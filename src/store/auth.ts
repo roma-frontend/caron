@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
-      partialize: (state) => ({ user: state.user }), // sessionToken stays in httpOnly cookie only
+      partialize: (state) => ({ user: state.user, sessionToken: state.sessionToken }),
     },
   ),
 );
