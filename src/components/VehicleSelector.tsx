@@ -35,15 +35,15 @@ export function VehicleSelector({ className }: { className?: string }) {
       </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
         <Select value={brand} onValueChange={(v) => { setBrand(v ?? ''); setModel(''); setYear(''); }}>
-          <SelectTrigger className="h-11"><SelectValue placeholder="Մակնիշ" /></SelectTrigger>
+          <SelectTrigger className="h-11" aria-label="Մակնիշ"><SelectValue placeholder="Մակնիշ" /></SelectTrigger>
           <SelectContent>{CAR_BRANDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={model} onValueChange={(v) => { setModel(v ?? ''); setYear(''); }} disabled={!brand}>
-          <SelectTrigger className="h-11"><SelectValue placeholder="Մոդել" /></SelectTrigger>
+          <SelectTrigger className="h-11" aria-label="Մոդել"><SelectValue placeholder="Մոդել" /></SelectTrigger>
           <SelectContent>{models.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={year} onValueChange={(v) => setYear(v ?? '')} disabled={!model}>
-          <SelectTrigger className="h-11"><SelectValue placeholder="Տարի" /></SelectTrigger>
+          <SelectTrigger className="h-11" aria-label="Տարի"><SelectValue placeholder="Տարի" /></SelectTrigger>
           <SelectContent>{years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
         </Select>
         <Button onClick={go} disabled={!brand} size="lg" className="h-11 gap-2">

@@ -63,7 +63,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
 
         {/* Image */}
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
-          {slug && <Link href={`/products/${slug}`} className="absolute inset-0 z-[5]" />}
+          {slug && <Link href={`/products/${slug}`} aria-label={name} className="absolute inset-0 z-[5]" />}
           {image ? (
             <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
           ) : (

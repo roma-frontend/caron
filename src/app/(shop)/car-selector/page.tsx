@@ -47,21 +47,21 @@ export default function CarSelectorPage() {
             <div>
               <label className="text-sm font-medium mb-1.5 block">{'Արտադրող'}</label>
               <Select value={brand} onValueChange={(v) => { setBrand(v ?? ''); setModel(''); setYear(''); setSearching(false); }}>
-                <SelectTrigger className="h-11"><SelectValue placeholder={'Արտադրող'} /></SelectTrigger>
+                <SelectTrigger className="h-11" aria-label={'Արտադրող'}><SelectValue placeholder={'Արտադրող'} /></SelectTrigger>
                 <SelectContent>{BRANDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">{'Մոդել'}</label>
               <Select value={model} onValueChange={(v) => { setModel(v ?? ''); setYear(''); setSearching(false); }} disabled={!brand}>
-                <SelectTrigger className="h-11"><SelectValue placeholder={'Մոդել'} /></SelectTrigger>
+                <SelectTrigger className="h-11" aria-label={'Մոդել'}><SelectValue placeholder={'Մոդել'} /></SelectTrigger>
                 <SelectContent>{models.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">{'Տարի'}</label>
               <Select value={year} onValueChange={(v) => { setYear(v ?? ''); setSearching(false); }} disabled={!model}>
-                <SelectTrigger className="h-11"><SelectValue placeholder={'Տարի'} /></SelectTrigger>
+                <SelectTrigger className="h-11" aria-label={'Տարի'}><SelectValue placeholder={'Տարի'} /></SelectTrigger>
                 <SelectContent>{years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
               </Select>
             </div>
