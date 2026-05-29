@@ -1,0 +1,183 @@
+import { defineSchema, defineTable } from 'convex/server';
+import { v } from 'convex/values';
+
+export default defineSchema(
+  {
+  // ─── Users & Auth ──────────────────────────────────────────────
+  users: defineTable({
+    email: v.string(),
+    name: v.string(),
+    passwordHash: v.optional(v.string()),
+    googleId: v.optional(v.string()),
+    role: v.union(v.literal('admin'), v.literal('customer')),
+    phone: v.optional(v.string()),
+    isActive: v.boolean(),
+    sessionToken: v.optional(v.string()),
+    sessionExpiry: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_email', ['email'])
+    .index('by_google_id', ['googleId'])
+    .index('by_role', ['role']),
+
+  // ─── Categories ────────────────────────────────────────────────
+  categories: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    description: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    parentId: v.optional(v.id('categories')),
+    order: v.number(),
+    isActive: v.boolean(),
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index('by_slug', ['slug'])
+    .index('by_parent', ['parentId'])
+    .index('by_active', ['isActive']),
+
+  // ─── Dynamic Filter Definitions (per category) ─────────────────
+  filterDefinitions: defineTable({
+    categoryId: v.id('categories'),
+    name: v.string(),
+    slug: v.string(),
+    type: v.union(
+      v.literal('select'),
+      v.literal('multiselect'),
+      v.literal('range'),
+      v.literal('boolean'),
+    ),
+    options: v.optional(v.array(v.string())),
+    unit: v.optional(v.string()),
+    order: v.number(),
+  }).index('by_category', ['categoryId']),
+
+  // ─── Products ──────────────────────────────────────────────────
+  products: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    description: v.string(),
+    price: v.number(),
+    compareAtPrice: v.optional(v.number()),
+    categoryId: v.id('categories'),
+    images: v.array(v.string()),
+    sku: v.optional(v.string()),
+    stock: v.number(),
+    isActive: v.boolean(),
+    isFeatured: v.optional(v.boolean()),
+    attributes: v.optional(v.any()),
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_slug', ['slug'])
+    .index('by_category', ['categoryId'])
+    .index('by_active', ['isActive'])
+    .index('by_featured', ['isFeatured'])
+    .searchIndex('search_products', { searchField: 'name', filterFields: ['categoryId', 'isActive'] }),
+
+  // ─── Orders ────────────────────────────────────────────────────
+  orders: defineTable({
+    orderNumber: v.string(),
+    userId: v.optional(v.id('users')),
+    customerName: v.string(),
+    customerEmail: v.string(),
+    customerPhone: v.string(),
+    shippingAddress: v.string(),
+    items: v.array(
+      v.object({
+        productId: v.id('products'),
+        name: v.string(),
+        price: v.number(),
+        quantity: v.number(),
+        imageUrl: v.optional(v.string()),
+      }),
+    ),
+    subtotal: v.number(),
+    shipping: v.number(),
+    total: v.number(),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('confirmed'),
+      v.literal('processing'),
+      v.literal('shipped'),
+      v.literal('delivered'),
+      v.literal('cancelled'),
+    ),
+    paymentStatus: v.union(
+      v.literal('awaiting'),
+      v.literal('paid'),
+      v.literal('refunded'),
+    ),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_status', ['status'])
+    .index('by_order_number', ['orderNumber'])
+    .index('by_payment_status', ['paymentStatus']),
+
+  // ─── Promotions / Sales ────────────────────────────────────────
+  promotions: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    discountPercent: v.optional(v.number()),
+    discountAmount: v.optional(v.number()),
+    productIds: v.optional(v.array(v.id('products'))),
+    categoryIds: v.optional(v.array(v.id('categories'))),
+    startDate: v.number(),
+    endDate: v.number(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  }).index('by_active', ['isActive']),
+
+  // ─── Reviews ───────────────────────────────────────────────────────
+  reviews: defineTable({
+    productId: v.id('products'),
+    authorName: v.string(),
+    rating: v.number(),
+    text: v.optional(v.string()),
+    isApproved: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_approved', ['isApproved']),
+
+  // ─── Settings ──────────────────────────────────────────────────────
+  settings: defineTable({
+    storeName: v.string(),
+    phone: v.string(),
+    email: v.string(),
+    address: v.string(),
+    whatsapp: v.string(),
+    telegram: v.string(),
+    instagram: v.string(),
+    facebook: v.string(),
+    deliveryYerevan: v.number(),
+    deliveryRegions: v.number(),
+    freeShippingThreshold: v.number(),
+    announcementBar: v.string(),
+    workingHours: v.string(),
+    telegramBotToken: v.string(),
+    telegramChatId: v.string(),
+    mapUrl: v.optional(v.string()),
+  }),
+
+  // ─── Pages (CMS) ──────────────────────────────────────────────
+  pages: defineTable({
+    title: v.string(),
+    slug: v.string(),
+    content: v.string(),
+    isPublished: v.boolean(),
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_slug', ['slug']),
+  },
+  { schemaValidation: false },
+);

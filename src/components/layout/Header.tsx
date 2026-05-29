@@ -1,0 +1,181 @@
+'use client';
+
+import Link from 'next/link';
+import { ShoppingCart, Search, ActivityIcon, Menu, User, Heart, X, Grid3X3, Tag, Phone, Car, Info, Truck, BarChart3, ClipboardList } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { NAV, SITE } from '@/lib/constants';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSettings } from '@/hooks/useSettings';
+import { useCartStore } from '@/store/cart';
+import { useAuth } from '@/store/auth';
+import { useFavoritesStore } from '@/store/favorites';
+
+const LINKS = [
+  { href: '/products', label: NAV.catalog },
+  { href: '/categories', label: NAV.categories },
+  { href: '/promotions', label: NAV.promotions },
+  { href: '/contact', label: NAV.contact },
+];
+
+const MORE_LINKS = [
+  { href: '/car-selector', label: 'Պահեստամասեր ըստ մոդելի', icon: Car },
+  { href: '/about', label: 'Մեր մասին', icon: Info },
+  { href: '/order-status', label: NAV.orderStatus, icon: ClipboardList },
+  { href: '/compare', label: 'Համեմատել', icon: BarChart3 },
+  { href: '/delivery', label: 'Առաքում', icon: Truck },
+];
+
+export function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const cartCount = useCartStore((s) => s.totalItems());
+  const { user } = useAuth();
+  const router = useRouter();
+  const settings = useSettings();
+  const [searchVal, setSearchVal] = useState('');
+  const favCount = useFavoritesStore((s) => s.count());
+  const hasFavs = favCount > 0;
+
+  return (
+    <>
+      <div className="bg-primary text-primary-foreground text-center text-xs font-medium py-2 px-4">
+        <span>{settings?.announcementBar} • Հեռ. {settings?.phone}</span>
+      </div>
+      <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>
+        <div className="mx-auto flex h-full items-center justify-between px-4" style={{ maxWidth: 'var(--container-max)' }}>
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <ShoppingCart className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="hidden text-xl font-bold sm:inline">{SITE.name}</span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden items-center gap-1 md:flex">
+            {LINKS.map((link) => (
+              <Link key={link.href} href={link.href} className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                {link.label}
+              </Link>
+            ))}
+            <div className="relative group">
+              <button className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">Ավելին ▾</button>
+              <div className="invisible absolute left-0 top-full z-50 min-w-[200px] rounded-xl border bg-background p-2 shadow-xl opacity-0 transition-all group-hover:visible group-hover:opacity-100">
+                {MORE_LINKS.map((link) => (
+                  <Link key={link.href} href={link.href} className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </nav>
+
+          {/* Search - desktop */}
+          <div className="hidden flex-1 items-center lg:flex" style={{ maxWidth: '16rem', marginInline: '1.5rem' }}>
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder={NAV.search} className="h-9 pl-9" value={searchVal} onChange={(e) => setSearchVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && searchVal.trim()) { router.push(`/products?q=${searchVal.trim()}`); setSearchVal(''); } }} />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div suppressHydrationWarning className="flex items-center gap-1">
+            <Link href="/favorites">
+              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label={NAV.favorites} suppressHydrationWarning>
+                <Heart className={`h-5 w-5 transition-colors ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
+              </Button>
+            </Link>
+            <Link href="/cart">
+              <Button variant="ghost" size="icon" className="relative overflow-visible" aria-label={NAV.cart}>
+                <ShoppingCart className="h-5 w-5" />
+                <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-[10px]">{cartCount}</Badge>
+              </Button>
+            </Link>
+            <Link href={user ? "/admin" : "/login"}>
+              <Button variant="ghost" size="icon" aria-label={NAV.login}>
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+            <button onClick={() => setMenuOpen(true)} className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent md:hidden" aria-label="Menu">
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {menuOpen && (
+        <div className="fixed inset-0" style={{ zIndex: 'var(--z-modal)' }}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] flex flex-col bg-background shadow-2xl" style={{ animation: 'slideInRight 0.3s ease' }}>
+            {/* Header */}
+            <div className="flex-1 overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                  <ShoppingCart className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <span className="text-lg font-bold">{SITE.name}</span>
+              </Link>
+              <button onClick={() => setMenuOpen(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="p-4 border-b">
+              <form onSubmit={(e) => { e.preventDefault(); const v = (e.currentTarget.elements.namedItem('mq') as HTMLInputElement).value; if (v) { router.push(`/products?q=${v}`); setMenuOpen(false); } }} className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input name="mq" placeholder={NAV.search} className="h-10 w-full rounded-xl border bg-muted/50 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background transition-colors" />
+              </form>
+            </div>
+
+            {/* Main Nav */}
+            <nav className="p-3">
+              <p className="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Նավիգացիա</p>
+              {[
+                { href: '/products', label: NAV.catalog, icon: Grid3X3 },
+                { href: '/categories', label: NAV.categories, icon: Tag },
+                { href: '/promotions', label: NAV.promotions, icon: ActivityIcon },
+                { href: '/contact', label: NAV.contact, icon: Phone },
+              ].map((link) => (
+                <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent">
+                  <link.icon className="h-4 w-4 text-muted-foreground" />
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* More Links */}
+            <nav className="p-3 border-t">
+              <p className="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ավելին</p>
+              {MORE_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent">
+                  <link.icon className="h-4 w-4 text-muted-foreground" />
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            </div>
+
+            {/* User Actions */}
+            <div className="p-3 border-t mt-auto">
+              <div className="flex flex-col gap-2">
+                <Link href="/favorites" onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-colors hover:bg-accent">
+                  <Heart className={`h-4 w-4 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
+                  {NAV.favorites}
+                </Link>
+                <Link href={user ? "/admin" : "/login"} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-colors hover:bg-accent">
+                  <User className="h-4 w-4" />
+                  {user ? NAV.account : NAV.login}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

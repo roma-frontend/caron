@@ -1,0 +1,34 @@
+import { v } from 'convex/values';
+import { query, mutation } from './_generated/server';
+
+export const getByCategory = query({
+  args: { categoryId: v.id('categories') },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('filterDefinitions')
+      .withIndex('by_category', (q) => q.eq('categoryId', args.categoryId))
+      .take(50);
+  },
+});
+
+export const create = mutation({
+  args: {
+    categoryId: v.id('categories'),
+    name: v.string(),
+    slug: v.string(),
+    type: v.union(v.literal('select'), v.literal('multiselect'), v.literal('range'), v.literal('boolean')),
+    options: v.optional(v.array(v.string())),
+    unit: v.optional(v.string()),
+    order: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert('filterDefinitions', args);
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id('filterDefinitions') },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});

@@ -1,0 +1,17 @@
+{
+  "name": "Caroon Armenia",
+  "short_name": "Caroon",
+  "description": "Caroon-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է, որը առաջարկում է լայն տեսականի բարձրորակ ապրանքների՝ անվադողեր, դիսկեր, յուղեր, ֆիլտրեր և այլ պարագաներ:",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "hy",
+  "dir": "ltr",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#5B21B6",
+  "background_color": "#ffffff",
+  "categories": ["shopping", "auto"],
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
