@@ -24,7 +24,6 @@ import { PRODUCT } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { ProductImageZoom } from '@/components/ProductImageZoom';
 const StickyBuyBar = dynamic(() => import('@/components/StickyBuyBar').then((m) => ({ default: m.StickyBuyBar })));
 const QuickBuyButton = dynamic(() => import('@/components/QuickBuy').then((m) => ({ default: m.QuickBuyButton })));
 import { useCompareStore } from '@/store/compare';
@@ -82,9 +81,9 @@ export default function ProductDetailPage() {
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Gallery */}
         <div>
-          <div className="rounded-2xl border bg-muted/30">
+          <div className="aspect-square overflow-hidden rounded-2xl border bg-muted/30">
             {product.images?.[selectedImg] ? (
-              <ProductImageZoom src={product.images[selectedImg]} alt={product.name} width={800} height={800} priority sizes="(max-width: 1024px) 100vw, 50vw" className="aspect-square rounded-2xl" />
+              <Image src={product.images[selectedImg]} alt={product.name} width={800} height={800} priority sizes="(max-width: 1024px) 100vw, 50vw" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full items-center justify-center text-6xl text-muted-foreground/20 p-4 text-center"><div className="flex flex-col items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg></div></div>
             )}

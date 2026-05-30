@@ -67,7 +67,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
             transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease',
             transform: isHovered ? 'translateY(-6px) scale(1.02)' : 'translateY(0) scale(1)',
             boxShadow: isHovered
-              ? '0 20px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.1)'
+              ? 'var(--shadow-card-hover)'
               : 'var(--shadow-card)',
           }}
         >
@@ -126,7 +126,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background/80 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           </div>
 
           <div className="p-4">
