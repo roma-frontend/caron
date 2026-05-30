@@ -68,7 +68,13 @@ export default function AdminCouponsPage() {
               <div><Label>Արժեք</Label><Input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))} placeholder={type === 'percent' ? '10' : '5000'} className="h-10" /></div>
               <div><Label>Մին. պատվեր</Label><Input type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} className="h-10" /></div>
               <div><Label>Մաքս. օգտ.</Label><Input type="number" value={maxUses} onChange={(e) => setMaxUses(Number(e.target.value))} className="h-10" /></div>
-              <div><Label>Վերջ</Label><Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="h-10" /></div>
+              <div>
+                <Label>Վերջնաժամկետ</Label>
+                <div className="relative">
+                  <Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="h-10 pr-8" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">📅</span>
+                </div>
+              </div>
             </div>
             <Button onClick={handleCreate} disabled={!code.trim() || !value}>Ստեղծել</Button>
           </CardContent>
