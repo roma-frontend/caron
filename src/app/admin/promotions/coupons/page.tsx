@@ -1,0 +1,100 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../../../../convex/_generated/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2, Tag } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuthStore } from '@/store/auth';
+import { Id } from '../../../../../convex/_generated/dataModel';
+
+export default function AdminCouponsPage() {
+  const sessionToken = useAuthStore((s) => s.sessionToken);
+  const coupons = useQuery(api.coupons.list, sessionToken ? { sessionToken } : 'skip');
+  const create = useMutation(api.coupons.create);
+  const remove = useMutation(api.coupons.remove);
+  const [showForm, setShowForm] = useState(false);
+  const [code, setCode] = useState('');
+  const [type, setType] = useState<'percent' | 'fixed'>('percent');
+  const [value, setValue] = useState(0);
+  const [minAmount, setMinAmount] = useState(0);
+  const [maxUses, setMaxUses] = useState(0);
+  const [expiresAt, setExpiresAt] = useState('');
+
+  const handleCreate = async () => {
+    if (!code.trim() || !value) return;
+    await create({
+      sessionToken: sessionToken!,
+      code: code.trim().toUpperCase(),
+      type,
+      value,
+      minOrderAmount: minAmount || undefined,
+      maxUses: maxUses || undefined,
+      isActive: true,
+      expiresAt: expiresAt ? new Date(expiresAt).getTime() : undefined,
+    });
+    toast.success('Կուպոն ստեղծվել է');
+    setShowForm(false); setCode(''); setValue(0); setMinAmount(0); setMaxUses(0); setExpiresAt('');
+  };
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Կուպոններ</h1>
+          <p className="text-muted-foreground">{coupons?.length ?? 0} կուպոն</p>
+        </div>
+        <Button onClick={() => setShowForm(!showForm)} className="gap-2"><Plus className="h-4 w-4" /> Նոր կուպոն</Button>
+      </div>
+
+      {showForm && (
+        <Card className="mb-6">
+          <CardContent className="p-5 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div><Label>Կոդ</Label><Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="SALE20" className="h-10 font-mono" /></div>
+              <div>
+                <Label>Տեսակ</Label>
+                <div className="flex gap-2 mt-1">
+                  <button onClick={() => setType('percent')} className={`flex-1 rounded-xl border py-2 text-sm transition-all ${type === 'percent' ? 'border-primary bg-primary/10 text-primary' : 'hover:border-primary/40'}`}>%</button>
+                  <button onClick={() => setType('fixed')} className={`flex-1 rounded-xl border py-2 text-sm transition-all ${type === 'fixed' ? 'border-primary bg-primary/10 text-primary' : 'hover:border-primary/40'}`}>֏</button>
+                </div>
+              </div>
+              <div><Label>Արժեք</Label><Input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))} placeholder={type === 'percent' ? '10' : '5000'} className="h-10" /></div>
+              <div><Label>Մին. պատվեր</Label><Input type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} className="h-10" /></div>
+              <div><Label>Մաքս. օգտ.</Label><Input type="number" value={maxUses} onChange={(e) => setMaxUses(Number(e.target.value))} className="h-10" /></div>
+              <div><Label>Վերջ</Label><Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="h-10" /></div>
+            </div>
+            <Button onClick={handleCreate} disabled={!code.trim() || !value}>Ստեղծել</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-2">
+        {coupons?.map((c) => (
+          <div key={c._id} className="flex items-center justify-between rounded-xl border bg-background p-4">
+            <div className="flex items-center gap-3">
+              <Tag className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-mono font-bold">{c.code}</span>
+                <span className="ml-2 text-sm text-muted-foreground">{c.type === 'percent' ? `${c.value}%` : `${c.value.toLocaleString()} ֏`}</span>
+                {c.minOrderAmount ? <span className="ml-2 text-xs text-muted-foreground">от {c.minOrderAmount.toLocaleString()} ֏</span> : null}
+              </div>
+              <Badge variant={c.isActive ? 'default' : 'secondary'} className="text-[10px]">{c.isActive ? 'Активен' : 'Отключен'}</Badge>
+              {c.maxUses && <span className="text-xs text-muted-foreground">Использовано {c.usedCount}/{c.maxUses}</span>}
+            </div>
+            <Button variant="ghost" size="icon" onClick={async () => { await remove({ sessionToken: sessionToken!, id: c._id }); toast.success('Удален'); }}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        ))}
+        {coupons?.length === 0 && <p className="py-8 text-center text-muted-foreground">Купоны не созданы</p>}
+      </div>
+    </div>
+  );
+}

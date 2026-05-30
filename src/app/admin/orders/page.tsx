@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileDown, ShoppingBag, Clock, CheckCircle, Truck, Package, Search } from 'lucide-react';
+import { FileDown, ShoppingBag, Clock, CheckCircle, Truck, Package, Search, Phone, MessageSquare, Smartphone, FileSpreadsheet } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
+import { useSettings } from '@/hooks/useSettings';
+import Link from 'next/link';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: 'Սպասում', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -61,7 +63,7 @@ function exportPDF(order: { orderNumber: string; customerName: string; customerP
 
 const PAYMENT_LABELS: Record<string, string> = { cash: 'Կանխիկ', card: 'Քարտով', idram: 'Idram', easypay: 'EasyPay', transfer: 'Բանկային փոխանցում' };
 
-function OrderCard({ order, sessionToken, index }: { order: { _id: Id<'orders'>; orderNumber: string; customerName: string; customerPhone: string; customerEmail: string; shippingAddress: string; items: { name: string; price: number; quantity: number; productId: Id<'products'>; imageUrl?: string }[]; total: number; status: string; paymentStatus: string; paymentMethod?: string; createdAt: number }; sessionToken: string; index: number }) {
+function OrderCard({ order, sessionToken, index, settings }: { order: { _id: Id<'orders'>; orderNumber: string; customerName: string; customerPhone: string; customerEmail: string; shippingAddress: string; items: { name: string; price: number; quantity: number; productId: Id<'products'>; imageUrl?: string }[]; total: number; status: string; paymentStatus: string; paymentMethod?: string; createdAt: number }; sessionToken: string; index: number; settings: ReturnType<typeof useSettings> }) {
   const { ref, visible } = useReveal();
   const updateStatus = useMutation(api.orders.updateStatus);
   const status = STATUS_MAP[order.status] ?? STATUS_MAP.pending;
@@ -102,9 +104,24 @@ function OrderCard({ order, sessionToken, index }: { order: { _id: Id<'orders'>;
               <Button size="sm" variant={order.paymentStatus === 'paid' ? 'outline' : 'default'} className="h-8 gap-1 text-xs" onClick={() => { updateStatus({ sessionToken, id: order._id, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' : 'paid' }); toast.success(order.paymentStatus === 'paid' ? 'Վերադարձվել է սպասման' : 'Նշվել է որպես վճարված'); }}>
                 {order.paymentStatus === 'paid' ? '✗' : '✓'} Վճարված
               </Button>
-              <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => exportPDF(order)}>
+              <Link href="/api/export/orders" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                 <FileDown className="h-3 w-3" /> PDF
-              </Button>
+              </Link>
+              <div className="flex gap-1">
+                <Link href={`tel:${order.customerPhone}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Զանգել">
+                  <Phone className="h-3.5 w-3.5" />
+                </Link>
+                {settings?.whatsapp && (
+                  <Link href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg border text-green-600 hover:bg-green-50" aria-label="WhatsApp">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+                {settings?.telegram && (
+                  <Link href={`https://t.me/${order.customerPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg border text-sky-600 hover:bg-sky-50" aria-label="Telegram">
+                    <Smartphone className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -116,6 +133,7 @@ function OrderCard({ order, sessionToken, index }: { order: { _id: Id<'orders'>;
 export default function AdminOrdersPage() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
+  const settings = useSettings();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -135,10 +153,13 @@ export default function AdminOrdersPage() {
           <h1 className="text-3xl font-bold">Պատվերներ</h1>
           <p className="text-muted-foreground">{orders?.length ?? 0} պատվեր</p>
         </div>
+        <Link href="/api/export/orders" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
+          <FileSpreadsheet className="h-4 w-4" /> CSV
+        </Link>
       </div>
 
       <div className="space-y-3">
-        {filtered?.map((order, i) => <OrderCard key={order._id} order={order} sessionToken={sessionToken ?? ''} index={i} />)}
+        {filtered?.map((order, i) => <OrderCard key={order._id} order={order} sessionToken={sessionToken ?? ''} index={i} settings={settings} />)}
       </div>
 
       {filtered?.length === 0 && (

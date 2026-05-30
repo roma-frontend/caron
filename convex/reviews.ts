@@ -71,6 +71,25 @@ export const create = mutation({
   },
 });
 
+export const listAll = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    return await ctx.db.query('reviews').order('desc').take(200);
+  },
+});
+
+export const approve = mutation({
+  args: { sessionToken: v.string(), id: v.id('reviews'), approved: v.boolean() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const review = await ctx.db.get(args.id);
+    if (!review) return;
+    await ctx.db.patch(args.id, { isApproved: args.approved });
+    await recomputeRating(ctx, review.productId);
+  },
+});
+
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('reviews') },
   handler: async (ctx, args) => {

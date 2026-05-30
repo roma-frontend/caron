@@ -126,6 +126,15 @@ export const getByOrderNumber = query({
   },
 });
 
+export const listByUser = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx, args.sessionToken);
+    if (!caller) return [];
+    return await ctx.db.query('orders').withIndex('by_user', (q) => q.eq('userId', caller._id)).order('desc').take(50);
+  },
+});
+
 export const getById = query({
   args: { id: v.id('orders'), sessionToken: v.optional(v.string()) },
   handler: async (ctx, args) => {
