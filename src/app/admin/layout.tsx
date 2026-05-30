@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           </div>
           <div className="relative group">
-            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary transition-colors hover:bg-accent hover:text-foreground">
               {user.name.charAt(0)}
             </button>
             <div className="absolute right-0 top-full mt-2 hidden w-40 flex-col rounded-xl border bg-popover p-1 shadow-lg group-hover:flex">
