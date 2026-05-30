@@ -137,7 +137,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
               {user.name.charAt(0)}
             </button>
-            <div className="absolute right-0 top-full mt-2 hidden w-40 flex-col rounded-xl border bg-popover p-1 shadow-lg group-focus-within:flex">
+            <div className="absolute right-0 top-full mt-2 hidden w-40 flex-col rounded-xl border bg-popover p-1 shadow-lg group-hover:flex">
               <span className="px-3 py-2 text-xs font-medium text-muted-foreground truncate">{user.email}</span>
               <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs" onClick={handleLogout}>
                 <LogOut className="h-3.5 w-3.5" /> Դուրս գալ
