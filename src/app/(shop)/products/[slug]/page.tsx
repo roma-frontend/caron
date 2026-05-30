@@ -209,13 +209,17 @@ export default function ProductDetailPage() {
               </span>
             )}
           </div>
-          {product.stock <= 0 && settings?.enableBackInStock && (
-            <div className="mt-4">
-              <BackInStockButton productId={product._id} />
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Back in stock — under price area, visible when out of stock */}
+      {product.stock <= 0 && settings?.enableBackInStock && (
+        <div className="mt-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
+          <p className="mb-2 text-sm font-medium flex items-center gap-2"><Bell className="h-4 w-4 text-primary" />Ապրանքը ժամանակավորապես բացակայում է</p>
+          <BackInStockButton productId={product._id} />
+        </div>
+      )}
+
       {settings?.enableReviews !== false && <ProductReviews productId={product._id} />}
 
       <RecentlyViewed />
