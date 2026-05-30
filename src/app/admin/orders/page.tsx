@@ -71,40 +71,58 @@ function exportPDF(o: Record<string, unknown>) {
 function OrderCard({ order, sessionToken, index, settings }: { order: Record<string, unknown>; sessionToken: string; index: number; settings: ReturnType<typeof useSettings> }) {
   const { ref, visible } = useReveal();
   const updateStatus = useMutation(api.orders.updateStatus);
-  const status = STATUS_MAP[order.status as string] ?? STATUS_MAP.pending;
-  const payment = PAYMENT_MAP[order.paymentStatus as string] ?? PAYMENT_MAP.awaiting;
+  const s = STATUS_MAP[String(order.status)] ?? STATUS_MAP.pending;
+  const p = PAYMENT_MAP[String(order.paymentStatus)] ?? PAYMENT_MAP.awaiting;
 
   return (
     <div ref={ref} style={revealStyle(visible, index * 0.03)}>
-      <div className="flex items-center gap-4 rounded-xl border bg-background p-4 transition-all hover:shadow-md">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-sm font-bold">{String(order.orderNumber)}</span>
-            <Badge className={`${status.color} border-0 text-[10px]`}>{status.label}</Badge>
-            <Badge className={`${payment.color} border-0 text-[10px]`}>{payment.label}</Badge>
-            {order.paymentMethod ? <Badge variant="outline" className="text-[10px]">{PAYMENT_LABELS[String(order.paymentMethod)] || String(order.paymentMethod)}</Badge> : null}
+      <div className="rounded-xl border bg-background transition-all hover:shadow-md hover:border-primary/20 overflow-hidden">
+        {/* Top bar — status + order number */}
+        <div className="flex items-center justify-between bg-muted/40 px-4 py-2 border-b">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold tracking-wider text-muted-foreground">{String(order.orderNumber)}</span>
+            <Badge className={`${s.color} border-0 text-[10px]`}>{s.label}</Badge>
+            <Badge className={`${p.color} border-0 text-[10px]`}>{p.label}</Badge>
+            {order.paymentMethod ? <Badge variant="outline" className="text-[10px] text-muted-foreground">{PAYMENT_LABELS[String(order.paymentMethod)] || String(order.paymentMethod)}</Badge> : null}
           </div>
-          <p className="mt-0.5 text-sm font-medium">{String(order.customerName)}</p>
-          <p className="text-xs text-muted-foreground">{String(order.customerPhone)}</p>
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold text-primary">{formatPrice(Number(order.total))}</span>
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{formatDateHy(Number(order.createdAt))}</span>
+          </div>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-lg font-bold text-primary">{formatPrice(Number(order.total))}</p>
-          <p className="text-xs text-muted-foreground">{formatDateHy(Number(order.createdAt))}</p>
-        </div>
-        <div className="flex flex-col gap-1.5 shrink-0">
-          <div className="flex gap-1">
+        {/* Content row — customer + actions */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary shrink-0">
+              {String(order.customerName).charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-sm font-medium leading-tight">{String(order.customerName)}</p>
+              <p className="text-xs text-muted-foreground">{String(order.customerPhone)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             <Select value={String(order.status)} onValueChange={(v) => { if (v) updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' }); }}>
-              <SelectTrigger className="h-7 w-24 text-[10px]"><span>{STATUS_MAP[String(order.status)]?.label ?? String(order.status)}</span></SelectTrigger>
+              <SelectTrigger className="h-8 w-[110px] text-xs"><span>{s.label}</span></SelectTrigger>
               <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
             </Select>
-            <Button size="sm" variant={order.paymentStatus === 'paid' ? 'outline' : 'default'} className="h-7 gap-1 text-[10px] px-2" onClick={() => updateStatus({ sessionToken, id: order._id as Id<'orders'>, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' as const : 'paid' as const })}>
-              {order.paymentStatus === 'paid' ? '✗' : '✓'}
-            </Button>
-          </div>
-          <div className="flex gap-1">
-            <a href={`tel:${String(order.customerPhone)}`} className="flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent"><Phone className="h-3 w-3" /></a>
-            {settings?.whatsapp && <a href={`https://wa.me/${String(order.customerPhone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-md border text-green-600 hover:bg-green-50"><MessageSquare className="h-3 w-3" /></a>}
-            <button onClick={() => exportPDF(order as { orderNumber: string; customerName: string; customerPhone: string; customerEmail: string; shippingAddress: string; items: { name: string; price: number; quantity: number }[]; total: number; createdAt: number })} className="flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent"><FileDown className="h-3 w-3" /></button>
+            <button onClick={() => updateStatus({ sessionToken, id: order._id as Id<'orders'>, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' as const : 'paid' as const })}
+              className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors ${order.paymentStatus === 'paid' ? 'bg-green-50 border-green-200 text-green-700' : 'text-muted-foreground hover:bg-accent'}`}>
+              {order.paymentStatus === 'paid' ? '✓' : '○'} {order.paymentStatus === 'paid' ? 'Վճարված' : 'Նշել վճարած'}
+            </button>
+            <div className="h-6 w-px bg-border mx-1" />
+            <a href={`tel:${String(order.customerPhone)}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title="Զանգել">
+              <Phone className="h-3.5 w-3.5" />
+            </a>
+            {settings?.whatsapp && (
+              <a href={`https://wa.me/${String(order.customerPhone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border text-green-600 hover:bg-green-50 transition-colors" title="WhatsApp">
+                <MessageSquare className="h-3.5 w-3.5" />
+              </a>
+            )}
+            <button onClick={() => exportPDF(order)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors" title="PDF">
+              <FileDown className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       </div>

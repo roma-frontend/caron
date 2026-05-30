@@ -76,10 +76,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <button onClick={() => setSidebarOpen(false)} className="ml-2 lg:hidden"><X className="h-5 w-5" /></button>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.map((item, i) => {
           const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
           return (
-            <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>
+            <Link key={`${item.href}-${i}`} href={item.href} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>
               <item.icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{item.label}</span>
               {item.href === '/admin/orders' && pendingCount > 0 && (
@@ -152,7 +152,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input type="text" placeholder="Որոնել..." className="h-9 w-full rounded-lg border bg-muted/50 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background"   onChange={(e) => { const q = e.target.value.toLowerCase(); const el = e.currentTarget.nextElementSibling; if (el) { el.querySelectorAll('[data-nav]').forEach((n) => { (n as HTMLElement).style.display = (n as HTMLElement).dataset.nav!.includes(q) ? '' : 'none'; }); }}} />
             <div className="absolute left-0 top-full mt-1 hidden group-focus-within/search:flex flex-col w-full rounded-xl border bg-popover p-1.5 shadow-lg z-50">
-              {NAV_ITEMS.map((item) => (<Link key={item.href} href={item.href} data-nav={item.label.toLowerCase()} onClick={() => { (document.activeElement as HTMLElement)?.blur(); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"><item.icon className="h-4 w-4 text-muted-foreground" />{item.label}</Link>))}
+              {NAV_ITEMS.map((item, i) => (<Link key={`search-${i}`} href={item.href} data-nav={item.label.toLowerCase()} onClick={() => { (document.activeElement as HTMLElement)?.blur(); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"><item.icon className="h-4 w-4 text-muted-foreground" />{item.label}</Link>))}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -188,10 +188,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }}
         />
         <div className="flex items-stretch h-14">
-          {NAV_ITEMS.slice(0, 5).map((item) => {
+          {NAV_ITEMS.slice(0, 5).map((item, i) => {
             const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
+              <Link key={`bottom-${i}`} href={item.href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 {item.label.slice(0, 6)}
                 {item.href === '/admin/orders' && pendingCount > 0 && <span className="absolute left-1/2 top-1 ml-1 rounded-full bg-destructive px-1.5 text-[9px] font-bold text-white">{pendingCount}</span>}
@@ -200,10 +200,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </div>
         <div className="grid grid-cols-5 overflow-hidden transition-all duration-300 h-0 group-data-[expanded]/nav:h-14">
-          {NAV_ITEMS.slice(5).map((item) => {
+          {NAV_ITEMS.slice(5).map((item, i) => {
             const active = pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href} className={`flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
+              <Link key={`exp-${i}`} href={item.href} className={`flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 {item.label.slice(0, 6)}
               </Link>
