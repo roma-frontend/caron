@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { clearAuthCookie } from '@/actions/auth';
 import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
+import { AIChatWidget } from '@/components/admin/AIChatWidget';
 
 const NAV_ITEMS = [
   { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ' },
@@ -106,6 +107,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen">
       <IdleTimeoutModal />
+      <AIChatWidget />
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:bg-muted/30 sticky top-0 h-screen">
         {sidebar}
