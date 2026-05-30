@@ -85,15 +85,15 @@ export default function AdminCouponsPage() {
                 <span className="ml-2 text-sm text-muted-foreground">{c.type === 'percent' ? `${c.value}%` : `${c.value.toLocaleString()} ֏`}</span>
                 {c.minOrderAmount ? <span className="ml-2 text-xs text-muted-foreground">от {c.minOrderAmount.toLocaleString()} ֏</span> : null}
               </div>
-              <Badge variant={c.isActive ? 'default' : 'secondary'} className="text-[10px]">{c.isActive ? 'Активен' : 'Отключен'}</Badge>
-              {c.maxUses && <span className="text-xs text-muted-foreground">Использовано {c.usedCount}/{c.maxUses}</span>}
+              <Badge variant={c.isActive ? 'default' : 'secondary'} className="text-[10px]">{c.isActive ? 'Ակտիվ' : 'Անակտիվ'}</Badge>
+              {c.maxUses && <span className="text-xs text-muted-foreground">Օգտագործվել է {c.usedCount}/{c.maxUses}</span>}
             </div>
-            <Button variant="ghost" size="icon" onClick={async () => { await remove({ sessionToken: sessionToken!, id: c._id }); toast.success('Удален'); }}>
+            <Button variant="ghost" size="icon" onClick={async () => { await remove({ sessionToken: sessionToken!, id: c._id }); toast.success('Ջնջվել է'); }}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
         ))}
-        {coupons?.length === 0 && <p className="py-8 text-center text-muted-foreground">Купоны не созданы</p>}
+        {coupons?.length === 0 && <p className="py-8 text-center text-muted-foreground">Կուպոններ չեն ստեղծվել</p>}
       </div>
     </div>
   );

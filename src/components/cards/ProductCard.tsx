@@ -73,12 +73,10 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               : 'var(--shadow-card)',
           }}
         >
-          {isHovered && (
             <div
               className="pointer-events-none absolute inset-0 -z-10 rounded-2xl"
               style={{ background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, oklch(0.6 0.14 248 / 0.14), transparent 50%)`, filter: 'blur(30px)' }}
             />
-          )}
 
           <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
             {slug && <Link href={`/products/${slug}`} aria-label={name} className="absolute inset-0 z-[5]" />}
@@ -114,13 +112,15 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
             </button>
 
             {/* Quick view button on hover */}
-            <button
-              aria-label="Արագ դիտում"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickOpen(true); }}
-              className="absolute right-3 bottom-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border bg-card/80 shadow-lg backdrop-blur-sm opacity-0 transition-all duration-300 hover:bg-primary hover:text-white hover:border-primary group-hover:opacity-100 hover:scale-110"
-            >
-              <Eye className="h-4 w-4" />
-            </button>
+            {settings?.enableQuickView !== false && (
+              <button
+                aria-label="Արագ դիտում"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickOpen(true); }}
+                className="absolute right-3 bottom-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border bg-card/80 shadow-lg backdrop-blur-sm opacity-0 transition-all duration-300 hover:bg-primary hover:text-white hover:border-primary group-hover:opacity-100 hover:scale-110"
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+            )}
 
             {!inStock && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
