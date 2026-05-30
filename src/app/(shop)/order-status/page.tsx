@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Package, Clock, CheckCircle, Truck, MapPin } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
+import { useSettings } from '@/hooks/useSettings';
 
 const STEPS = [
   { key: 'pending', label: 'Սպասվում է', icon: Clock },
@@ -19,6 +20,7 @@ const STEPS = [
 ];
 
 export default function OrderStatusPage() {
+  const settings = useSettings();
   const [orderNum, setOrderNum] = useState('');
   const [searchNum, setSearchNum] = useState('');
   const order = useQuery(api.orders.getByOrderNumber, searchNum ? { orderNumber: searchNum } : 'skip');
@@ -68,8 +70,8 @@ export default function OrderStatusPage() {
                 <span className="text-xl font-bold text-primary">{formatPrice(order.total)}</span>
               </div>
 
-              {/* Timeline with connecting line */}
-              {order.status !== 'cancelled' ? (
+              {/* Timeline */}
+              {settings?.enableTimeline !== false && order.status !== 'cancelled' ? (
                 <div className="relative">
                   <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted" />
                   {STEPS.map((step, i) => {

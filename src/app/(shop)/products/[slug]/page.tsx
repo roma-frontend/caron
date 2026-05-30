@@ -207,7 +207,7 @@ export default function ProductDetailPage() {
           <div className="mt-6 flex flex-wrap gap-3 sm:gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><Truck className="h-4 w-4" /> {'Առաքման վճար'}</span>
             <span className="flex items-center gap-1"><Shield className="h-4 w-4" /> {'Անվտանգ գնումներ'}</span>
-            {settings?.enableShareButtons && (
+            {settings?.enableShareButtons !== false && (
               <span className="flex items-center gap-1">
                 <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Հղումը պատճենվեց'); }} className="flex items-center gap-1 hover:text-primary transition-colors">
                   <Share2 className="h-4 w-4" /> {'Կիսվել'}
