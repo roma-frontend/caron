@@ -100,8 +100,8 @@ export function Header() {
             </Button>
             <ThemeToggle />
             <Link href="/favorites">
-              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label={NAV.favorites} suppressHydrationWarning>
-                <Heart className={`h-5 w-5 transition-colors ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
+              <Button variant="ghost" size="icon" className="hidden sm:inline-flex group/fav" aria-label={NAV.favorites} suppressHydrationWarning>
+                <Heart className={`h-5 w-5 transition-colors group-hover/fav:fill-red-500 group-hover/fav:text-red-500 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
               </Button>
             </Link>
             <Link href="/cart">
@@ -180,8 +180,8 @@ export function Header() {
             {/* User Actions */}
             <div className="p-3 border-t mt-auto">
               <div className="flex flex-col gap-2">
-                <Link href="/favorites" onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-colors hover:bg-accent">
-                  <Heart className={`h-4 w-4 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
+                <Link href="/favorites" onClick={() => setMenuOpen(false)} className="group/fav flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-colors hover:bg-accent">
+                  <Heart className={`h-4 w-4 transition-colors group-hover/fav:fill-red-500 group-hover/fav:text-red-500 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
                   {NAV.favorites}
                 </Link>
                 <Link href={user ? "/admin" : "/login"} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-colors hover:bg-accent">
