@@ -17,7 +17,7 @@ import { useAuth } from '@/store/auth';
 const STATUS_MAP: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: 'Սպասում', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
   confirmed: { label: 'Հաստատվել է', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-  processing: { label: 'Մշակվում է', color: 'bg-purple-100 text-purple-800', icon: Package },
+  processing: { label: 'Կատարվում է', color: 'bg-purple-100 text-purple-800', icon: Package },
   shipped: { label: 'Ուղարկվել է', color: 'bg-indigo-100 text-indigo-800', icon: Truck },
   delivered: { label: 'Առաքված', color: 'bg-green-100 text-green-800', icon: CheckCircle },
   cancelled: { label: 'Չեղյալ', color: 'bg-red-100 text-red-800', icon: Clock },

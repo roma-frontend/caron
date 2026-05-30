@@ -91,7 +91,7 @@ export const listAdmin = query({
     ),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    try { await getAdminCaller(ctx, args.sessionToken); } catch { return []; }
 
     if (args.status) {
       return await ctx.db
