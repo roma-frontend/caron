@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { Id } from '../../../../convex/_generated/dataModel';
 
-const BANK_DETAILS = { bank: 'Ameriabank', account: '1570000000000000', name: 'Caroon LLC', swift: 'ARMIAM22' };
+const BANK_DETAILS = { bank: 'Ameriabank', account: '1570000000000000', name: 'AutoParts LLC', swift: 'ARMIAM22' };
 
 export default function OrderSuccessContent() {
   const params = useSearchParams();

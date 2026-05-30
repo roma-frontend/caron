@@ -223,7 +223,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) =>
                   set('telegram', e.target.value)
                 }
-                placeholder="@caroon_am"
+                placeholder="@auto_parts_am"
                 className="h-10"
               />
             </div>
@@ -236,7 +236,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) =>
                   set('instagram', e.target.value)
                 }
-                placeholder="@caroon.am"
+                placeholder="@auto_parts_am"
                 className="h-10"
               />
             </div>
@@ -249,7 +249,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) =>
                   set('facebook', e.target.value)
                 }
-                placeholder="caroon.am"
+                placeholder="autoparts.am"
                 className="h-10"
               />
             </div>

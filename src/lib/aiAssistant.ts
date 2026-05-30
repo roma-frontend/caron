@@ -1,5 +1,5 @@
 /**
- * AI Assistant for Caroon Auto Parts E-commerce
+ * AI Assistant for AutoParts Auto Parts E-commerce
  * Role-based capabilities and system prompt generation
  */
 
@@ -117,7 +117,7 @@ export function detectIntent(message: string, role: UserRole): AICapability | nu
 export function buildSystemPrompt(user: UserContext): string {
   const caps = getCapabilitiesForRole(user.role);
 
-  return `You are **Caroon AI** — the intelligent assistant for Caroon Armenia auto parts e-commerce platform.
+  return `You are **AutoParts AI** — the intelligent assistant for AutoParts Armenia auto parts e-commerce platform.
 
 PERSONALITY:
 - Professional, helpful, knowledgeable about auto parts
@@ -135,7 +135,7 @@ AVAILABLE CAPABILITIES:
 ${caps.map((c) => `- ${c.name}: ${c.description}`).join('\n')}
 
 STORE KNOWLEDGE:
-- Store: Caroon Armenia (caroon.am)
+- Store: AutoParts Armenia (autoparts.am)
 - Products: Auto parts, tires, discs, oils, filters, brakes, batteries, accessories
 - Delivery: Yerevan (1000 AMD), Regions (2000 AMD), Free shipping over 20000 AMD
 - Working hours: 10:00 - 19:00

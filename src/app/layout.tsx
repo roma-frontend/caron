@@ -32,7 +32,7 @@ const notoSansArmenian = Noto_Sans_Armenian({
   fallback: ['sans-serif'],
 });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caroon.am';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://autoparts.am';
 
 export const viewport: Viewport = {
   themeColor: [
@@ -68,8 +68,8 @@ export const metadata: Metadata = {
     'ավտոմեքենայի պարագաներ',
     'auto parts Armenia',
     'ավտոպահեստ Երևան',
-    'caroon',
-    'caroon.am',
+    'autoparts',
+    'autoparts.am',
   ],
 
   authors: [{ name: SITE.fullName, url: APP_URL }],
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     locale: 'hy_AM',
     url: APP_URL,
     siteName: SITE.fullName,
-    title: 'Caroon Armenia | Ավտոպահեստամասերի առցանց խանութ',
+    title: 'AutoParts Armenia | Ավտոպահեստամասերի առցանց խանութ',
     description:
       'Ավտոպահեստամասերի առցանց խանութ Հայաստանում։ Գնեք բարձրորակ ավտոպահեստամասեր ձեր մեքենայի համար՝ մատչելի գներով և արագ առաքմամբ։',
     images: [
@@ -98,7 +98,7 @@ export const metadata: Metadata = {
         url: '/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Caroon Armenia — Ավտոպահեստամասերի առցանց խանութ',
+        alt: 'AutoParts Armenia — Ավտոպահեստամասերի առցանց խանութ',
         type: 'image/svg+xml',
       },
     ],
@@ -106,7 +106,7 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'Caroon Armenia | Ավտոպահեստամասերի առցանց խանութ',
+    title: 'AutoParts Armenia | Ավտոպահեստամասերի առցանց խանութ',
     description: 'Ավտոպահեստամասերի առցանց խանութ Հայաստանում',
     images: ['/og-image.svg'],
   },

@@ -7,6 +7,7 @@ import { useAuth } from '@/store/auth';
 import { getRoleSuggestions, type UserRole } from '@/lib/aiAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SITE } from '@/lib/constants';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -64,7 +65,7 @@ export function FloatingActions() {
         <div className="fixed bottom-20 right-4 z-50 flex w-[340px] max-w-[calc(100vw-2rem)] flex-col rounded-2xl border bg-background shadow-2xl lg:bottom-20 lg:right-6 lg:w-[380px] animate-in slide-in-from-bottom-4 duration-200" style={{ height: 'min(480px, 65vh)' }}>
           <div className="flex items-center gap-3 border-b px-4 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Bot className="h-4 w-4 text-primary" /></div>
-            <div className="flex-1"><p className="text-sm font-semibold">Caroon AI</p><p className="text-[10px] text-muted-foreground">Օգնական</p></div>
+            <div className="flex-1"><p className="text-sm font-semibold">{SITE.name} AI</p><p className="text-[10px] text-muted-foreground">Օգնական</p></div>
             <div className="flex gap-1">
               <a href={`tel:${settings?.phone || ''}`} className="rounded-lg p-1.5 hover:bg-muted"><Phone className="h-4 w-4" /></a>
               <button onClick={() => setChatOpen(false)} className="rounded-lg p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>

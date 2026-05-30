@@ -57,7 +57,7 @@ export const sendTest = action({
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: '✅ Caroon — թեստային ծանուցում: բոտը աշխատում է:' }),
+      body: JSON.stringify({ chat_id: chatId, text: '✅ AutoParts — թեստային ծանուցում: բոտը աշխատում է:' }),
     });
     const data = (await res.json().catch(() => null)) as { ok?: boolean; description?: string } | null;
     if (!res.ok || !data?.ok) throw new Error(data?.description || `Telegram error (HTTP ${res.status})`);

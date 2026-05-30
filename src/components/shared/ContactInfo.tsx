@@ -6,7 +6,7 @@ export function ContactInfo() {
   const settings = useSettings();
   return (
     <ul>
-      <li>Էլ. փոստ՝ {settings?.email ?? 'info@caroon.am'}</li>
+      <li>Էլ. փոստ՝ {settings?.email ?? 'info@autoparts.am'}</li>
       <li>Հեռախոս՝ {settings?.phone ?? '+374 XX XXX XXX'}</li>
       <li>Հասցե՝ {settings?.address ?? 'Երևան, Հայաստան'}</li>
     </ul>

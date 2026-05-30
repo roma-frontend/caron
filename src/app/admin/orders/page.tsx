@@ -40,7 +40,7 @@ function exportPDF(order: { orderNumber: string; customerName: string; customerP
     ${order.items.map((i) => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.price.toLocaleString()} ֏</td><td>${(i.price * i.quantity).toLocaleString()} ֏</td></tr>`).join('')}
     </tbody></table>
     <p class="total">Վճարված: ${order.total.toLocaleString()} ֏</p>
-    <hr><p><strong>Բանկ՝</strong><br>Ameriabank<br>Հաշվեհամար: 1570000000000000<br>Caroon LLC</p>
+    <hr><p><strong>Բանկ՝</strong><br>Ameriabank<br>Հաշվեհամար: 1570000000000000<br>AutoParts LLC</p>
     </body></html>`;
   const w = window.open('', '_blank');
   if (w) { w.document.write(html); w.document.close(); w.print(); }

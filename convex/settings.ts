@@ -7,9 +7,9 @@ export const get = query({
   handler: async (ctx) => {
     const settings = await ctx.db.query('settings').first();
     return settings ?? {
-      storeName: 'Caroon Armenia',
+      storeName: 'AutoParts Armenia',
       phone: '+374 XX XXX XXX',
-      email: 'info@caroon.am',
+      email: 'info@autoparts.am',
       address: 'Երևան, Հայաստան',
       whatsapp: '',
       telegram: '',
@@ -85,7 +85,7 @@ export const save = mutation({
       await ctx.db.patch(existing._id, data);
     } else {
       await ctx.db.insert('settings', {
-        storeName: args.storeName ?? 'Caroon Armenia',
+        storeName: args.storeName ?? 'AutoParts Armenia',
         phone: args.phone ?? '',
         email: args.email ?? '',
         address: args.address ?? '',
