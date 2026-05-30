@@ -8,22 +8,19 @@ import { SITE, NAV, FOOTER } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
 import { useStoreName } from '@/hooks/useStoreName';
 
-function socialUrl(key: string, value: string): string {
-  switch (key) {
-    case 'instagram': return value.startsWith('http') ? value : `https://instagram.com/${value.replace(/^@/, '')}`;
-    case 'facebook': return value.startsWith('http') ? value : `https://facebook.com/${value.replace(/^@/, '')}`;
-    case 'telegram': return value.startsWith('http') ? value : `https://t.me/${value.replace(/^@/, '')}`;
-    case 'whatsapp': return value.startsWith('http') ? value : `https://wa.me/${value.replace(/[^0-9]/g, '')}`;
-    default: return value;
-  }
-}
-
-const SOCIAL_CONFIG: { key: string; label: string; icon: string }[] = [
-  { key: 'instagram', label: 'Instagram', icon: 'instagram' },
-  { key: 'facebook', label: 'Facebook', icon: 'facebook' },
-  { key: 'telegram', label: 'Telegram', icon: 'telegram' },
-  { key: 'whatsapp', label: 'WhatsApp', icon: 'whatsapp' },
+const SOCIAL_CONFIG: { key: string; label: string; href: string; icon: string }[] = [
+  { key: 'instagram', label: 'Instagram', href: 'https://instagram.com/', icon: 'instagram' },
+  { key: 'facebook', label: 'Facebook', href: 'https://facebook.com/', icon: 'facebook' },
+  { key: 'telegram', label: 'Telegram', href: 'https://t.me/', icon: 'telegram' },
+  { key: 'whatsapp', label: 'WhatsApp', href: 'https://wa.me/', icon: 'whatsapp' },
 ];
+
+function socialUrl(setting: string | undefined, fallback: string): string {
+  if (!setting || !setting.trim()) return fallback;
+  const s = setting.trim();
+  if (s.startsWith('http')) return s;
+  return fallback + s.replace(/^@/, '');
+}
 
 function SocialIcon({ icon }: { icon: string }) {
   switch (icon) {
@@ -75,13 +72,13 @@ export function Footer() {
             <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{SITE.heroDesc}</p>
             <div className="mt-4 flex items-center gap-3">
               {SOCIAL_CONFIG.map((s) => {
-                const url = settings?.[s.key as keyof typeof settings];
-                if (!url || typeof url !== 'string') return null;
+                const val = settings ? (settings as Record<string, unknown>)[s.key] as string | undefined : undefined;
+                const url = socialUrl(val, s.href);
                 return (
-                  <a key={s.key} href={socialUrl(s.key, url)} target="_blank" rel="noopener noreferrer" aria-label={s.label}
+                  <Link key={s.key} href={url} target="_blank" rel="noopener noreferrer" aria-label={s.label}
                     className="flex h-9 w-9 items-center justify-center rounded-xl border bg-background text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md">
                     <SocialIcon icon={s.icon} />
-                  </a>
+                  </Link>
                 );
               })}
             </div>
