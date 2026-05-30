@@ -190,19 +190,26 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 )}
-                {paymentMethod && (paymentMethod === 'transfer' || paymentMethod === 'idram' || paymentMethod === 'easypay') && (
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-1.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Վճարման տվյալներ</p>
-                    {paymentMethod === 'transfer' && (
-                      <>
-                        {settings?.bankName && <p className="text-sm">Բանկ՝ <strong>{settings.bankName}</strong></p>}
-                        {settings?.bankAccount && <p className="text-sm">Հաշիվ՝ <strong className="font-mono">{settings.bankAccount}</strong></p>}
-                        {settings?.bankCode && <p className="text-sm">SWIFT/BIC՝ <strong className="font-mono">{settings.bankCode}</strong></p>}
-                      </>
-                    )}
-                    {(paymentMethod === 'idram' || paymentMethod === 'easypay') && settings?.cardNumber && (
-                      <p className="text-sm">Քարտ՝ <strong className="font-mono">{settings.cardNumber}</strong></p>
-                    )}
+                {paymentMethod === 'transfer' && settings?.bankName && (
+                  <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Վճարման տվյալներ</p>
+                    <p className="text-sm">Բանկ՝ <strong>{settings.bankName}</strong></p>
+                    {settings?.bankAccount && <p className="text-sm">Հաշիվ՝ <strong className="font-mono text-base">{settings.bankAccount}</strong></p>}
+                    {settings?.bankCode && <p className="text-sm">SWIFT/BIC՝ <strong className="font-mono">{settings.bankCode}</strong></p>}
+                    {settings?.paymentNote && <p className="text-xs text-muted-foreground mt-2">{settings.paymentNote}</p>}
+                  </div>
+                )}
+                {paymentMethod === 'idram' && settings?.cardNumber && (
+                  <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Idram քարտ</p>
+                    <p className="text-sm">Համար՝ <strong className="font-mono text-base">{settings.cardNumber}</strong></p>
+                    {settings?.paymentNote && <p className="text-xs text-muted-foreground mt-2">{settings.paymentNote}</p>}
+                  </div>
+                )}
+                {paymentMethod === 'easypay' && settings?.cardNumber && (
+                  <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">EasyPay քարտ</p>
+                    <p className="text-sm">Համար՝ <strong className="font-mono text-base">{settings.cardNumber}</strong></p>
                     {settings?.paymentNote && <p className="text-xs text-muted-foreground mt-2">{settings.paymentNote}</p>}
                   </div>
                 )}
