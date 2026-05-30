@@ -181,6 +181,32 @@ export default defineSchema(
     showFeatures: v.optional(v.boolean()),
     enableCarSelector: v.optional(v.boolean()),
     enableReviews: v.optional(v.boolean()),
+    // Cart & checkout
+    minOrderAmount: v.optional(v.number()),
+    enableQuickBuy: v.optional(v.boolean()),
+    // Payments
+    paymentMethods: v.optional(v.array(v.string())),
+    // Marketing
+    gaId: v.optional(v.string()),
+    fbPixelId: v.optional(v.string()),
+    enableCookieConsent: v.optional(v.boolean()),
+    cookieConsentText: v.optional(v.string()),
+    enableNewsletter: v.optional(v.boolean()),
+    // Catalog
+    defaultViewMode: v.optional(v.union(v.literal('grid'), v.literal('list'))),
+    productsPerPage: v.optional(v.number()),
+    enableBreadcrumbs: v.optional(v.boolean()),
+    // UI
+    enableScrollToTop: v.optional(v.boolean()),
+    logoUrl: v.optional(v.string()),
+    customCss: v.optional(v.string()),
+    customJsHead: v.optional(v.string()),
+    // Auth
+    enableRegistration: v.optional(v.boolean()),
+    // Auto parts
+    enableVinDecoder: v.optional(v.boolean()),
+    enableOemSearch: v.optional(v.boolean()),
+    defaultWarranty: v.optional(v.string()),
   }),
 
   // ─── Pages (CMS) ──────────────────────────────────────────────

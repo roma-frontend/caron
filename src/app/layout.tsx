@@ -8,9 +8,12 @@ import { ThemeProvider } from 'next-themes';
 import { ThemedToaster } from '@/components/ThemedToaster';
 import { BrandTheme } from '@/components/BrandTheme';
 import { SettingsProvider } from '@/components/SettingsProvider';
+import { AnalyticsInjector } from '@/components/AnalyticsInjector';
+import { CookieConsent } from '@/components/CookieConsent';
 import { FloatingActions } from '@/components/FloatingActions';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
 
 // Primary UI font
 const inter = Inter({
@@ -167,7 +170,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ConvexClientProvider>
             <SettingsProvider>
               <BrandTheme />
+              <AnalyticsInjector />
               <main id="main-content">{children}</main>
+              <CookieConsentWrapper />
             </SettingsProvider>
             <ThemedToaster />
             <FloatingActions />

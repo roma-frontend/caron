@@ -54,7 +54,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
     cartIcon?.classList.add('cart-bounce');
     setTimeout(() => cartIcon?.classList.remove('cart-bounce'), 400);
     toast.success(`${name} ավելացվել է`, {
-      action: { label: 'Հետարկել', onClick: () => useCartStore.getState().removeItem(id) },
+      action: { label: 'Չեղարկել', onClick: () => useCartStore.getState().removeItem(id) },
     });
   };
 

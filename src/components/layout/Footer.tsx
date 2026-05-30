@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { SITE, NAV, FOOTER } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
 import { useStoreName } from '@/hooks/useStoreName';
+import { NewsletterForm } from '@/components/NewsletterForm';
 
 const SOCIAL_CONFIG: { key: string; label: string; href: string; icon: string }[] = [
   { key: 'instagram', label: 'Instagram', href: 'https://instagram.com/', icon: 'instagram' },
@@ -111,6 +112,13 @@ export function Footer() {
             </div>
           </div>
         </div>
+
+        {settings?.enableNewsletter && (
+          <div className="mt-8 max-w-md mx-auto">
+            <NewsletterForm />
+          </div>
+        )}
+
         <Separator style={{ marginBlock: 'var(--space-8)' }} />
         <p className="text-center text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{FOOTER.rights}</p>
       </div>
