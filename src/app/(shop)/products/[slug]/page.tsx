@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Car, Share2, Smartphone } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Car, Share2, Smartphone, Bell } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
@@ -211,6 +211,13 @@ export default function ProductDetailPage() {
               <span className="flex items-center gap-1">
                 <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Հղումը պատճենվեց'); }} className="flex items-center gap-1 hover:text-primary transition-colors">
                   <Share2 className="h-4 w-4" /> {'Կիսվել'}
+                </button>
+              </span>
+            )}
+            {settings?.enablePriceAlert !== false && (
+              <span className="flex items-center gap-1">
+                <button onClick={() => toast.success('Կծանուցենք երբ գինը փոխվի')} className="flex items-center gap-1 hover:text-primary transition-colors">
+                  <Bell className="h-4 w-4" /> {'Զեղչ'}
                 </button>
               </span>
             )}

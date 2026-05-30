@@ -68,19 +68,22 @@ export default function OrderStatusPage() {
                 <span className="text-xl font-bold text-primary">{formatPrice(order.total)}</span>
               </div>
 
-              {/* Steps */}
+              {/* Timeline with connecting line */}
               {order.status !== 'cancelled' ? (
-                <div className="flex items-center justify-between">
+                <div className="relative">
+                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted" />
                   {STEPS.map((step, i) => {
                     const done = i <= currentStep;
                     const active = i === currentStep;
                     return (
-                      <div key={step.key} className="flex flex-col items-center gap-1.5 flex-1">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${done ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'} ${active ? 'ring-4 ring-primary/20' : ''}`}>
+                      <div key={step.key} className="relative flex items-start gap-4 pb-6 last:pb-0">
+                        <div className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all ${done ? 'bg-primary border-primary text-white' : 'bg-background border-muted text-muted-foreground'} ${active ? 'ring-4 ring-primary/20 scale-110' : ''}`}>
                           <step.icon className="h-5 w-5" />
                         </div>
-                        <span className={`text-[10px] text-center ${done ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>{step.label}</span>
-                        {i < STEPS.length - 1 && <div className={`absolute h-0.5 w-full ${done ? 'bg-primary' : 'bg-muted'}`} style={{ display: 'none' }} />}
+                        <div className="pt-1.5">
+                          <p className={`text-sm font-medium ${done ? 'text-foreground' : 'text-muted-foreground'}`}>{step.label}</p>
+                          <p className="text-xs text-muted-foreground">{done ? formatDateHy(order.createdAt) : '—'}</p>
+                        </div>
                       </div>
                     );
                   })}

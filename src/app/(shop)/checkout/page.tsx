@@ -38,6 +38,7 @@ export default function CheckoutPage() {
   const [agreed, setAgreed] = useState(false);
   const [animatedStep, setAnimatedStep] = useState(0);
 
+  const [pickup, setPickup] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const coupon = useQuery(api.coupons.validate, couponCode.trim() ? { code: couponCode.trim(), orderTotal: totalPrice + shippingCost } : 'skip');
@@ -164,7 +165,14 @@ export default function CheckoutPage() {
             <Card style={{ boxShadow: 'var(--shadow-card)' }} className="animate-in slide-in-from-right-4 duration-300">
               <CardHeader><CardTitle>Առաքման հասցե</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div><Label>{CHECKOUT.address} *</Label><Input required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Երևան" className="h-11" /></div>
+                {settings?.enablePickup && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={pickup} onChange={(e) => setPickup(e.target.checked)} className="rounded border-input accent-primary" />
+                    <span className="text-sm font-medium">Ինքնահանում խանութից</span>
+                    {settings.pickupAddress && <span className="text-xs text-muted-foreground">{settings.pickupAddress}</span>}
+                  </label>
+                )}
+                {!pickup && <div><Label>{CHECKOUT.address} *</Label><Input required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Երևան" className="h-11" /></div>}
                 <div><Label>{CHECKOUT.notes}</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={CHECKOUT.notesPlaceholder} rows={3} /></div>
               </CardContent>
             </Card>
