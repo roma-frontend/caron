@@ -213,7 +213,50 @@ export default defineSchema(
     enableVinDecoder: v.optional(v.boolean()),
     enableOemSearch: v.optional(v.boolean()),
     defaultWarranty: v.optional(v.string()),
+    // Stock
+    lowStockThreshold: v.optional(v.number()),
+    showStockCount: v.optional(v.boolean()),
+    // Delivery
+    deliveryEstimateYerevan: v.optional(v.string()),
+    deliveryEstimateRegions: v.optional(v.string()),
+    // Cart
+    maxCartItems: v.optional(v.number()),
+    cartTtlDays: v.optional(v.number()),
+    // Cross-sell
+    enableCrossSell: v.optional(v.boolean()),
+    enableQuickView: v.optional(v.boolean()),
+    enableShareButtons: v.optional(v.boolean()),
+    // Back-in-stock
+    enableBackInStock: v.optional(v.boolean()),
+    // Order history
+    enableOrderHistory: v.optional(v.boolean()),
   }),
+
+  // ─── Coupons / Promocodes ────────────────────────────────────
+  coupons: defineTable({
+    code: v.string(),
+    type: v.union(v.literal('percent'), v.literal('fixed')),
+    value: v.number(),
+    minOrderAmount: v.optional(v.number()),
+    maxUses: v.optional(v.number()),
+    usedCount: v.number(),
+    isActive: v.boolean(),
+    startsAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_code', ['code'])
+    .index('by_active', ['isActive']),
+
+  // ─── Back-in-stock requests ──────────────────────────────────
+  backInStock: defineTable({
+    productId: v.id('products'),
+    email: v.string(),
+    notified: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_notified', ['notified']),
 
   // ─── Pages (CMS) ──────────────────────────────────────────────
   pages: defineTable({

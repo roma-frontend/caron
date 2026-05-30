@@ -9,7 +9,9 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as backInStock from "../backInStock.js";
 import type * as categories from "../categories.js";
+import type * as coupons from "../coupons.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as notifications from "../notifications.js";
@@ -30,7 +32,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  backInStock: typeof backInStock;
   categories: typeof categories;
+  coupons: typeof coupons;
   filters: typeof filters;
   "lib/auth": typeof lib_auth;
   notifications: typeof notifications;
