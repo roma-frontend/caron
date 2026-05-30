@@ -19,11 +19,13 @@ import { Loader } from '@/components/ui/loader';
 import { useRecentlyViewedStore } from '@/store/recentlyViewed';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { ProductReviews } from '@/components/ProductReviews';
+import dynamic from 'next/dynamic';
 import { PRODUCT } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { QuickBuyButton } from '@/components/QuickBuy';
+const StickyBuyBar = dynamic(() => import('@/components/StickyBuyBar').then((m) => ({ default: m.StickyBuyBar })));
+const QuickBuyButton = dynamic(() => import('@/components/QuickBuy').then((m) => ({ default: m.QuickBuyButton })));
 import { useCompareStore } from '@/store/compare';
 import { GitCompareArrows } from 'lucide-react';
 import Image from 'next/image';
@@ -43,7 +45,7 @@ export default function ProductDetailPage() {
   const { add: addCompare, isInCompare } = useCompareStore();
   const inCompare = isInCompare(product?._id ?? '');
   const toggleFav = useFavoritesStore((s) => s.toggle);
-  const isFav = useFavoritesStore((s) => s.isFavorite)(product?._id ?? '');
+  const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product?._id));
 
   if (product === undefined) return <Loader />;
   if (product === null) return (
@@ -72,7 +74,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div data-product-content className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
 
@@ -83,7 +85,7 @@ export default function ProductDetailPage() {
             {product.images?.[selectedImg] ? (
               <Image src={product.images[selectedImg]} alt={product.name} width={800} height={800} priority sizes="(max-width: 1024px) 100vw, 50vw" className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full items-center justify-center text-6xl text-muted-foreground/20 p-4 text-center"><div className="flex flex-col items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div></div>
+              <div className="flex h-full items-center justify-center text-6xl text-muted-foreground/20 p-4 text-center"><div className="flex flex-col items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg></div></div>
             )}
           </div>
           {product.images && product.images.length > 1 && (
@@ -91,7 +93,7 @@ export default function ProductDetailPage() {
               {product.images.map((img, i) => (
                 <button key={i} onClick={() => setSelectedImg(i)}
                   className={`h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${i === selectedImg ? 'border-primary' : 'border-transparent hover:border-muted-foreground/30'}`}>
-                  <Image src={img} alt="" width={150} height={150} className="h-full w-full object-cover" />
+                  <Image src={img} alt="" width={150} height={150} sizes="64px" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
@@ -211,17 +213,11 @@ export default function ProductDetailPage() {
         <RelatedProducts categoryId={product.categoryId} currentId={product._id} />
       </div>
 
-      {/* Sticky mobile buy bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-background/95 p-3 backdrop-blur-md lg:hidden">
-        <div className="min-w-0">
-          <div className="text-lg font-bold text-primary">{formatPrice(product.price)}</div>
-          {product.compareAtPrice && <div className="text-xs text-muted-foreground line-through">{formatPrice(product.compareAtPrice)}</div>}
-        </div>
-        <Button size="lg" className="flex-1 gap-2" disabled={product.stock <= 0}
-          onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
-          <ShoppingCart className="h-5 w-5" /> {PRODUCT.addToCart}
-        </Button>
-      </div>
+      <StickyBuyBar productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} productCompareAtPrice={product.compareAtPrice} inStock={product.stock > 0} slug={product.slug} />
+      <Button size="lg" className="flex-1 gap-2" disabled={product.stock <= 0}
+        onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
+        <ShoppingCart className="h-5 w-5" /> {PRODUCT.addToCart}
+      </Button>
     </div>
   );
 }

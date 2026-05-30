@@ -7,14 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Edit, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useAuthStore } from '@/store/auth';
 
 export default function AdminPagesPage() {
   const pages = useQuery(api.pages.list) ?? [];
   const remove = useMutation(api.pages.remove);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
 
   const handleDelete = async (id: typeof pages[number]['_id'], title: string) => {
     if (!confirm(`Ջնջել "${title}"?`)) return;
-    await remove({ id });
+    await remove({ id, sessionToken: sessionToken! });
     toast.success('Էջը ջնջվել է');
   };
 

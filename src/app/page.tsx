@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Truck, Shield, Clock, Star } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -12,11 +10,12 @@ import { ProductCard } from '@/components/cards/ProductCard';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { CategoryCard } from '@/components/cards/CategoryCard';
 import { VehicleSelector } from '@/components/VehicleSelector';
-import { useReveal, useMouseGlow, revealStyle, cardRevealStyle } from '@/lib/motion';
+import { useReveal, revealStyle } from '@/lib/motion';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { formatPrice } from '@/lib/formatters';
 import { useSettings } from '@/hooks/useSettings';
+import Image from 'next/image';
 
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
 
@@ -94,8 +93,35 @@ export default function HomePage() {
             </Link>
           </div>
 
+          {/* Mini product grid in hero */}
+          {featured && featured.length > 0 && (
+            <div className="hero-fade-4 mt-10 w-full max-w-4xl mx-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {featured.slice(0, 4).map((p, i) => (
+                  <Link key={p._id} href={`/products/${p.slug}`} className="group relative overflow-hidden rounded-xl border bg-card/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg" style={{ aspectRatio: '3/4' }}>
+                    {p.images?.[0] ? (
+                      <Image src={p.images[0]} alt={p.name} width={200} height={200} priority sizes="(max-width: 640px) 50vw, 200px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm will-change-[backdrop-filter]" />
+                      <div className="relative flex h-full flex-col items-center justify-center p-4 text-center">
+                        <p className="text-xs font-semibold text-white line-clamp-2">{p.name}</p>
+                        <p className="mt-1 text-sm font-bold text-white">{formatPrice(p.price)}</p>
+                      </div>
+                    </div>
+                    {p.isFeatured && <span className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">Թոփ</span>}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Trust bar */}
-          <div className="hero-fade-4 flex flex-wrap items-center justify-center" style={{ gap: 'var(--space-3) var(--space-6)', marginTop: 'var(--space-8)' }}>
+          <div className="hero-fade-4 flex flex-wrap items-center justify-center" style={{ gap: 'var(--space-3) var(--space-6)', marginTop: 'var(--space-6)' }}>
             {[
               { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
               { Icon: Shield, label: 'Երաշխիք ապրանքների վրա' },
@@ -140,19 +166,26 @@ export default function HomePage() {
         </section>
         )}
 
-        {/* Featured Products */}
+        {/* Featured Products — с хитовыми товарами в hero-стиле */}
         {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-            <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>Առաջարկվող ապրանքներ</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
+              <Link href="/products">
+                <Button variant="ghost" className="gap-1 text-sm">
+                  Բոլոր ապրանքները <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
-                    <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} index={i} />
+                    <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} index={i} isHit={p.isFeatured} />
                   ))}
             </div>
             <div className="mt-8 flex justify-center">
-              <Link href="/products"><Button size="lg" variant="outline" className="gap-2">Տեսնել ավելին <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button></Link>
+              <Link href="/products"><Button size="lg" variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button></Link>
             </div>
           </section>
         )}

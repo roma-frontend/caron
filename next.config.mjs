@@ -57,6 +57,7 @@ const nextConfig = {
   },
 
   experimental: {
+    viewTransition: true,
     serverActions: { bodySizeLimit: '2mb' },
     optimizePackageImports: [
       'lucide-react',

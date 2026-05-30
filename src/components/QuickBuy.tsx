@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,29 @@ export function QuickBuyButton({ productId, productName, productPrice, productIm
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const createOrder = useMutation(api.orders.create);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setOpen(false);
+        if (e.key === 'Tab' && dialogRef.current) {
+          const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button, input, [tabindex]:not([tabindex="-1"])');
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      setTimeout(() => dialogRef.current?.querySelector<HTMLElement>('input')?.focus(), 50);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    } else {
+      previousFocusRef.current?.focus();
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!phone || !name) { toast.error('Լրացրեք բոլոր պահանջվող դաշտերը'); return; }
@@ -57,9 +80,9 @@ export function QuickBuyButton({ productId, productName, productPrice, productIm
       </Button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Արագ գնում">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-background p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div ref={dialogRef} className="relative w-full max-w-sm rounded-2xl bg-background p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <button onClick={() => setOpen(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
               <X className="h-5 w-5" />
             </button>

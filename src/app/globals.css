@@ -534,3 +534,55 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee { animation: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATE-IN UTILITIES (for step transitions, sticky buy bar etc.)
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInFromBottom {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+.slide-in-from-right-4 {
+  animation-name: slideInFromRight;
+  animation-duration: 0.3s;
+}
+.slide-in-from-bottom-4 {
+  animation-name: slideInFromBottom;
+  animation-duration: 0.3s;
+}
+.slide-in-from-left-2 {
+  animation-name: slideInFromLeft;
+  animation-duration: 0.2s;
+}
+.fade-in {
+  animation-name: fadeIn;
+  animation-duration: 0.2s;
+}
+.zoom-in-95 {
+  animation-name: zoomIn;
+  animation-duration: 0.2s;
+}
+.duration-100 { animation-duration: 0.1s; }
+.duration-200 { animation-duration: 0.2s; }
+.duration-300 { animation-duration: 0.3s; }
+.duration-500 { animation-duration: 0.5s; }

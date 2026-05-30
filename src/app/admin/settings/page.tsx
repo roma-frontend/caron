@@ -398,7 +398,7 @@ export default function AdminSettingsPage() {
 
             <div className="sm:col-span-2">
               <Button variant="outline" size="sm" className="gap-2" disabled={testing}
-                onClick={async () => { setTesting(true); try { await sendTest({}); toast.success('Թեստային ծանուցումն ուղարկվեց'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Չհաջողվեց ուղարկել'); } finally { setTesting(false); } }}>
+                onClick={async () => { setTesting(true); try { await sendTest({ sessionToken: sessionToken! }); toast.success('Թեստային ծանուցումն ուղարկվեց'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Չհաջողվեց ուղարկել'); } finally { setTesting(false); } }}>
                 <Send className="h-4 w-4" /> {testing ? 'Ուղարկվում է...' : 'Ուղարկել թեստ'}
               </Button>
             </div>

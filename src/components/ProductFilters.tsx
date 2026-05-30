@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -115,10 +115,10 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
       {/* Category */}
       {!categoryId && categories && (
         <Section title="Կատեգորիա" k="category" expanded={expanded} toggle={toggle}>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
               <Badge key={c._id} variant={activeFilters.categoryId === c._id ? 'default' : 'outline'}
-                className="cursor-pointer text-xs transition-all hover:scale-105"
+                className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
                 onClick={() => onFilterChange({ ...activeFilters, categoryId: activeFilters.categoryId === c._id ? undefined : c._id, attributes: undefined })}
               >{c.name}</Badge>
             ))}
@@ -126,21 +126,32 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
         </Section>
       )}
 
-      {/* Price */}
-      <Section title="Գին" k="price" expanded={expanded} toggle={toggle}>
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {([[0, 10000], [10000, 30000], [30000, 60000], [60000, 0]] as [number, number][]).map(([min, max], i) => (
-            <Badge key={i} variant="outline" className="cursor-pointer text-xs transition-all hover:scale-105"
-              onClick={() => onFilterChange({ ...activeFilters, minPrice: min || undefined, maxPrice: max || undefined })}>
-              {max ? `${min / 1000}\u2013${max / 1000} հազ ֏` : `${min / 1000} հազ ֏-ից`}
-            </Badge>
-          ))}
+      {/* Price - Dual Range Slider */}
+      <Section title="Цена" k="price" expanded={expanded} toggle={toggle}>
+        <div className="flex gap-2 mb-3">
+          <div className="flex-1">
+            <label className="text-[10px] text-muted-foreground mb-1 block">От</label>
+            <Input type="number" placeholder="0" className="h-8 text-xs" value={activeFilters.minPrice ?? ''}
+              onChange={(e) => onFilterChange({ ...activeFilters, minPrice: e.target.value ? Number(e.target.value) : undefined })} />
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] text-muted-foreground mb-1 block">До</label>
+            <Input type="number" placeholder="100000" className="h-8 text-xs" value={activeFilters.maxPrice ?? ''}
+              onChange={(e) => onFilterChange({ ...activeFilters, maxPrice: e.target.value ? Number(e.target.value) : undefined })} />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Input type="number" placeholder="Նվազագույն" className="h-8 text-xs" value={activeFilters.minPrice ?? ''}
-            onChange={(e) => onFilterChange({ ...activeFilters, minPrice: e.target.value ? Number(e.target.value) : undefined })} />
-          <Input type="number" placeholder="Առավելագույն" className="h-8 text-xs" value={activeFilters.maxPrice ?? ''}
-            onChange={(e) => onFilterChange({ ...activeFilters, maxPrice: e.target.value ? Number(e.target.value) : undefined })} />
+        {/* Visual range bar */}
+        <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+          <div className="absolute h-full rounded-full bg-primary/30" style={{
+            left: `${Math.min(100, ((activeFilters.minPrice ?? 0) / 100000) * 100)}%`,
+            right: `${100 - Math.min(100, ((activeFilters.maxPrice ?? 100000) / 100000) * 100)}%`,
+          }} />
+          <input type="range" min={0} max={100000} step={1000} value={activeFilters.minPrice ?? 0}
+            onChange={(e) => onFilterChange({ ...activeFilters, minPrice: Number(e.target.value) || undefined })}
+            className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label="Նվազագույն գին" />
+          <input type="range" min={0} max={100000} step={1000} value={activeFilters.maxPrice ?? 100000}
+            onChange={(e) => onFilterChange({ ...activeFilters, maxPrice: Number(e.target.value) < 100000 ? Number(e.target.value) : undefined })}
+            className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label="Առավելագույն գին" />
         </div>
       </Section>
 
@@ -160,10 +171,10 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
 
       {/* Rating */}
       <Section title="Գնահատական" k="rating" expanded={expanded} toggle={toggle}>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {[4, 3, 2, 1].map((r) => (
             <Badge key={r} variant={activeFilters.minRating === r ? 'default' : 'outline'}
-              className="cursor-pointer text-xs transition-all hover:scale-105"
+              className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
               onClick={() => onFilterChange({ ...activeFilters, minRating: activeFilters.minRating === r ? undefined : r })}>{r}★+</Badge>
           ))}
         </div>
@@ -173,7 +184,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
       {filterDefs?.map((def) => (
         <Section key={def._id} title={def.name} k={def.slug} expanded={expanded} toggle={toggle}>
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {def.options.map((opt) => {
                 const isMulti = def.type === 'multiselect';
                 const active = isMulti
@@ -181,7 +192,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
                   : activeFilters.attributes?.[def.slug] === opt;
                 return (
                   <Badge key={opt} variant={active ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs transition-all hover:scale-105"
+                    className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
                     onClick={() => isMulti ? toggleMulti(def.slug, opt) : updateAttr(def.slug, active ? null : opt)}
                   >{opt}</Badge>
                 );

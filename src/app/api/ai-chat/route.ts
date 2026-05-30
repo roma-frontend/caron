@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { buildSystemPrompt, type UserContext } from '@/lib/aiAssistant';
+import { checkRateLimit } from '@/lib/ratelimit';
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const { allowed, reset } = await checkRateLimit(`ai-chat:${ip}`);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(reset) } });
+  }
+
   try {
     const { message, user, history } = await req.json() as {
       message: string;
@@ -17,6 +24,10 @@ export async function POST(req: NextRequest) {
 
     if (!message || !user) {
       return NextResponse.json({ error: 'Missing message or user' }, { status: 400 });
+    }
+
+    if (typeof message !== 'string' || message.length > 2000) {
+      return NextResponse.json({ error: 'Message too long' }, { status: 400 });
     }
 
     const systemPrompt = buildSystemPrompt(user);

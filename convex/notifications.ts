@@ -48,8 +48,11 @@ export const sendOrderNotification = internalAction({
 });
 
 export const sendTest = action({
-  args: {},
-  handler: async (ctx): Promise<boolean> => {
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args): Promise<boolean> => {
+    const caller = await ctx.runQuery(api.auth.me, { sessionToken: args.sessionToken });
+    if (!caller || caller.role !== 'admin') throw new Error('Admin access required');
+
     const settings = await ctx.runQuery(api.settings.get, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;

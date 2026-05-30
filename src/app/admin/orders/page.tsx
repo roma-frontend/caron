@@ -29,15 +29,19 @@ const PAYMENT_MAP: Record<string, { label: string; color: string }> = {
   refunded: { label: 'Վերադարձվել է', color: 'bg-red-100 text-red-800' },
 };
 
+function escapeHtml(str: string): string {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
+
 function exportPDF(order: { orderNumber: string; customerName: string; customerPhone: string; customerEmail: string; shippingAddress: string; items: { name: string; price: number; quantity: number }[]; total: number; createdAt: number }) {
   const html = `
-    <html><head><meta charset="utf-8"><title>Invoice ${order.orderNumber}</title>
+    <html><head><meta charset="utf-8"><title>Invoice ${escapeHtml(order.orderNumber)}</title>
     <style>body{font-family:sans-serif;padding:40px;max-width:700px;margin:auto}h1{color:#333}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#f5f5f5}.total{font-size:1.3em;font-weight:bold;text-align:right;margin-top:20px}</style></head>
-    <body><h1>Invoice #${order.orderNumber}</h1>
-    <p><strong>Անձը՝</strong> ${order.customerName}<br>${order.customerPhone}<br>${order.customerEmail}<br>${order.shippingAddress}</p>
+    <body><h1>Invoice #${escapeHtml(order.orderNumber)}</h1>
+    <p><strong>Անձը՝</strong> ${escapeHtml(order.customerName)}<br>${escapeHtml(order.customerPhone)}<br>${escapeHtml(order.customerEmail)}<br>${escapeHtml(order.shippingAddress)}</p>
     <p><strong>Ամսաթիվ՝</strong> ${formatDateHy(order.createdAt)}</p>
     <table><thead><tr><th>Ապրանք</th><th>Քանակ</th><th>Գին</th><th>Վճարված</th></tr></thead><tbody>
-    ${order.items.map((i) => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.price.toLocaleString()} ֏</td><td>${(i.price * i.quantity).toLocaleString()} ֏</td></tr>`).join('')}
+    ${order.items.map((i) => `<tr><td>${escapeHtml(i.name)}</td><td>${i.quantity}</td><td>${i.price.toLocaleString()} ֏</td><td>${(i.price * i.quantity).toLocaleString()} ֏</td></tr>`).join('')}
     </tbody></table>
     <p class="total">Վճարված: ${order.total.toLocaleString()} ֏</p>
     <hr><p><strong>Բանկ՝</strong><br>Ameriabank<br>Հաշվեհամար: 1570000000000000<br>AutoParts LLC</p>

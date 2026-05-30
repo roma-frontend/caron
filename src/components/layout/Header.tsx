@@ -18,7 +18,8 @@ import { useCartStore } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useFavoritesStore } from '@/store/favorites';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { SearchCommand } from '@/components/SearchCommand';
+import dynamic from 'next/dynamic';
+const SearchCommand = dynamic(() => import('@/components/SearchCommand').then((m) => ({ default: m.SearchCommand })));
 
 const LINKS = [
   { href: '/products', label: NAV.catalog },
@@ -36,6 +37,7 @@ const MORE_LINKS = [
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const cartCount = useCartStore((s) => s.totalItems());
   const { user } = useAuth();
   const router = useRouter();
@@ -73,11 +75,15 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <div className="relative group">
-              <button className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">Ավելին ▾</button>
-              <div className="invisible absolute left-0 top-full z-50 min-w-[200px] rounded-xl border bg-background p-2 shadow-xl opacity-0 transition-all group-hover:visible group-hover:opacity-100">
+            <div className="relative" onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>
+              <button className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                onClick={() => setMoreOpen((v) => !v)} onBlur={(e) => { if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) setMoreOpen(false); }}
+                aria-expanded={moreOpen} aria-haspopup="true">Ավելին ▾</button>
+              <div className={`absolute left-0 top-full z-50 min-w-[200px] rounded-xl border bg-background p-2 shadow-xl transition-all ${moreOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}
+                onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>
                 {MORE_LINKS.map((link) => (
-                  <Link key={link.href} href={link.href} className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                  <Link key={link.href} href={link.href} className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    onFocus={() => setMoreOpen(true)} onBlur={(e) => { if (!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget as Node)) setMoreOpen(false); }}>
                     {link.label}
                   </Link>
                 ))}
@@ -106,7 +112,7 @@ export function Header() {
             </Link>
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative overflow-visible" aria-label={NAV.cart}>
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-5 w-5" data-cart-icon />
                 <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-[10px]">{cartCount}</Badge>
               </Button>
             </Link>

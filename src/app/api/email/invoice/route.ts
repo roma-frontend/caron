@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/adminAuth';
+import { checkRateLimit } from '@/lib/ratelimit';
 
 function escapeHtml(str: string): string {
   return String(str)
@@ -11,6 +12,12 @@ function escapeHtml(str: string): string {
 }
 
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const { allowed, reset } = await checkRateLimit(`email-invoice:${ip}`);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(reset) } });
+  }
+
   if (!(await requireAdminAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

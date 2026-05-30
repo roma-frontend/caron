@@ -7,7 +7,7 @@ export async function setAuthCookie(sessionToken: string) {
   cookieStore.set('auth-token', sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 7 days
   });

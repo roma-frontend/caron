@@ -6,6 +6,8 @@ export interface FavoriteItem {
   name: string;
   price: number;
   image: string | null;
+  addedAt?: number;
+  priceAtAdd?: number;
 }
 
 interface FavoritesState {
@@ -13,6 +15,7 @@ interface FavoritesState {
   toggle: (item: FavoriteItem) => void;
   isFavorite: (id: string) => boolean;
   count: () => number;
+  getPriceDrop: (id: string) => number | null;
 }
 
 export const useFavoritesStore = create<FavoritesState>()(
@@ -21,10 +24,25 @@ export const useFavoritesStore = create<FavoritesState>()(
       items: [],
       toggle: (item) => set((state) => {
         const exists = state.items.some((i) => i.id === item.id);
-        return { items: exists ? state.items.filter((i) => i.id !== item.id) : [...state.items, item] };
+        if (exists) {
+          return { items: state.items.filter((i) => i.id !== item.id) };
+        }
+        return {
+          items: [...state.items, {
+            ...item,
+            addedAt: Date.now(),
+            priceAtAdd: item.price,
+          }],
+        };
       }),
-      isFavorite: (id) => get().items.some((i) => i.id === id),
+      isFavorite: (id: string) => get().items.some((i) => i.id === id),
       count: () => get().items.length,
+      getPriceDrop: (id) => {
+        const item = get().items.find((i) => i.id === id);
+        if (!item || !item.priceAtAdd) return null;
+        const drop = item.priceAtAdd - item.price;
+        return drop > 0 ? drop : null;
+      },
     }),
     { name: 'favorites-storage' },
   ),

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { getAdminCaller } from './lib/auth';
 
 export const list = query({
   args: {},
@@ -17,6 +18,7 @@ export const getBySlug = query({
 
 export const save = mutation({
   args: {
+    sessionToken: v.string(),
     id: v.optional(v.id('pages')),
     title: v.string(),
     slug: v.string(),
@@ -25,7 +27,9 @@ export const save = mutation({
     seoTitle: v.optional(v.string()),
     seoDescription: v.optional(v.string()),
   },
-  handler: async (ctx, { id, ...data }) => {
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const { sessionToken: _, id, ...data } = args;
     const now = Date.now();
     if (id) {
       await ctx.db.patch(id, { ...data, updatedAt: now });
@@ -36,8 +40,9 @@ export const save = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id('pages') },
-  handler: async (ctx, { id }) => {
-    await ctx.db.delete(id);
+  args: { sessionToken: v.string(), id: v.id('pages') },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    await ctx.db.delete(args.id);
   },
 });

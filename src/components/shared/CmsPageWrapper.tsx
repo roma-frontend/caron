@@ -8,6 +8,16 @@ interface Props {
   children: React.ReactNode;
 }
 
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/on\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/on\w+\s*=\s*[^\s>]+/gi, '')
+    .replace(/<iframe\b[^>]*>/gi, '')
+    .replace(/<\/iframe>/gi, '');
+}
+
 export function CmsPageWrapper({ slug, children }: Props) {
   const page = useQuery(api.pages.getBySlug, { slug });
 
@@ -24,7 +34,7 @@ export function CmsPageWrapper({ slug, children }: Props) {
       <div className="rounded-2xl border bg-card p-6 md:p-10">
         <div
           className="prose prose-neutral dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: page.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.content) }}
         />
       </div>
     </div>

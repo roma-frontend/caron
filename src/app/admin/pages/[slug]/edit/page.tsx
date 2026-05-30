@@ -12,6 +12,7 @@ import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useAuthStore } from '@/store/auth';
 
 const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), { ssr: false });
 
@@ -21,15 +22,16 @@ export default function EditPagePage() {
   const isNew = slug === 'new';
   const page = useQuery(api.pages.getBySlug, isNew ? 'skip' : { slug });
   const save = useMutation(api.pages.save);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
 
   if (!isNew && page === undefined) return <div className="p-8 text-center text-muted-foreground">Բեռնվում է...</div>;
   if (!isNew && page === null) return <div className="p-8 text-center text-muted-foreground">Էջը չի գտնվել</div>;
 
-  return <EditForm key={page?._id ?? 'new'} page={page} isNew={isNew} save={save} router={router} />;
+  return <EditForm key={page?._id ?? 'new'} page={page} isNew={isNew} save={save} router={router} sessionToken={sessionToken} />;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function EditForm({ page, isNew, save, router }: { page: any; isNew: boolean; save: any; router: any }) {
+function EditForm({ page, isNew, save, router, sessionToken }: { page: any; isNew: boolean; save: any; router: any; sessionToken?: string | null }) {
   const [title, setTitle] = useState(page?.title ?? '');
   const [pageSlug, setPageSlug] = useState(page?.slug ?? '');
   const [content, setContent] = useState(page?.content ?? '');
@@ -44,6 +46,7 @@ function EditForm({ page, isNew, save, router }: { page: any; isNew: boolean; sa
     setSaving(true);
     try {
       await save({
+        sessionToken: sessionToken!,
         id: page?._id,
         title: title.trim(),
         slug: pageSlug.trim(),

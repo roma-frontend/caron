@@ -27,6 +27,19 @@ export const getStats = query({
   },
 });
 
+export const getByProductWithStats = query({
+  args: { productId: v.id('products') },
+  handler: async (ctx, args) => {
+    const reviews = await ctx.db.query('reviews')
+      .withIndex('by_product', (q) => q.eq('productId', args.productId))
+      .collect()
+      .then((r) => r.filter((rev) => rev.isApproved));
+    const count = reviews.length;
+    const avg = count ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / count) * 10) / 10 : 0;
+    return { reviews, stats: { avg, count } };
+  },
+});
+
 async function recomputeRating(ctx: MutationCtx, productId: Id<'products'>) {
   const reviews = (await ctx.db.query('reviews').withIndex('by_product', (q) => q.eq('productId', productId)).collect()).filter((r) => r.isApproved);
   const count = reviews.length;

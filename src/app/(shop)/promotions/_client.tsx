@@ -36,7 +36,7 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
     <Link href={`/promotions/${promo._id}`} className="block">
       <div className="group overflow-hidden rounded-2xl border bg-background transition-all hover:shadow-xl hover:-translate-y-1">
         <div className="aspect-[2/1] bg-gradient-to-br from-primary/10 to-primary/5 relative overflow-hidden">
-          {promo.imageUrl ? <Image src={promo.imageUrl} alt="" width={400} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>}
+          {promo.imageUrl ? <Image src={promo.imageUrl} alt="" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>}
           {promo.discountPercent && <Badge className="absolute left-4 top-4 bg-destructive text-lg px-3 py-1 font-black">-{promo.discountPercent}%</Badge>}
         </div>
         <div className="p-6">

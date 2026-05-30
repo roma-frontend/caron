@@ -3,16 +3,18 @@
 import { useCompareStore } from '@/store/compare';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, GitCompareArrows, ShoppingCart } from 'lucide-react';
+import { X, GitCompareArrows, ShoppingCart, Star, TrendingDown, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from '@/lib/motion';
 
 export default function ComparePage() {
   const { items, remove, clear } = useCompareStore();
   const addToCart = useCartStore((s) => s.addItem);
+  const bestPrice = items.length > 0 ? Math.min(...items.map((i) => i.price)) : 0;
 
   if (items.length === 0) {
     return (
@@ -27,68 +29,96 @@ export default function ComparePage() {
     );
   }
 
-  // Collect all unique attribute keys
   const allKeys = [...new Set(items.flatMap((i) => Object.keys(i.attributes)))];
 
   return (
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">{'Համեմատություն'}</h1>
+        <h1 className="text-3xl font-bold">{'Համեմատություն'} <span className="text-lg font-normal text-muted-foreground">({items.length} ապրանք)</span></h1>
         <Button variant="outline" size="sm" onClick={clear}>{'Մաքրել'}</Button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      <div className="overflow-x-auto pb-4">
+        <motion.table className="w-full border-collapse" layout>
           <thead>
             <tr>
               <th className="p-3 text-left text-sm font-medium text-muted-foreground w-40"></th>
-              {items.map((item) => (
-                <th key={item.id} className="p-3 text-center min-w-[200px]">
-                  <div className="relative">
-                    <button onClick={() => remove(item.id)} className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white text-xs">
+              {items.map((item, idx) => (
+                <th key={item.id} className="p-3 text-center min-w-[220px]">
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }} className="relative">
+                    <button onClick={() => remove(item.id)} className="absolute -right-1 -top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white text-xs hover:scale-110 transition-transform">
                       <X className="h-3 w-3" />
                     </button>
+                    {item.price === bestPrice && items.length > 1 && (
+                      <span className="absolute -left-1 -top-1 z-10 flex items-center gap-1 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
+                        <TrendingDown className="h-3 w-3" /> Լավագույն գին
+                      </span>
+                    )}
                     <Link href={`/products/${item.slug}`}>
-                      <div className="mx-auto mb-3 h-32 w-32 overflow-hidden rounded-xl bg-muted">
-                        {item.image ? <Image src={item.image} alt={item.name} width={300} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-3xl">{'Համեմատություն'}</div>}
+                      <div className={`mx-auto mb-3 h-36 w-36 overflow-hidden rounded-xl bg-muted ring-1 transition-all duration-300 hover:ring-2 ${item.price === bestPrice && items.length > 1 ? 'ring-green-500/50' : 'ring-foreground/10'}`}>
+                        {item.image ? <Image src={item.image} alt={item.name} width={300} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-3xl text-muted-foreground/30">?</div>}
                       </div>
-                      <p className="text-sm font-semibold hover:text-primary transition-colors">{item.name}</p>
+                      <p className="text-sm font-semibold hover:text-primary transition-colors line-clamp-2">{item.name}</p>
                     </Link>
-                  </div>
+                  </motion.div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {/* Price row */}
             <tr className="border-t">
-              <td className="p-3 text-sm font-medium">{'Գին'}</td>
-              {items.map((item) => (
-                <td key={item.id} className="p-3 text-center text-lg font-bold text-primary">{formatPrice(item.price)}</td>
+              <td className="p-3 text-sm font-medium text-muted-foreground">{'Գին'}</td>
+              {items.map((item, idx) => (
+                <td key={item.id} className={`p-3 text-center text-lg font-bold ${item.price === bestPrice && items.length > 1 ? 'text-green-600' : 'text-primary'}`}>
+                  <motion.span initial={{ scale: 1 }} animate={item.price === bestPrice ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.5 }}>
+                    {formatPrice(item.price)}
+                  </motion.span>
+                  {item.price === bestPrice && items.length > 1 && (
+                    <span className="ml-1.5 inline-flex"><Check className="h-4 w-4 text-green-600" /></span>
+                  )}
+                </td>
               ))}
             </tr>
-            {/* Attribute rows */}
-            {allKeys.map((key) => (
-              <tr key={key} className="border-t">
-                <td className="p-3 text-sm font-medium text-muted-foreground">{key}</td>
-                {items.map((item) => (
-                  <td key={item.id} className="p-3 text-center text-sm">{item.attributes[key] || 'Նախատեսված'}</td>
-                ))}
-              </tr>
-            ))}
-            {/* Add to cart row */}
+
+            {/* Совместимость */}
+            {allKeys.map((key) => {
+              const values = items.map((i) => i.attributes[key] || '-');
+              const isNumeric = values.every((v) => v !== '-' && !isNaN(Number(v)));
+              const maxVal = isNumeric ? Math.max(...values.map(Number)) : null;
+              return (
+                <tr key={key} className="border-t hover:bg-muted/30 transition-colors">
+                  <td className="p-3 text-sm font-medium text-muted-foreground">{key}</td>
+                  {items.map((item) => {
+                    const val = item.attributes[key] || '-';
+                    const numVal = isNumeric ? Number(val) : null;
+                    const isMax = numVal !== null && maxVal !== null && numVal === maxVal;
+                    return (
+                      <td key={item.id} className="p-3 text-center">
+                        <span className="text-sm">{val}</span>
+                        {isNumeric && numVal !== null && maxVal !== null && (
+                          <div className="mx-auto mt-1.5 h-1 w-full max-w-20 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${(numVal / maxVal) * 100}%` }} />
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+
             <tr className="border-t">
               <td className="p-3"></td>
               {items.map((item) => (
                 <td key={item.id} className="p-3 text-center">
-                  <Button size="sm" className="gap-1.5" onClick={() => { addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); toast.success('Ապրանքն ավելացվեց զամբյուղի մեջ'); }}>
+                  <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); toast.success('Ավելացվել է զամբյուղում'); }}>
                     <ShoppingCart className="h-3.5 w-3.5" /> {'Ավելացնել զամբյուղ'}
                   </Button>
                 </td>
               ))}
             </tr>
           </tbody>
-        </table>
+        </motion.table>
       </div>
     </div>
   );
