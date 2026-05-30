@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import { useRef } from 'react';
 import Image from 'next/image';
+import { useAuthStore } from '@/store/auth';
 
 function StepInfo() {
   const { data, update } = useWizardData();
@@ -55,6 +56,7 @@ function StepDates() {
 export default function AddPromotionPage() {
   const router = useRouter();
   const create = useMutation(api.promotions.create);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
 
   const steps: WizardStep[] = [
     { id: 'info', title: 'Ակցիայի տվյալներ', content: <StepInfo />, validation: (d) => !!(d.title) },
@@ -63,6 +65,7 @@ export default function AddPromotionPage() {
 
   const handleComplete = async (data: Record<string, unknown>) => {
     await create({
+      sessionToken: sessionToken!,
       title: data.title as string,
       description: (data.description as string) || undefined,
       discountPercent: Number(data.discountPercent) || undefined,

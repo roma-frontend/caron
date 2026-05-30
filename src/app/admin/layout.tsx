@@ -13,6 +13,7 @@ import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { clearAuthCookie } from '@/actions/auth';
+import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
 
 const NAV_ITEMS = [
   { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ' },
@@ -46,7 +47,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   if (!hydrated) return <div className="flex min-h-screen items-center justify-center">...</div>;
-  if (!user || user.role !== 'admin') return <div className="flex min-h-screen items-center justify-center"><Link href="/login" className="text-primary underline">Մուտք գործել</Link></div>;
+  if (!user || user.role !== 'admin') return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
+      <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <LogOut className="h-7 w-7 text-primary" />
+        </div>
+        <h1 className="text-xl font-semibold tracking-tight">Սեսիան ավարտվել է</h1>
+        <Link href="/login">
+          <Button className="mt-2 gap-2">
+            <LogOut className="h-4 w-4" />
+            Մուտք գործել
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
 
   const sidebar = (
     <>
@@ -89,6 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen">
+      <IdleTimeoutModal />
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:bg-muted/30 sticky top-0 h-screen">
         {sidebar}

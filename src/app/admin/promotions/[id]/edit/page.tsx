@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuthStore } from '@/store/auth';
 
 export default function EditPromotionPage() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function EditPromotionPage() {
   const promoId = params.id as Id<'promotions'>;
   const promotions = useQuery(api.promotions.list, {});
   const update = useMutation(api.promotions.update);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -51,7 +53,7 @@ export default function EditPromotionPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await update({ id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, imageUrl: form.imageUrl || undefined, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime() });
+      await update({ sessionToken: sessionToken!, id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, imageUrl: form.imageUrl || undefined, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime() });
       toast.success('Ակցիան հաջողությամբ թարմացվեց');
       router.push('/admin/promotions');
     } catch { toast.error('Ակցիան չի հաջողվել թարմացնել'); } finally { setSaving(false); }

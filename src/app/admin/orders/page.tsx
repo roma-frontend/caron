@@ -128,7 +128,7 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className="space-y-3">
-        {orders?.map((order, i) => <OrderCard key={order._id} order={order} sessionToken={sessionToken ?? ''} index={i} />)}
+        {filtered?.map((order, i) => <OrderCard key={order._id} order={order} sessionToken={sessionToken ?? ''} index={i} />)}
       </div>
 
       {filtered?.length === 0 && (

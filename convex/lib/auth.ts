@@ -24,11 +24,19 @@ export async function getAdminCaller(
   return { _id: user._id, role: user.role, email: user.email, name: user.name };
 }
 
-// Legacy: used by public queries that optionally check auth
+// Optional auth: returns user if valid session token found, null otherwise
 export async function getAuthCaller(
   ctx: QueryCtx | MutationCtx,
+  sessionToken?: string | null,
 ): Promise<AuthenticatedCaller | null> {
-  return null;
+  if (!sessionToken) return null;
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_session_token', (q) => q.eq('sessionToken', sessionToken))
+    .unique();
+  if (!user || !user.isActive) return null;
+  if (!user.sessionExpiry || user.sessionExpiry < Date.now()) return null;
+  return { _id: user._id, role: user.role, email: user.email, name: user.name };
 }
 
 export function requireAdmin(caller: AuthenticatedCaller | null): AuthenticatedCaller {

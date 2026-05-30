@@ -61,7 +61,7 @@ export default function CheckoutPage() {
         })),
         subtotal: totalPrice,
         shipping: shippingCost,
-        total: totalPrice,
+        total: totalPrice + shippingCost,
       });
       clearCart();
       router.push(`/order-success?id=${orderId}`);

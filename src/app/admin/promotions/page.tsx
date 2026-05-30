@@ -13,11 +13,13 @@ import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuthStore } from '@/store/auth';
 
 export default function AdminPromotionsPage() {
   const promotions = useQuery(api.promotions.list, {});
   const router = useRouter();
   const remove = useMutation(api.promotions.remove);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
 
 
   return (
@@ -31,7 +33,7 @@ export default function AdminPromotionsPage() {
       </div>
 
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-        {promotions?.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} onEdit={() => router.push(`/admin/promotions/${promo._id}/edit`)} onDelete={async () => { await remove({ id: promo._id }); toast.success('Ակցիան հաջողությամբ հեռացվեց'); }} />)}
+        {promotions?.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} onEdit={() => router.push(`/admin/promotions/${promo._id}/edit`)} onDelete={async () => { await remove({ sessionToken: sessionToken!, id: promo._id }); toast.success('Ակցիան հաջողությամբ հեռացվեց'); }} />)}
       </div>
 
       {promotions?.length === 0 && (

@@ -66,7 +66,7 @@ export default function HomePage() {
           </div>
 
           {/* Title */}
-          <h1 className="hero-fade-2 font-black tracking-tighter" style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)' }}>
+          <h1 className="hero-fade-2 font-black tracking-tighter" style={{ fontSize: 'clamp(2rem, 6vw, 4.5rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)', overflowWrap: 'break-word' }}>
             {HOME.heroTitle}
           </h1>
 

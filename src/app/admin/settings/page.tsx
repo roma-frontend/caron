@@ -25,11 +25,13 @@ import {
 } from 'lucide-react';
 
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/auth';
 
 export default function AdminSettingsPage() {
   const settings = useQuery(api.settings.get, {});
   const save = useMutation(api.settings.save);
   const sendTest = useAction(api.notifications.sendTest);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
 
   const [form, setForm] = useState<Record<string, string | number>>({});
   const [loaded, setLoaded] = useState(false);
@@ -40,7 +42,7 @@ export default function AdminSettingsPage() {
   const saveField = async (key: string, value: string | number | boolean) => {
     if (typeof value !== 'boolean') setForm((f) => ({ ...f, [key]: value }));
     try {
-      await save({ [key]: value } as Parameters<typeof save>[0]);
+      await save({ sessionToken: sessionToken!, [key]: value } as Parameters<typeof save>[0]);
       toast.success('Պահպանվեց');
     } catch {
       toast.error('Սխալ');
@@ -57,6 +59,7 @@ export default function AdminSettingsPage() {
 
     try {
       await save({
+        sessionToken: sessionToken!,
         storeName: String(form.storeName ?? ''),
         phone: String(form.phone ?? ''),
         email: String(form.email ?? ''),

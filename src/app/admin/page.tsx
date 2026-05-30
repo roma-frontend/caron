@@ -36,7 +36,7 @@ function StatCard({
         href ? 'hover:border-primary/50 transition-colors cursor-pointer' : ''
       }
     >
-      <CardContent className="flex items-center gap-4 p-5">
+      <CardContent className="flex flex-col items-start gap-4 px-5 py-2">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <Icon className="h-6 w-6 text-primary" />
         </div>

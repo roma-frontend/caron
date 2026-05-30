@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { getAdminCaller } from './lib/auth';
 
 export const get = query({
   args: {},
@@ -36,8 +37,19 @@ export const get = query({
   },
 });
 
+export const getPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const s = await ctx.db.query('settings').first();
+    if (!s) return null;
+    const { telegramBotToken, telegramChatId, ...pub } = s;
+    return pub;
+  },
+});
+
 export const save = mutation({
   args: {
+    sessionToken: v.string(),
     storeName: v.optional(v.string()),
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
@@ -66,6 +78,7 @@ export const save = mutation({
     enableReviews: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
     const existing = await ctx.db.query('settings').first();
     if (existing) {
       await ctx.db.patch(existing._id, args);

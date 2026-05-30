@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
+import { getAuthCaller, getAdminCaller } from './lib/auth';
 
 export const getByProduct = query({
   args: { productId: v.id('products') },
@@ -35,14 +36,20 @@ async function recomputeRating(ctx: MutationCtx, productId: Id<'products'>) {
 
 export const create = mutation({
   args: {
+    sessionToken: v.optional(v.string()),
     productId: v.id('products'),
     authorName: v.string(),
     rating: v.number(),
     text: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx, args.sessionToken);
+    if (!caller) throw new Error('Authentication required to leave a review');
     const id = await ctx.db.insert('reviews', {
-      ...args,
+      productId: args.productId,
+      authorName: args.authorName,
+      rating: args.rating,
+      text: args.text,
       isApproved: true,
       createdAt: Date.now(),
     });
@@ -52,8 +59,9 @@ export const create = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id('reviews') },
+  args: { sessionToken: v.string(), id: v.id('reviews') },
   handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
     const review = await ctx.db.get(args.id);
     await ctx.db.delete(args.id);
     if (review) await recomputeRating(ctx, review.productId);

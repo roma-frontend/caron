@@ -65,7 +65,7 @@ export default function ProductDetailPage() {
     offers: {
       '@type': 'Offer',
       price: product.price,
-      priceCurrency: 'Դ',
+      priceCurrency: 'AMD',
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
     ...(product.reviewCount ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: product.rating, reviewCount: product.reviewCount } } : {}),

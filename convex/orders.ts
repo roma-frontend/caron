@@ -5,6 +5,7 @@ import { getAdminCaller, getAuthCaller } from './lib/auth';
 
 export const create = mutation({
   args: {
+    sessionToken: v.optional(v.string()),
     customerName: v.string(),
     customerEmail: v.string(),
     customerPhone: v.string(),
@@ -24,7 +25,7 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const caller = await getAuthCaller(ctx);
+    const caller = await getAuthCaller(ctx, args.sessionToken);
 
     // Server-side price validation — recompute from DB
     let serverSubtotal = 0;
@@ -48,6 +49,12 @@ export const create = mutation({
 
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const now = Date.now();
+
+    // Deduct stock
+    for (const item of args.items) {
+      const product = await ctx.db.get(item.productId);
+      if (product) await ctx.db.patch(item.productId, { stock: product.stock - item.quantity });
+    }
 
     const orderId = await ctx.db.insert('orders', {
       ...args,
@@ -91,9 +98,9 @@ export const listAdmin = query({
         .query('orders')
         .withIndex('by_status', (q) => q.eq('status', args.status!))
         .order('desc')
-        .take(100);
+        .take(500);
     }
-    return await ctx.db.query('orders').order('desc').take(100);
+    return await ctx.db.query('orders').order('desc').take(500);
   },
 });
 
@@ -119,12 +126,12 @@ export const getByOrderNumber = query({
 });
 
 export const getById = query({
-  args: { id: v.id('orders') },
+  args: { id: v.id('orders'), sessionToken: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.id);
     if (!order) return null;
     // Allow owner or admin
-    const caller = await getAuthCaller(ctx);
+    const caller = await getAuthCaller(ctx, args.sessionToken);
     if (caller?.role === 'admin') return order;
     if (caller && order.userId === caller._id) return order;
     // Unauthenticated: return safe subset only
@@ -140,9 +147,9 @@ export const getById = query({
 });
 
 export const myOrders = query({
-  args: {},
-  handler: async (ctx) => {
-    const caller = await getAuthCaller(ctx);
+  args: { sessionToken: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx, args.sessionToken);
     if (!caller) return [];
     return await ctx.db
       .query('orders')
