@@ -1,7 +1,6 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { MobileNav } from '@/components/layout/MobileNav';
-import { FloatingActions } from '@/components/FloatingActions';
 import { JsonLd } from '@/components/JsonLd';
 import { MaintenanceGate } from '@/components/MaintenanceGate';
 
@@ -11,7 +10,6 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <Header />
       <main className="flex-1"><MaintenanceGate>{children}</MaintenanceGate></main>
       <Footer />
-      <FloatingActions />
       <MobileNav />
       <JsonLd />
     </div>

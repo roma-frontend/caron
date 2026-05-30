@@ -8,13 +8,13 @@ import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOu
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { SITE } from '@/lib/constants';
+import { useStoreName } from '@/hooks/useStoreName';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { clearAuthCookie } from '@/actions/auth';
 import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
-import { AIChatWidget } from '@/components/admin/AIChatWidget';
 
 const NAV_ITEMS = [
   { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ' },
@@ -35,6 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const logoutMutation = useMutation(api.auth.logout);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pendingCount, flash } = useOrderNotifications(sessionToken);
+  const storeName = useStoreName();
 
   // Redirect handled inline below
 
@@ -71,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/" className="transition-transform hover:scale-110">
           <Logo size={32} />
         </Link>
-        <span className="font-bold">{SITE.name}</span>
+        <span className="font-bold">{storeName}</span>
         <span className="ml-auto rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Admin</span>
         <button onClick={() => setSidebarOpen(false)} className="ml-2 lg:hidden"><X className="h-5 w-5" /></button>
       </div>
@@ -107,7 +108,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen">
       <IdleTimeoutModal />
-      <AIChatWidget />
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:bg-muted/30 sticky top-0 h-screen">
         {sidebar}

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGroq } from '@ai-sdk/groq';
 import { buildSystemPrompt, type UserContext } from '@/lib/aiAssistant';
 
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 export async function POST(req: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     ];
 
     const { text } = await generateText({
-      model: google('gemini-2.0-flash'),
+      model: groq('llama-3.3-70b-versatile'),
       system: systemPrompt,
       messages,
     });

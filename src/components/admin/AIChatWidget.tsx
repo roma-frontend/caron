@@ -44,7 +44,7 @@ export function AIChatWidget() {
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.reply || data.error || 'Error' };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Service unavailable. Try again later.' }]);
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Ծառայությունը անհասանելի է։ Փորձեք ավելի ուշ։' }]);
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export function AIChatWidget() {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="fixed bottom-24 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 lg:bottom-6">
-        <Sparkles className="h-5 w-5" />
+        <Bot className="h-5 w-5" />
       </button>
     );
   }
@@ -63,7 +63,7 @@ export function AIChatWidget() {
       {/* Header */}
       <div className="flex items-center gap-3 border-b px-4 py-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Bot className="h-4 w-4 text-primary" /></div>
-        <div className="flex-1"><p className="text-sm font-semibold">Caroon AI</p><p className="text-[10px] text-muted-foreground">Auto parts assistant</p></div>
+        <div className="flex-1"><p className="text-sm font-semibold">Caroon AI</p><p className="text-[10px] text-muted-foreground">Ավտոպահեստամասերի օգնական</p></div>
         <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>
       </div>
 
@@ -71,7 +71,7 @@ export function AIChatWidget() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="space-y-3 pt-4">
-            <p className="text-center text-xs text-muted-foreground">Ask me anything about auto parts</p>
+            <p className="text-center text-xs text-muted-foreground">Հարցրեք ինձ</p>
             <div className="grid gap-2">
               {suggestions.map((s) => (
                 <button key={s} onClick={() => sendMessage(s)} className="rounded-xl border px-3 py-2 text-left text-xs transition-colors hover:border-primary/40 hover:bg-primary/5">{s}</button>
@@ -98,7 +98,7 @@ export function AIChatWidget() {
       {/* Input */}
       <div className="border-t p-3">
         <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
-          <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." className="h-9 text-sm rounded-xl" disabled={loading} />
+          <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Գրեք հաղորդագրություն..." className="h-9 text-sm rounded-xl" disabled={loading} />
           <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-xl" disabled={!input.trim() || loading}>
             <Send className="h-4 w-4" />
           </Button>

@@ -175,16 +175,16 @@ RULES:
 export function getRoleSuggestions(role: UserRole): string[] {
   if (role === 'admin') {
     return [
-      'Show me today\'s orders summary',
-      'Which products are low on stock?',
-      'Suggest a promotion for this week',
-      'Help me write a product description',
+      'Ցուցադրել վաճառքի միտումները',
+      'Որ ապրանքներն են պակասում',
+      'Գրեք ապրանքի նկարագրություն',
+      'Առաջարկեք ակցիաներ',
     ];
   }
   return [
-    'Help me find brake pads for my car',
-    'What oil do you recommend for Toyota Camry?',
-    'How much is delivery to regions?',
-    'What is your return policy?',
+    'Ցուցադրել ապրանքները',
+    'Որոնել ապրանք',
+    'Գնի համեմատություն',
+    'Առաջարկել ակցիաներ',
   ];
 }

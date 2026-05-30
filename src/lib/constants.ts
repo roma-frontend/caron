@@ -1,9 +1,11 @@
 /** Site-wide Armenian text constants */
 export const SITE = {
-  name: 'Caroon',
-  tagline: 'Ձեր ավտոպահեստամասերի հարթակը Հայաստանում',
-  description: 'Caroon-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է, որը առաջարկում է լայն տեսականի բարձրորակ ապրանքների՝ անվադողեր, դիսկեր, յուղեր, ֆիլտրեր և այլ պարագաներ:',
-} as const;
+  name: process.env.NEXT_PUBLIC_STORE_NAME || 'AutoParts',
+  fullName: process.env.NEXT_PUBLIC_STORE_FULL_NAME || 'AutoParts',
+  tagline: 'Ձեր ավտոպահեստամասերի հառթակը Հայաստանում',
+  get heroDesc() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
+  get description() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
+};
 
 export const NAV = {
   catalog: 'Ցանկ',
@@ -19,7 +21,7 @@ export const NAV = {
   account: 'Հաշիվ',
   favorites: 'Նախընտրվածներ',
   orderStatus: 'Պատվերի կարգավիճակ',
-} as const;
+};
 
 export const PRODUCT = {
   addToCart: 'Ավելացնել զամբյուղ',
@@ -34,7 +36,7 @@ export const PRODUCT = {
   sortPopular: 'Հայտնի',
   filters: 'Ֆիլտրեր',
   items: 'տարրեր',
-} as const;
+};
 
 export const CART = {
   title: 'Զամբյուղ',
@@ -46,7 +48,7 @@ export const CART = {
   total: 'Ընդահանուր գին',
   checkout: 'Պատվիրել',
   orderSummary: 'Պատվերի ամփոփում',
-} as const;
+};
 
 export const CHECKOUT = {
   title: 'Պատվիրել',
@@ -59,7 +61,7 @@ export const CHECKOUT = {
   notesPlaceholder: 'Նշումներ...',
   placeOrder: 'Պատվիրել',
   paymentNote: 'Նկատարկումներ վճարման մասին',
-} as const;
+};
 
 export const AUTH = {
   loginTitle: 'Մուտք',
@@ -73,10 +75,10 @@ export const AUTH = {
   phone: 'Հեռախոս',
   noAccount: 'Չունեք հաշիվ?',
   hasAccount: 'Ունեք հաշիվ?',
-} as const;
+};
 
 export const FOOTER = {
-  rights: '© 2026 Caroon. Բոլոր իրավունքները պաշտպանված են։',
+  get rights() { return '© 2026 ' + SITE.name + '. Բոլոր իրավունքները պաշտպանված են։'; },
   navigation: 'Նավիգացիա',
   info: 'Տեղեկատվություն',
   contacts: 'Կապ',
@@ -84,18 +86,20 @@ export const FOOTER = {
   returns: 'Վերադարձ',
   privacy: 'Գաղտնիություն',
   terms: 'Պայմաններ',
-} as const;
+};
 
 export const HOME = {
+  name: process.env.NEXT_PUBLIC_STORE_NAME || 'AutoParts',
   heroBadge: 'Նորամուծություն',
   heroTitle: 'Ավտոմասեր ձեր մեքենայի համար',
   heroHighlight: 'Նորամուծություն',
-  heroDesc: 'Caroon-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է, որը առաջարկում է լայն տեսականի բարձրորակ ապրանքների՝ անվադողեր, դիսկեր, յուղեր, ֆիլտրեր և այլ պարգաներ:',
+  get heroDesc() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
+  get description() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
   ctaCatalog: 'Դիտել ցանկը',
   ctaCategories: 'Դիտել կատեգորիաՆերը',
   categoriesTitle: 'Կատեգորիաներ',
   featuresTitle: 'Նախագծված հատկություններ',
-} as const;
+};
 
 export const FEATURES = [
   { key: 'delivery', title: 'Առաքում', desc: 'Առաքում ամեն օր' },

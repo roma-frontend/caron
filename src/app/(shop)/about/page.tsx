@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import AboutPage from './_client';
+import { SITE } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Մեր մասին',
-  description: 'Caroon Armenia-ի պատմությունը՝ Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութ:',
+  description: SITE.heroDesc,
 };
-
+  
 export default function Page() {
   return <AboutPage />;
 }

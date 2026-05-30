@@ -16,9 +16,9 @@ import { useReveal, revealStyle } from '@/lib/motion';
 export default function ContactPage() {
   const settings = useSettings();
   const CONTACTS = [
-  { icon: Phone, label: 'Հեռախոս', value: settings?.phone || '+374 XX XXX XXX' },
-  { icon: Mail, label: 'Էլ. փոստ', value: 'info@caroon.am' },
-  { icon: MapPin, label: 'Հասցե', value: 'Երեւան, Անտառային փողոց 1' },
+  { icon: Phone, label: 'Հեռախոս', value: settings?.phone || '+374 XX XXX XXX', href: `tel:${settings?.phone || ''}` },
+  { icon: Mail, label: 'Էլ. փոստ', value: settings?.email || 'info@autoparts.am', href: `mailto:${settings?.email || ''}` },
+  { icon: MapPin, label: 'Հասցե', value: settings?.address || 'Երեւան', href: `https://www.google.com/maps/search/${encodeURIComponent(settings?.address || '')}` },
   { icon: Clock, label: 'Աշխատանքի ժամանակ', value: 'Ժամեր 10:00 - 19:00' },
 ];
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' });
@@ -52,19 +52,22 @@ export default function ContactPage() {
         {/* Contact info */}
         <div className="space-y-4 lg:col-span-2">
           {CONTACTS.map((c, i) => {
+            const Wrapper = c.href ? 'a' : 'div';
             return (
               <div key={c.label} ref={ref} style={revealStyle(visible, i * 0.1)}>
-                <Card className="transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
-                  <CardContent className="flex items-center gap-4 p-5">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                      <c.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{c.label}</p>
-                      <p className="font-medium">{c.value}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Wrapper href={c.href || undefined} target={c.href?.startsWith('http') ? '_blank' : undefined} rel={c.href?.startsWith('http') ? 'noopener noreferrer' : undefined}>
+                  <Card className="transition-all hover:shadow-md hover:border-primary/40 cursor-pointer" style={{ boxShadow: 'var(--shadow-xs)' }}>
+                    <CardContent className="flex items-center gap-4 p-5">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                        <c.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">{c.label}</p>
+                        <p className="font-medium">{c.value}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Wrapper>
               </div>
             );
           })}

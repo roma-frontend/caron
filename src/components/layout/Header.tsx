@@ -9,6 +9,7 @@ import { NAV, SITE } from '@/lib/constants';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/hooks/useSettings';
+import { useStoreName } from '@/hooks/useStoreName';
 import { useCartStore } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useFavoritesStore } from '@/store/favorites';
@@ -40,6 +41,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   const hasFavs = mounted && favCount > 0;
+  const storeName = useStoreName();
 
   return (
     <>
@@ -53,7 +55,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Logo size={36} />
-            <span className="hidden text-xl font-bold sm:inline">{SITE.name}</span>
+            <span className="hidden text-xl font-bold sm:inline">{storeName}</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -129,7 +131,7 @@ export function Header() {
             <div className="flex items-center justify-between p-4 border-b">
               <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
                 <Logo size={32} />
-                <span className="text-lg font-bold">{SITE.name}</span>
+                <span className="text-lg font-bold">{storeName}</span>
               </Link>
               <button onClick={() => setMenuOpen(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent transition-colors">
                 <X className="h-5 w-5" />

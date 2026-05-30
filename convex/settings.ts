@@ -79,9 +79,10 @@ export const save = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
+    const { sessionToken, ...data } = args;
     const existing = await ctx.db.query('settings').first();
     if (existing) {
-      await ctx.db.patch(existing._id, args);
+      await ctx.db.patch(existing._id, data);
     } else {
       await ctx.db.insert('settings', {
         storeName: args.storeName ?? 'Caroon Armenia',

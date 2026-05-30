@@ -6,8 +6,10 @@ import { Logo } from '@/components/layout/Logo';
 import { Separator } from '@/components/ui/separator';
 import { SITE, NAV, FOOTER } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
+import { useStoreName } from '@/hooks/useStoreName';
 
 export function Footer() {
+  const storeName = useStoreName();
   const settings = useSettings();
   return (
     <footer className="border-t bg-muted/30">
@@ -16,9 +18,9 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 shrink-0 mb-4">
             <Logo size={36} />
-            <span className="hidden text-xl font-bold sm:inline">{SITE.name}</span>
+            <span className="hidden text-xl font-bold sm:inline">{storeName}</span>
           </Link>
-            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{SITE.description}</p>
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{SITE.heroDesc}</p>
           </div>
           <div>
             <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{FOOTER.navigation}</h4>
@@ -42,9 +44,9 @@ export function Footer() {
           <div>
             <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{FOOTER.contacts}</h4>
             <div className="flex flex-col text-muted-foreground" style={{ gap: 'var(--space-2)', fontSize: 'var(--text-sm)' }}>
-              <a href={`tel:${settings?.phone || "+374 XX XXX XXX"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Phone style={{ height: '1rem', width: '1rem' }} /> {settings?.phone || "+374 XX XXX XXX"}</a>
-              <a href={`mailto:${settings?.email || "info@autoparts.am"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Mail style={{ height: '1rem', width: '1rem' }} /> {settings?.email || "info@autoparts.am"}</a>
-              <a href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || "Երևան, Հայաստան")}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><MapPin style={{ height: '1rem', width: '1rem' }} /> {settings?.address || "Երևան, Հայաստան"}</a>
+              <Link href={`tel:${settings?.phone || "+374 XX XXX XXX"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Phone style={{ height: '1rem', width: '1rem' }} /> {settings?.phone || "+374 XX XXX XXX"}</Link>
+              <Link href={`mailto:${settings?.email || "info@autoparts.am"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Mail style={{ height: '1rem', width: '1rem' }} /> {settings?.email || "info@autoparts.am"}</Link>
+              <Link href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || "Երևան, Հայաստան")}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><MapPin style={{ height: '1rem', width: '1rem' }} /> {settings?.address || "Երևան, Հայաստան"}</Link>
             </div>
           </div>
         </div>

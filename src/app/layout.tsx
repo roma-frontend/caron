@@ -3,9 +3,11 @@ import { Inter, Noto_Sans_Armenian } from 'next/font/google';
 import React from 'react';
 import './globals.css';
 import { ConvexClientProvider } from '@/lib/convex';
+import { SITE } from '@/lib/constants';
 import { ThemeProvider } from 'next-themes';
 import { ThemedToaster } from '@/components/ThemedToaster';
 import { BrandTheme } from '@/components/BrandTheme';
+import { FloatingActions } from '@/components/FloatingActions';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -48,12 +50,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
 
   title: {
-    default: 'Caroon Armenia | Ավտոպահեստամասերի առցանց խանութ',
-    template: '%s | Caroon Armenia',
+    default: `${SITE.fullName} | Ավտոպահեստամասերի առցանց խանութ`,
+    template: `%s | ${SITE.fullName}`,
   },
 
   description:
-    'Caroon-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։ Անվադողեր, դիսկեր, յուղեր, ֆիլտրեր և ավտոմեքենայի պարագաներ՝ մատչելի գներով և արագ առաքմամբ։',
+    SITE.description,
 
   keywords: [
     'ավտոպահեստամասեր',
@@ -70,9 +72,9 @@ export const metadata: Metadata = {
     'caroon.am',
   ],
 
-  authors: [{ name: 'Caroon Armenia', url: APP_URL }],
-  creator: 'Caroon Armenia',
-  publisher: 'Caroon Armenia',
+  authors: [{ name: SITE.fullName, url: APP_URL }],
+  creator: SITE.fullName,
+  publisher: SITE.fullName,
   category: 'shopping',
 
   alternates: {
@@ -87,7 +89,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'hy_AM',
     url: APP_URL,
-    siteName: 'Caroon Armenia',
+    siteName: SITE.fullName,
     title: 'Caroon Armenia | Ավտոպահեստամասերի առցանց խանութ',
     description:
       'Ավտոպահեստամասերի առցանց խանութ Հայաստանում։ Գնեք բարձրորակ ավտոպահեստամասեր ձեր մեքենայի համար՝ մատչելի գներով և արագ առաքմամբ։',
@@ -169,6 +171,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <BrandTheme />
             <main id="main-content">{children}</main>
             <ThemedToaster />
+            <FloatingActions />
           </ConvexClientProvider>
         </ThemeProvider>
 
