@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Car, Share2, Bell } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Car, Share2, Smartphone } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
@@ -136,6 +136,12 @@ export default function ProductDetailPage() {
             )}
           </div>
 
+          {product.stock <= 0 && settings?.enableBackInStock !== false && (
+            <div className="mt-3">
+              <BackInStockButton productId={product._id} />
+            </div>
+          )}
+
           {typeof attrs.carBrand === 'string' && attrs.carBrand && (
             <div className="mt-3">
               {vehicle && vehicle.brand === attrs.carBrand ? (
@@ -212,17 +218,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Back in stock */}
-      {settings?.enableBackInStock && (
-        <div className="mt-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
-          <p className="mb-2 text-sm font-medium flex items-center gap-2">
-            <Bell className="h-4 w-4 text-primary" />
-            {product.stock <= 0 ? 'Ապրանքը ժամանակավորապես բացակայում է' : 'Տեղեկացրեք ինձ այս ապրանքի մասին'}
-          </p>
-          <BackInStockButton productId={product._id} />
-        </div>
-      )}
-
       {settings?.enableReviews !== false && <ProductReviews productId={product._id} />}
 
       <RecentlyViewed />
@@ -243,20 +238,20 @@ export default function ProductDetailPage() {
 }
 
 function BackInStockButton({ productId }: { productId: string }) {
-  const [email, setEmail] = useState('');
+  const [contact, setContact] = useState('');
   const subscribe = useMutation(api.backInStock.subscribe);
   const [sent, setSent] = useState(false);
   const handleSubmit = async () => {
-    if (!email) return;
-    await subscribe({ productId: productId as Id<'products'>, email });
+    if (!contact) return;
+    await subscribe({ productId: productId as Id<'products'>, contact });
     setSent(true);
-    toast.success('Կծանուցենք երբ ապրանքը հայտնվի');
+    toast.success('Կծանուցենք Telegram-ով երբ ապրանքը հայտնվի');
   };
-  if (sent) return <p className="text-sm text-green-600">Կծանուցենք Ձեզ էլ. փոստով</p>;
+  if (sent) return <p className="text-sm text-green-600">✅ Կծանուցենք Telegram-ով</p>;
   return (
     <div className="flex gap-2">
-      <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Ձեր էլ. փոստը" className="h-10 flex-1" />
-      <Button size="sm" onClick={handleSubmit} disabled={!email} className="gap-2"><Bell className="h-4 w-4" /> Տեղեկացնել</Button>
+      <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username կամ հեռախոս" className="h-10 flex-1" />
+      <Button size="sm" onClick={handleSubmit} disabled={!contact} className="gap-2 shrink-0"><Smartphone className="h-4 w-4" /> Telegram</Button>
     </div>
   );
 }

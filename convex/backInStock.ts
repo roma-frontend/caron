@@ -3,11 +3,11 @@ import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
 
 export const subscribe = mutation({
-  args: { productId: v.id('products'), email: v.string() },
+  args: { productId: v.id('products'), contact: v.string() },
   handler: async (ctx, args) => {
     const existing = await ctx.db.query('backInStock').withIndex('by_product', (q) => q.eq('productId', args.productId)).collect();
-    if (existing.some((r) => r.email === args.email && !r.notified)) return null;
-    return await ctx.db.insert('backInStock', { productId: args.productId, email: args.email, notified: false, createdAt: Date.now() });
+    if (existing.some((r) => r.contact === args.contact && !r.notified)) return null;
+    return await ctx.db.insert('backInStock', { productId: args.productId, contact: args.contact, notified: false, createdAt: Date.now() });
   },
 });
 

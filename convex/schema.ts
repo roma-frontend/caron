@@ -251,7 +251,7 @@ export default defineSchema(
   // ─── Back-in-stock requests ──────────────────────────────────
   backInStock: defineTable({
     productId: v.id('products'),
-    email: v.string(),
+    contact: v.string(),
     notified: v.boolean(),
     createdAt: v.number(),
   })
