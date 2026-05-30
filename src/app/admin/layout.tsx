@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav touch-none">
         <div className="mx-auto w-10 h-1.5 rounded-full bg-muted-foreground/30 mt-2 mb-1 cursor-grab touch-none"
           onTouchStart={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).dataset.touchY = String(e.touches[0].clientY); }}
           onTouchMove={(e) => { e.preventDefault(); }}
