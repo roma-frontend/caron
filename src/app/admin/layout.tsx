@@ -134,17 +134,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav"
-        onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset.touchY = String(e.touches[0].clientY); }}
-        onTouchEnd={(e) => {
-          const startY = Number((e.currentTarget as HTMLElement).dataset.touchY);
-          const endY = e.changedTouches[0].clientY;
-          const el = e.currentTarget as HTMLElement;
-          if (startY - endY > 30) el.dataset.expanded = 'true';
-          else if (endY - startY > 30) el.dataset.expanded = '';
-        }}
-      >
-        <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/30 mt-1.5 mb-1 group-data-[expanded]/nav:mb-2" />
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav">
+        <div className="mx-auto w-10 h-1.5 rounded-full bg-muted-foreground/30 mt-2 mb-1 cursor-grab touch-none"
+          onTouchStart={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).dataset.touchY = String(e.touches[0].clientY); }}
+          onTouchMove={(e) => { e.preventDefault(); }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            const startY = Number((e.currentTarget as HTMLElement).dataset.touchY);
+            const endY = e.changedTouches[0].clientY;
+            const nav = e.currentTarget.closest('nav') as HTMLElement;
+            if (startY - endY > 20) nav.dataset.expanded = 'true';
+            else if (endY - startY > 20) nav.dataset.expanded = '';
+          }}
+        />
         <div className="flex items-stretch h-14">
           {NAV_ITEMS.slice(0, 5).map((item) => {
             const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
