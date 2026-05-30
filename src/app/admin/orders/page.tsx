@@ -120,7 +120,7 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-bold">Պատվերներ</h1>
           <p className="text-muted-foreground">{orders?.length ?? 0} պատվեր</p>

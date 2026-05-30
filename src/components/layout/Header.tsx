@@ -6,7 +6,7 @@ import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NAV, SITE } from '@/lib/constants';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/hooks/useSettings';
 import { useCartStore } from '@/store/cart';
@@ -37,7 +37,9 @@ export function Header() {
   const settings = useSettings();
   const [searchOpen, setSearchOpen] = useState(false);
   const favCount = useFavoritesStore((s) => s.count());
-  const hasFavs = favCount > 0;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const hasFavs = mounted && favCount > 0;
 
   return (
     <>

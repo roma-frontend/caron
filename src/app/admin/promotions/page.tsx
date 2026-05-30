@@ -24,7 +24,7 @@ export default function AdminPromotionsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-bold">Ակցիաներ</h1>
           <p className="text-muted-foreground">{promotions?.length ?? 0} ակցիա</p>
