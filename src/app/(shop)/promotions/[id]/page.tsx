@@ -39,44 +39,44 @@ export default function PromotionDetailPage() {
       <Breadcrumbs items={[{ label: 'Ակցիաներ', href: '/promotions' }, { label: promo.title }]} />
 
       {/* Hero banner with overlay */}
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 to-primary/5">
-        <div className="aspect-video sm:aspect-[2.5/1] relative">
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 to-primary/5 max-w-2xl">
+        <div className="aspect-square sm:aspect-[4/3] relative max-h-80">
           {promo.imageUrl ? (
-            <Image src={promo.imageUrl} alt={promo.title} fill priority sizes="100vw" className="object-cover" />
+            <Image src={promo.imageUrl} alt={promo.title} fill priority sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <Percent className="h-24 w-24 text-primary/15" strokeWidth={1} />
+              <Percent className="h-16 w-16 text-primary/15" strokeWidth={1} />
             </div>
           )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
 
           {/* Overlaid content */}
-          <div className="absolute inset-0 flex flex-col justify-center p-6 sm:p-10 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-3 mb-3">
+          <div className="absolute inset-0 flex flex-col justify-center p-5 sm:p-8 max-w-lg">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               {promo.discountPercent && (
-                <span className="rounded-xl bg-destructive px-3 py-1.5 text-base font-black text-white shadow-lg">
+                <span className="rounded-lg bg-destructive px-2.5 py-1 text-sm font-black text-white shadow-lg">
                   -{promo.discountPercent}%
                 </span>
               )}
-              <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${isExpired ? 'bg-muted-foreground/20 text-muted-foreground' : isUpcoming ? 'bg-blue-500/20 text-blue-600' : 'bg-green-500/20 text-green-600'}`}>
+              <span className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${isExpired ? 'bg-muted-foreground/20 text-muted-foreground' : isUpcoming ? 'bg-blue-500/20 text-blue-600' : 'bg-green-500/20 text-green-600'}`}>
                 {isExpired ? 'Ավարտված' : isUpcoming ? 'Շուտով' : 'Ակտիվ'}
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-foreground">{promo.title}</h1>
-            {promo.description && <p className="mt-3 text-base sm:text-lg text-muted-foreground max-w-xl">{promo.description}</p>}
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" />{formatDateHy(promo.startDate)} — {formatDateHy(promo.endDate)}</span>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">{promo.title}</h1>
+            {promo.description && <p className="mt-2 text-sm sm:text-base text-muted-foreground line-clamp-2">{promo.description}</p>}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs sm:text-sm text-muted-foreground">
+              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDateHy(promo.startDate)} — {formatDateHy(promo.endDate)}</span>
               {!isExpired && !isUpcoming && daysLeft <= 14 && (
-                <span className="flex items-center gap-1.5 text-amber-600 font-medium"><Clock className="h-4 w-4" />Մնաց {daysLeft} օր</span>
+                <span className="flex items-center gap-1 text-amber-600 font-medium"><Clock className="h-3.5 w-3.5" />Մնաց {daysLeft} օր</span>
               )}
             </div>
           </div>
         </div>
 
         {/* Back link */}
-        <Link href="/promotions" className="absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" />
+        <Link href="/promotions" className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-3.5 w-3.5" />
         </Link>
       </div>
 

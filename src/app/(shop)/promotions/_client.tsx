@@ -34,9 +34,9 @@ function CountdownBlock({ endDate }: { endDate: number }) {
 function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; imageUrl?: string; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
   return (
     <Link href={`/promotions/${promo._id}`} className="block">
-      <div className="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-        {/* Image — shorter and proportional */}
-        <div className="relative aspect-[16/9] sm:aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
+      <div className="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+        {/* Image */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
           {promo.imageUrl ? (
             <>
               <Image src={promo.imageUrl} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -56,12 +56,12 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
           )}
         </div>
 
-        {/* Text below image */}
-        <div className="p-5">
-          <h3 className="text-lg font-bold group-hover:text-primary transition-colors leading-tight">{promo.title}</h3>
-          {promo.description && <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{promo.description}</p>}
-          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          {/* Text below image */}
+        <div className="p-4">
+          <h3 className="text-base font-bold group-hover:text-primary transition-colors leading-tight">{promo.title}</h3>
+          {promo.description && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{promo.description}</p>}
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
             <span>Մանրամասներ</span>
           </div>
         </div>
