@@ -27,7 +27,7 @@ export default function CartPage() {
 
   const handleRemove = (id: string, name: string) => {
     removeItem(id);
-    toast.success(`${name} удален`, {
+    toast.success(`${name} Ջնջվեց`, {
       action: { label: 'Չեղարկել', onClick: () => undoRemove() },
       duration: 5000,
     });
