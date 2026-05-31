@@ -50,7 +50,7 @@ export default function HomePage() {
       <Header />
       <main className="flex-1">
         {/* Hero with mesh gradient orbs */}
-        <section className="relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden text-center" style={{ paddingInline: 'var(--space-container)' }}>
+        <section className="relative flex min-h-[70vh] sm:min-h-[80vh] flex-col items-center justify-center overflow-hidden text-center" style={{ paddingInline: 'max(var(--space-container), 0.75rem)' }}>
           {/* Animated orbs */}
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-10%] top-[-20%] h-[800px] w-[800px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(100px)' }} />
@@ -168,7 +168,7 @@ export default function HomePage() {
         {/* Featured Products — с хитовыми товарами в hero-стиле */}
         {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
               <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
               <Link href="/products">
                 <Button variant="ghost" className="gap-1 text-sm">

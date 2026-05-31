@@ -63,8 +63,8 @@ export function Footer() {
   const settings = useSettings();
   return (
     <footer className="border-t bg-muted/30">
-      <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-12)' }}>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+      <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'max(var(--space-container), 0.75rem)', paddingBlock: 'var(--space-12)' }}>
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center gap-2 shrink-0 mb-4">
             <Logo size={36} />
@@ -114,13 +114,13 @@ export function Footer() {
         </div>
 
         {settings?.enableNewsletter && (
-          <div className="mt-8 max-w-md mx-auto">
+          <div className="mt-6 sm:mt-8 max-w-md mx-auto px-2 sm:px-0">
             <NewsletterForm />
           </div>
         )}
 
         <Separator style={{ marginBlock: 'var(--space-8)' }} />
-        <p className="text-center text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{FOOTER.rights}</p>
+        <p className="text-left sm:text-center text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{FOOTER.rights}</p>
       </div>
     </footer>
   );

@@ -172,7 +172,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav touch-none">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav touch-none" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="mx-auto w-10 h-1.5 rounded-full bg-muted-foreground/30 mt-2 mb-1 cursor-grab touch-none"
           onTouchStart={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).dataset.touchY = String(e.touches[0].clientY); }}
           onTouchMove={(e) => { e.preventDefault(); }}
@@ -189,7 +189,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {NAV_ITEMS.slice(0, 5).map((item, i) => {
             const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
             return (
-              <Link key={`bottom-${i}`} href={item.href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
+              <Link key={`bottom-${i}`} href={item.href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] p-2 font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 {item.label.slice(0, 6)}
                 {item.href === '/admin/orders' && pendingCount > 0 && <span className="absolute left-1/2 top-1 ml-1 rounded-full bg-destructive px-1.5 text-[9px] font-bold text-white">{pendingCount}</span>}

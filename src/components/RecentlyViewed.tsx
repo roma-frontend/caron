@@ -8,7 +8,7 @@ export function RecentlyViewed() {
   if (items.length === 0) return null;
 
   return (
-    <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
+    <section className="mx-auto" style={{ maxWidth: 'var(--container-max)' }}>
       <h2 className="mb-6 text-xl font-bold">{'Վերջերս դիտված ապրանքներ'}</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {items.slice(0, 6).map((item, i) => (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -9,27 +9,32 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Car, X, LayoutGrid, List } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
-import { Loader, LoaderInline } from '@/components/ui/loader';
+import { LoaderInline } from '@/components/ui/loader';
 import { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ProductFilters, SortBar } from '@/components/ProductFilters';
 import { NAV } from '@/lib/constants';
 import { useVehicleStore } from '@/store/vehicle';
 
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export default function ProductsPage() {
   const params = useSearchParams();
   const settings = useSettings();
   const PAGE_SIZE = settings?.productsPerPage || 20;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings?.defaultViewMode || 'grid');
-  const [search, setSearch] = useState(params.get('q') ?? '');
   const vehicle = useVehicleStore((s) => s.vehicle);
+  const [search, setSearch] = useState(() => {
+    const q = params.get('q');
+    if (q) return q;
+    if (vehicle) return [vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' ');
+    return '';
+  });
   const clearVehicle = useVehicleStore((s) => s.clear);
   const cats = useQuery(api.categories.list, {});
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    if (!params.get('q') && vehicle) setSearch([vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' '));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [filters, setFilters] = useState<{
     categoryId?: Id<'categories'>; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
   }>({});
@@ -76,7 +81,7 @@ export default function ProductsPage() {
         <ProductFilters onFilterChange={setFilters} activeFilters={filters} />
 
         <div className="flex-1 min-w-0">
-          <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="mb-5 flex flex-col items-start sm:items-center justify-between gap-3">
             <SortBar activeFilters={filters} onFilterChange={setFilters} />
             <div className="flex items-center gap-1 shrink-0">
               <button onClick={() => setViewMode('grid')} className={`rounded-lg p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`} aria-label="Grid">

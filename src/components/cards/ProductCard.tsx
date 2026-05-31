@@ -66,14 +66,14 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
       <div ref={ref} style={cardRevealStyle(visible, index * 0.06)} {...handlers}>
         {compact ? (
           /* ─── Compact list mode ─── */
-          <div className="flex gap-3 rounded-xl border bg-background p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
+          <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
             <Link href={`/products/${slug}`} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
               {image ? <Image src={image} alt={name} width={64} height={64} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
             </Link>
             <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
               <div className="min-w-0">
                 <Link href={`/products/${slug}`} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center flex-wrap gap-2 mt-0.5">
                   <span className="text-sm font-bold text-primary">{formatPrice(price)}</span>
                   {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
                 </div>
@@ -174,7 +174,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                 </div>
               ) : null}
 
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
                 <span className="text-lg font-bold text-primary">{formatPrice(price)}</span>
                 {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
               </div>

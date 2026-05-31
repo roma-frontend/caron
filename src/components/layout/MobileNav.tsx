@@ -27,7 +27,7 @@ export function MobileNav() {
   if (/^\/products\/.+/.test(pathname)) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-background/95 backdrop-blur-md lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-background/95 backdrop-blur-md lg:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       {ITEMS.map((item) => {
         const href = item.auth ? (mounted && user ? '/admin' : '/login') : item.href;
         const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -36,7 +36,7 @@ export function MobileNav() {
           <Link key={item.label} href={href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
             <item.icon className="h-5 w-5" />
             {item.label}
-            {count > 0 && <span className="absolute left-1/2 top-2 ml-1 rounded-full bg-primary px-1.5 text-[9px] font-bold text-primary-foreground">{count}</span>}
+            {count > 0 && <span className="absolute left-1/2 -translate-x-1/2 top-1 ml-3 rounded-full bg-primary px-1 min-w-[14px] text-[8px] font-bold text-primary-foreground leading-[14px] text-center">{count}</span>}
           </Link>
         );
       })}

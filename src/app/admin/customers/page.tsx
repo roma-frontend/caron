@@ -92,36 +92,36 @@ export default function AdminCustomersPage() {
       <div className="space-y-3">
         {filtered.map((c, i) => (
           <Card key={i}>
-            <CardContent className="flex items-center gap-4 p-4">
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 <Users className="h-5 w-5 text-primary" />
               </div>
 
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 w-full sm:w-auto">
                 <p className="font-medium truncate">
                   {c.name}
                 </p>
 
-                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-0.5">
-                  <span className="flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    {c.email}
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs text-muted-foreground mt-0.5">
+                  <span className="flex items-center gap-1 truncate">
+                    <Mail className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{c.email}</span>
                   </span>
 
                   <span className="flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
+                    <Phone className="h-3 w-3 shrink-0" />
                     {c.phone}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-4 shrink-0 w-full sm:w-auto justify-start sm:justify-end">
                 <div className="text-center">
                   <p className="text-lg font-bold">
                     {c.ordersCount}
                   </p>
 
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[10px] text-muted-foreground whitespace-nowrap">
                     {'պատվեր'}
                   </p>
                 </div>
@@ -137,11 +137,11 @@ export default function AdminCustomersPage() {
                 </div>
 
                 <div className="text-center hidden sm:block">
-                  <p className="text-xs">
+                  <p className="text-xs whitespace-nowrap">
                     {formatDateHy(c.lastOrder)}
                   </p>
 
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[10px] text-muted-foreground whitespace-nowrap">
                     {'վերջին'}
                   </p>
                 </div>

@@ -78,20 +78,20 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
     <div ref={ref} style={revealStyle(visible, index * 0.03)}>
       <div className="rounded-xl border bg-background transition-all hover:shadow-md hover:border-primary/20 overflow-hidden">
         {/* Top bar — status + order number */}
-        <div className="flex items-center justify-between bg-muted/40 px-4 py-2 border-b">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold tracking-wider text-muted-foreground">{String(order.orderNumber)}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-muted/40 px-4 py-2 border-b gap-2">
+          <div className="flex items-center flex-wrap gap-1.5">
+            <span className="font-mono text-xs font-bold tracking-wider text-muted-foreground whitespace-nowrap">{String(order.orderNumber)}</span>
             <Badge className={`${s.color} border-0 text-[10px]`}>{s.label}</Badge>
             <Badge className={`${p.color} border-0 text-[10px]`}>{p.label}</Badge>
             {order.paymentMethod ? <Badge variant="outline" className="text-[10px] text-muted-foreground">{PAYMENT_LABELS[String(order.paymentMethod)] || String(order.paymentMethod)}</Badge> : null}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <span className="text-lg font-bold text-primary">{formatPrice(Number(order.total))}</span>
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">{formatDateHy(Number(order.createdAt))}</span>
           </div>
         </div>
         {/* Content row — customer + actions */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary shrink-0">
               {String(order.customerName).charAt(0).toUpperCase()}
@@ -101,16 +101,16 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
               <p className="text-xs text-muted-foreground">{String(order.customerPhone)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <Select value={String(order.status)} onValueChange={(v) => { if (v) updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' }); }}>
-              <SelectTrigger className="h-8 w-[110px] text-xs"><span>{s.label}</span></SelectTrigger>
+              <SelectTrigger className="h-8 w-full sm:w-[110px] text-xs min-w-0"><span>{s.label}</span></SelectTrigger>
               <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
             </Select>
             <button onClick={() => updateStatus({ sessionToken, id: order._id as Id<'orders'>, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' as const : 'paid' as const })}
-              className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors ${order.paymentStatus === 'paid' ? 'bg-green-50 border-green-200 text-green-700' : 'text-muted-foreground hover:bg-accent'}`}>
+              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2 sm:px-3 text-[11px] sm:text-xs font-medium transition-colors ${order.paymentStatus === 'paid' ? 'bg-green-50 border-green-200 text-green-700' : 'text-muted-foreground hover:bg-accent'}`}>
               {order.paymentStatus === 'paid' ? '✓' : '○'} {order.paymentStatus === 'paid' ? 'Վճարված' : 'Նշել վճարած'}
             </button>
-            <div className="h-6 w-px bg-border mx-1" />
+            <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
             <a href={`tel:${String(order.customerPhone)}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title="Զանգել">
               <Phone className="h-3.5 w-3.5" />
             </a>
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Պատվերների վահանակ</h1>
         <a href="/api/export/orders" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
           <FileSpreadsheet className="h-4 w-4" /> CSV
@@ -187,13 +187,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Search & filter */}
-      <div className="mb-4 flex gap-3">
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Որոնել պատվեր..." className="h-9 pl-9 text-sm" />
         </div>
         <Select value={statusFilter} onValueChange={(v) => { if (v !== null) setStatusFilter(v); }}>
-          <SelectTrigger className="h-9 w-32 text-xs"><span>{statusFilter === 'all' ? 'Բոլորը' : STATUS_MAP[statusFilter]?.label || statusFilter}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-32 text-xs"><span>{statusFilter === 'all' ? 'Բոլորը' : STATUS_MAP[statusFilter]?.label || statusFilter}</span></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Բոլորը</SelectItem>
             {Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}

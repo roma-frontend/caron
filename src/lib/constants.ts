@@ -24,7 +24,7 @@ export const NAV = {
 };
 
 export const PRODUCT = {
-  addToCart: 'Ավելացնել զամբյուղ',
+  addToCart: 'Ավելացնել',
   outOfStock: 'Վերջացել է',
   featured: 'Նախագծված',
   newArrival: 'Նորամուծություն',

@@ -50,7 +50,7 @@ export default function LoginPage() {
       <div className="hero-fade-1 w-full" style={{ maxWidth: '26rem' }}>
 
 
-        <div className="rounded-2xl border bg-background/80 p-8 shadow-xl backdrop-blur-sm" style={{ boxShadow: 'var(--shadow-xl)' }}>
+        <div className="rounded-2xl border bg-background/80 p-5 sm:p-8 shadow-xl backdrop-blur-sm" style={{ boxShadow: 'var(--shadow-xl)' }}>
           <div className="mb-6 text-center">
             <Link href="/" className="mb-8 flex flex-col items-center gap-3 transition-transform hover:scale-105">
               <Logo size={48} />

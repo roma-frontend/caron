@@ -12,7 +12,7 @@ import { ScrollToTop } from '@/components/ScrollToTop';
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <div className="flex min-h-screen flex-col pb-16 lg:pb-0">
+    <div className="flex min-h-screen flex-col" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
       <Header />
       <main className="flex-1">
         <MaintenanceGate>

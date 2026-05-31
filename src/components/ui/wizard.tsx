@@ -62,11 +62,11 @@ export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծ�
           </div>
           <div className="flex items-center justify-between">
             {steps.map((s, i) => (
-              <div key={s.id} className="flex flex-col items-center flex-1">
-                <div className={cn('flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-all', i < step ? 'border-primary bg-primary text-primary-foreground' : i === step ? 'border-primary text-primary scale-110' : 'border-muted-foreground/30 text-muted-foreground')}>
-                  {i < step ? <CheckCircle className="h-4 w-4" /> : i + 1}
+              <div key={s.id} className="flex flex-col items-center flex-1 min-w-0">
+                <div className={cn('flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border-2 text-[10px] sm:text-xs font-semibold transition-all', i < step ? 'border-primary bg-primary text-primary-foreground' : i === step ? 'border-primary text-primary scale-110' : 'border-muted-foreground/30 text-muted-foreground')}>
+                  {i < step ? <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" /> : i + 1}
                 </div>
-                <span className={cn('mt-1.5 text-[11px] font-medium text-center', i === step ? 'text-primary' : 'text-muted-foreground')}>{s.title}</span>
+                <span className={cn('mt-1 text-[10px] sm:text-[11px] font-medium text-center truncate max-w-full px-0.5', i === step ? 'text-primary' : 'text-muted-foreground')}>{s.title}</span>
               </div>
             ))}
           </div>

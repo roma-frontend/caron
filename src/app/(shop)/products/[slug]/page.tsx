@@ -187,20 +187,21 @@ export default function ProductDetailPage() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button size="lg" className="w-full sm:w-auto sm:flex-1 gap-2" disabled={product.stock <= 0}
+            <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0}
               onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
-              <ShoppingCart className="h-5 w-5" /> {PRODUCT.addToCart}
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
-            <Button size="lg" variant="outline"
-              className={isFav ? 'text-red-500 border-red-200' : ''}
+            <div className="flex gap-2 w-full sm:w-auto">
+            <Button size="icon" variant="outline" className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11'}
               onClick={() => toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null })}>
-              <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />
+              <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
             </Button>
-            <Button variant="outline" size="lg" className={`gap-2 w-full sm:w-auto ${inCompare ? 'border-primary text-primary' : ''}`}
+            <Button variant="outline" size="icon" className={`h-10 w-10 sm:h-11 sm:w-11 ${inCompare ? 'border-primary text-primary' : ''}`}
               onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success('Ավելացվեց համեմատման'); } }}>
-              <GitCompareArrows className="h-5 w-5" /> {inCompare ? 'Համեմատման մեջ' : 'Համեմատել'}
+              <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <QuickBuyButton productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} />
+            </div>
           </div>
 
           {/* Trust */}
@@ -228,10 +229,6 @@ export default function ProductDetailPage() {
       </div>
 
       <StickyBuyBar productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} productCompareAtPrice={product.compareAtPrice} inStock={product.stock > 0} slug={product.slug} />
-      <Button size="lg" className="flex-1 gap-2" disabled={product.stock <= 0}
-        onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
-        <ShoppingCart className="h-5 w-5" /> {PRODUCT.addToCart}
-      </Button>
     </div>
   );
 }
@@ -248,9 +245,9 @@ function BackInStockButton({ productId }: { productId: string }) {
   };
   if (sent) return <p className="text-sm text-green-600">✅ Կծանուցենք Telegram-ով</p>;
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col sm:flex-row gap-2">
       <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username կամ հեռախոս" className="h-10 flex-1" />
-      <Button size="sm" onClick={handleSubmit} disabled={!contact} className="gap-2 shrink-0"><Smartphone className="h-4 w-4" /> Telegram</Button>
+      <Button size="sm" onClick={handleSubmit} disabled={!contact} className="gap-2 shrink-0 w-full sm:w-auto"><Smartphone className="h-4 w-4" /> Telegram</Button>
     </div>
   );
 }
@@ -295,7 +292,7 @@ function ShareButton({ productName }: { productName: string }) {
         <Share2 className="h-4 w-4" /> {'Կիսվել'}
       </button>
       {open && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex gap-1 rounded-xl border bg-background p-1.5 shadow-lg animate-in zoom-in-95 duration-100">
+        <div className="absolute bottom-full left-0 sm:left-1/2 sm:-translate-x-1/2 mb-2 flex gap-1 rounded-xl border bg-background p-1.5 shadow-lg animate-in zoom-in-95 duration-100" style={{ right: 'auto' }}>
           <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" aria-label="Facebook">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
           </a>

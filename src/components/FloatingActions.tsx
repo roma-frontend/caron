@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SITE } from '@/lib/constants';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
 export function FloatingActions() {
+  const pathname = usePathname();
   const settings = useSettings();
   const { user } = useAuth();
   const [showTop, setShowTop] = useState(false);
@@ -23,6 +25,8 @@ export function FloatingActions() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const role: UserRole = user?.role === 'admin' ? 'admin' : user ? 'customer' : 'guest';
   const suggestions = getRoleSuggestions(role);
+  const noMobileNav = pathname === '/' || /^\/products\/.+/.test(pathname);
+  const mobileBottom = noMobileNav ? '1.5rem' : '5rem';
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 400);
@@ -63,7 +67,7 @@ export function FloatingActions() {
     <>
       {/* Chat panel */}
       {chatOpen && (
-        <div className="fixed bottom-20 right-4 z-50 flex w-[340px] max-w-[calc(100vw-2rem)] flex-col rounded-2xl border bg-background shadow-2xl lg:bottom-20 lg:right-6 lg:w-[380px] animate-in slide-in-from-bottom-4 duration-200" style={{ height: 'min(480px, 65vh)' }}>
+        <div className="fixed bottom-20 right-4 z-50 flex w-[340px] max-w-[calc(100vw-2rem)] flex-col rounded-2xl border bg-background shadow-2xl lg:right-6 lg:w-[380px] lg:bottom-20 animate-in slide-in-from-bottom-4 duration-200" style={{ height: 'min(480px, 65vh)', maxHeight: 'calc(65vh - 4rem)', marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)' }}>
           <div className="flex items-center gap-3 border-b px-4 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Bot className="h-4 w-4 text-primary" /></div>
             <div className="flex-1"><p className="text-sm font-semibold">{SITE.name} AI</p><p className="text-[10px] text-muted-foreground">Օգնական</p></div>
@@ -118,7 +122,7 @@ export function FloatingActions() {
       )}
 
       {/* Floating buttons */}
-      <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end gap-3 lg:bottom-6 lg:right-6">
+      <div className="fixed right-4 z-50 flex flex-col items-end gap-3 lg:bottom-6 lg:right-6" style={{ bottom: mobileBottom, transition: 'bottom 0.35s cubic-bezier(0.22, 1, 0.36, 1)', marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.25rem)' }}>
         {!chatOpen && settings?.whatsapp && (
           <Link href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
             className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-xl transition-all hover:scale-110 hover:bg-green-600"

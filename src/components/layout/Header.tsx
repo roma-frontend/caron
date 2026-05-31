@@ -51,12 +51,12 @@ export function Header() {
   return (
     <>
       {settings?.announcementEnabled !== false && settings?.announcementBar && (
-        <div className="bg-primary text-primary-foreground text-center text-xs font-medium py-2 px-4">
-          <span>{settings?.announcementBar} • Հեռ. {settings?.phone}</span>
+        <div className="bg-primary text-primary-foreground text-center text-[10px] sm:text-xs font-medium py-1.5 sm:py-2 px-2 sm:px-4 leading-tight">
+          <span className="line-clamp-1 sm:line-clamp-none">{settings?.announcementBar} • Հեռ. {settings?.phone}</span>
         </div>
       )}
       <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>
-        <div className="mx-auto flex h-full items-center justify-between px-4" style={{ maxWidth: 'var(--container-max)' }}>
+        <div className="mx-auto flex h-full items-center justify-between gap-1 px-2 sm:px-4" style={{ maxWidth: 'var(--container-max)' }}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Logo size={36} />
@@ -100,29 +100,29 @@ export function Header() {
           </div>
 
           {/* Actions */}
-          <div suppressHydrationWarning className="flex items-center gap-1">
+          <div suppressHydrationWarning className="flex items-center gap-0.5 sm:gap-1">
             <Button variant="ghost" size="icon" className="lg:hidden" aria-label={NAV.search} onClick={() => setSearchOpen(true)}>
-              <Search className="h-5 w-5" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <ThemeToggle />
             <Link href="/favorites">
               <Button variant="ghost" size="icon" className="hidden sm:inline-flex group/fav" aria-label={NAV.favorites} suppressHydrationWarning>
-                <Heart className={`h-5 w-5 transition-colors group-hover/fav:fill-red-500 group-hover/fav:text-red-500 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
+                <Heart className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors group-hover/fav:fill-red-500 group-hover/fav:text-red-500 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
               </Button>
             </Link>
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative overflow-visible" aria-label={NAV.cart}>
-                <ShoppingCart className="h-5 w-5" data-cart-icon />
-                <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-[10px]">{cartCount}</Badge>
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" data-cart-icon />
+                <Badge className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center p-0 text-[9px] sm:text-[10px]">{cartCount}</Badge>
               </Button>
             </Link>
             <Link href={user ? "/admin" : "/login"}>
               <Button variant="ghost" size="icon" aria-label={NAV.login}>
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </Link>
-            <button onClick={() => setMenuOpen(true)} className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent md:hidden" aria-label="Menu">
-              <Menu className="h-5 w-5" />
+            <button onClick={() => setMenuOpen(true)} className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md hover:bg-accent md:hidden" aria-label="Menu">
+              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         </div>

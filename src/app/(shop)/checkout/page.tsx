@@ -204,22 +204,22 @@ export default function CheckoutPage() {
                   <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wider text-primary">Վճարման տվյալներ</p>
                     <p className="text-sm">Բանկ՝ <strong>{settings.bankName}</strong></p>
-                    {settings?.bankAccount && <p className="text-sm">Հաշիվ՝ <strong className="font-mono text-base">{settings.bankAccount}</strong></p>}
-                    {settings?.bankCode && <p className="text-sm">SWIFT/BIC՝ <strong className="font-mono">{settings.bankCode}</strong></p>}
+                    {settings?.bankAccount && <p className="text-sm break-all">Հաշիվ՝ <strong className="font-mono text-sm sm:text-base">{settings.bankAccount}</strong></p>}
+                    {settings?.bankCode && <p className="text-sm">SWIFT/BIC՝ <strong className="font-mono break-all">{settings.bankCode}</strong></p>}
                     {settings?.paymentNote && <p className="text-xs text-muted-foreground mt-2">{settings.paymentNote}</p>}
                   </div>
                 )}
                 {paymentMethod === 'idram' && settings?.cardNumber && (
                   <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wider text-primary">Idram քարտ</p>
-                    <p className="text-sm">Համար՝ <strong className="font-mono text-base">{settings.cardNumber}</strong></p>
+                    <p className="text-sm break-all">Համար՝ <strong className="font-mono text-sm sm:text-base">{settings.cardNumber}</strong></p>
                     {settings?.paymentNote && <p className="text-xs text-muted-foreground mt-2">{settings.paymentNote}</p>}
                   </div>
                 )}
                 {paymentMethod === 'easypay' && settings?.cardNumber && (
                   <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wider text-primary">EasyPay քարտ</p>
-                    <p className="text-sm">Համար՝ <strong className="font-mono text-base">{settings.cardNumber}</strong></p>
+                    <p className="text-sm break-all">Համար՝ <strong className="font-mono text-sm sm:text-base">{settings.cardNumber}</strong></p>
                     {settings?.paymentNote && <p className="text-xs text-muted-foreground mt-2">{settings.paymentNote}</p>}
                   </div>
                 )}
@@ -246,9 +246,9 @@ export default function CheckoutPage() {
                 <ChevronLeft className="h-4 w-4" /> Հետ
               </Button>
             ) : <div />}
-            <Button type="submit" variant="cta" size="lg" className="gap-2" disabled={loading || (step === STEPS.length - 1 && !agreed)}>
+            <Button type="submit" variant="cta" size="lg" className="gap-2 text-sm sm:text-base" disabled={loading || (step === STEPS.length - 1 && !agreed)}>
               {step === STEPS.length - 1 ? (
-                loading ? 'Ձևակերպվում է...' : `${CHECKOUT.placeOrder} — ${formatPrice(totalPrice + shippingCost)}`
+                loading ? 'Ձևակերպվում է...' : <span className="truncate max-w-[200px] sm:max-w-none">{CHECKOUT.placeOrder} — {formatPrice(totalPrice + shippingCost)}</span>
               ) : (
                 <>Հաջորդ <ChevronRight className="h-4 w-4" /></>
               )}

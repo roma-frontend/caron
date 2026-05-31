@@ -120,7 +120,7 @@
   --card-foreground: oklch(0.2 0.01 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.01 250);
-  --primary: oklch(0.5 0.14 248);
+  --primary: #0066ae;
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.94 0.003 250);
   --secondary-foreground: oklch(0.26 0.01 250);
@@ -291,6 +291,14 @@
   }
   *::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Smaller container padding on very small screens */
+@media (max-width: 374px) {
+  :root {
+    --space-container: 0.75rem;
+    --space-section: 2.5rem;
   }
 }
 

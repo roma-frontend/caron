@@ -65,7 +65,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
             )}
           </div>
 
-          <div className="flex flex-col p-6">
+          <div className="flex flex-col p-4 sm:p-6">
             <DialogHeader className="p-0">
               <DialogTitle className="text-xl font-bold leading-tight">{product.name}</DialogTitle>
             </DialogHeader>
@@ -112,7 +112,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                   });
                 }}
               >
-                <ShoppingCart className="h-4 w-4" /> {product.inStock ? 'Ավելացնել զամբյուղ' : 'Չկա պահանջվող քանակով'}
+                <ShoppingCart className="h-4 w-4" /> {product.inStock ? 'Ավելացնել' : 'Չկա պահանջվող քանակով'}
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; toggleFav({ id: product.id, name: product.name, price: product.price, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); toast.success(adding ? 'Ավելացվել է' : 'Հեռացվել'); if (adding) setTimeout(() => onOpenChange(false), 350); }}>

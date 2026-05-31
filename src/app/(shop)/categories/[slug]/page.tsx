@@ -57,9 +57,11 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      <ProductFilters categoryId={category._id} onFilterChange={setFilters} activeFilters={filters} />
+      <div className="lg:flex lg:gap-8">
+        <ProductFilters categoryId={category._id} onFilterChange={setFilters} activeFilters={filters} />
 
-      <div className="grid" style={{ gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+        <div className="flex-1 min-w-0">
+        <div className="grid" style={{ gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
         {results.map((p, i) => (
           <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} index={i} />
         ))}
@@ -78,6 +80,8 @@ export default function CategoryPage() {
       )}
 
       {status === 'LoadingMore' && <LoaderInline />}
+        </div>
+      </div>
     </div>
   );
 }

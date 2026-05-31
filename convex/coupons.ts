@@ -1,11 +1,12 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller } from './lib/auth';
+import { getAdminCaller, getAuthCaller } from './lib/auth';
 
 export const list = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    const caller = await getAuthCaller(ctx, args.sessionToken);
+    if (!caller || caller.role !== 'admin') return [];
     return await ctx.db.query('coupons').order('desc').take(100);
   },
 });

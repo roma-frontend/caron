@@ -50,7 +50,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
 
         {/* Content */}
         <div className="p-4">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-sm font-semibold">{product.name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
@@ -112,19 +112,20 @@ export default function AdminProductsPage() {
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
+        <div className="relative flex-1 min-w-[140px] sm:min-w-[180px] max-w-full sm:max-w-xs w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Որոնել..." className="h-9 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
         <Select value={catFilter} onValueChange={(v) => setCatFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-40"><SelectValue>{catFilter === "all" ? "Բոլոր" : categories?.find(c => c._id === catFilter)?.name ?? "Կատեգորիա"}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-40 min-w-0"><SelectValue>{catFilter === "all" ? "Բոլոր" : categories?.find(c => c._id === catFilter)?.name ?? "Կատեգորիա"}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Բոլոր</SelectItem>
             {categories?.map((cat) => <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={stockFilter} onValueChange={(v) => setStockFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-36"><SelectValue>{{ all: "Պահեստ", instock: "Առկա", low: "Ցածր (≤5)", out: "Սպառվել" }[stockFilter]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Պահեստ", instock: "Առկա", low: "Ցածր (≤5)", out: "Սպառվել" }[stockFilter]}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Պահեստ</SelectItem>
             <SelectItem value="instock">Առկա</SelectItem>
@@ -133,7 +134,7 @@ export default function AdminProductsPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-36"><SelectValue>{{ all: "Կարգավիճակ", active: "Ակտիվ", inactive: "Անակտիվ", featured: "Առաջարկված" }[statusFilter]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Կարգավիճակ", active: "Ակտիվ", inactive: "Անակտիվ", featured: "Առաջարկված" }[statusFilter]}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Կարգավիճակ</SelectItem>
             <SelectItem value="active">Ակտիվ</SelectItem>
@@ -142,7 +143,7 @@ export default function AdminProductsPage() {
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v ?? 'newest')}>
-          <SelectTrigger className="h-9 w-36"><SelectValue>{{ newest: "Նորագույն", name: "Անուն", priceAsc: "Գին ↑", priceDesc: "Գին ↓", stockAsc: "Պահեստ ↑" }[sortBy]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ newest: "Նորագույն", name: "Անուն", priceAsc: "Գին ↑", priceDesc: "Գին ↓", stockAsc: "Պահեստ ↑" }[sortBy]}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="newest">Նորագույն</SelectItem>
             <SelectItem value="name">Անուն</SelectItem>
@@ -151,6 +152,7 @@ export default function AdminProductsPage() {
             <SelectItem value="stockAsc">Պահեստ ↑</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
       <p className="mb-4 text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
 
@@ -168,3 +170,5 @@ export default function AdminProductsPage() {
     </div>
   );
 }
+
+

@@ -38,8 +38,8 @@ export default function ComparePage() {
         <Button variant="outline" size="sm" onClick={clear}>{'Մաքրել'}</Button>
       </div>
 
-      <div className="overflow-x-auto pb-4">
-        <motion.table className="w-full border-collapse" layout>
+      <div className="overflow-x-auto pb-4 -mx-4 sm:-mx-0 px-4 sm:px-0">
+        <motion.table className="w-full border-collapse min-w-[500px] sm:min-w-0" layout>
           <thead>
             <tr>
               <th className="p-3 text-left text-sm font-medium text-muted-foreground w-40"></th>
@@ -112,7 +112,7 @@ export default function ComparePage() {
               {items.map((item) => (
                 <td key={item.id} className="p-3 text-center">
                   <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); toast.success('Ավելացվել է զամբյուղում'); }}>
-                    <ShoppingCart className="h-3.5 w-3.5" /> {'Ավելացնել զամբյուղ'}
+                    <ShoppingCart className="h-3.5 w-3.5" /> {'Ավելացնել'}
                   </Button>
                 </td>
               ))}

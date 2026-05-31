@@ -74,7 +74,8 @@ export const create = mutation({
 export const listAll = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    const caller = await getAuthCaller(ctx, args.sessionToken);
+    if (!caller || caller.role !== 'admin') return [];
     return await ctx.db.query('reviews').order('desc').take(200);
   },
 });
