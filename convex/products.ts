@@ -197,10 +197,87 @@ export const update = mutation({
   },
 });
 
+async function deleteR2Image(imageUrl: string): Promise<void> {
+  try {
+    const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKey = process.env.R2_ACCESS_KEY_ID;
+    const secretKey = process.env.R2_SECRET_ACCESS_KEY;
+    const bucket = process.env.R2_BUCKET_NAME;
+    if (!accountId || !accessKey || !secretKey || !bucket) return;
+
+    const key = imageUrl.split('/').pop();
+    if (!key) return;
+
+    const host = `${accountId}.r2.cloudflarestorage.com`;
+    const endpoint = `https://${host}/${bucket}/${encodeURIComponent(key)}`;
+    const date = new Date().toISOString().replace(/[:\-]|\.\d{3}/g, '');
+    const dateShort = date.slice(0, 8);
+    const service = 's3';
+    const region = 'auto';
+
+    // AWS V4 signing helpers using Web Crypto API
+    const hmac = async (keyBytes: ArrayBuffer, data: string): Promise<ArrayBuffer> => {
+      const algo = { name: 'HMAC', hash: 'SHA-256' };
+      const k = await crypto.subtle.importKey('raw', keyBytes, algo, false, ['sign']);
+      return crypto.subtle.sign(algo, k, new TextEncoder().encode(data));
+    };
+    const sha256 = async (data: string): Promise<string> => {
+      const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+      return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    const credentialScope = `${dateShort}/${region}/${service}/aws4_request`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    const payloadHash = await sha256('');
+
+    const canonicalRequest = [
+      'DELETE',
+      `/${bucket}/${encodeURIComponent(key)}`,
+      '',
+      `host:${host}`,
+      `x-amz-content-sha256:${payloadHash}`,
+      `x-amz-date:${date}`,
+      '',
+      signedHeaders,
+      payloadHash,
+    ].join('\n');
+
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      date,
+      credentialScope,
+      await sha256(canonicalRequest),
+    ].join('\n');
+
+    const dateKey = await hmac(new TextEncoder().encode(`AWS4${secretKey}`).buffer, dateShort);
+    const regionKey = await hmac(dateKey, region);
+    const serviceKey = await hmac(regionKey, service);
+    const signingKey = await hmac(serviceKey, 'aws4_request');
+    const sigBytes = await hmac(signingKey, stringToSign);
+    const signature = Array.from(new Uint8Array(sigBytes)).map((b) => b.toString(16).padStart(2, '0')).join('');
+
+    const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope},SignedHeaders=${signedHeaders},Signature=${signature}`;
+
+    await fetch(endpoint, {
+      method: 'DELETE',
+      headers: {
+        Host: host,
+        'x-amz-content-sha256': payloadHash,
+        'x-amz-date': date,
+        Authorization: authHeader,
+      },
+    });
+  } catch {}
+}
+
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('products') },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
+    const product = await ctx.db.get(args.id);
+    if (product?.images?.length) {
+      await Promise.all(product.images.map(deleteR2Image));
+    }
     await ctx.db.delete(args.id);
   },
 });
