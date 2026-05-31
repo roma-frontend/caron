@@ -78,8 +78,14 @@ export default function EditProductPage() {
       });
       toast.success('Ապրանքը հաջողությամբ թարմացվել է');
       router.push('/admin/products');
-    } catch {
-      toast.error('Ապրանքի թարմացումը ձախողվեց');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg.includes('Not authenticated') || msg.includes('Session expired')) {
+        toast.error('Սեսիան ավարտվել է, մուտք գործեք կրկին');
+        router.push('/login');
+      } else {
+        toast.error('Ապրանքի թարմացումը ձախողվեց');
+      }
     } finally {
       setSaving(false);
     }
