@@ -122,7 +122,8 @@ export function FloatingActions() {
       )}
 
       {/* Floating buttons */}
-      <div className="fixed right-4 z-50 flex flex-col items-end gap-3 lg:bottom-6 lg:right-6" style={{ bottom: mobileBottom, transition: 'bottom 0.35s cubic-bezier(0.22, 1, 0.36, 1)', marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.25rem)' }}>
+      <div data-fab className="fixed right-4 z-50 flex flex-col items-end gap-3" style={{ bottom: mobileBottom, transition: 'bottom 0.35s cubic-bezier(0.22, 1, 0.36, 1)', marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.25rem)' }}>
+        <style>{'@media (min-width:768px){[data-fab]{bottom:1.5rem!important;right:1.5rem!important;transition:none!important}}'}</style>
         {!chatOpen && settings?.whatsapp && (
           <Link href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
             className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-xl transition-all hover:scale-110 hover:bg-green-600"
