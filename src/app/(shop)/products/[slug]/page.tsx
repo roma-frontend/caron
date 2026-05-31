@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Car, Share2, Smartphone, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
@@ -48,20 +47,19 @@ export default function ProductDetailPage() {
   const inCompare = isInCompare(product?._id ?? '');
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product?._id));
+  const imgs = product?.images ?? [];
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
   const [emblaIndex, setEmblaIndex] = useState(0);
-  const [emblaSnaps, setEmblaSnaps] = useState<number[]>([]);
+  const emblaSnaps = imgs.map((_, i) => i);
   const onEmblaSelect = useCallback(() => {
     if (!emblaApi) return;
     setEmblaIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
   useEffect(() => {
     if (!emblaApi) return;
-    setEmblaSnaps(emblaApi.scrollSnapList());
     emblaApi.on('select', onEmblaSelect);
     onEmblaSelect();
   }, [emblaApi, onEmblaSelect]);
-  const imgs = product?.images ?? [];
 
   if (product === undefined) return <Loader />;
   if (product === null) return (
@@ -232,24 +230,16 @@ export default function ProductDetailPage() {
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
             <div className="flex gap-2 w-full sm:w-auto">
-            <Tooltip>
-              <TooltipTrigger>
-                <Button size="icon" variant="outline" className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11'}
-                  onClick={() => toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null })}>
-                  <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{isFav ? 'Հեռացնել' : 'Նախընտրած'}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger>
-                <Button variant="outline" size="icon" className={`h-10 w-10 sm:h-11 sm:w-11 ${inCompare ? 'border-primary text-primary' : ''}`}
-                  onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success('Ավելացվեց համեմատման'); } }}>
-                  <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{inCompare ? 'Համեմատման մեջ' : 'Համեմատել'}</TooltipContent>
-            </Tooltip>
+            <Button size="icon" variant="outline" title={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
+              className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11'}
+              onClick={() => toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null })}>
+              <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
+            </Button>
+            <Button variant="outline" size="icon" title={inCompare ? 'Համեմատման մեջ' : 'Համեմատել'}
+              className={`h-10 w-10 sm:h-11 sm:w-11 ${inCompare ? 'border-primary text-primary' : ''}`}
+              onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success('Ավելացվեց համեմատման'); } }}>
+              <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
             <ShareButton productName={product.name} />
             {settings?.enablePriceAlert !== false && (
               <SubscribePriceButton productId={product._id} currentPrice={product.price} />
