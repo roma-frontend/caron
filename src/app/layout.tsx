@@ -11,6 +11,7 @@ import { SettingsProvider } from '@/components/SettingsProvider';
 import { AnalyticsInjector } from '@/components/AnalyticsInjector';
 import { CookieConsent } from '@/components/CookieConsent';
 import { FloatingActions } from '@/components/FloatingActions';
+import { AdminOrderWatcher } from '@/components/AdminOrderWatcher';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
@@ -173,6 +174,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AnalyticsInjector />
               <main id="main-content">{children}</main>
               <CookieConsentWrapper />
+              <AdminOrderWatcher />
             </SettingsProvider>
             <ThemedToaster />
             <FloatingActions />

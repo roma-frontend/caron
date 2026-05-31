@@ -11,7 +11,7 @@ import { useStoreName } from '@/hooks/useStoreName';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
-import { useOrderNotifications } from '@/hooks/useOrderNotifications';
+import { useOrderNotificationStore } from '@/store/orderNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { clearAuthCookie } from '@/actions/auth';
 import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
@@ -36,7 +36,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const logoutStore = useAuthStore((s) => s.logout);
   const logoutMutation = useMutation(api.auth.logout);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { pendingCount, flash } = useOrderNotifications(sessionToken);
+  const pendingCount = useOrderNotificationStore((s) => s.pendingCount);
+  const flash = useOrderNotificationStore((s) => s.flash);
   const storeName = useStoreName();
 
   // Redirect handled inline below
