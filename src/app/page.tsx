@@ -15,6 +15,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { formatPrice } from '@/lib/formatters';
 import { useSettings } from '@/hooks/useSettings';
+import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
@@ -106,12 +107,12 @@ export default function HomePage() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 h-0 bg-gradient-to-t from-black to-black/50 transition-all duration-300 group-hover:h-full" />
+                    <div className="absolute inset-x-0 bottom-0 h-0 bg-gradient-to-t from-black to-black/40 transition-all duration-300 group-hover:h-full" />
                     <div className="absolute inset-x-0 bottom-0 translate-y-4 p-4 text-center opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                       <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow-lg">{p.name}</p>
                       <p className="mt-1 text-sm font-bold text-white drop-shadow-lg">{formatPrice(p.price)}</p>
                     </div>
-                    {p.isFeatured && <span className="absolute left-2 top-2 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-bold text-background">Թոփ</span>}
+                    {p.isFeatured && <Badge className="absolute left-2 top-2 px-2 py-0.5 text-[10px] font-bold" variant="destructive">Թոփ</Badge>}
                   </Link>
                 ))}
               </div>

@@ -329,7 +329,7 @@ export default function AdminSettingsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={flags.enablePriceAlert !== false} onCheckedChange={(v) => saveField('enablePriceAlert', v)} />
-                <span className="text-sm">{'Զեղչի մասին ծանուցում}'}</span>
+                <span className="text-sm">{'Զեղչի մասին ծանուցում'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={flags.enableCartRecovery !== false} onCheckedChange={(v) => saveField('enableCartRecovery', v)} />
