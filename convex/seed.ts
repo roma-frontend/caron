@@ -59,10 +59,14 @@ export const setImages = seedMutation({
     const products = await ctx.db.query('products').collect();
     let n = 0;
     for (const p of products) {
-      if (p.images && p.images.length > 0) continue;
       const slug = slugById.get(p.categoryId);
       const imgs = slug ? imageMap[slug] : undefined;
-      if (imgs) { await ctx.db.patch(p._id, { images: imgs, updatedAt: Date.now() }); n++; }
+      if (!imgs) continue;
+      const sameAsOld = p.images?.length === 1 && p.images[0] === imgs[0];
+      if (p.images && p.images.length > 1) continue;
+      if (p.images?.length === 1 && !sameAsOld) continue;
+      await ctx.db.patch(p._id, { images: imgs, updatedAt: Date.now() });
+      n++;
     }
     return `Updated ${n} products`;
   },
