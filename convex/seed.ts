@@ -46,13 +46,13 @@ export const seed = seedMutation({
 export const setImages = seedMutation({
   args: {},
   handler: async (ctx) => {
-    const map: Record<string, string> = {
-      tires: '/products/tires.jpg',
-      oils: '/products/oils.jpg',
-      filters: '/products/filters.jpg',
-      brakes: '/products/brakes.jpg',
-      lamps: '/products/lamps.jpg',
-      batteries: '/products/batteries.jpg',
+    const imageMap: Record<string, string[]> = {
+      tires: ['/products/tires.jpg'],
+      oils: ['/products/oils.jpg', '/products/oils_2.jpg'],
+      filters: ['/products/filters.jpg'],
+      brakes: ['/products/brakes.jpg'],
+      lamps: ['/products/lamps.jpg'],
+      batteries: ['/products/batteries.jpg'],
     };
     const cats = await ctx.db.query('categories').collect();
     const slugById = new Map(cats.map((c) => [c._id, c.slug]));
@@ -61,8 +61,8 @@ export const setImages = seedMutation({
     for (const p of products) {
       if (p.images && p.images.length > 0) continue;
       const slug = slugById.get(p.categoryId);
-      const img = slug ? map[slug] : undefined;
-      if (img) { await ctx.db.patch(p._id, { images: [img], updatedAt: Date.now() }); n++; }
+      const imgs = slug ? imageMap[slug] : undefined;
+      if (imgs) { await ctx.db.patch(p._id, { images: imgs, updatedAt: Date.now() }); n++; }
     }
     return `Updated ${n} products`;
   },
