@@ -188,7 +188,7 @@ export const sendReceiptToCustomer = action({
       `━━━━━━━━━━━━━━━━━━`,
       `<b>✅ Պատվերը հաստատված է</b>`,
       `<b>📝 Պատվեր՝</b> <code>${String(o.orderNumber)}</code>`,
-      `<b>📅 Ամսաթիվ՝</b> ${new Date(Number(o.createdAt)).toLocaleString('hy-AM')}`,
+      `<b>📅 Ամսաթիվ՝</b> ${new Date(Number(o.createdAt)).toLocaleString('hy-AM', { timeZone: 'Asia/Yerevan' })}`,
       ``,
       `━━ 🧾 <b>Ապրանքներ</b> ━━━━━━━━━`,
       ``,
