@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Save, ArrowLeft, ImagePlus, Package, X, Search } from 'lucide-react';
 import { useState, useRef, useMemo } from 'react';
+import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuthStore } from '@/store/auth';
 
 export default function EditPromotionPage() {
   const params = useParams();
@@ -27,7 +28,7 @@ export default function EditPromotionPage() {
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', discountPercent: 0, imageUrl: '', startDate: '', endDate: '', productIds: [] as Id<'products'>[] });
+  const [form, setForm] = useState({ title: '', description: '', discountPercent: 0, imageUrl: '', images: [] as string[], startDate: '', endDate: '', productIds: [] as Id<'products'>[], isActive: true });
   const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState('');
   const allProducts = useQuery(api.products.list, { limit: 200 });
@@ -35,28 +36,36 @@ export default function EditPromotionPage() {
   const promo = promotions?.find((p) => p._id === promoId);
 
   if (promo && !loaded) {
+    const existingImages = (promo.images ?? (promo.imageUrl ? [promo.imageUrl] : [])) as string[];
     setForm({
       title: promo.title,
       description: promo.description ?? '',
       discountPercent: promo.discountPercent ?? 0,
       imageUrl: promo.imageUrl ?? '',
+      images: existingImages,
       startDate: new Date(promo.startDate).toISOString().split('T')[0],
       endDate: new Date(promo.endDate).toISOString().split('T')[0],
       productIds: (promo.productIds ?? []) as Id<'products'>[],
+      isActive: promo.isActive,
     });
     setLoaded(true);
   }
 
-  const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try { const url = await upload(file); if (url) setForm({ ...form, imageUrl: url }); } catch { toast.error('Չի հաջողվել պատկերը բեռնել'); }
+  const handleImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    try {
+      const urls: string[] = [];
+      for (const f of files) { const url = await upload(f); if (url) urls.push(url); }
+      setForm({ ...form, images: [...form.images, ...urls] });
+    } catch { toast.error('Չի հաջողվել պատկերները բեռնել'); }
   };
+  const removeImage = (i: number) => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await update({ sessionToken: sessionToken!, id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, imageUrl: form.imageUrl || undefined, productIds: form.productIds, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime() });
+      await update({ sessionToken: sessionToken!, id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, imageUrl: form.images[0] || undefined, images: form.images.length > 0 ? form.images : undefined, productIds: form.productIds, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime(), isActive: form.isActive });
       toast.success('Ակցիան հաջողությամբ թարմացվեց');
       router.push('/admin/promotions');
     } catch { toast.error('Ակցիան չի հաջողվել թարմացնել'); } finally { setSaving(false); }
@@ -68,10 +77,10 @@ export default function EditPromotionPage() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center gap-3">
         <Link href="/admin/promotions"><Button variant="ghost" size="icon-sm"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <h1 className="text-2xl font-bold">խմբագրել</h1>
+        <h1 className="text-2xl font-bold">Խմբագրել</h1>
       </div>
       <Card>
-        <CardHeader><CardTitle>խմբագրել</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Խմբագրել</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div><Label>Ակցիայի անուն</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-11" /></div>
           <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
@@ -80,19 +89,27 @@ export default function EditPromotionPage() {
             <div><Label>Սկիզբ</Label><Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-11" /></div>
             <div><Label>Ավարտ</Label><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="h-11" /></div>
           </div>
+          <div className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
+            <div>
+              <Label className="text-sm font-medium">Ակտիվ է</Label>
+              <p className="text-xs text-muted-foreground">Деактивируйте, чтобы скрыть акцию с сайта</p>
+            </div>
+            <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} />
+          </div>
           <div>
-            <Label>Պատկեր</Label>
-            {form.imageUrl ? (
-              <div className="relative mt-2 aspect-video overflow-hidden rounded-lg border">
-                <Image src={form.imageUrl} alt="" width={600} height={200} className="h-full w-full object-cover" />
-                <button onClick={() => setForm({ ...form, imageUrl: '' })} className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white text-xs">✕</button>
-              </div>
-            ) : (
-              <button onClick={() => fileRef.current?.click()} disabled={uploading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-muted-foreground hover:border-primary hover:text-primary">
-                <ImagePlus className="h-5 w-5" /> {uploading ? '...' : 'Ներբեռնել պատկեր'}
+            <Label>Պատկերներ</Label>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {form.images.map((img, i) => (
+                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                  <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
+                  <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-0 transition-opacity group-hover:opacity-100 text-[10px]">✕</button>
+                </div>
+              ))}
+              <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                <ImagePlus className="h-6 w-6" />
               </button>
-            )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImages} />
           </div>
           {/* Product selection */}
           <div>

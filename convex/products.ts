@@ -113,17 +113,17 @@ export const list = query({
           if (args.categoryId) search = search.eq('categoryId', args.categoryId);
           return search.eq('isActive', true);
         })
-        .take(Math.min(args.limit ?? 20, 100));
+        .take(Math.min(args.limit ?? 20, 500));
       if (args.minPrice) results = results.filter((p) => p.price >= args.minPrice!);
       if (args.maxPrice) results = results.filter((p) => p.price <= args.maxPrice!);
       return results;
     }
     let products;
     if (args.categoryId) {
-      products = await ctx.db.query('products').withIndex('by_category', (q) => q.eq('categoryId', args.categoryId!)).take(Math.min(args.limit ?? 20, 100));
+      products = await ctx.db.query('products').withIndex('by_category', (q) => q.eq('categoryId', args.categoryId!)).take(Math.min(args.limit ?? 20, 500));
       products = products.filter((p) => p.isActive);
     } else {
-      products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(Math.min(args.limit ?? 20, 100));
+      products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(Math.min(args.limit ?? 20, 500));
     }
     if (args.minPrice) products = products.filter((p) => p.price >= args.minPrice!);
     if (args.maxPrice) products = products.filter((p) => p.price <= args.maxPrice!);

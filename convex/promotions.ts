@@ -35,6 +35,7 @@ export const create = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
     discountPercent: v.optional(v.number()),
     discountAmount: v.optional(v.number()),
     startDate: v.number(),
@@ -44,6 +45,9 @@ export const create = mutation({
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const { sessionToken, ...data } = args;
+    if (data.images && data.images.length > 0) {
+      data.imageUrl = data.images[0];
+    }
     return await ctx.db.insert('promotions', { ...data, createdAt: Date.now() });
   },
 });
@@ -63,6 +67,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
     discountPercent: v.optional(v.number()),
     productIds: v.optional(v.array(v.id('products'))),
     categoryIds: v.optional(v.array(v.id('categories'))),
@@ -72,7 +77,7 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken, productIds, ...rest } = args;
+    const { id, sessionToken, productIds, images, ...rest } = args;
 
     const old = await ctx.db.get(id);
     const oldIds = old?.productIds ?? [];
@@ -89,6 +94,10 @@ export const update = mutation({
 
     const patch: Record<string, unknown> = { ...rest };
     if (productIds !== undefined) patch.productIds = productIds;
+    if (images !== undefined) {
+      patch.images = images;
+      patch.imageUrl = images.length > 0 ? images[0] : undefined;
+    }
     await ctx.db.patch(id, patch);
   },
 });

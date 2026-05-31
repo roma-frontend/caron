@@ -6,7 +6,7 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Flame, Percent, Gift, Zap, Bell } from 'lucide-react';
+import { Clock, Flame, Percent, Gift, Zap, Bell, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useReveal, cardRevealStyle } from '@/lib/motion';
 import { ProductCard } from '@/components/cards/ProductCard';
@@ -33,7 +33,7 @@ function CountdownBlock({ endDate }: { endDate: number }) {
   );
 }
 
-function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; imageUrl?: string; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
+function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; imageUrl?: string; images?: string[]; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
   const { ref, visible } = useReveal();
 
   return (
@@ -65,6 +65,14 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
           {promo.discountPercent && (
             <div className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-white shadow-lg">
               -{promo.discountPercent}%
+            </div>
+          )}
+
+          {/* Multi-image indicator */}
+          {((promo.images?.length ?? 1) > 1) && (
+            <div className="absolute left-6 bottom-6 inline-flex items-center gap-1 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur-sm shadow-sm">
+              <ImageIcon className="h-3 w-3" />
+              {promo.images!.length}
             </div>
           )}
         </div>
@@ -234,7 +242,7 @@ export default function PromotionsPage() {
       {promotions.length > 0 && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section) 0' }}>
           <h2 className="mb-8 text-center text-2xl font-bold">Ակցիաներ</h2>
-          <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
             {promotions.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} />)}
           </div>
         </section>

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import { useRef } from 'react';
@@ -19,25 +19,36 @@ function StepInfo() {
   const { data, update } = useWizardData();
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
-  const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (!file) return; try { const url = await upload(file); update('imageUrl', url); } catch { toast.error('Error'); } };
+  const images = (data.images as string[]) ?? [];
+  const handleImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    try {
+      const urls: string[] = [];
+      for (const f of files) { const url = await upload(f); if (url) urls.push(url); }
+      update('images', [...images, ...urls]);
+    } catch { toast.error('Error'); }
+  };
+  const removeImage = (i: number) => update('images', images.filter((_, idx) => idx !== i));
   return (
     <div className="space-y-5">
       <div><Label>Ակցիայի անուն *</Label><Input value={(data.title as string) ?? ''} onChange={(e) => update('title', e.target.value)} placeholder="Ակցիայի անուն" className="h-11" /></div>
       <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Ակցիայի նկարագրություն..." rows={3} /></div>
       <div><Label>Զեղչ (%)</Label><Input type="number" value={(data.discountPercent as number) ?? 10} onChange={(e) => update('discountPercent', Number(e.target.value))} className="h-11" /></div>
       <div>
-        <Label>Պատկեր</Label>
-        {data.imageUrl ? (
-          <div className="relative mt-2 aspect-video overflow-hidden rounded-lg border">
-            <Image src={data.imageUrl as string} alt="" width={600} height={200} className="h-full w-full object-cover" />
-            <button onClick={() => update('imageUrl', '')} className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white text-xs">✕</button>
-          </div>
-        ) : (
-          <button onClick={() => fileRef.current?.click()} disabled={uploading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-muted-foreground hover:border-primary hover:text-primary">
-            <ImagePlus className="h-5 w-5" /> {uploading ? '...' : 'Ներբեռնել պատկեր'}
+        <Label>Պատկերներ</Label>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {images.map((img, i) => (
+            <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+              <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
+              <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-0 transition-opacity group-hover:opacity-100 text-[10px]">✕</button>
+            </div>
+          ))}
+          <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+            <ImagePlus className="h-6 w-6" />
           </button>
-        )}
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImages} />
       </div>
     </div>
   );
@@ -64,12 +75,14 @@ export default function AddPromotionPage() {
   ];
 
   const handleComplete = async (data: Record<string, unknown>) => {
+    const images = (data.images as string[]) ?? [];
     await create({
       sessionToken: sessionToken!,
       title: data.title as string,
       description: (data.description as string) || undefined,
       discountPercent: Number(data.discountPercent) || undefined,
-      imageUrl: (data.imageUrl as string) || undefined,
+      imageUrl: images[0] || undefined,
+      images: images.length > 0 ? images : undefined,
       startDate: new Date(data.startDate as string).getTime(),
       endDate: new Date(data.endDate as string).getTime(),
       isActive: true,

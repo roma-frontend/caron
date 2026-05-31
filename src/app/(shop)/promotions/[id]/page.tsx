@@ -1,25 +1,75 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/loader';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Clock, Percent, Calendar, ArrowLeft } from 'lucide-react';
+import { Clock, Percent, Calendar, ArrowLeft, Tag, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDateHy } from '@/lib/formatters';
 import { Id } from '../../../../../convex/_generated/dataModel';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState, useCallback, useEffect } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+
+function Countdown({ endDate }: { endDate: number }) {
+  const [now] = useState(() => Date.now());
+  const diff = Math.max(0, endDate - now);
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  return (
+    <div className="flex gap-2">
+      {[{ v: days, l: 'օր' }, { v: hours, l: 'ժ' }, { v: mins, l: 'ր' }].map((item) => (
+        <div key={item.l} className="flex min-w-[56px] flex-col items-center rounded-xl bg-background/80 px-3 py-2 backdrop-blur-sm">
+          <span className="text-xl font-black tabular-nums">{String(item.v).padStart(2, '0')}</span>
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground">{item.l}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProgressBar({ start, end }: { start: number; end: number }) {
+  const [now] = useState(() => Date.now());
+  const total = end - start;
+  const elapsed = now - start;
+  const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+  if (now < start || now > end) return null;
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary transition-all duration-1000" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-[11px] font-medium text-muted-foreground tabular-nums">{Math.round(pct)}%</span>
+    </div>
+  );
+}
 
 export default function PromotionDetailPage() {
   const { id } = useParams();
   const promotions = useQuery(api.promotions.active, {});
-  const products = useQuery(api.products.list, { limit: 50 });
+  const products = useQuery(api.products.list, { limit: 500 });
   const promo = promotions?.find((p) => p._id === id);
+
   const [now] = useState(() => Date.now());
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', onSelect);
+    return () => { emblaApi.off('select', onSelect); };
+  }, [emblaApi, onSelect]);
 
   if (promotions === undefined) return <Loader />;
   if (!promo) return <div className="py-20 text-center text-muted-foreground">{'Ակցիան չի գտնվել'}</div>;
@@ -27,6 +77,7 @@ export default function PromotionDetailPage() {
   const daysLeft = Math.max(0, Math.ceil((promo.endDate - now) / 86400000));
   const isExpired = promo.endDate < now;
   const isUpcoming = promo.startDate > now;
+  const isLive = !isExpired && !isUpcoming;
 
   const promoProducts = products?.filter((p) => {
     if (promo.productIds && promo.productIds.length > 0) return promo.productIds.includes(p._id as Id<'products'>);
@@ -34,58 +85,122 @@ export default function PromotionDetailPage() {
     return false;
   }) ?? [];
 
+  const images = (promo.images ?? (promo.imageUrl ? [promo.imageUrl] : [])) as string[];
+
   return (
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <Breadcrumbs items={[{ label: 'Ակցիաներ', href: '/promotions' }, { label: promo.title }]} />
 
-      {/* Hero banner with overlay */}
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 to-primary/5 max-w-2xl">
-        <div className="aspect-square relative max-h-80">
-          {promo.imageUrl ? (
-            <Image src={promo.imageUrl} alt={promo.title} fill priority sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
+      {/* Hero with image carousel */}
+      <div className="relative mt-4 overflow-hidden rounded-2xl border bg-gradient-to-b from-muted/30 to-muted/10">
+        {/* Carousel area */}
+        <div className="relative mx-auto flex aspect-[21/9] max-h-[400px] w-full items-center justify-center overflow-hidden p-5 sm:p-8">
+          {images.length > 0 ? (
+            <>
+              {/* Blurred backdrop */}
+              <div className="absolute inset-0 -z-10 scale-110 overflow-hidden opacity-30">
+                <Image src={images[selectedIndex]} alt="" fill className="object-cover blur-xl" sizes="100vw" />
+              </div>
+
+              {/* Embla carousel */}
+              <div ref={emblaRef} className="h-full w-full overflow-hidden">
+                <div className="flex h-full">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative flex min-w-0 flex-[0_0_100%] items-center justify-center">
+                      <div className="relative h-full w-full max-w-[512px] overflow-hidden rounded-2xl bg-card shadow-xl ring-1 ring-black/[0.04]">
+                        <Image
+                          src={img}
+                          alt=""
+                          fill
+                          priority={i === 0}
+                          sizes="(max-width: 640px) 100vw, 512px"
+                          className="object-contain p-3"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nav arrows */}
+              {images.length > 1 && (
+                <>
+                  <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-7 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/70 shadow-sm backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground">
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => emblaApi?.scrollNext()} className="absolute right-7 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/70 shadow-sm backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Dots */}
+              {images.length > 1 && (
+                <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+                  {images.map((_, i) => (
+                    <button key={i} onClick={() => emblaApi?.scrollTo(i)} className={`h-1.5 rounded-full transition-all duration-300 ${i === selectedIndex ? 'w-5 bg-primary' : 'w-1.5 bg-background/60 hover:bg-background/90'}`} />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex h-full items-center justify-center">
-              <Percent className="h-16 w-16 text-primary/15" strokeWidth={1} />
+              <Percent className="h-24 w-24 text-primary/10" strokeWidth={1} />
             </div>
           )}
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
 
-          {/* Overlaid content */}
-          <div className="absolute inset-0 flex flex-col justify-center p-5 sm:p-8 max-w-lg">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              {promo.discountPercent && (
-                <span className="rounded-lg bg-destructive px-2.5 py-1 text-sm font-black text-white shadow-lg">
-                  -{promo.discountPercent}%
-                </span>
-              )}
-              <span className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${isExpired ? 'bg-muted-foreground/20 text-muted-foreground' : isUpcoming ? 'bg-blue-500/20 text-blue-600' : 'bg-green-500/20 text-green-600'}`}>
-                {isExpired ? 'Ավարտված' : isUpcoming ? 'Շուտով' : 'Ակտիվ'}
+          {/* Back button */}
+          <Link href="/promotions" className="absolute left-5 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+
+          {/* Badges */}
+          <div className="absolute right-5 top-5 z-10 flex flex-wrap gap-2">
+            {promo.discountPercent && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-4 py-1.5 text-sm font-black text-white shadow-lg">
+                <Tag className="h-3.5 w-3.5" /> -{promo.discountPercent}%
               </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">{promo.title}</h1>
-            {promo.description && <p className="mt-2 text-sm sm:text-base text-muted-foreground line-clamp-2">{promo.description}</p>}
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs sm:text-sm text-muted-foreground">
-              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDateHy(promo.startDate)} — {formatDateHy(promo.endDate)}</span>
-              {!isExpired && !isUpcoming && daysLeft <= 14 && (
-                <span className="flex items-center gap-1 text-amber-600 font-medium"><Clock className="h-3.5 w-3.5" />Մնաց {daysLeft} օր</span>
-              )}
-            </div>
+            )}
+            <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur-sm ${
+              isExpired ? 'bg-muted/80 text-muted-foreground' : isUpcoming ? 'bg-blue-500/80 text-white' : 'bg-green-500/80 text-white'
+            }`}>
+              {isExpired ? 'Ավարտված' : isUpcoming ? 'Շուտով' : 'Ակտիվ'}
+            </span>
           </div>
         </div>
 
-        {/* Back link */}
-        <Link href="/promotions" className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" />
-        </Link>
+        {/* Info strip */}
+        <div className="border-t px-6 py-5 sm:px-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{promo.title}</h1>
+              {promo.description && (
+                <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{promo.description}</p>
+              )}
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDateHy(promo.startDate)} — {formatDateHy(promo.endDate)}</span>
+                {isLive && daysLeft <= 14 && (
+                  <span className="flex items-center gap-1 font-medium text-amber-600"><Clock className="h-3.5 w-3.5" />Մնաց {daysLeft} օր</span>
+                )}
+              </div>
+            </div>
+            {isLive && <Countdown endDate={promo.endDate} />}
+          </div>
+          {isLive && <div className="mt-4"><ProgressBar start={promo.startDate} end={promo.endDate} /></div>}
+        </div>
       </div>
 
       {/* Products */}
       {promoProducts.length > 0 && (
-        <div className="mt-10">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">{'Ակցիայի ապրանքներ'}</h2>
-            <span className="text-sm text-muted-foreground">{promoProducts.length} ապրանք</span>
+        <div className="mt-12">
+          <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Zap className="h-4 w-4 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold">{'Ակցիայի ապրանքներ'}</h2>
+            </div>
+            <Badge variant="secondary" className="text-xs">{promoProducts.length} ապրանք</Badge>
           </div>
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {promoProducts.map((p, i) => (
@@ -96,7 +211,7 @@ export default function PromotionDetailPage() {
       )}
 
       {promoProducts.length === 0 && (
-        <div className="mt-10 text-center py-10 text-muted-foreground">Այս ակցիային ապրանքներ չկան</div>
+        <div className="mt-12 text-center py-12 text-muted-foreground">Այս ակցիային ապրանքներ չկան</div>
       )}
     </div>
   );

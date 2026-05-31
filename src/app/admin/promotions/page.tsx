@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Edit, Tag, Percent, Calendar, Clock, Package, Search, X, ShoppingBag } from 'lucide-react';
+import { Plus, Trash2, Edit, Tag, Percent, Calendar, Clock, Package, Search, X, ShoppingBag, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
@@ -73,7 +73,7 @@ function PromotedProductsSection() {
     <div className="mt-12">
       <div className="mb-6 flex items-center gap-3">
         <ShoppingBag className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-bold">Ակցիայի ապրանքներ</h2>
+        <h2 className="text-xl font-bold">Զեղչով ապրանքներ</h2>
         <Badge variant="secondary" className="ml-auto text-xs">
           {promoProducts?.length ?? 0} ապրանք
         </Badge>
@@ -148,12 +148,12 @@ function PromotedProductsSection() {
   );
 }
 
-function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promotions'>; title: string; description?: string; imageUrl?: string; discountPercent?: number; discountAmount?: number; productIds?: Id<'products'>[]; categoryIds?: Id<'categories'>[]; startDate: number; endDate: number; isActive: boolean }; index: number; onDelete: () => void; onEdit: () => void }) {
+function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promotions'>; title: string; description?: string; imageUrl?: string; images?: string[]; discountPercent?: number; discountAmount?: number; productIds?: Id<'products'>[]; categoryIds?: Id<'categories'>[]; startDate: number; endDate: number; isActive: boolean }; index: number; onDelete: () => void; onEdit: () => void }) {
   const { ref, visible } = useReveal();
   const [now] = useState(() => Date.now());
   const isExpired = promo.endDate < now;
   const isUpcoming = promo.startDate > now;
-  const isLive = !isExpired && !isUpcoming;
+  const isLive = promo.isActive && !isExpired && !isUpcoming;
   const itemsCount = (promo.productIds?.length ?? 0) + (promo.categoryIds?.length ?? 0);
   const daysLeft = Math.ceil((promo.endDate - now) / 86400000);
 
@@ -189,6 +189,14 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
           {isLive && daysLeft <= 7 && (
             <div className="absolute right-4 bottom-4 flex items-center gap-1 rounded-lg bg-background/90 px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur-sm">
               <Clock className="h-3 w-3" /> {daysLeft} օր
+            </div>
+          )}
+
+          {/* Multi-image indicator */}
+          {((promo.images?.length ?? 1) > 1) && (
+            <div className="absolute left-4 bottom-4 flex items-center gap-1 rounded-lg bg-background/90 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+              <ImageIcon className="h-3 w-3" />
+              {promo.images!.length}
             </div>
           )}
         </div>
