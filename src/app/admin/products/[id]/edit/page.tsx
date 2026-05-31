@@ -100,7 +100,7 @@ export default function EditProductPage() {
           <CardHeader><CardTitle>Նկարներ</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-3">
-              {images.map((img, i) => (
+              {images.filter(Boolean).map((img, i) => (
                 <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border">
                   <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" loading="eager" />
                   <button onClick={() => setImages(images.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white opacity-0 transition-opacity group-hover:opacity-100">
