@@ -16,6 +16,7 @@ export default defineSchema(
     discountPercent: v.optional(v.number()),
     sessionToken: v.optional(v.string()),
     sessionExpiry: v.optional(v.number()),
+    cartJson: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index('by_email', ['email'])

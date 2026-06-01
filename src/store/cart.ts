@@ -12,11 +12,12 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   lastRemoved: CartItem | null;
-  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
   undoRemove: () => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  loadItems: (items: CartItem[]) => void;
   totalItems: () => number;
   totalPrice: () => number;
 }
@@ -26,15 +27,14 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       lastRemoved: null,
-      addItem: (item, quantity = 1) => {
-        const state = get();
+      loadItems: (items) => set({ items, lastRemoved: null }),
+      addItem: (item) => set((state) => {
         const existing = state.items.find((i) => i.id === item.id);
         if (existing) {
-          set({ items: state.items.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i) });
-        } else {
-          set({ items: [...state.items, { ...item, quantity }] });
+          return { items: state.items.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i) };
         }
-      },
+        return { items: [...state.items, { ...item, quantity: 1 }] };
+      }),
       removeItem: (id) => set((state) => ({
         lastRemoved: state.items.find((i) => i.id === id) ?? null,
         items: state.items.filter((i) => i.id !== id),
