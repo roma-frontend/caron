@@ -138,10 +138,24 @@ export default function ImportProductsPage() {
   const categoriesMap: Record<string, string> = {};
   if (categories) for (const c of categories) categoriesMap[c.name.toLowerCase()] = c._id;
 
-  const decodeFile = async (file: File): Promise<string> => {
+  const decodeFile = async (file: File, cats: Record<string, string>): Promise<string> => {
     const buf = await file.arrayBuffer();
-    try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
-    catch { return new TextDecoder('windows-1251', { fatal: false }).decode(buf); }
+    const tries = [
+      { enc: 'utf-8', label: 'UTF-8' },
+      { enc: 'windows-1251', label: 'Windows-1251' },
+    ];
+    for (const t of tries) {
+      try {
+        const text = new TextDecoder(t.enc, { fatal: true }).decode(buf);
+        const { headers, rows } = parseCsv(text);
+        const catIdx = headers.findIndex((h) => h.includes('cat') || h.includes('category') || h.includes('категория'));
+        if (catIdx >= 0) {
+          const matched = rows.filter((r) => r[catIdx] && cats[r[catIdx].toLowerCase().trim()]);
+          if (matched.length > rows.length / 3) return text;
+        }
+      } catch {}
+    }
+    return new TextDecoder('utf-8', { fatal: false }).decode(buf);
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,7 +165,7 @@ export default function ImportProductsPage() {
     setParsed(null);
     setDone(false);
     try {
-      const text = await decodeFile(file);
+      const text = await decodeFile(file, categoriesMap);
       const { headers, rows } = parseCsv(text);
       const mapped: ParsedRow[] = [];
       const errs: string[] = [];
@@ -230,7 +244,7 @@ export default function ImportProductsPage() {
                     ['description', 'Ապրանքի նկարագրություն'],
                     ['price', 'Գին դրամներով (պարտադիր)'],
                     ['compareAtPrice', 'Հին գին (ցուցադրվում է որպես կտրատված)'],
-                    ['stock', 'Քանակ պահեստում ( 1)'],
+                    ['stock', 'Քանակ պահեստում (քանակ 1)'],
                     ['sku', 'Արտիկուլ ապրանքի'],
                     ['category', 'Կատեգորիա — պետք է համապատասխանի համակարգում գրված անվանմանը'],
                     ['isActive', 'Ակտիվ՝ yes/no/1/0 (լռելյային yes)'],
