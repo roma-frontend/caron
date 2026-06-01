@@ -5,23 +5,32 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, FolderTree, Package } from 'lucide-react';
+import { Plus, Trash2, Edit, FolderTree, Package, ToggleLeft, ToggleRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import Link from 'next/link';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { CATEGORY_ICONS, CATEGORY_COLORS } from '@/components/cards/CategoryCard';
+import { Switch } from '@/components/ui/switch';
 
 function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categories'>; name: string; slug: string; description?: string; isActive: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const remove = useMutation(api.categories.remove);
+  const updateCat = useMutation(api.categories.update);
   const router = useRouter();
 
   const handleDelete = async () => {
     if (!confirm(`Ջնջել "${cat.name}"?`)) return;
     await remove({ sessionToken, id: cat._id });
     toast.success('Կատեգորիան ջնջվել է');
+  };
+
+  const toggleActive = async () => {
+    try {
+      await updateCat({ sessionToken, id: cat._id, isActive: !cat.isActive });
+      toast.success(cat.isActive ? 'Կատեգորիան դեակտիվացված է' : 'Կատեգորիան ակտիվացված է');
+    } catch { toast.error('Սխալ'); }
   };
 
   const Icon = CATEGORY_ICONS[cat.slug] ?? Package;
@@ -34,7 +43,10 @@ function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categ
           <Icon className="h-7 w-7" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold">{cat.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="truncate font-semibold">{cat.name}</h3>
+            <Switch checked={cat.isActive} onCheckedChange={toggleActive} size="sm" />
+          </div>
           <p className="truncate font-mono text-xs text-muted-foreground">/{cat.slug}</p>
           <Badge variant={cat.isActive ? 'default' : 'secondary'} className="mt-1.5 text-[10px]">{cat.isActive ? 'Ակտիվ' : 'Ակտիվ չէ'}</Badge>
         </div>
@@ -49,7 +61,7 @@ function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categ
 
 export default function AdminCategoriesPage() {
   const { sessionToken } = useAuth();
-  const categories = useQuery(api.categories.list, {});
+  const categories = useQuery(api.categories.listAll, {});
 
   return (
     <div>
