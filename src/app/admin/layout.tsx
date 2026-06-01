@@ -2,13 +2,13 @@
 
 import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { useOrderNotificationStore } from '@/store/orderNotifications';
@@ -39,6 +39,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pendingCount = useOrderNotificationStore((s) => s.pendingCount);
   const flash = useOrderNotificationStore((s) => s.flash);
   const storeName = useStoreName();
+  const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
+
+  useEffect(() => {
+    if (me === null) {
+      toast.error('Սեսիան ավարտվել է, խնդրում ենք կրկին մուտք գործել');
+      logoutStore();
+      router.push('/login');
+    }
+  }, [me]);
 
   // Redirect handled inline below
 
