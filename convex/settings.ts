@@ -44,7 +44,7 @@ export const get = query({
       gaId: '',
       fbPixelId: '',
       enableCookieConsent: false,
-      cookieConsentText: 'Մենք օգտագործում ենք թխուկներ կայքի աշխատանքը բարելավելու համար',
+      cookieConsentText: 'Մենք օգտագործում ենք Cookie-ներ կայքի աշխատանքը բարելավելու համար',
       enableNewsletter: false,
       defaultViewMode: 'grid',
       productsPerPage: 20,
