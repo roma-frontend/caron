@@ -51,6 +51,8 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
                 src={promo.imageUrl}
                 alt=""
                 fill
+                priority={index < 3}
+                loading={index < 3 ? 'eager' : undefined}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-contain p-3 transition-all duration-500 group-hover:scale-105"
               />
