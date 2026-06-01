@@ -69,7 +69,7 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 shrink-0 mb-4">
             <Logo size={36} />
-            <span className="hidden text-xl font-bold sm:inline">{storeName}</span>
+            <span className="hidden text-xl font-bold sm:inline" style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>{storeName}</span>
           </Link>
             <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{SITE.heroDesc}</p>
             <div className="mt-4 flex items-center gap-3">

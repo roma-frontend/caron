@@ -79,7 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/" className="transition-transform hover:scale-110">
           <Logo size={32} />
         </Link>
-        <span className="font-bold">{storeName}</span>
+        <span className="font-bold" style={{fontFamily: 'var(--font-playfair), Georgia, serif' }}>{storeName}</span>
         
         <button onClick={() => setSidebarOpen(false)} className="ml-2 lg:hidden"><X className="h-5 w-5" /></button>
       </div>

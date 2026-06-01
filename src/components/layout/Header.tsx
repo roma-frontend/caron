@@ -69,7 +69,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Logo size={36} />
-            <span className="text-xl font-bold sm:inline">{storeName}</span>
+            <span className="text-xl font-bold sm:inline" style={{fontFamily: 'var(--font-playfair), Georgia, serif' }}>{storeName}</span>
           </Link>
 
           {/* Desktop Nav */}
