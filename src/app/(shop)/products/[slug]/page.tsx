@@ -231,7 +231,7 @@ export default function ProductDetailPage() {
               onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Button size="icon" variant="outline" title={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
               className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11 hover:text-red-500 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20'}
               onClick={() => toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null })}>

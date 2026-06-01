@@ -20,9 +20,9 @@ export function RecentlyViewed() {
   const visible = items.slice(0, 6);
 
   return (
-    <section className="mx-auto w-full" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <section className="mx-auto w-full" style={{ maxWidth: 'var(--container-max)' }}>
       <h2 className="mb-6 text-xl font-bold">{'Վերջերս դիտված ապրանքներ'}</h2>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {visible.map((item, i) => (
           <ProductCard key={item.id} id={item.id} slug={item.slug} name={item.name} price={item.price} image={getImage(item.id, item.image)} index={i} />
         ))}
