@@ -168,34 +168,32 @@ export default function HomePage() {
         {settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>Բրենդեր</h2>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3">
             {brands?.slice(0, 8).map((b) => {
               const color = BRAND_COLORS[b] || '#666';
-              const initials = b.split(/[\s-]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
               return (
                 <Link key={b} href={`/products?brand=${encodeURIComponent(b)}`}
-                  className="group relative flex h-24 w-44 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-1.5 hover:shadow-xl"
-                  style={{ borderColor: `${color}30` }}>
-                  {/* Colored top bar */}
-                  <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(90deg, ${color}, ${color}88, ${color})` }} />
-                  {/* Hover glow */}
-                  <div className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100" style={{ background: `radial-gradient(600px circle at 50% 50%, ${color}15, transparent 60%)` }} />
-                  {/* Logo placeholder */}
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-black tracking-wider shadow-sm" style={{ background: `${color}15`, color }}>
-                    {initials}
+                  className="group relative flex h-[72px] w-[180px] items-center gap-4 rounded-xl bg-card px-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg overflow-hidden"
+                  style={{ borderLeft: `4px solid ${color}` }}>
+                  {/* Hover bg fill */}
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background: `linear-gradient(90deg, ${color}08, transparent)` }} />
+                  {/* Color dot */}
+                  <div className="relative h-10 w-10 shrink-0 rounded-lg flex items-center justify-center text-sm font-black tracking-wider shadow-sm" style={{ background: color, color: '#fff' }}>
+                    {b.charAt(0)}
                   </div>
-                  {/* Brand name */}
-                  <span className="text-sm font-bold tracking-tight" style={{ color }}>{b}</span>
-                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground/50">OEM</span>
+                  <div className="relative">
+                    <p className="text-base font-bold tracking-tight" style={{ color }}>{b}</p>
+                    {/* <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-medium"></p> */}
+                  </div>
+                  <ArrowRight className="relative ml-auto h-4 w-4 shrink-0 text-muted-foreground/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary" />
                 </Link>
               );
             })}
             {brands && brands.length > 8 && (
               <Link href="/products?brand=all"
-                className="group flex h-24 w-44 flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed bg-card/50 text-muted-foreground transition-all hover:-translate-y-1.5 hover:shadow-md hover:border-primary/40 hover:text-primary">
-                <span className="text-2xl font-light">+</span>
-                <span className="text-xs font-semibold">Դիտել Բոլորը</span>
-                <ArrowRight className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                className="flex h-[72px] w-[180px] items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-card/50 text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/30 hover:text-primary">
+                <span className="text-lg font-light">+</span>
+                <span className="text-sm font-medium">Все бренды</span>
               </Link>
             )}
           </div>

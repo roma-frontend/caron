@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore, useEffect } from 'react';
+import { useState, useSyncExternalStore, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -50,6 +50,15 @@ export default function ProductsPage() {
 
   const isVehicleSearch = !!vehicle && (search?.includes(vehicle.brand) || !!params.get('q'));
   const activeBrand = filters.brand || urlBrand || undefined;
+  const [brandLoading, setBrandLoading] = useState(false);
+  const brandTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const prevBrand = useRef(activeBrand);
+  if (prevBrand.current !== activeBrand) {
+    prevBrand.current = activeBrand;
+    setBrandLoading(true);
+    clearTimeout(brandTimer.current);
+    brandTimer.current = setTimeout(() => setBrandLoading(false), 400);
+  }
 
   /** Detect products matching the brand for auto-category */
   const brandProducts = useQuery(api.customers.getByBrand, urlBrand ? { brand: urlBrand } : 'skip');
@@ -128,7 +137,7 @@ export default function ProductsPage() {
             <div className="mb-5 flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2.5 text-sm">
               <Car className="h-4 w-4 text-primary" />
               <span className="font-medium">{[vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' ')}</span>
-              <button onClick={() => { clearVehicle(); setSearch(''); }} className="ml-auto text-muted-foreground transition-colors hover:text-foreground">{'\u0549\u0565\u0572\u0561\u0580\u056F\u0565\u056C \u2715'}</button>
+              <button onClick={() => { clearVehicle(); setSearch(''); }} className="ml-auto text-muted-foreground transition-colors hover:text-foreground">{'Մաքրել'}</button>
             </div>
           )}
 
@@ -139,25 +148,27 @@ export default function ProductsPage() {
                   {c.label} <X className="h-3 w-3" />
                 </button>
               ))}
-              <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'\u0544\u0561\u0584\u0580\u0565\u056C \u0562\u0578\u056C\u0578\u0580\u0568'}</button>
+              <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'Դասավորել ֆիլտրերը'}</button>
             </div>
           )}
 
-          <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
-            {results.map((p, i) => (
-              <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
-            ))}
-          </div>
-
-          {results.length === 0 && status !== 'LoadingFirstPage' && (
-            <div className="py-16 text-center text-muted-foreground">{'\u0548\u0579 \u0574\u056B \u0561\u057A\u0580\u0561\u0576\u0584 \u0579\u056B \u0563\u057F\u0576\u057E\u0565\u056C'}</div>
+          {!brandLoading && (
+            <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+              {results.map((p, i) => (
+                <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
+              ))}
+            </div>
           )}
 
-          {status === 'LoadingFirstPage' && <ProductGridSkeleton />}
+          {!brandLoading && results.length === 0 && status !== 'LoadingFirstPage' && (
+            <div className="py-16 text-center text-muted-foreground">{'Ոչ մի ապրանք չի գտնվել'}</div>
+          )}
+
+          {(status === 'LoadingFirstPage' || brandLoading) && <ProductGridSkeleton />}
 
           {status === 'CanLoadMore' && (
             <div className="mt-8 flex justify-center">
-              <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'\u054F\u0565\u057D\u0576\u0565\u056C \u0561\u057E\u0565\u056C\u056B\u0576'}</Button>
+              <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Բեռնել ավելի շատ ապրանքներ'}</Button>
             </div>
           )}
 
