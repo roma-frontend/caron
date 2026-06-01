@@ -10,6 +10,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SlidersHorizontal, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { Id } from '../../convex/_generated/dataModel';
 import { PRODUCT } from '@/lib/constants';
+import { useSettings } from '@/hooks/useSettings';
 
 type FilterValues = Record<string, unknown>;
 type Filters = { categoryId?: Id<'categories'>; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
@@ -84,6 +85,7 @@ export function SortBar({ activeFilters, onFilterChange }: { activeFilters: Filt
 
 
 function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
+  const settings = useSettings();
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['category', 'price', 'sale', 'rating']));
   const selectedCat = activeFilters.categoryId ?? categoryId;
   const filterDefs = useQuery(api.filters.getByCategory, selectedCat ? { categoryId: selectedCat } : 'skip');
@@ -129,7 +131,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
       )}
 
       {/* Price - Dual Range Slider */}
-      <Section title="Գին" k="price" expanded={expanded} toggle={toggle}>
+      {settings?.enablePriceFilter !== false && <Section title="Գին" k="price" expanded={expanded} toggle={toggle}>
         <div className="flex gap-2 mb-3">
           <div className="flex-1">
             <label className="text-[10px] text-muted-foreground mb-1 block">Սկսած</label>
@@ -156,6 +158,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
             className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label="Առավելագույն գին" />
         </div>
       </Section>
+      }
 
       {/* Stock + Sale */}
       <Section title="Մնացորդ" k="stock" expanded={expanded} toggle={toggle}>

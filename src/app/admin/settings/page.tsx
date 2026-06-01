@@ -582,11 +582,11 @@ export default function AdminSettingsPage() {
               <div className="flex flex-wrap gap-6">
                 <div className="flex items-center gap-2">
                   <Switch checked={flags.enableCookieConsent === true} onCheckedChange={(v) => saveField('enableCookieConsent', v)} />
-                  <span className="text-sm">{'Cookie Consent'}</span>
+                  <span className="text-sm">{'Cookie Համաձայնություն'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={flags.enableNewsletter === true} onCheckedChange={(v) => saveField('enableNewsletter', v)} />
-                  <span className="text-sm">{'Newsletter (footer)'}</span>
+                  <span className="text-sm">{'Նորություններ (footer)'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={flags.enableRegistration !== false} onCheckedChange={(v) => saveField('enableRegistration', v)} />
@@ -668,6 +668,7 @@ export default function AdminSettingsPage() {
                 ['showBrands', 'Բրենդների շարք (գլխավոր)'],
                 ['showFeatures', 'Առավելությունների բաժին (գլխավոր)'],
                 ['enableCarSelector', 'Ավտոյի ընտրիչ'],
+                ['enablePriceFilter', 'Գնի ֆիլտր'],
                 ['enableReviews', 'Ապրանքի գնահատականներ'],
               ] as [string, string][]).map(([key, label]) => (
                 <div key={key} className="flex items-center justify-between gap-3">

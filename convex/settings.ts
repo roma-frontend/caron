@@ -122,6 +122,7 @@ export const save = mutation({
     showBrands: v.optional(v.boolean()),
     showFeatures: v.optional(v.boolean()),
     enableCarSelector: v.optional(v.boolean()),
+    enablePriceFilter: v.optional(v.boolean()),
     enableReviews: v.optional(v.boolean()),
     minOrderAmount: v.optional(v.number()),
     enableQuickBuy: v.optional(v.boolean()),

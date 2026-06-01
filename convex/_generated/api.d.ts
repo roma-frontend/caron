@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as backInStock from "../backInStock.js";
 import type * as categories from "../categories.js";
 import type * as coupons from "../coupons.js";
+import type * as customers from "../customers.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as notifications from "../notifications.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   backInStock: typeof backInStock;
   categories: typeof categories;
   coupons: typeof coupons;
+  customers: typeof customers;
   filters: typeof filters;
   "lib/auth": typeof lib_auth;
   notifications: typeof notifications;

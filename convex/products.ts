@@ -13,6 +13,7 @@ export const listPaginated = query({
     inStockOnly: v.optional(v.boolean()),
     onSale: v.optional(v.boolean()),
     minRating: v.optional(v.number()),
+    brand: v.optional(v.string()),
     sort: v.optional(v.union(v.literal('newest'), v.literal('priceAsc'), v.literal('priceDesc'), v.literal('popular'))),
     attributes: v.optional(v.any()),
     paginationOpts: paginationOptsValidator,
@@ -53,6 +54,7 @@ export const listPaginated = query({
     if (args.inStockOnly) filtered = filtered.filter((p) => p.stock > 0);
     if (args.onSale) filtered = filtered.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price);
     if (args.minRating) filtered = filtered.filter((p) => (p.rating ?? 0) >= args.minRating!);
+    if (args.brand) filtered = filtered.filter((p) => p.brand?.toLowerCase() === args.brand!.toLowerCase());
 
     // Attribute filtering (arbitrary keys can't be indexed)
     if (args.attributes && typeof args.attributes === 'object') {
@@ -174,7 +176,8 @@ export const create = mutation({
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
     compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
-    images: v.array(v.string()), sku: v.optional(v.string()), stock: v.number(),
+    images: v.array(v.string()), brand: v.optional(v.string()),
+    sku: v.optional(v.string()), stock: v.number(),
     isActive: v.boolean(), isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
     attributes: v.optional(v.any()),
@@ -197,7 +200,8 @@ export const update = mutation({
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
     compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
-    images: v.optional(v.array(v.string())), sku: v.optional(v.string()),
+    images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
+    sku: v.optional(v.string()),
     stock: v.optional(v.number()), isActive: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),

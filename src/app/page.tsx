@@ -44,6 +44,8 @@ function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; ind
 export default function HomePage() {
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
+  const allProds = useQuery(api.products.list, { limit: 500 });
+  const brands = allProds ? [...new Set(allProds.filter((p) => p.brand).map((p) => p.brand as string))].sort() : undefined;
   const settings = useSettings();
   return (
     <div className="flex min-h-screen flex-col">
@@ -152,15 +154,23 @@ export default function HomePage() {
         </section>
         )}
 
-        {/* Trusted brands */}
+        {/* Brands */}
         {settings?.showBrands !== false && (
-        <section className="marquee-pause overflow-hidden border-y bg-muted/30" style={{ paddingBlock: 'var(--space-8)' }}>
-          <div className="marquee-mask">
-            <div className="flex w-max animate-marquee">
-              {['Bosch', 'Michelin', 'Mobil', 'Castrol', 'Continental', 'Brembo', 'NGK', 'Hella', 'Bosch', 'Michelin', 'Mobil', 'Castrol', 'Continental', 'Brembo', 'NGK', 'Hella'].map((b, i) => (
-                <span key={i} className="px-8 text-lg font-bold tracking-tight text-muted-foreground/60 sm:text-xl">{b}</span>
-              ))}
-            </div>
+        <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
+          <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>Բրենդներ</h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {brands?.slice(0, 8).map((b) => (
+              <Link key={b} href={`/products?brand=${encodeURIComponent(b)}`}
+                className="flex items-center gap-2 rounded-xl border bg-card px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
+                {b}
+              </Link>
+            ))}
+            {brands && brands.length > 8 && (
+              <Link href="/products?brand=all"
+                className="flex items-center gap-2 rounded-xl border bg-primary/5 px-5 py-3 text-sm font-semibold text-primary transition-all hover:-translate-y-0.5 hover:shadow-md hover:bg-primary/10">
+                Դիտել Բոլորը <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
         </section>
         )}

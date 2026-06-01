@@ -29,7 +29,7 @@ export default function EditProductPage() {
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState<{ name?: string; price?: number; stock?: number; description?: string; sku?: string; compareAtPrice?: number; discountPercent?: number; attributes?: Record<string, unknown> }>({});
+  const [form, setForm] = useState<{ name?: string; price?: number; brand?: string; stockIncrement?: number; stock?: number; description?: string; sku?: string; compareAtPrice?: number; discountPercent?: number; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +38,7 @@ export default function EditProductPage() {
 
   // Init form when product loads
   if (currentProduct && !form.name) {
-    setForm({ name: currentProduct.name, price: currentProduct.price, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
+    setForm({ name: currentProduct.name, price: currentProduct.price, brand: currentProduct.brand, stockIncrement: 1, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
     setImages(currentProduct.images ?? []);
   }
 
@@ -71,6 +71,7 @@ export default function EditProductPage() {
         id: productId,
         name: form.name,
         price: Number(form.price),
+        brand: form.brand || undefined,
         compareAtPrice: form.discountPercent === 0 ? 0 : (form.compareAtPrice || undefined),
         stock: Number(form.stock),
         description: form.description,
@@ -130,7 +131,7 @@ export default function EditProductPage() {
           <CardHeader><CardTitle>Ապրանքի տվյալներ</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div><Label>Անվանում</Label><Input value={form.name ?? ''} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11" /></div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div><Label>Գին (֏)</Label><Input type="number" value={form.price ?? ''} onChange={(e) => {
                 const p = Number(e.target.value);
                 const d = form.discountPercent ?? 0;
@@ -146,6 +147,16 @@ export default function EditProductPage() {
                 const p = form.price ?? 0;
                 setForm({ ...form, discountPercent: d, compareAtPrice: d > 0 && p > 0 ? Math.round(p / (1 - d / 100)) : undefined });
               }} className="h-11" min={0} max={100} /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div><Label>Բրենդ</Label><Input value={form.brand ?? ''} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-11" placeholder="Bosch, Mobil..." /></div>
+              <div><Label>Փաթեթ (+N)</Label>
+                <div className="flex gap-1">
+                  <Input type="number" value={form.stockIncrement ?? 1} onChange={(e) => setForm({ ...form, stockIncrement: Number(e.target.value) })} className="h-11 w-16 text-xs" />
+                  <button onClick={() => setForm({ ...form, stock: (form.stock ?? 0) + (form.stockIncrement ?? 1) })} className="h-11 w-11 rounded-lg border bg-primary/10 text-primary font-bold hover:bg-primary/20">+</button>
+                  <button onClick={() => setForm({ ...form, stock: Math.max(0, (form.stock ?? 0) - (form.stockIncrement ?? 1)) })} className="h-11 w-11 rounded-lg border bg-destructive/10 text-destructive font-bold hover:bg-destructive/20">−</button>
+                </div>
+              </div>
               <div><Label>Պահեստ</Label><Input type="number" value={form.stock ?? ''} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className="h-11" /></div>
             </div>
             <div><Label>Նկարագրություն</Label><Textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} /></div>

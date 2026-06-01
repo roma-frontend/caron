@@ -35,17 +35,20 @@ export default function ProductsPage() {
   const clearVehicle = useVehicleStore((s) => s.clear);
   const cats = useQuery(api.categories.list, {});
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const urlBrand = params.get('brand');
   const [filters, setFilters] = useState<{
-    categoryId?: Id<'categories'>; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
+    categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
   }>({});
 
   const isVehicleSearch = !!vehicle && (search?.includes(vehicle.brand) || !!params.get('q'));
+  const activeBrand = filters.brand || urlBrand || undefined;
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.products.listPaginated,
     {
       search: isVehicleSearch ? undefined : (search || undefined),
       categoryId: filters.categoryId,
+      brand: activeBrand,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       inStockOnly: filters.inStockOnly,
@@ -60,6 +63,7 @@ export default function ProductsPage() {
   );
 
   const fchips: { key: string; label: string; clear: () => void }[] = [];
+  if (activeBrand) fchips.push({ key: 'brand', label: `${activeBrand}`, clear: () => setFilters({ ...filters, brand: undefined }) });
   if (filters.categoryId) fchips.push({ key: 'cat', label: cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա', clear: () => setFilters({ ...filters, categoryId: undefined, attributes: undefined }) });
   if (filters.onSale) fchips.push({ key: 'sale', label: 'Զեղչված', clear: () => setFilters({ ...filters, onSale: undefined }) });
   if (filters.minRating) fchips.push({ key: 'rating', label: `${filters.minRating}★+`, clear: () => setFilters({ ...filters, minRating: undefined }) });
