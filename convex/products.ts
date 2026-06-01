@@ -321,3 +321,33 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+export const bulkCreate = mutation({
+  args: {
+    sessionToken: v.string(),
+    products: v.array(
+      v.object({
+        name: v.string(),
+        slug: v.string(),
+        description: v.string(),
+        price: v.number(),
+        compareAtPrice: v.optional(v.number()),
+        categoryId: v.id('categories'),
+        sku: v.optional(v.string()),
+        stock: v.number(),
+        isActive: v.boolean(),
+        isFeatured: v.optional(v.boolean()),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const now = Date.now();
+    let count = 0;
+    for (const p of args.products) {
+      await ctx.db.insert('products', { ...p, images: [], createdAt: now, updatedAt: now });
+      count++;
+    }
+    return `Imported ${count} products`;
+  },
+});

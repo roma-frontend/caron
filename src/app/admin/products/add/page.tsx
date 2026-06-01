@@ -173,7 +173,7 @@ export default function AddProductPage() {
     { id: 'basic', title: 'Սկզբնական տվյալներ', content: <StepBasicInfo />, validation: (d) => !!(d.name && d.slug && d.categoryId) },
     { id: 'pricing', title: 'Գնային տվյալներ', content: <StepPricing />, validation: (d) => !!(d.price && d.stock) },
     { id: 'attributes', title: 'Բնութագրեր', content: <StepAttributes /> },
-    { id: 'vehicle', title: 'Совместимость', content: <StepVehicle /> },
+    { id: 'vehicle', title: 'Համապատասխանություն', content: <StepVehicle /> },
     { id: 'seo', title: 'SEO', content: <StepSEO /> },
   ];
 
