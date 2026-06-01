@@ -63,6 +63,21 @@ export const update = mutation({
   },
 });
 
+export const listWithCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const cats = await ctx.db
+      .query('categories')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .take(100);
+    const products = await ctx.db.query('products').collect();
+    return cats.map((c) => ({
+      ...c,
+      count: products.filter((p) => p.categoryId === c._id && p.isActive).length,
+    }));
+  },
+});
+
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('categories') },
   handler: async (ctx, args) => {

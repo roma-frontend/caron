@@ -1,18 +1,21 @@
-import type { Metadata } from 'next';
-import { HOME, CATEGORIES_DATA } from '@/lib/constants';
-import { CategoryCard } from '@/components/cards/CategoryCard';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Կատեգորիաներ',
-  description: 'Ավտոպահեստամասերի կատեգորիաներ՝ գտեք ձեր մեքենայի համար անհրաժեստ պահեստամասերը:',
-};
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import { CategoryCard } from '@/components/cards/CategoryCard';
+import { Loader } from '@/components/ui/loader';
+import { HOME } from '@/lib/constants';
 
 export default function CategoriesPage() {
+  const categories = useQuery(api.categories.listWithCounts, {});
+
+  if (categories === undefined) return <Loader />;
+
   return (
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h1>
       <div className="grid" style={{ gap: 'var(--space-6)', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
-        {CATEGORIES_DATA.map((cat, i) => (
+        {categories.map((cat, i) => (
           <CategoryCard
             key={cat.slug}
             id={cat.slug}
