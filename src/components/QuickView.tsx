@@ -93,10 +93,12 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
             )}
 
             <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-primary">{formatPrice(product.price)}</span>
-              {product.compareAtPrice && (
+              <span className="text-2xl font-bold text-primary">{formatPrice(cartPrice)}</span>
+              {product.compareAtPrice ? (
                 <span className="text-sm text-muted-foreground line-through">{formatPrice(product.compareAtPrice)}</span>
-              )}
+              ) : cartPrice !== product.price ? (
+                <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+              ) : null}
             </div>
 
             {product.carBrand && (

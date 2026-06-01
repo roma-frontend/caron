@@ -168,13 +168,15 @@ export default function ProductDetailPage() {
           {product.sku && <p className="mt-1 text-sm text-muted-foreground">SKU: {product.sku}</p>}
 
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-2xl sm:text-3xl font-bold text-primary">{formatPrice(product.price)}</span>
-            {product.compareAtPrice && (
+            <span className="text-2xl sm:text-3xl font-bold text-primary">{formatPrice(cartPrice)}</span>
+            {product.compareAtPrice ? (
               <>
                 <span className="text-lg text-muted-foreground line-through">{formatPrice(product.compareAtPrice)}</span>
                 <Badge className="bg-destructive text-white">-{discountPercent(product.price, product.compareAtPrice)}%</Badge>
               </>
-            )}
+            ) : cartPrice !== product.price ? (
+              <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+            ) : null}
           </div>
 
           <div className="mt-3">
