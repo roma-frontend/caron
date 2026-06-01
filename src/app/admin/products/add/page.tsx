@@ -88,17 +88,12 @@ function StepPricing() {
         <div><Label>Համեմատական գին (֏)</Label><Input type="number" value={(data.compareAtPrice as string) ?? ''} onChange={(e) => update('compareAtPrice', e.target.value)} placeholder="15000" className="h-11" /></div>
         <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Бренд</Label><Input value={(data.brand as string) ?? ''} onChange={(e) => update('brand', e.target.value)} placeholder="Michelin, Bosch, Mobil..." className="h-11" /></div>
+      <div className="grid grid-cols-3 gap-4">
+        <div><Label>Բրենդ</Label><Input value={(data.brand as string) ?? ''} onChange={(e) => update('brand', e.target.value)} placeholder="Michelin, Bosch..." className="h-11" /></div>
+        <div><Label>Քանակի քայլ</Label><Input type="number" value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
         <div><Label>SKU</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ART-001" className="h-11" /></div>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div><Label>Партия (+N при добавлении)</Label>
-          <div className="flex gap-2">
-            <Input type="number" value={(data.stockIncrement as string) ?? '1'} onChange={(e) => update('stockIncrement', e.target.value)} className="h-11 w-20" placeholder="1" />
-            <Input type="number" value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="Количество" className="h-11" />
-          </div>
-        </div>
         <div><Label>Առկայություն *</Label><Input type="number" value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
       </div>
     </div>

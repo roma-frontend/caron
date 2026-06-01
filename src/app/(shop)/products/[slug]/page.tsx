@@ -217,9 +217,9 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">{'Քանակ'}</span>
             <div className="flex items-center rounded-lg border">
-              <button onClick={() => setQty(Math.max(1, qty - 1))} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg">-</button>
+              <button onClick={() => setQty(Math.max(product.qtyStep || 1, qty - (product.qtyStep || 1)))} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg">−</button>
               <span className="flex h-10 w-12 items-center justify-center font-semibold border-x">{qty}</span>
-              <button onClick={() => setQty(Math.min(product.stock, qty + 1))} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg">+</button>
+              <button onClick={() => setQty(Math.min(product.stock, qty + (product.qtyStep || 1)))} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg">+</button>
             </div>
           </div>
 
@@ -228,7 +228,7 @@ export default function ProductDetailPage() {
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0}
-              onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
+              onClick={() => { const step = product.qtyStep || 1; for (let i = 0; i < qty; i += step) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">

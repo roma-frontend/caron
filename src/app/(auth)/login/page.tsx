@@ -29,7 +29,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const result = await login(form);
-      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role });
+      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent });
       await setAuthCookie(result.sessionToken);
       toast.success(`Բարի գալուստ, ${result.name}!`);
       router.push('/admin');
@@ -78,6 +78,12 @@ export default function LoginPage() {
               {loading ? 'Մուտք...' : 'Մուտք'}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            {'Չունեք հաշիվ? '}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              Գրանցվել
+            </Link>
+          </p>
         </div>
       </div>
     </div>

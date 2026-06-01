@@ -18,6 +18,16 @@ import { useSettings } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 
+const BRAND_COLORS: Record<string, string> = {
+  Bosch: '#E60000', Michelin: '#FFD700', Mobil: '#0072C6', Castrol: '#005EB8',
+  Continental: '#FFAA00', Brembo: '#E30613', NGK: '#00A65A', Hella: '#F5A623',
+  Mann: '#003D7A', 'Mann-Filter': '#003D7A', Varta: '#1A5C1A', Shell: '#FFD500',
+  'Liqui Moly': '#003D7A', Motul: '#005EB8', Philips: '#005CB9', Osram: '#00A3E0',
+  Denso: '#E60000', Mahle: '#005A8C', Bridgestone: '#E60012', Goodyear: '#000000',
+  Pirelli: '#FFCC00', Hankook: '#004EA2', Yokohama: '#001F5B', Dunlop: '#005A8C',
+  Toyo: '#E60012', Kumho: '#009944',
+};
+
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
 
 
@@ -157,18 +167,19 @@ export default function HomePage() {
         {/* Brands */}
         {settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-          <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>Բրենդներ</h2>
+          <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>Բրենդեր</h2>
           <div className="flex flex-wrap justify-center gap-3">
             {brands?.slice(0, 8).map((b) => (
               <Link key={b} href={`/products?brand=${encodeURIComponent(b)}`}
-                className="flex items-center gap-2 rounded-xl border bg-card px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
-                {b}
+                className="flex h-20 w-40 items-center justify-center rounded-xl border-2 bg-card px-4 text-sm font-bold tracking-tight shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:border-primary/40"
+                style={{ borderColor: BRAND_COLORS[b] ?? undefined }}>
+                <span style={{ color: BRAND_COLORS[b] ?? undefined }}>{b}</span>
               </Link>
             ))}
             {brands && brands.length > 8 && (
               <Link href="/products?brand=all"
-                className="flex items-center gap-2 rounded-xl border bg-primary/5 px-5 py-3 text-sm font-semibold text-primary transition-all hover:-translate-y-0.5 hover:shadow-md hover:bg-primary/10">
-                Դիտել Բոլորը <ArrowRight className="h-4 w-4" />
+                className="flex h-20 w-40 items-center justify-center rounded-xl border-2 border-dashed bg-card/50 px-4 text-sm font-semibold text-muted-foreground transition-all hover:-translate-y-1 hover:shadow-md hover:border-primary/40 hover:text-primary">
+                Դիտել Բոլորը <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
             )}
           </div>
@@ -180,11 +191,6 @@ export default function HomePage() {
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
               <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
-              <Link href="/products">
-                <Button variant="ghost" className="gap-1 text-sm">
-                  Բոլոր ապրանքները <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {featured === undefined

@@ -36,13 +36,13 @@ export default function AdminCustomersPage() {
     try {
       const newType = current === 'wholesale' ? 'retail' : 'wholesale';
       await updateCustomer({ sessionToken, userId, customerType: newType as 'retail' | 'wholesale' });
-      toast.success(`Клиент переведён в ${newType === 'wholesale' ? 'մեծածախ' : 'մանրածախ'}`);
-    } catch { toast.error('Ошибка'); }
+      toast.success(`Հաճախորդը տեղափոխվեց ${newType === 'wholesale' ? 'մեծածախ' : 'մանրածախ'}`);
+    } catch { toast.error('Սխալ առաջացավ'); }
   };
 
   const setDiscount = async (userId: Id<'users'>, discountPercent: number) => {
     if (!sessionToken) return;
-    try { await updateCustomer({ sessionToken, userId, discountPercent }); toast.success('Скидка сохранена'); } catch { toast.error('Ошибка'); }
+    try { await updateCustomer({ sessionToken, userId, discountPercent }); toast.success('Скидка сохранена'); } catch { toast.error('Սխալ առաջացավ'); }
   };
 
   if (customers === undefined) return <Loader />;
@@ -51,8 +51,8 @@ export default function AdminCustomersPage() {
     <div>
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Покупатели</h1>
-          <p className="text-sm text-muted-foreground">{customers.total} зарегистрировано</p>
+          <h1 className="text-2xl font-bold">Հաճախորդներ</h1>
+          <p className="text-sm text-muted-foreground">{customers.total} գրանցվել է</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setViewMode('grid')} className={`rounded-lg p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}><LayoutGrid className="h-4 w-4" /></button>
@@ -63,12 +63,12 @@ export default function AdminCustomersPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Поиск по имени, email, телефону..." className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Որոնել անուն, էլ. փոստ, հեռախոսահամար..." className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
-          <option value="all">Все</option>
-          <option value="retail">Розница</option>
-          <option value="wholesale">Опт</option>
+          <option value="all">Բոլորը</option>
+          <option value="retail">Մանրածախ</option>
+          <option value="wholesale">Մեծածախ</option>
         </select>
       </div>
 
@@ -83,13 +83,13 @@ export default function AdminCustomersPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr className="border-b">
-                <th className="p-3 text-left font-medium">Имя</th>
-                <th className="p-3 text-left font-medium">Email</th>
-                <th className="p-3 text-left font-medium">Телефон</th>
-                <th className="p-3 text-left font-medium">Тип</th>
-                <th className="p-3 text-left font-medium">Скидка</th>
-                <th className="p-3 text-left font-medium">Статус</th>
-                <th className="p-3 text-left font-medium">Дата</th>
+                <th className="p-3 text-left font-medium">Անուն</th>
+                <th className="p-3 text-left font-medium">Էլ. փոստ</th>
+                <th className="p-3 text-left font-medium">Հեռախոս</th>
+                <th className="p-3 text-left font-medium">Տիպ</th>
+                <th className="p-3 text-left font-medium">Զեղչ</th>
+                <th className="p-3 text-left font-medium">Ստատուս</th>
+                <th className="p-3 text-left font-medium">Ամսաթիվ</th>
               </tr>
             </thead>
             <tbody>
@@ -100,14 +100,14 @@ export default function AdminCustomersPage() {
                   <td className="p-3 text-muted-foreground">{c.phone || '—'}</td>
                   <td className="p-3">
                     <Badge variant={c.customerType === 'wholesale' ? 'default' : 'secondary'} className="text-[10px] cursor-pointer" onClick={() => toggleType(c._id, c.customerType)}>
-                      {c.customerType === 'wholesale' ? 'Опт' : 'Розница'}
+                      {c.customerType === 'wholesale' ? 'Մեծածախ' : 'Մանրածախ'}
                     </Badge>
                   </td>
                   <td className="p-3">
                     <input type="number" className="h-7 w-16 rounded border border-input bg-background px-2 text-xs" defaultValue={c.discountPercent ?? 0} onBlur={(e) => setDiscount(c._id, Number(e.target.value))} />
                     <span className="text-xs text-muted-foreground ml-1">%</span>
                   </td>
-                  <td className="p-3">{c.isActive ? <Badge className="text-[10px] bg-green-500">Актив</Badge> : <Badge variant="secondary" className="text-[10px]">Блок</Badge>}</td>
+                  <td className="p-3">{c.isActive ? <Badge className="text-[10px] bg-green-500">Ակտիվ</Badge> : <Badge variant="secondary" className="text-[10px]">Բլոկ</Badge>}</td>
                   <td className="p-3 text-xs text-muted-foreground">{formatDateHy(c.createdAt)}</td>
                 </tr>
               ))}
@@ -117,7 +117,7 @@ export default function AdminCustomersPage() {
       )}
 
       {customers.page.length === 0 && (
-        <div className="py-16 text-center text-muted-foreground">Покупатели не найдены</div>
+        <div className="py-16 text-center text-muted-foreground">Հաճախորդներ չեն գտնվել</div>
       )}
     </div>
   );
@@ -135,7 +135,7 @@ function CustomerCard({ customer, sessionToken, onToggleType, onSetDiscount }: {
             {customer.name.charAt(0).toUpperCase()}
           </div>
           <Badge variant={customer.customerType === 'wholesale' ? 'default' : 'secondary'} className="cursor-pointer text-[10px]" onClick={onToggleType}>
-            {customer.customerType === 'wholesale' ? 'Опт' : 'Розница'}
+            {customer.customerType === 'wholesale' ? 'Մեծածախ' : 'Մանրածախ'}
           </Badge>
         </div>
         <h3 className="mt-2 font-semibold truncate">{customer.name}</h3>
@@ -150,7 +150,7 @@ function CustomerCard({ customer, sessionToken, onToggleType, onSetDiscount }: {
             <span className="text-xs text-muted-foreground">%</span>
           </div>
           <Badge variant={customer.isActive ? 'default' : 'secondary'} className="text-[10px]">
-            {customer.isActive ? 'Актив' : 'Блок'}
+            {customer.isActive ? 'Ակտիվ' : 'Բլոկավորված'}
           </Badge>
         </div>
       </CardContent>

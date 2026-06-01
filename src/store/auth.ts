@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 
 interface AuthState {
   sessionToken: string | null;
-  user: { id: string; name: string; email: string; role: string } | null;
-  setSession: (token: string, user: { id: string; name: string; email: string; role: string }) => void;
+  user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number } | null;
+  setSession: (token: string, user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number }) => void;
   logout: () => void;
   _hasHydrated: boolean;
   setHasHydrated: (v: boolean) => void;

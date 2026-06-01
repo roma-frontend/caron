@@ -68,6 +68,7 @@ export default defineSchema(
     sku: v.optional(v.string()),
     stock: v.number(),
     brand: v.optional(v.string()),
+    qtyStep: v.optional(v.number()),
     isActive: v.boolean(),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),

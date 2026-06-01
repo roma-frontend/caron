@@ -17,6 +17,7 @@ const QuickView = dynamic(() => import('@/components/QuickView').then((m) => ({ 
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuthStore } from '@/store/auth';
 
 interface ProductCardProps {
   id: string;
@@ -34,6 +35,7 @@ interface ProductCardProps {
   reviewCount?: number;
   carBrand?: string;
   promoDiscountPercent?: number;
+  qtyStep?: number;
   attributes?: Record<string, unknown>;
   index?: number;
   description?: string;
@@ -52,7 +54,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, price, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, attributes, index = 0, description, compact }: ProductCardProps) {
+export function ProductCard({ id, name, slug, price, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -62,6 +64,12 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === id));
   const vehicle = useVehicleStore((s) => s.vehicle);
   const settings = useSettings();
+  const currentUser = useAuthStore((s) => s.user);
+  const [qty, setQty] = useState(1);
+  const step = qtyStep || 1;
+  const isWholesale = currentUser?.customerType === 'wholesale';
+  const discount = currentUser?.discountPercent ?? 0;
+  const displayPrice = isWholesale ? Math.round(price * (1 - discount / 100)) : price;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
 
@@ -90,14 +98,20 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               <Link href={`/products/${slug}`} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-sm font-bold text-primary shrink-0">{formatPrice(price)}</span>
+                  <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
                   {compareAtPrice && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(compareAtPrice)}</span>}
+                  {isWholesale && discount > 0 && <span className="text-[10px] font-bold text-primary">-{discount}%</span>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={(e) => { e.preventDefault(); toggleFav({ id, name, price, image: image ?? null }); }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
-                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={handleAddToCart}>
+                  <div className="flex items-center rounded-lg border h-7">
+                    <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-l-lg">−</button>
+                    <span className="flex h-full w-6 items-center justify-center text-[10px] font-semibold border-x">{qty}</span>
+                    <button onClick={(e) => { e.preventDefault(); setQty(Math.min(stock ?? 999, qty + step)); }} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-r-lg">+</button>
+                  </div>
+                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price, image: image ?? null }); }}>
                     <ShoppingCart className="h-3 w-3" />
                   </Button>
                 </div>
@@ -191,8 +205,11 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               ) : null}
 
               <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <span className="text-lg font-bold text-primary">{formatPrice(price)}</span>
+                <span className="text-lg font-bold text-primary">{formatPrice(displayPrice)}</span>
                 {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
+                {isWholesale && discount > 0 && (
+                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Опт -{discount}%</span>
+                )}
               </div>
 
               {fits && (
@@ -206,10 +223,17 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
             </div>
 
             <div className="px-4 pb-4">
-              <Button size="sm" className="w-full gap-2 rounded-xl" disabled={!inStock} onClick={handleAddToCart}
-                aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
-                <ShoppingCart data-cart-icon className="h-4 w-4" /> {PRODUCT.addToCart}
-              </Button>
+              <div className="flex gap-1.5">
+                <div className="flex items-center rounded-lg border">
+                  <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg">−</button>
+                  <span className="flex h-9 w-8 items-center justify-center text-xs font-semibold border-x">{qty}</span>
+                  <button onClick={(e) => { e.preventDefault(); setQty(Math.min(stock ?? 999, qty + step)); }} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg">+</button>
+                </div>
+                <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price, image: image ?? null }); }}
+                  aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
+                  <ShoppingCart data-cart-icon className="h-4 w-4" /> {PRODUCT.addToCart}
+                </Button>
+              </div>
             </div>
           </div>
         )}
