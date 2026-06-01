@@ -86,21 +86,21 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
             <Link href={`/products/${slug}`} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
               {image ? <Image src={image} alt={name} width={64} height={64} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
             </Link>
-            <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-              <div className="min-w-0">
-                <Link href={`/products/${slug}`} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
-                <div className="flex items-center flex-wrap gap-2 mt-0.5">
-                  <span className="text-sm font-bold text-primary">{formatPrice(price)}</span>
-                  {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+              <Link href={`/products/${slug}`} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-bold text-primary shrink-0">{formatPrice(price)}</span>
+                  {compareAtPrice && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(compareAtPrice)}</span>}
                 </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button onClick={(e) => { e.preventDefault(); toggleFav({ id, name, price, image: image ?? null }); }} aria-label="Նախընտրած" className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
-                  <Heart className={`h-3.5 w-3.5 ${isFav ? 'fill-current' : ''}`} />
-                </button>
-                <Button size="sm" className="h-8 gap-1 rounded-lg text-xs" disabled={!inStock} onClick={handleAddToCart}>
-                  <ShoppingCart className="h-3 w-3" />
-                </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={(e) => { e.preventDefault(); toggleFav({ id, name, price, image: image ?? null }); }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
+                    <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
+                  </button>
+                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={handleAddToCart}>
+                    <ShoppingCart className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
