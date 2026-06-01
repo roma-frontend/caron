@@ -153,7 +153,7 @@ export default function ImportProductsPage() {
         try {
           mapped.push(parseRow(headers, rows[i], categoriesMap));
         } catch (e) {
-          errs.push(`Рядок ${i + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+          errs.push(`Տող ${i + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
         }
       }
       if (mapped.length === 0) { toast.error('Չհաջողվեց գտնել որևէ տող'); return; }
@@ -266,7 +266,7 @@ export default function ImportProductsPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-amber-600 mb-2">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">{errors.length} рядков с ошибками</span>
+              <span className="text-sm font-medium">{errors.length} սխալ</span>
             </div>
             <div className="max-h-32 overflow-y-auto space-y-1">{errors.map((e, i) => <p key={i} className="text-xs text-muted-foreground">{e}</p>)}</div>
           </CardContent>
@@ -322,7 +322,7 @@ export default function ImportProductsPage() {
 
       {/* Category reference */}
       <details className="text-xs text-muted-foreground">
-        <summary className="cursor-pointer hover:text-foreground">Доступные категории в системе</summary>
+        <summary className="cursor-pointer hover:text-foreground">Հայտնի կատեգորիաներ</summary>
         <div className="mt-2 flex flex-wrap gap-1.5">{catKeys.map((k) => <Badge key={k} variant="outline" className="text-[10px]">{k}</Badge>)}</div>
       </details>
     </div>
