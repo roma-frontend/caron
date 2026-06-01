@@ -48,7 +48,7 @@ export const checkAndNotify = action({
           `<b>Հին գին՝</b> ${sub.priceAtSubscribe.toLocaleString()} ֏`,
           `<b>Նոր գին՝</b> ${args.newPrice.toLocaleString()} ֏`,
           `<b>Տարբերություն՝</b> -${drop.toLocaleString()} ֏ (-${Math.round(drop / sub.priceAtSubscribe * 100)}%)`,
-          `<a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://drivex.am'}/products/${args.productId}">🛒 Դիտել ապրանքը</a>`,
+          `<a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am'}/products/${args.productId}">🛒 Դիտել ապրանքը</a>`,
           `━━━━━━━━━━━━━━━━━━`,
         ].join('\n');
         try {

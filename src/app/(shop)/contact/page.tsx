@@ -3,7 +3,7 @@ import ContactPage from './_client';
 
 export const metadata: Metadata = {
   title: 'Կապ',
-  description: 'Կապվեք մեզ հեռախոսով, էլ. փոստով կամ այցելեք մեր խանութը: DriveX Armenia:',
+  description: 'Կապվեք մեզ հեռախոսով, էլ. փոստով կամ այցելեք մեր խանութը: Caron Armenia:',
 };
 
 export default function Page() {

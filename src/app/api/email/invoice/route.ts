@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'DriveX <noreply@drivex.am>',
+      from: 'Caron <noreply@caron.am>',
       to: escapeHtml(to),
       subject: `Պատվեր #${escapeHtml(orderNumber)}`,
       html,

@@ -20,8 +20,8 @@
   </g>
 
   <!-- Text -->
-  <text x="600" y="270" text-anchor="middle" font-family="system-ui,sans-serif" font-size="96" font-weight="800" fill="white">DriveX</text>
+  <text x="600" y="270" text-anchor="middle" font-family="system-ui,sans-serif" font-size="96" font-weight="800" fill="white">Caron</text>
   <text x="600" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="42" font-weight="600" fill="white" opacity="0.85">Armenia</text>
   <text x="600" y="410" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" fill="white" opacity="0.55">Ավտոպահեստամասերի առցանց խանութ</text>
-  <text x="600" y="460" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" fill="#FFD700" opacity="0.8">drivex.am</text>
+  <text x="600" y="460" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" fill="#FFD700" opacity="0.8">caron.am</text>
 </svg>

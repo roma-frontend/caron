@@ -293,15 +293,15 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <Label>Telegram</Label>
-                <Input value={form.telegram ?? ''} onChange={(e) => set('telegram', e.target.value)} placeholder="@auto_parts_am" className="h-10" />
+                <Input value={form.telegram ?? ''} onChange={(e) => set('telegram', e.target.value)} placeholder="@acaron_am" className="h-10" />
               </div>
               <div>
                 <Label>Instagram</Label>
-                <Input value={form.instagram ?? ''} onChange={(e) => set('instagram', e.target.value)} placeholder="@auto_parts_am" className="h-10" />
+                <Input value={form.instagram ?? ''} onChange={(e) => set('instagram', e.target.value)} placeholder="@caron_am" className="h-10" />
               </div>
               <div>
                 <Label>Facebook</Label>
-                <Input value={form.facebook ?? ''} onChange={(e) => set('facebook', e.target.value)} placeholder="drivex.am" className="h-10" />
+                <Input value={form.facebook ?? ''} onChange={(e) => set('facebook', e.target.value)} placeholder="caron" className="h-10" />
               </div>
             </CardContent>
           </Card>

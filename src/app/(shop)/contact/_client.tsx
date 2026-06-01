@@ -17,7 +17,7 @@ export default function ContactPage() {
   const settings = useSettings();
   const CONTACTS = [
   { icon: Phone, label: 'Հեռախոս', value: settings?.phone || '+374 XX XXX XXX', href: `tel:${settings?.phone || ''}` },
-  { icon: Mail, label: 'Էլ. փոստ', value: settings?.email || 'info@drivex.am', href: `mailto:${settings?.email || ''}` },
+  { icon: Mail, label: 'Էլ. փոստ', value: settings?.email || 'info@caron.am', href: `mailto:${settings?.email || ''}` },
   { icon: MapPin, label: 'Հասցե', value: settings?.address || 'Երեւան', href: `https://www.google.com/maps/search/${encodeURIComponent(settings?.address || '')}` },
   { icon: Clock, label: 'Աշխատանքի ժամանակ', value: settings?.workingHours || '10:00 - 19:00' },
 ];

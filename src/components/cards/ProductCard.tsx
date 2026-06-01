@@ -170,6 +170,13 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
               </button>
 
+              {carBrand && (
+                <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1.5 rounded-xl border bg-white/90 px-2.5 py-1 text-[10px] font-bold tracking-wide text-gray-800 shadow-lg backdrop-blur-xs dark:bg-gray-900/90 dark:text-gray-100 uppercase">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                  {carBrand}
+                </div>
+              )}
+
               {settings?.enableQuickView !== false && (
                 <button
                   aria-label="Արագ դիտում"
@@ -207,15 +214,15 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               <div className="mt-3 flex items-center gap-2 flex-wrap">
                 <span className="text-lg font-bold text-primary">{formatPrice(displayPrice)}</span>
                 {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
-                {isWholesale && discount > 0 && (
-                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Մեծածախ -{discount}%</span>
-                )}
               </div>
 
               {fits && (
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-600/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">
-                  <Check className="h-3 w-3" /> Համապատասխանում է ձեր {vehicle!.brand}-ին
-                </span>
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 shadow-xs dark:text-emerald-400">
+                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20">
+                    <Check className="h-2.5 w-2.5" />
+                  </div>
+                  <span>{vehicle!.brand}</span>
+                </div>
               )}
               {settings?.showStockCount && inStock && stock !== undefined && stock <= (settings.lowStockThreshold ?? 5) && (
                 <p className="mt-1.5 text-[11px] font-medium text-orange-600">Մնացել է {stock} հատ</p>

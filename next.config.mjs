@@ -113,8 +113,8 @@ const nextConfig = {
       // Redirect www to non-www (handled by Vercel, but good to have)
       {
         source: '/:path*',
-        has: [{ type: 'host', value: 'www.drivex.am' }],
-        destination: 'https://drivex.am/:path*',
+        has: [{ type: 'host', value: 'www.caron.am' }],
+        destination: 'https://caron.am/:path*',
         permanent: true,
       },
     ];

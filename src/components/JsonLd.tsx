@@ -25,9 +25,9 @@ export function JsonLd() {
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Store',
-    name: settings?.storeName || 'DriveX Armenia',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://drivex.am',
-    logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://drivex.am'}/favicon.svg`,
+    name: settings?.storeName || 'Caron Armenia',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am',
+    logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am'}/favicon.svg`,
     description: 'Ավտոպահեստամասերի առցանց խանութ Հայաստանում',
     address: { '@type': 'PostalAddress', addressLocality: 'Yerevan', addressCountry: 'AM' },
     priceRange: '$$',

@@ -24,6 +24,6 @@
     <rect x="78" y="5" width="8" height="14" rx="3" fill="#FFD700"/>
     <rect x="-86" y="5" width="8" height="14" rx="3" fill="#FF6B6B"/>
   </g>
-  <text x="256" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="42" fill="#FFFFFF" letter-spacing="4">DriveX</text>
+  <text x="256" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="42" fill="#FFFFFF" letter-spacing="4">Caron</text>
   <text x="256" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="16" fill="#FFFFFF" fill-opacity="0.7" letter-spacing="6">AUTO PARTS</text>
 </svg>

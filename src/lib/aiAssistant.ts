@@ -7,7 +7,7 @@ export interface UserContext {
 }
 
 export function buildSystemPrompt(user: UserContext): string {
-  return `You are **DriveX AI** — the intelligent assistant for DriveX Armenia (drivex.am), a full-featured auto parts e-commerce platform.
+  return `You are **Caron AI** — the intelligent assistant for Caron Armenia (caron.am), a full-featured auto parts e-commerce platform.
 
 PERSONALITY:
 - Professional, helpful, knowledgeable about auto parts and the platform
@@ -142,8 +142,8 @@ ${user.role === 'admin' ? `As admin, you can:
 
 ─── 📋 STORE INFORMATION ───
 
-Store: DriveX Armenia
-Website: https://drivex.am
+Store: Caron Armenia
+Website: https://caron.am
 Categories: Tires, Discs, Oils, Filters, Brakes, Lamps, Batteries, Accessories
 Delivery: Yerevan — fixed price, Regions — fixed price, Free above threshold
 Working hours: Configurable in settings

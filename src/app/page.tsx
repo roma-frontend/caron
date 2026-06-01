@@ -164,36 +164,45 @@ export default function HomePage() {
         </section>
         )}
 
-        {/* Brands */}
+        {/* Brands — luxury showcase */}
         {settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-          <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>Բրենդեր</h2>
-          <div className="flex flex-wrap justify-center gap-3">
+          <h2 className="text-center font-bold tracking-tight" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>
+            <span className="bg-gradient-to-r from-foreground/80 via-foreground to-foreground/80 bg-clip-text text-transparent">Բրենդեր</span>
+          </h2>
+          <div className="flex flex-wrap justify-center gap-4">
             {brands?.slice(0, 8).map((b) => {
               const color = BRAND_COLORS[b] || '#666';
               return (
                 <Link key={b} href={`/products?brand=${encodeURIComponent(b)}`}
-                  className="group relative flex h-[72px] w-[180px] items-center gap-4 rounded-xl bg-card px-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg overflow-hidden"
-                  style={{ borderLeft: `4px solid ${color}` }}>
-                  {/* Hover bg fill */}
-                  <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background: `linear-gradient(90deg, ${color}08, transparent)` }} />
-                  {/* Color dot */}
-                  <div className="relative h-10 w-10 shrink-0 rounded-lg flex items-center justify-center text-sm font-black tracking-wider shadow-sm" style={{ background: color, color: '#fff' }}>
+                  className="group relative flex h-20 w-[190px] items-center justify-center rounded-2xl border border-transparent bg-gradient-to-br from-card to-muted/30 px-6 shadow-xs transition-all duration-500 hover:scale-[1.03] hover:shadow-xl overflow-hidden"
+                  style={{ '--brand-color': color } as React.CSSProperties}>
+                  {/* Shine overlay on hover */}
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                    style={{ background: `linear-gradient(135deg, transparent 30%, ${color}15 50%, transparent 70%)` }} />
+                  {/* Thin top accent line */}
+                  <div className="absolute inset-x-4 top-0 h-0.5 rounded-full opacity-0 transition-all duration-500 group-hover:opacity-100"
+                    style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
+                  {/* Subtle glow */}
+                  <div className="absolute -inset-1 rounded-3xl opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-30"
+                    style={{ background: `radial-gradient(circle, ${color}20, transparent 70%)` }} />
+                  {/* Brand initial — luxury monogram */}
+                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black tracking-widest shadow-inner"
+                    style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: '#fff' }}>
                     {b.charAt(0)}
                   </div>
-                  <div className="relative">
-                    <p className="text-base font-bold tracking-tight" style={{ color }}>{b}</p>
-                    {/* <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-medium"></p> */}
+                  {/* Brand name — typographic logotype style */}
+                  <div className="relative ml-3">
+                    <p className="text-xl font-black leading-none tracking-[0.12em]" style={{ color, fontFamily: 'var(--font-playfair), Georgia, serif' }}>{b}</p>
                   </div>
-                  <ArrowRight className="relative ml-auto h-4 w-4 shrink-0 text-muted-foreground/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary" />
                 </Link>
               );
             })}
             {brands && brands.length > 8 && (
               <Link href="/products?brand=all"
-                className="flex h-[72px] w-[180px] items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-card/50 text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/30 hover:text-primary">
-                <span className="text-lg font-light">+</span>
-                <span className="text-sm font-medium">Все бренды</span>
+                className="group flex h-20 w-[190px] items-center justify-center gap-2.5 rounded-2xl border border-dashed border-muted-foreground/20 bg-card/50 text-muted-foreground transition-all duration-500 hover:scale-[1.03] hover:border-primary/30 hover:text-primary hover:shadow-lg">
+                <span className="text-2xl font-light leading-none transition-transform duration-500 group-hover:rotate-90">+</span>
+                <span className="text-sm font-medium">Բոլոր բրենդերը</span>
               </Link>
             )}
           </div>

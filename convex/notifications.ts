@@ -32,7 +32,7 @@ export const sendOrderNotification = internalAction({
       `<b>💰 Ընդհանուր գումար՝</b> <b>${fmt(args.total)} ֏</b>`,
       `━━━━━━━━━━━━━━━━━━`,
       ``,
-      `<a href="https://drivex.am/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
+      `<a href="https://caron.am/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
     ].join('\n');
 
     try {
@@ -56,7 +56,7 @@ export const sendTest = action({
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) throw new Error('Telegram կարգավորումներ չկան');
     const testHtml = [
-      `<b>✅ DriveX — Թեստային հաղորդագրություն</b>`,
+      `<b>✅ Caron — Թեստային հաղորդագրություն</b>`,
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `<b>Բոտը աշխատում է՝</b> ✅`,
@@ -94,7 +94,7 @@ export const sendDailyReport = action({
       `<b>💰 Եկամուտ՝</b> ${fmt(revenue)} ֏`,
       `<b>🕐 Ամսաթիվ՝</b> ${new Date().toLocaleDateString('hy-AM')}`,
       `━━━━━━━━━━━━━━━━━━`,
-      `<a href="https://drivex.am/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
+      `<a href="https://caron.am/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
     ].join('\n');
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -117,7 +117,7 @@ export const sendLowStockAlert = action({
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `<b>Շեմ՝</b> ${threshold} հատ`,
-      `<a href="https://drivex.am/admin/products">📋 Դիտել ապրանքները</a>`,
+      `<a href="https://caron.am/admin/products">📋 Դիտել ապրանքները</a>`,
       `━━━━━━━━━━━━━━━━━━`,
     ].join('\n');
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -178,7 +178,7 @@ export const sendReceiptToCustomer = action({
       .join('\n\n');
 
     const logo = (settings?.logoUrl as string) || '🛒';
-    const storeName = (settings?.storeName as string) || 'DriveX Armenia';
+    const storeName = (settings?.storeName as string) || 'Caron Armenia';
     const phone = (settings?.phone as string) || '';
     const address = (settings?.address as string) || '';
 
@@ -240,7 +240,7 @@ export const sendCartRecovery = action({
       `━━━━━━━━━━━━━━━━━━`,
       `<b>📦 Ապրանքներ՝</b> ${args.cartItems} հատ`,
       `<b>💰 Գումար՝</b> ${fmt(args.cartTotal)} ֏`,
-      `<a href="https://drivex.am/cart">🛒 Վերադառնալ զամբյուղ</a>`,
+      `<a href="https://caron.am/cart">🛒 Վերադառնալ զամբյուղ</a>`,
       `━━━━━━━━━━━━━━━━━━`,
     ].join('\n');
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

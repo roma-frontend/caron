@@ -185,9 +185,17 @@ export default function ProductDetailPage() {
           {(fitsCompat || (typeof attrs.carBrand === 'string' && attrs.carBrand)) && (
             <div className="mt-3">
               {fitsCompat || fitsSimple ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-600/10 px-3 py-1 text-sm font-medium text-green-700"><Check className="h-4 w-4" /> Համապատասխանում է ձեր {vehicle?.brand}{vehicle?.model ? ` ${vehicle.model}` : ''}-ին</span>
+                <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 px-3 py-1.5 text-sm font-semibold text-emerald-600 shadow-xs dark:text-emerald-400">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20">
+                    <Check className="h-3 w-3" />
+                  </div>
+                  <span>{vehicle?.brand}{vehicle?.model ? ` ${vehicle.model}` : ''}</span>
+                </div>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"><Car className="h-4 w-4" /> Համատեղելի՝ {attrs.carBrand as string}</span>
+                <div className="inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-1.5 text-sm font-semibold text-primary shadow-xs">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                  {attrs.carBrand as string}
+                </div>
               )}
             </div>
           )}

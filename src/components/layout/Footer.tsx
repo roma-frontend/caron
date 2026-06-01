@@ -113,7 +113,7 @@ export function Footer() {
             <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{FOOTER.contacts}</h4>
             <div className="flex flex-col text-muted-foreground" style={{ gap: 'var(--space-2)', fontSize: 'var(--text-sm)' }}>
               <Link href={`tel:${settings?.phone || "+374 XX XXX XXX"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Phone style={{ height: '1rem', width: '1rem' }} /> {settings?.phone || "+374 XX XXX XXX"}</Link>
-              <Link href={`mailto:${settings?.email || "info@drivex.am"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Mail style={{ height: '1rem', width: '1rem' }} /> {settings?.email || "info@drivex.am"}</Link>
+              <Link href={`mailto:${settings?.email || "info@caron.am"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Mail style={{ height: '1rem', width: '1rem' }} /> {settings?.email || "info@caron.am"}</Link>
               <Link href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || "Еրևան, Հայաստան")}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><MapPin style={{ height: '1rem', width: '1rem' }} /> {settings?.address || "Еրևան, Հայաստան"}</Link>
             </div>
           </div>
