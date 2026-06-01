@@ -11,7 +11,7 @@ export const list = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    const caller = await getAdminCaller(ctx, args.sessionToken);
     let users = await ctx.db.query('users').collect();
     if (args.search) {
       const q = args.search.toLowerCase();
@@ -20,7 +20,7 @@ export const list = query({
     if (args.customerType) {
       users = users.filter((u) => u.customerType === args.customerType);
     }
-    users = users.filter((u) => u.role === 'customer' || u.role === 'admin').sort((a, b) => b.createdAt - a.createdAt);
+    users = users.filter((u) => u._id !== caller._id && u.role === 'customer').sort((a, b) => b.createdAt - a.createdAt);
     const total = users.length;
     const { numItems } = args.paginationOpts;
     const page = users.slice(0, numItems ?? 20);

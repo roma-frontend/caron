@@ -1,6 +1,12 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 
+async function hashPassword(password: string): Promise<string> {
+  const enc = new TextEncoder();
+  const hash = await crypto.subtle.digest('SHA-256', enc.encode(password));
+  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function safeEqual(a: string, b: string): Promise<boolean> {
   const enc = new TextEncoder();
   const [ha, hb] = await Promise.all([
@@ -39,7 +45,8 @@ export const login = mutation({
     // Try customer login
     const user = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', args.email.toLowerCase())).unique();
     if (!user || !user.passwordHash) throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
-    const passMatch = await safeEqual(args.password, user.passwordHash);
+    const inputHash = await hashPassword(args.password);
+    const passMatch = await safeEqual(inputHash, user.passwordHash);
     if (!passMatch) throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
     if (!user.isActive) throw new Error('Օգտագործողը չի գտնվել');
     const sessionToken = crypto.randomUUID();
@@ -70,9 +77,7 @@ export const register = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', args.email.toLowerCase())).unique();
     if (existing) throw new Error('Այս էլ․ հասցեն արդեն գրանցված է');
-    const enc = new TextEncoder();
-    const hash = await crypto.subtle.digest('SHA-256', enc.encode(args.password));
-    const passwordHash = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const passwordHash = await hashPassword(args.password);
     const id = await ctx.db.insert('users', {
       name: args.name,
       email: args.email.toLowerCase(),

@@ -1,15 +1,14 @@
 'use client';
 
-import { useQuery } from 'convex/react';
-import { useAuth } from '@/store/auth';
+import { useEffect } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { useAuth, useAuthStore } from '@/store/auth';
+import { useRouter } from 'next/navigation';
 import { Loader } from '@/components/ui/loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, User, ShoppingBag, LogOut, Heart, Truck, Clock } from 'lucide-react';
-import { useAuthStore } from '@/store/auth';
-import { useRouter } from 'next/navigation';
-import { useMutation } from 'convex/react';
 import { clearAuthCookie } from '@/actions/auth';
 import { formatDateHy, formatPrice } from '@/lib/formatters';
 import Link from 'next/link';
@@ -22,14 +21,30 @@ export default function DashboardPage() {
   const logoutMutation = useMutation(api.auth.logout);
   const orders = useQuery(api.orders.listByUser, sessionToken ? { sessionToken } : 'skip');
 
+  useEffect(() => {
+    if (hydrated && !user) {
+      const t = setTimeout(() => router.push('/'), 800);
+      return () => clearTimeout(t);
+    }
+  }, [hydrated, user, router]);
+
   if (!hydrated) return <Loader />;
-  if (!user) { router.push('/login'); return null; }
+  if (!user) return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
+      <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <LogOut className="h-7 w-7 text-primary" />
+        </div>
+        <h1 className="text-xl font-semibold tracking-tight">Սեսիան ավարտվել է</h1>
+        <p className="text-sm text-muted-foreground">Մինչ նոր հանդիպում</p>
+      </div>
+    </div>
+  );
 
   const handleLogout = async () => {
     if (sessionToken) try { await logoutMutation({ sessionToken }); } catch {}
     logoutStore();
     await clearAuthCookie();
-    router.push('/');
   };
 
   return (

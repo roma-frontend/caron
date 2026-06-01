@@ -53,12 +53,14 @@ export default function ProductsPage() {
   const [brandLoading, setBrandLoading] = useState(false);
   const brandTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const prevBrand = useRef(activeBrand);
-  if (prevBrand.current !== activeBrand) {
-    prevBrand.current = activeBrand;
-    setBrandLoading(true);
-    clearTimeout(brandTimer.current);
-    brandTimer.current = setTimeout(() => setBrandLoading(false), 400);
-  }
+  useEffect(() => {
+    if (prevBrand.current !== activeBrand) {
+      prevBrand.current = activeBrand;
+      setBrandLoading(true);
+      clearTimeout(brandTimer.current);
+      brandTimer.current = setTimeout(() => setBrandLoading(false), 400);
+    }
+  }, [activeBrand]);
 
   /** Detect products matching the brand for auto-category */
   const brandProducts = useQuery(api.customers.getByBrand, urlBrand ? { brand: urlBrand } : 'skip');
@@ -84,16 +86,17 @@ export default function ProductsPage() {
 
   // Auto-select category when brand is set from URL
   const [autoCatted, setAutoCatted] = useState(false);
-  useEffect(() => {
-    if (!urlBrand || filters.categoryId || !brandProducts || !cats || autoCatted) return;
+  if (!autoCatted && urlBrand && !filters.categoryId && brandProducts && cats) {
     const catCount: Record<string, number> = {};
     for (const p of brandProducts) {
       if (p.categoryId) catCount[p.categoryId] = (catCount[p.categoryId] || 0) + 1;
     }
     const best = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0];
-    if (best) { setFilters((f) => ({ ...f, categoryId: best as Id<'categories'> })); }
+    if (best) {
+      setFilters((f) => ({ ...f, categoryId: best as Id<'categories'> }));
+    }
     setAutoCatted(true);
-  }, [urlBrand, brandProducts, cats]);
+  }
 
   const fchips: { key: string; label: string; clear: () => void }[] = [];
   if (activeBrand) fchips.push({ key: 'brand', label: `${activeBrand}`, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });

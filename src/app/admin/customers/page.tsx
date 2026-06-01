@@ -65,7 +65,7 @@ export default function AdminCustomersPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Որոնել անուն, էլ. փոստ, հեռախոսահամար..." className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | 'retail' | 'wholesale')} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
           <option value="all">Բոլորը</option>
           <option value="retail">Մանրածախ</option>
           <option value="wholesale">Մեծածախ</option>
