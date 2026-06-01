@@ -76,7 +76,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem({ id, name, price, image: image ?? null });
+    addItem({ id, name, price, image: image ?? null }, qty);
     const cartIcon = document.querySelector('[data-cart-icon]')?.closest('button');
     cartIcon?.classList.add('cart-bounce');
     setTimeout(() => cartIcon?.classList.remove('cart-bounce'), 400);
@@ -111,7 +111,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                     <span className="flex h-full w-6 items-center justify-center text-[10px] font-semibold border-x">{qty}</span>
                     <button onClick={(e) => { e.preventDefault(); setQty(Math.min(stock ?? 999, qty + step)); }} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-r-lg">+</button>
                   </div>
-                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price, image: image ?? null }); }}>
+                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={(e) => { e.preventDefault(); addItem({ id, name, price, image: image ?? null }, qty); }}>
                     <ShoppingCart className="h-3 w-3" />
                   </Button>
                 </div>
