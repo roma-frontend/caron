@@ -26,13 +26,15 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       lastRemoved: null,
-      addItem: (item, quantity = 1) => set((state) => {
+      addItem: (item, quantity = 1) => {
+        const state = get();
         const existing = state.items.find((i) => i.id === item.id);
         if (existing) {
-          return { items: state.items.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i) };
+          set({ items: state.items.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i) });
+        } else {
+          set({ items: [...state.items, { ...item, quantity }] });
         }
-        return { items: [...state.items, { ...item, quantity }] };
-      }),
+      },
       removeItem: (id) => set((state) => ({
         lastRemoved: state.items.find((i) => i.id === id) ?? null,
         items: state.items.filter((i) => i.id !== id),

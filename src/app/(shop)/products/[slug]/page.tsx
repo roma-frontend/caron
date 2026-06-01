@@ -236,7 +236,7 @@ export default function ProductDetailPage() {
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0}
-              onClick={() => { const step = product.qtyStep || 1; for (let i = 0; i < qty; i += step) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
+              onClick={() => { console.log('DEBUG addItem qty=', qty); addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }, qty); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -276,7 +276,7 @@ export default function ProductDetailPage() {
         <RelatedProducts categoryId={product.categoryId} currentId={product._id} />
       </div>
 
-      <StickyBuyBar productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} productCompareAtPrice={product.compareAtPrice} inStock={product.stock > 0} slug={product.slug} />
+      <StickyBuyBar productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} productCompareAtPrice={product.compareAtPrice} inStock={product.stock > 0} slug={product.slug} qty={qty} />
     </div>
   );
 }
