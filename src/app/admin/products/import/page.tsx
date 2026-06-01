@@ -124,7 +124,7 @@ export default function ImportProductsPage() {
       </div>
 
       <Card className="mb-6">
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-5 w-5 text-primary" /> Ֆայլ ներկրել</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-5 w-5 text-primary" />Ներկրել Excel ֆայլ</CardTitle></CardHeader>
         <CardContent>
           <div className="mb-4 rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer" onClick={() => fileRef.current?.click()}>
             <FileSpreadsheet className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
@@ -137,7 +137,7 @@ export default function ImportProductsPage() {
             <summary className="cursor-pointer hover:text-foreground">CSV ձևաչափ: սովորական սյունակներ</summary>
             <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-muted p-3 leading-relaxed">
 {`name, slug, price, category, stock, description, compareAtPrice, sku
-"Тормозные колодки Brembo", brembo-p85075, 28000, "Кочлак", 20, "Описание...", 32000, BRK-001`}
+"Тормозные колодки Brembo", brembo-p85075, 28000, "Կոճղակ", 20, "Описание...", 32000, BRK-001`}
             </pre>
             <p className="mt-2">Կատեգորիան պետք է համընկնի սիստեմայի անվանման հետ (Անիվներ, Նյութեր, Ֆիլտրեր...)</p>
           </details>
