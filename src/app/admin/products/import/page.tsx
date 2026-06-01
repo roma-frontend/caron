@@ -138,6 +138,12 @@ export default function ImportProductsPage() {
   const categoriesMap: Record<string, string> = {};
   if (categories) for (const c of categories) categoriesMap[c.name.toLowerCase()] = c._id;
 
+  const decodeFile = async (file: File): Promise<string> => {
+    const buf = await file.arrayBuffer();
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+    catch { return new TextDecoder('windows-1251', { fatal: false }).decode(buf); }
+  };
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -145,7 +151,7 @@ export default function ImportProductsPage() {
     setParsed(null);
     setDone(false);
     try {
-      const text = await file.text();
+      const text = await decodeFile(file);
       const { headers, rows } = parseCsv(text);
       const mapped: ParsedRow[] = [];
       const errs: string[] = [];
@@ -220,11 +226,11 @@ export default function ImportProductsPage() {
                 <div className="grid gap-1.5 sm:grid-cols-2">
                   {[
                     ['name', 'Անվանում (պարտադիր)'],
-                    ['slug', 'URL-ադրես (եթե դատարկ է — կգոյացնվի անվանումից)'],
+                    ['slug', 'URL-հասցե (եթե դատարկ է — կգոյացվի անվանումից)'],
                     ['description', 'Ապրանքի նկարագրություն'],
                     ['price', 'Գին դրամներով (պարտադիր)'],
                     ['compareAtPrice', 'Հին գին (ցուցադրվում է որպես կտրատված)'],
-                    ['stock', 'Քանակ պահեստում (լռելյային 1)'],
+                    ['stock', 'Քանակ պահեստում ( 1)'],
                     ['sku', 'Արտիկուլ ապրանքի'],
                     ['category', 'Կատեգորիա — պետք է համապատասխանի համակարգում գրված անվանմանը'],
                     ['isActive', 'Ակտիվ՝ yes/no/1/0 (լռելյային yes)'],
