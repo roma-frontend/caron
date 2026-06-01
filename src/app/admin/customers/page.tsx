@@ -42,7 +42,7 @@ export default function AdminCustomersPage() {
 
   const setDiscount = async (userId: Id<'users'>, discountPercent: number) => {
     if (!sessionToken) return;
-    try { await updateCustomer({ sessionToken, userId, discountPercent }); toast.success('Скидка сохранена'); } catch { toast.error('Սխալ առաջացավ'); }
+    try { await updateCustomer({ sessionToken, userId, discountPercent }); toast.success('Զեղչը պահպանվեց'); } catch { toast.error('Սխալ առաջացավ'); }
   };
 
   if (customers === undefined) return <Loader />;

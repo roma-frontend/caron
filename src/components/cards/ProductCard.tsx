@@ -208,7 +208,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                 <span className="text-lg font-bold text-primary">{formatPrice(displayPrice)}</span>
                 {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
                 {isWholesale && discount > 0 && (
-                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Опт -{discount}%</span>
+                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Մեծածախ -{discount}%</span>
                 )}
               </div>
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Edit, Package, Search, Upload } from 'lucide-react';
+import { Plus, Trash2, Edit, Package, Search, Upload, AlertTriangle } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -15,15 +15,23 @@ import Link from 'next/link';
 import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm(`Ջնջել "${product.name}"?`)) return;
-    await remove({ sessionToken, id: product._id });
-    toast.success('Ապրանքը ջնջվել է');
+    setDeleting(true);
+    try {
+      await remove({ sessionToken, id: product._id });
+      toast.success('Ապրանքը ջնջվել է');
+      setDeleteOpen(false);
+    } catch {
+      toast.error('Սխալ ջնջելու ժամանակ');
+    } finally { setDeleting(false); }
   };
 
   return (
@@ -42,7 +50,27 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
             <Link href={`/admin/products/${product._id}/edit`}>
               <Button size="icon-sm" variant="secondary" className="h-8 w-8 shadow-md"><Edit className="h-3.5 w-3.5" /></Button>
             </Link>
-            <Button size="icon-sm" variant="destructive" className="h-8 w-8 shadow-md" onClick={handleDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
+            <Button size="icon-sm" variant="destructive" className="h-8 w-8 shadow-md" onClick={() => setDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5" /></Button>
+            <Dialog open={deleteOpen}>
+              <DialogContent showCloseButton={false}>
+                <DialogHeader>
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <DialogTitle className="text-center">Ջնջել ապրանքը</DialogTitle>
+                  <DialogDescription className="text-center">
+                    Համոզվա՞ծ եք, որ ցանկանում եք ջնջել<br />
+                    <strong>"{product.name}"</strong>
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" className="flex-1" disabled={deleting} onClick={() => setDeleteOpen(false)}>Չեղարկել</Button>
+                  <Button variant="destructive" className="flex-1" disabled={deleting} onClick={handleDelete}>
+                    {deleting ? 'Ջնջվում է...' : 'Ջնջել'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
           {!product.isActive && <Badge className="absolute left-2 top-2" variant="secondary">Ակտիվ</Badge>}
           {product.isFeatured && <Badge className="absolute left-2 bottom-2 bg-primary">★</Badge>}

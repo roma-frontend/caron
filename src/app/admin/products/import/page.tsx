@@ -5,12 +5,13 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Info } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Info, File as FileIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import type { Id } from '../../../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
+import * as XLSX from 'xlsx';
 
 interface ParsedRow {
   name: string;
@@ -18,6 +19,7 @@ interface ParsedRow {
   description: string;
   price: number;
   compareAtPrice?: number;
+  images: string[];
   category: string;
   sku?: string;
   stock: number;
@@ -30,21 +32,38 @@ interface ParsedRow {
   vehicleCompat: Array<{ brand: string; model: string; yearFrom: number; yearTo: number }>;
 }
 
+function splitLine(line: string, sep: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === sep && !inQuotes) { result.push(current.trim()); current = ''; continue; }
+    current += ch;
+  }
+  result.push(current.trim());
+  return result;
+}
+
 function parseCsv(text: string): { headers: string[]; rows: string[][] } {
-  const lines = text.split('\n').filter((l) => l.trim());
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.split('\n').filter((l) => l.trim());
   if (lines.length < 2) throw new Error('CSV ֆայլը պետք է ունենա վերնագրի տող և առնվազն մեկ տվյալների տող։');
-  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
-  const rows = lines.slice(1).map((l) => l.split(',').map((c) => c.trim()).map((c) => c.replace(/^"|"$/g, '')));
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const headers = splitLine(lines[0], sep).map((h) => h.trim().toLowerCase());
+  const rows = lines.slice(1).map((l) => splitLine(l, sep));
   return { headers, rows };
 }
 
-const BOOL_MAP: Record<string, boolean> = { yes: true, '1': true, да: true, '+': true, айо: true, no: false, '0': false, нет: false, '-': false, not: false, ոչ: false };
+const BOOL_MAP: Record<string, boolean> = { yes: true, '1': true, да: true, '+': true, այո: true, no: false, '0': false, нет: false, '-': false, not: false, ոչ: false };
 
 const COLUMN_MAP: Record<string, string> = {
   name: 'name', slug: 'slug', description: 'description', price: 'price',
   compareatprice: 'compareAtPrice', category: 'category', sku: 'sku', stock: 'stock',
   isactive: 'isActive', isfeatured: 'isFeatured', showinpromotions: 'showInPromotions',
   seotitle: 'seoTitle', seodescription: 'seoDescription',
+  images: 'images', image: 'images',
 };
 
 function getColumnAliases(): string[] {
@@ -54,9 +73,7 @@ function getColumnAliases(): string[] {
 function parseRow(headers: string[], values: string[], categoriesMap: Record<string, string>): ParsedRow {
   const get = (key: string) => {
     const h = headers.map((h) => h.toLowerCase().trim());
-    const col = getColumnAliases().find((alias) => h.includes(alias));
-    if (!col) return '';
-    const idx = h.findIndex((h) => h.includes(col));
+    const idx = h.indexOf(key.toLowerCase());
     return idx >= 0 ? values[idx] || '' : '';
   };
 
@@ -120,6 +137,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     showInPromotions: get('showInPromotions') ? bool('showInPromotions') : undefined,
     seoTitle: get('seoTitle') || undefined,
     seoDescription: get('seoDescription') || undefined,
+    images: (get('images') || '').split(';').map((u) => u.trim()).filter(Boolean),
     attributes: attrs,
     vehicleCompat: vc,
   };
@@ -134,28 +152,61 @@ export default function ImportProductsPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
   const [done, setDone] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[] | null>(null);
+  const [pasteText, setPasteText] = useState('');
 
   const categoriesMap: Record<string, string> = {};
   if (categories) for (const c of categories) categoriesMap[c.name.toLowerCase()] = c._id;
 
-  const decodeFile = async (file: File, cats: Record<string, string>): Promise<string> => {
+  const decodeFile = async (file: File): Promise<string> => {
     const buf = await file.arrayBuffer();
-    const tries = [
-      { enc: 'utf-8', label: 'UTF-8' },
-      { enc: 'windows-1251', label: 'Windows-1251' },
-    ];
-    for (const t of tries) {
+    const tries = ['utf-8', 'windows-1251'];
+    for (const enc of tries) {
       try {
-        const text = new TextDecoder(t.enc, { fatal: true }).decode(buf);
-        const { headers, rows } = parseCsv(text);
-        const catIdx = headers.findIndex((h) => h.includes('cat') || h.includes('category') || h.includes('категория'));
-        if (catIdx >= 0) {
-          const matched = rows.filter((r) => r[catIdx] && cats[r[catIdx].toLowerCase().trim()]);
-          if (matched.length > rows.length / 3) return text;
-        }
+        return new TextDecoder(enc, { fatal: true }).decode(buf);
       } catch {}
     }
     return new TextDecoder('utf-8', { fatal: false }).decode(buf);
+  };
+
+  const parseText = (text: string) => {
+    if (Object.keys(categoriesMap).length === 0) {
+      toast.error('Կատեգորիաները դեռ բեռնված չեն, սպասեք...');
+      return;
+    }
+    const { headers, rows } = parseCsv(text);
+    const info: string[] = [
+      `Բաժանարար: "${text.includes(';') ? ';' : ','}"`,
+      `Վերնագրեր: ${headers.join(', ')}`,
+      `Առաջին տող: ${rows[0]?.join(' | ') || '(դատարկ)'}`,
+      `Կատեգորիաներ DB: ${Object.keys(categoriesMap).join(', ')}`,
+    ];
+    setDebugInfo(info);
+    const mapped: ParsedRow[] = [];
+    const errs: string[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      try {
+        mapped.push(parseRow(headers, rows[i], categoriesMap));
+      } catch (e) {
+        errs.push(`Տող ${i + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+      }
+    }
+    setParsed(mapped);
+    setErrors(errs);
+    if (mapped.length === 0) { toast.error('Չհաջողվեց գտնել որևէ տող'); return; }
+    toast.success(`Հայտնաբերվել ${mapped.length} ապրանք${errs.length > 0 ? `, ${errs.length} сшибка` : ''}`);
+  };
+
+  const readXlsx = async (file: File): Promise<string> => {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(ws, { header: 1 });
+    return rows.map((r) => r.map((c) => {
+      if (c == null) return '';
+      const v = String(c);
+      return v.includes(';') || v.includes(',') ? `"${v}"` : v;
+    }).join(';')).join('\n');
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,25 +215,23 @@ export default function ImportProductsPage() {
     setErrors([]);
     setParsed(null);
     setDone(false);
+    setDebugInfo(null);
+    setPasteText('');
     try {
-      const text = await decodeFile(file, categoriesMap);
-      const { headers, rows } = parseCsv(text);
-      const mapped: ParsedRow[] = [];
-      const errs: string[] = [];
-      for (let i = 0; i < rows.length; i++) {
-        try {
-          mapped.push(parseRow(headers, rows[i], categoriesMap));
-        } catch (e) {
-          errs.push(`Տող ${i + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
-        }
-      }
-      if (mapped.length === 0) { toast.error('Չհաջողվեց գտնել որևէ տող'); return; }
-      setParsed(mapped);
-      if (errs.length > 0) setErrors(errs);
-      toast.success(`Հայտնաբերվել ${mapped.length} ապրանք${errs.length > 0 ? `, ${errs.length} սխալ` : ''}`);
+      const text = file.name.endsWith('.xlsx') ? await readXlsx(file) : await decodeFile(file);
+      parseText(text);
     } catch (e) {
-      toast.error(`Սխալ: ${e instanceof Error ? e.message : 'Նախատեսված ձևաչափ'}`);
+      toast.error(`Сшибка: ${e instanceof Error ? e.message : 'Նախատեսված ձևաչափ'}`);
     }
+  };
+
+  const handlePaste = () => {
+    if (!pasteText.trim()) { toast.error('Вставьте данные'); return; }
+    setErrors([]);
+    setParsed(null);
+    setDone(false);
+    setDebugInfo(null);
+    parseText(pasteText);
   };
 
   const handleImport = async () => {
@@ -200,6 +249,7 @@ export default function ImportProductsPage() {
         stock: r.stock,
         isActive: r.isActive,
         isFeatured: r.isFeatured || undefined,
+        images: r.images.length > 0 ? r.images : undefined,
       }));
       const result = await bulkCreate({ sessionToken, products });
       toast.success(`${result}. Ատրիբուտները և համատեղելիությունը պետք է ավելացվի խմբագրիչի միջոցով.`);
@@ -226,7 +276,24 @@ export default function ImportProductsPage() {
             <p className="text-sm font-medium">Կտտացրու, որպեսզի ընտրես CSV-ֆայլ</p>
             <p className="mt-1 text-xs text-muted-foreground">Արտահանված Excel-ից: Ֆայլ → Պահպանել որպես → CSV UTF-8</p>
           </div>
-          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={handleFile} />
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx" className="hidden" onChange={handleFile} />
+
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">կամ вставьте текст</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder="Պարզապես պատճենեք և տեղադրեք տեքստը այստեղ։"
+              className="w-full h-28 rounded-lg border border-input bg-background p-3 text-xs font-mono resize-y"
+            />
+            <Button size="sm" variant="outline" className="mt-2 gap-1 text-xs" onClick={handlePaste} disabled={!pasteText.trim()}>
+              <Upload className="h-3 w-3" /> Պարսել
+            </Button>
+          </div>
 
           {/* Column reference */}
           <details className="group">
@@ -250,6 +317,7 @@ export default function ImportProductsPage() {
                     ['isActive', 'Ակտիվ՝ yes/no/1/0 (լռելյային yes)'],
                     ['isFeatured', 'Առաջարկված՝ yes/no/1/0 (լռելյային no)'],
                     ['showInPromotions', 'Ցուցադրել ակցիաներում՝ yes/no/1/0 (լռելյային no)'],
+                    ['images', 'Պատկերի URL-ը ; (արդեն նեմուծվել է (cloud)'],
                     ['seoTitle', 'SEO վերնագիր'],
                     ['seoDescription', 'SEO նկարագրություն'],
                   ].map(([col, hint]) => (
@@ -265,10 +333,10 @@ export default function ImportProductsPage() {
                 <p className="mb-2 text-muted-foreground">Յուրաքանչյուր ֆիլտրի համար ավելացրու սյունակ <code className="text-primary">attr_ՖիլտրիԱնվանում</code></p>
                 <details>
                   <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Կատեգորիաների օրինակներ</summary>
-                  <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-muted p-3 leading-relaxed text-muted-foreground">
-{`Анивнер: attr_brand, attr_season, attr_width, attr_profile, attr_diameter
-Нютер:   attr_brand, attr_viscosity, attr_oilType, attr_volume, attr_apiClass
-Кочлак:  attr_brand, attr_brakeType, attr_axle, attr_material`}
+                   <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-muted p-3 leading-relaxed text-muted-foreground">
+{`Անիվներ:   attr_ապրանքանիշ, attr_սեզոն, attr_լայնություն, attr_պրոֆիլ, attr_տրամագիծ
+Յուղեր:    attr_ապրանքանիշ, attr_մածուցիկություն, attr_յուղի_տեսակ, attr_ծավալ, attr_api_դաս
+Անվահեծ:   attr_ապրանքանիշ, attr_արգելակի_տեսակ, attr_առանցք, attr_նյութ`}
                   </pre>
                 </details>
               </div>
@@ -286,7 +354,7 @@ export default function ImportProductsPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-amber-600 mb-2">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">{errors.length} սխալ</span>
+              <span className="text-sm font-medium">{errors.length} сшибка</span>
             </div>
             <div className="max-h-32 overflow-y-auto space-y-1">{errors.map((e, i) => <p key={i} className="text-xs text-muted-foreground">{e}</p>)}</div>
           </CardContent>
@@ -309,6 +377,7 @@ export default function ImportProductsPage() {
                     <th className="p-2 text-left font-medium">Կատեգորիա</th>
                     <th className="p-2 text-left font-medium">SKU</th>
                     <th className="p-2 text-left font-medium">Մնացորդ</th>
+                    <th className="p-2 text-left font-medium">Նկար</th>
                     <th className="p-2 text-left font-medium">Ակտիվ</th>
                   </tr>
                 </thead>
@@ -320,6 +389,7 @@ export default function ImportProductsPage() {
                       <td className="p-2">{r.category}</td>
                       <td className="p-2 font-mono">{r.sku || '—'}</td>
                       <td className="p-2">{r.stock}</td>
+                      <td className="p-2">{r.images.length > 0 ? '✅' : '—'}</td>
                       <td className="p-2">{r.isActive ? '✅' : '❌'}</td>
                     </tr>
                   ))}

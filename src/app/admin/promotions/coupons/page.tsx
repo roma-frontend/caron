@@ -103,7 +103,7 @@ export default function AdminCouponsPage() {
               <div>
                 <span className="font-mono font-bold">{c.code}</span>
                 <span className="ml-2 text-sm text-muted-foreground">{c.type === 'percent' ? `${c.value}%` : `${c.value.toLocaleString()} ֏`}</span>
-                {c.minOrderAmount ? <span className="ml-2 text-xs text-muted-foreground">от {c.minOrderAmount.toLocaleString()} ֏</span> : null}
+                {c.minOrderAmount ? <span className="ml-2 text-xs text-muted-foreground">ից {c.minOrderAmount.toLocaleString()} ֏</span> : null}
               </div>
               <Badge variant={c.isActive ? 'default' : 'secondary'} className="text-[10px]">{c.isActive ? 'Ակտիվ' : 'Անակտիվ'}</Badge>
               {c.expiresAt && <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateHy(c.expiresAt)}</span>}

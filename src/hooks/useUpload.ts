@@ -24,7 +24,7 @@ export function useUpload() {
       const { publicUrl } = await res.json();
 
       if (!publicUrl) {
-        toast.error('R2_PUBLIC_URL настроен неправильно');
+        toast.error('R2_PUBLIC_URL-ի վերբեռնումը ձախողվեց');
         return null;
       }
 

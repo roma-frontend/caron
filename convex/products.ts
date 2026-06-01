@@ -343,17 +343,25 @@ export const bulkCreate = mutation({
         stock: v.number(),
         isActive: v.boolean(),
         isFeatured: v.optional(v.boolean()),
+        images: v.optional(v.array(v.string())),
       }),
     ),
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const now = Date.now();
-    let count = 0;
+    let created = 0;
+    let updated = 0;
     for (const p of args.products) {
-      await ctx.db.insert('products', { ...p, images: [], createdAt: now, updatedAt: now });
-      count++;
+      const existing = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', p.slug)).unique();
+      if (existing) {
+        await ctx.db.patch(existing._id, { ...p, images: p.images ?? [], updatedAt: now });
+        updated++;
+      } else {
+        await ctx.db.insert('products', { ...p, images: p.images ?? [], createdAt: now, updatedAt: now });
+        created++;
+      }
     }
-    return `Imported ${count} products`;
+    return `Ստեղծվել է ${created}, թարմացվել է ${updated} ապրանք`;
   },
 });
