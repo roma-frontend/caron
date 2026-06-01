@@ -157,7 +157,7 @@ export default function AdminDashboard() {
             </CardHeader>
 
             <CardContent>
-              <div className="space-y-2 max-h-64 overflow-y-auto scroll-indicator-none">
+              <div className="space-y-2 max-h-6ջ overflow-y-auto scroll-indicator-none">
                 {outOfStock.map((p) => (
                   <Link
                     key={p._id}

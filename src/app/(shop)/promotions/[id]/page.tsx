@@ -211,7 +211,7 @@ export default function PromotionDetailPage() {
       )}
 
       {promoProducts.length === 0 && (
-        <div className="mt-12 text-center py-12 text-muted-foreground">Այս ակցիային ապրանքներ չկան</div>
+        <div className="mt-12 text-center py-12 text-muted-foreground">Այս ակցիային կցված ապրանքներ չկան</div>
       )}
     </div>
   );
