@@ -32,7 +32,7 @@ export default function LoginPage() {
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent });
       await setAuthCookie(result.sessionToken);
       toast.success(`Բարի գալուստ, ${result.name}!`);
-      router.push('/admin');
+      router.push(result.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''; setError(msg.includes('Uncaught Error:') ? msg.split('Uncaught Error:')[1].split(' at ')[0].trim() : msg || 'Մուտքի սխալ');
     } finally {

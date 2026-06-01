@@ -231,7 +231,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                 </div>
                 <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price, image: image ?? null }); }}
                   aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
-                  <ShoppingCart data-cart-icon className="h-4 w-4" /> {PRODUCT.addToCart}
+                  <ShoppingCart data-cart-icon className="h-4 w-4" />
                 </Button>
               </div>
             </div>

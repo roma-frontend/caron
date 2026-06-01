@@ -38,10 +38,10 @@ export const login = mutation({
 
     // Try customer login
     const user = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', args.email.toLowerCase())).unique();
-    if (!user || !user.passwordHash) throw new Error('Схала эл. пошт или пахтанабар');
+    if (!user || !user.passwordHash) throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
     const passMatch = await safeEqual(args.password, user.passwordHash);
-    if (!passMatch) throw new Error('Схала эл. пошт или пахтанабар');
-    if (!user.isActive) throw new Error('Огтахасирэл э');
+    if (!passMatch) throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
+    if (!user.isActive) throw new Error('Օգտագործողը չի գտնվել');
     const sessionToken = crypto.randomUUID();
     await ctx.db.patch(user._id, { sessionToken, sessionExpiry: Date.now() + 30 * 24 * 60 * 60 * 1000 });
     return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone };
@@ -69,7 +69,7 @@ export const register = mutation({
   args: { name: v.string(), email: v.string(), phone: v.optional(v.string()), password: v.string() },
   handler: async (ctx, args) => {
     const existing = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', args.email.toLowerCase())).unique();
-    if (existing) throw new Error('Эл. пошт артен грануцвел э');
+    if (existing) throw new Error('Այս էլ․ հասցեն արդեն գրանցված է');
     const enc = new TextEncoder();
     const hash = await crypto.subtle.digest('SHA-256', enc.encode(args.password));
     const passwordHash = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('');

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useSyncExternalStore, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -22,6 +22,7 @@ const getServerSnapshot = () => false;
 
 export default function ProductsPage() {
   const params = useSearchParams();
+  const router = useRouter();
   const settings = useSettings();
   const PAGE_SIZE = settings?.productsPerPage || 20;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings?.defaultViewMode || 'grid');
@@ -40,8 +41,18 @@ export default function ProductsPage() {
     categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
   }>({});
 
+  /** Clear URL brand param without page reload */
+  const clearUrlBrand = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('brand');
+    window.history.replaceState(null, '', url.toString());
+  };
+
   const isVehicleSearch = !!vehicle && (search?.includes(vehicle.brand) || !!params.get('q'));
   const activeBrand = filters.brand || urlBrand || undefined;
+
+  /** Detect products matching the brand for auto-category */
+  const brandProducts = useQuery(api.customers.getByBrand, urlBrand ? { brand: urlBrand } : 'skip');
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.products.listPaginated,
@@ -62,8 +73,21 @@ export default function ProductsPage() {
     { initialNumItems: PAGE_SIZE },
   );
 
+  // Auto-select category when brand is set from URL
+  const [autoCatted, setAutoCatted] = useState(false);
+  useEffect(() => {
+    if (!urlBrand || filters.categoryId || !brandProducts || !cats || autoCatted) return;
+    const catCount: Record<string, number> = {};
+    for (const p of brandProducts) {
+      if (p.categoryId) catCount[p.categoryId] = (catCount[p.categoryId] || 0) + 1;
+    }
+    const best = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (best) { setFilters((f) => ({ ...f, categoryId: best as Id<'categories'> })); }
+    setAutoCatted(true);
+  }, [urlBrand, brandProducts, cats]);
+
   const fchips: { key: string; label: string; clear: () => void }[] = [];
-  if (activeBrand) fchips.push({ key: 'brand', label: `${activeBrand}`, clear: () => setFilters({ ...filters, brand: undefined }) });
+  if (activeBrand) fchips.push({ key: 'brand', label: `${activeBrand}`, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });
   if (filters.categoryId) fchips.push({ key: 'cat', label: cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա', clear: () => setFilters({ ...filters, categoryId: undefined, attributes: undefined }) });
   if (filters.onSale) fchips.push({ key: 'sale', label: 'Զեղչված', clear: () => setFilters({ ...filters, onSale: undefined }) });
   if (filters.minRating) fchips.push({ key: 'rating', label: `${filters.minRating}★+`, clear: () => setFilters({ ...filters, minRating: undefined }) });
@@ -115,13 +139,13 @@ export default function ProductsPage() {
                   {c.label} <X className="h-3 w-3" />
                 </button>
               ))}
-              <button onClick={() => setFilters({ sort: filters.sort })} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'\u0544\u0561\u0584\u0580\u0565\u056C \u0562\u0578\u056C\u0578\u0580\u0568'}</button>
+              <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'\u0544\u0561\u0584\u0580\u0565\u056C \u0562\u0578\u056C\u0578\u0580\u0568'}</button>
             </div>
           )}
 
           <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {results.map((p, i) => (
-              <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
+              <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
             ))}
           </div>
 

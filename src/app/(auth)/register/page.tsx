@@ -32,7 +32,7 @@ export default function RegisterPage() {
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role });
       await setAuthCookie(result.sessionToken);
       toast.success('Գրանցումը հաջողվեց');
-      router.push('/');
+      router.push('/dashboard');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Սխալ');
     } finally { setBusy(false); }

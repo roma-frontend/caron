@@ -126,7 +126,7 @@ export function Header() {
                 <Badge className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center p-0 text-[9px] sm:text-[10px]">{cartCount}</Badge>
               </Button>
             </Link>
-            <Link href={user ? "/admin" : "/login"}>
+            <Link href={!user ? "/login" : user.role === 'admin' ? "/admin" : "/dashboard"}>
               <Button variant="ghost" size="icon" aria-label={NAV.login}>
                 <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
@@ -201,7 +201,7 @@ export function Header() {
                   <Heart className={`h-4 w-4 transition-colors ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
                   {NAV.favorites}
                 </Link>
-                <Link href={user ? "/admin" : "/login"} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-green-500/40 hover:bg-green-500/5 hover:text-green-500">
+                <Link href={!user ? "/login" : user.role === 'admin' ? "/admin" : "/dashboard"} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-green-500/40 hover:bg-green-500/5 hover:text-green-500">
                   <User className="h-4 w-4" />
                   {user ? NAV.account : NAV.login}
                 </Link>
