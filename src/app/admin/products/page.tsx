@@ -107,7 +107,7 @@ export default function AdminProductsPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/admin/products/import"><Button variant="outline" size="sm" className="gap-2 text-xs"><Upload className="h-3.5 w-3.5" /> CSV</Button></Link>
-          <Link href="/admin/products/add"><Button size="sm" className="gap-2"><Plus className="h-3.5 w-3.5" /> Авелацнел</Button></Link>
+          <Link href="/admin/products/add"><Button size="sm" className="gap-2"><Plus className="h-3.5 w-3.5" /> Ավելացնել</Button></Link>
         </div>
       </div>
 
@@ -135,11 +135,11 @@ export default function AdminProductsPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Կարգավիճակ", active: "Ակտիվ", inactive: "Անակտիվ", featured: "Առաջարկված" }[statusFilter]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Կարգավիճակ", active: "Ակտիվ", inactive: "Ակտիվ չէ", featured: "Առաջարկված" }[statusFilter]}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Կարգավիճակ</SelectItem>
             <SelectItem value="active">Ակտիվ</SelectItem>
-            <SelectItem value="inactive">Անակտիվ</SelectItem>
+            <SelectItem value="inactive">Ակտիվ չէ</SelectItem>
             <SelectItem value="featured">Առաջարկված</SelectItem>
           </SelectContent>
         </Select>
