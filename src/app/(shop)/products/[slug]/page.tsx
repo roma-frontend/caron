@@ -19,6 +19,7 @@ import { useVehicleStore } from '@/store/vehicle';
 import { useSettings } from '@/hooks/useSettings';
 import { Loader } from '@/components/ui/loader';
 import { useRecentlyViewedStore } from '@/store/recentlyViewed';
+import { useAuthStore } from '@/store/auth';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { ProductReviews } from '@/components/ProductReviews';
 import dynamic from 'next/dynamic';
@@ -40,9 +41,19 @@ export default function ProductDetailPage() {
   const settings = useSettings();
   const addViewed = useRecentlyViewedStore((s) => s.add);
   const productId = product?._id;
-  useEffect(() => { if (product) addViewed({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null }); }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [qty, setQty] = useState(1);
+  const currentUser = useAuthStore((s) => s.user);
+  const items = useCartStore((s) => s.items);
+  const [qty, setQty] = useState(() => product?.qtyStep || 1);
   const addItem = useCartStore((s) => s.addItem);
+  const isWholesale = currentUser?.customerType === 'wholesale';
+  const userDiscount = currentUser?.discountPercent ?? 0;
+  const cartPrice = product ? (isWholesale ? Math.round(product.price * (1 - userDiscount / 100)) : product.price) : 0;
+  const cartQty = product ? items.find((i) => i.id === product._id)?.quantity ?? 0 : 0;
+  const maxQty = product ? Math.max(0, product.stock - cartQty) : 0;
+
+  useEffect(() => { if (product) addViewed({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null }); }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (product) setQty(product.qtyStep || 1); }, [product]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (qty > maxQty) setQty(maxQty > 0 ? Math.max(maxQty, product?.qtyStep || 1) : 0); }, [maxQty]); // eslint-disable-line react-hooks/exhaustive-deps
   const { add: addCompare, isInCompare } = useCompareStore();
   const inCompare = isInCompare(product?._id ?? '');
   const toggleFav = useFavoritesStore((s) => s.toggle);
@@ -225,9 +236,9 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">{'Քանակ'}</span>
             <div className="flex items-center rounded-lg border">
-              <button onClick={() => setQty(Math.max(product.qtyStep || 1, qty - (product.qtyStep || 1)))} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg">−</button>
-              <span className="flex h-10 w-12 items-center justify-center font-semibold border-x">{qty}</span>
-              <button onClick={() => setQty(Math.min(product.stock, qty + (product.qtyStep || 1)))} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg">+</button>
+              <button onClick={() => setQty(Math.max(product.qtyStep || 1, qty - (product.qtyStep || 1)))} disabled={qty <= (product.qtyStep || 1)} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
+              <span className="flex h-10 w-12 items-center justify-center font-semibold border-x">{maxQty > 0 ? qty : '—'}</span>
+              <button onClick={() => setQty(Math.min(maxQty, qty + (product.qtyStep || 1)))} disabled={qty >= maxQty} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
             </div>
           </div>
 
@@ -235,8 +246,8 @@ export default function ProductDetailPage() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0}
-              onClick={() => { const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
+            <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0 || maxQty <= 0}
+              onClick={() => { const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -276,7 +287,7 @@ export default function ProductDetailPage() {
         <RelatedProducts categoryId={product.categoryId} currentId={product._id} />
       </div>
 
-      <StickyBuyBar productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} productCompareAtPrice={product.compareAtPrice} inStock={product.stock > 0} slug={product.slug} qty={qty} />
+      <StickyBuyBar productId={product._id} productName={product.name} productPrice={cartPrice} productImage={product.images?.[0]} productCompareAtPrice={product.compareAtPrice} inStock={product.stock > 0} slug={product.slug} qty={qty} productStock={product.stock} />
     </div>
   );
 }

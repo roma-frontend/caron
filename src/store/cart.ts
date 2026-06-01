@@ -7,6 +7,8 @@ export interface CartItem {
   price: number;
   image: string | null;
   quantity: number;
+  maxStock?: number;
+  qtyStep?: number;
 }
 
 interface CartState {
@@ -31,7 +33,8 @@ export const useCartStore = create<CartState>()(
       addItem: (item) => set((state) => {
         const existing = state.items.find((i) => i.id === item.id);
         if (existing) {
-          return { items: state.items.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i) };
+          const max = existing.maxStock ?? Infinity;
+          return { items: state.items.map((i) => i.id === item.id ? { ...i, quantity: Math.min(i.quantity + 1, max) } : i) };
         }
         return { items: [...state.items, { ...item, quantity: 1 }] };
       }),

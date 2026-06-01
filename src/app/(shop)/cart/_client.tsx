@@ -68,11 +68,15 @@ export default function CartPage() {
                 <p className="font-bold text-primary" style={{ fontSize: 'var(--text-sm)' }}>{formatPrice(item.price)}</p>
                 <div className="mt-auto flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-accent" onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label="Նվազեցնել քանակը">
+                    <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-accent"
+                      onClick={() => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { handleRemove(item.id, item.name); } else { updateQuantity(item.id, item.quantity - step); } }}
+                      disabled={item.quantity <= (item.qtyStep || 1)} aria-label="Նվազեցնել քանակը">
                       <Minus className="h-3 w-3" />
                     </Button>
                     <input type="number" value={item.quantity} onChange={(e) => { const v = parseInt(e.target.value); if (v > 0) updateQuantity(item.id, v); }} className="w-10 text-center text-sm font-medium bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" min={1} aria-label="Քանակ" />
-                    <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-accent" onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label="Ավելացնել քանակը">
+                    <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-accent"
+                      onClick={() => { const step = item.qtyStep || 1; updateQuantity(item.id, item.quantity + step); }}
+                      disabled={item.maxStock != null && item.quantity >= item.maxStock} aria-label="Ավելացնել քանակը">
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>

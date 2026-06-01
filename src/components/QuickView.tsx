@@ -8,6 +8,7 @@ import { ShoppingCart, Heart, Star, Check, XIcon } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
+import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -34,6 +35,10 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
   const addItem = useCartStore((s) => s.addItem);
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product.id));
+  const currentUser = useAuthStore((s) => s.user);
+  const cartPrice = currentUser?.customerType === 'wholesale'
+    ? Math.round(product.price * (1 - (currentUser?.discountPercent ?? 0) / 100))
+    : product.price;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,7 +111,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                 className="w-full gap-2 rounded-xl"
                 disabled={!product.inStock}
                 onClick={() => {
-                  addItem({ id: product.id, name: product.name, price: product.price, image: product.image ?? null });
+                  addItem({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null });
                   toast.success(`${product.name} ավելացվել է զամբյուղում`, {
                     action: { label: 'Չեղարկել', onClick: () => useCartStore.getState().removeItem(product.id) },
                   });
@@ -115,7 +120,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                 <ShoppingCart className="h-4 w-4" /> {product.inStock ? 'Ավելացնել' : 'Չկա պահանջվող քանակով'}
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; toggleFav({ id: product.id, name: product.name, price: product.price, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); toast.success(adding ? 'Ավելացվել է' : 'Հեռացվել'); if (adding) setTimeout(() => onOpenChange(false), 350); }}>
+                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); toast.success(adding ? 'Ավելացվել է' : 'Հեռացվել'); if (adding) setTimeout(() => onOpenChange(false), 350); }}>
                   <Heart className={`h-4 w-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
                   {isFav ? 'Ընտրված' : 'Ընտրել'}
                 </Button>

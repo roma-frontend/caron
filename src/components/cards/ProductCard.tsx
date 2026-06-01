@@ -60,23 +60,28 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
   const onImgError = useCallback(() => setImgError(true), []);
   const { mousePos, isHovered, handlers } = useMouseGlow();
   const addItem = useCartStore((s) => s.addItem);
+  const cartItems = useCartStore((s) => s.items);
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === id));
   const vehicle = useVehicleStore((s) => s.vehicle);
   const settings = useSettings();
   const currentUser = useAuthStore((s) => s.user);
-  const [qty, setQty] = useState(1);
   const step = qtyStep || 1;
+  const [qty, setQty] = useState(step);
   const isWholesale = currentUser?.customerType === 'wholesale';
   const discount = currentUser?.discountPercent ?? 0;
   const displayPrice = isWholesale ? Math.round(price * (1 - discount / 100)) : price;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
+  const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
+  const maxQty = stock != null ? Math.max(0, stock - cartQty) : Infinity;
+  const atLimit = stock != null && cartQty >= stock;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    for (let i = 0; i < qty; i++) addItem({ id, name, price, image: image ?? null });
+    if (atLimit) return;
+    for (let i = 0; i < qty; i++) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step });
     const cartIcon = document.querySelector('[data-cart-icon]')?.closest('button');
     cartIcon?.classList.add('cart-bounce');
     setTimeout(() => cartIcon?.classList.remove('cart-bounce'), 400);
@@ -107,11 +112,11 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                   <div className="flex items-center rounded-lg border h-7">
-                    <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-l-lg">−</button>
+                    <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-l-lg disabled:opacity-30">−</button>
                     <span className="flex h-full w-6 items-center justify-center text-[10px] font-semibold border-x">{qty}</span>
-                    <button onClick={(e) => { e.preventDefault(); setQty(Math.min(stock ?? 999, qty + step)); }} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-r-lg">+</button>
+                    <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-r-lg disabled:opacity-30">+</button>
                   </div>
-                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i++) addItem({ id, name, price, image: image ?? null }); }}>
+                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i++) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step }); }}>
                     <ShoppingCart className="h-3 w-3" />
                   </Button>
                 </div>
@@ -232,11 +237,11 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
             <div className="px-4 pb-4">
               <div className="flex gap-1.5">
                 <div className="flex items-center rounded-lg border">
-                  <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg">−</button>
+                  <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
                   <span className="flex h-9 w-8 items-center justify-center text-xs font-semibold border-x">{qty}</span>
-                  <button onClick={(e) => { e.preventDefault(); setQty(Math.min(stock ?? 999, qty + step)); }} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg">+</button>
+                  <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
                 </div>
-                <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i++) addItem({ id, name, price, image: image ?? null }); }}
+                <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i++) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step }); }}
                   aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
                   <ShoppingCart data-cart-icon className="h-4 w-4" />
                 </Button>

@@ -17,9 +17,10 @@ interface StickyBuyBarProps {
   inStock?: boolean;
   slug?: string;
   qty?: number;
+  productStock?: number;
 }
 
-export function StickyBuyBar({ productId, productName, productPrice, productImage, productCompareAtPrice, inStock = true, slug, qty = 1 }: StickyBuyBarProps) {
+export function StickyBuyBar({ productId, productName, productPrice, productImage, productCompareAtPrice, inStock = true, slug, qty = 1, productStock }: StickyBuyBarProps) {
   const [visible, setVisible] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const toggleFav = useFavoritesStore((s) => s.toggle);
@@ -62,7 +63,7 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
             size="lg"
             className="gap-2 rounded-xl h-10"
             disabled={!inStock}
-            onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: productId, name: productName, price: productPrice, image: productImage ?? null }); toast.success('Ավելացվել է զամբյուղում'); }}
+            onClick={() => { for (let i = 0; i < qty; i++) addItem({ id: productId, name: productName, price: productPrice, image: productImage ?? null, maxStock: productStock, qtyStep: 1 }); toast.success('Ավելացվել է զամբյուղում'); }}
           >
             <ShoppingCart className="h-4 w-4" /> Զամբյուղ
           </Button>
