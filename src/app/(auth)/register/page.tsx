@@ -6,13 +6,13 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserPlus, Store, ArrowRight } from 'lucide-react';
+import { User, Mail, Phone, Lock, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { setAuthCookie } from '@/actions/auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Logo } from '@/components/layout/Logo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,35 +34,75 @@ export default function RegisterPage() {
       toast.success('Գրանցումը հաջողվեց');
       router.push('/dashboard');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Սխալ');
+      toast.error(e instanceof Error ? e.message : 'Сшибка');
     } finally { setBusy(false); }
   };
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-            <UserPlus className="h-7 w-7 text-primary" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      <div className="absolute inset-0 -z-10" aria-hidden="true">
+        <div className="absolute left-[-15%] top-[-20%] h-[600px] w-[600px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+      </div>
+
+      <div className="hero-fade-1 w-full" style={{ maxWidth: '26rem' }}>
+
+        <div className="rounded-2xl border bg-background/80 p-5 sm:p-8 shadow-xl backdrop-blur-sm" style={{ boxShadow: 'var(--shadow-xl)' }}>
+          <div className="mb-6 text-center">
+            <Link href="/" className="mb-8 flex flex-col items-center gap-3 transition-transform hover:scale-105">
+              <Logo size={48} />
+              <h1 className="text-2xl font-bold">Գրանցում</h1>
+            </Link>
           </div>
-          <CardTitle className="text-xl">Գրանցում</CardTitle>
-        </CardHeader>
-        <CardContent>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div><Label>Անուն *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11" placeholder="Ձեր անունը" /></div>
-            <div><Label>Էլ. փոստ *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11" placeholder="email@example.com" /></div>
-            <div><Label>Հեռախոս *</Label><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-11" placeholder="+374 XX XXX XXX" /></div>
-            <div><Label>Գաղտնաբառ *</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-11" placeholder="Մինիմում 6 նիշ" /></div>
-            <div><Label>Հաստատել գաղտնաբառ *</Label><Input type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="h-11" /></div>
-            <Button type="submit" disabled={busy} size="lg" className="w-full gap-2">
-              <UserPlus className="h-4 w-4" /> {busy ? 'Գրանցվում է...' : 'Գրանցվել'}
+            <div className="space-y-2">
+              <Label>Անուն *</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 pl-10" placeholder="Ձեր անունը" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Էլ. փոստ *</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11 pl-10" placeholder="Ձեր էլ. փոստը" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Հեռախոս</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-11 pl-10" placeholder="+374 XX XXX XXX" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Գաղտնաբառ *</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-11 pl-10" placeholder="Մին. 6 նիշ" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Հաստատել գաղտնաբառ *</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="h-11 pl-10" placeholder="Կրկնել գաղտնաբառը" />
+              </div>
+            </div>
+            <Button type="submit" disabled={busy} variant="cta" size="xl" className="w-full gap-2">
+              {busy ? 'Գրանցվում է...' : 'Գրանցվել'}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Արդեն ունեք հաշիվ? <Link href="/login" className="font-medium text-primary hover:underline">Մուտք <ArrowRight className="inline h-3 w-3" /></Link>
+            Արդեն ունեք հաշիվ?{' '}
+            <Link href="/login" className="font-medium text-primary hover:underline">
+              Մուտք <ArrowRight className="inline h-3 w-3" />
+            </Link>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

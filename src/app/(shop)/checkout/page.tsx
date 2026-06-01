@@ -156,7 +156,7 @@ export default function CheckoutPage() {
                   <div><Label>{CHECKOUT.fullName} *</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={CHECKOUT.fullName} className="h-11" /></div>
                   <div><Label>{CHECKOUT.phone} *</Label><Input required type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={settings?.phone || "+374 XX XXX XXX"} className="h-11" /></div>
                 </div>
-                <div><Label>{CHECKOUT.email} *</Label><Input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" className="h-11" /></div>
+                <div><Label>{CHECKOUT.email} *</Label><Input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11" /></div>
               </CardContent>
             </Card>
           )}

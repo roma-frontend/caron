@@ -92,7 +92,7 @@ export default function ContactPage() {
                   <div><Label>Անուն, ազգանուն *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Անուն, ազգանուն" className="h-11" /></div>
                   <div><Label>Հեռախոս *</Label><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374..." className="h-11" /></div>
                 </div>
-                <div><Label>Էլ. փոստ</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" className="h-11" /></div>
+                <div><Label>Էլ. փոստ</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11" /></div>
                 <div><Label>Հարցում *</Label><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Նախատեսված հարցում..." rows={5} /></div>
                 <Button type="submit" variant="cta" size="xl" className="w-full gap-2" disabled={sending}>
                   <Send className="h-5 w-5" /> {sending ? 'Ուղարկվում է...' : 'Ուղարկել'}

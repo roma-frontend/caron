@@ -63,7 +63,7 @@ export default function LoginPage() {
               <Label>Էլ. փոստ</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" className="h-11 pl-10" />
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11 pl-10" />
               </div>
             </div>
             <div className="space-y-2">
