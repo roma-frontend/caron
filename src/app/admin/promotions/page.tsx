@@ -228,7 +228,7 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
           </div>
 
           {/* Actions on hover */}
-          <div className="mt-4 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="mt-4 flex gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
             <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-xs" onClick={onEdit}>
               <Edit className="h-3 w-3" /> Խմբագրել
             </Button>

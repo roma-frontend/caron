@@ -38,7 +38,7 @@ function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categ
           <p className="truncate font-mono text-xs text-muted-foreground">/{cat.slug}</p>
           <Badge variant={cat.isActive ? 'default' : 'secondary'} className="mt-1.5 text-[10px]">{cat.isActive ? 'Ակտիվ' : 'Ակտիվ չէ'}</Badge>
         </div>
-        <div className="flex shrink-0 flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex shrink-0 flex-col gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <Button size="icon-sm" variant="secondary" className="h-7 w-7 shadow-md" onClick={() => router.push(`/admin/categories/${cat._id}/edit`)}><Edit className="h-3 w-3" /></Button>
           <Button size="icon-sm" variant="destructive" className="h-7 w-7 shadow-md" onClick={handleDelete}><Trash2 className="h-3 w-3" /></Button>
         </div>

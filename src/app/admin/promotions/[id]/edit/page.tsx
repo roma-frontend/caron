@@ -102,7 +102,7 @@ export default function EditPromotionPage() {
               {form.images.map((img, i) => (
                 <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
                   <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
-                  <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-0 transition-opacity group-hover:opacity-100 text-[10px]">✕</button>
+                  <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 text-[10px]">✕</button>
                 </div>
               ))}
               <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">

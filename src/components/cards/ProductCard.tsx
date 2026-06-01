@@ -160,7 +160,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                 <button
                   aria-label="Արագ դիտում"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickOpen(true); }}
-                  className="absolute right-3 bottom-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border bg-card/80 shadow-lg backdrop-blur-sm opacity-0 transition-all duration-300 hover:bg-primary hover:text-white hover:border-primary group-hover:opacity-100 hover:scale-110"
+                  className="absolute right-3 bottom-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border bg-card/80 shadow-lg backdrop-blur-sm opacity-100 transition-all duration-300 hover:bg-primary hover:text-white hover:border-primary md:opacity-0 md:group-hover:opacity-100 hover:scale-110"
                 >
                   <Eye className="h-4 w-4" />
                 </button>

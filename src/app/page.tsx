@@ -108,7 +108,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="absolute inset-x-0 bottom-0 h-0 bg-gradient-to-t from-black to-black/40 transition-all duration-300 group-hover:h-full" />
-                    <div className="absolute inset-x-0 bottom-0 translate-y-4 p-4 text-center opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                    <div className="absolute inset-x-0 bottom-0 translate-y-4 p-4 text-center opacity-100 transition-all duration-300 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                       <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow-lg">{p.name}</p>
                       <p className="mt-1 text-sm font-bold text-white drop-shadow-lg">{formatPrice(p.price)}</p>
                     </div>

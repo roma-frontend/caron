@@ -113,10 +113,10 @@ export default function ProductDetailPage() {
             </div>
             {imgs.length > 1 && (
               <>
-                <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Назад">
+                <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Назад">
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <button onClick={() => emblaApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Вперед">
+                <button onClick={() => emblaApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Вперед">
                   <ChevronRight className="h-5 w-5" />
                 </button>
                 {/* Dots */}
