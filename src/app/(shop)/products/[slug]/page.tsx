@@ -46,10 +46,9 @@ export default function ProductDetailPage() {
   if (filterDefs) for (const f of filterDefs) attrNames[f.slug] = f.name;
   const currentUser = useAuthStore((s) => s.user);
   const items = useCartStore((s) => s.items);
-  const qtyStepRef = useRef(product?.qtyStep || 1);
-  const qtyStepInit = useRef(false);
-  const [qty, setQty] = useState(() => product?.qtyStep || 1);
+  const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
+  const step = product?.qtyStep || 1;
   const isWholesale = currentUser?.customerType === 'wholesale';
   const userDiscount = currentUser?.discountPercent ?? 0;
   const cartPrice = product ? (isWholesale ? Math.round(product.price * (1 - userDiscount / 100)) : product.price) : 0;
@@ -57,8 +56,6 @@ export default function ProductDetailPage() {
   const maxQty = product ? Math.max(0, product.stock - cartQty) : 0;
 
   useEffect(() => { if (product) addViewed({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null }); }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (product && qtyStepRef.current !== (product.qtyStep || 1)) { qtyStepRef.current = product.qtyStep || 1; if (!qtyStepInit.current) { qtyStepInit.current = true; setQty(product.qtyStep || 1); } }
-  if (qty > maxQty) setQty(maxQty > 0 ? Math.max(maxQty, product?.qtyStep || 1) : 0);
   const { add: addCompare, isInCompare } = useCompareStore();
   const inCompare = isInCompare(product?._id ?? '');
   const toggleFav = useFavoritesStore((s) => s.toggle);
@@ -256,9 +253,9 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">{'Քանակ'}</span>
             <div className="flex items-center rounded-lg border">
-              <button onClick={() => setQty(Math.max(product.qtyStep || 1, qty - (product.qtyStep || 1)))} disabled={qty <= (product.qtyStep || 1)} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
-              <span className="flex h-10 w-12 items-center justify-center font-semibold border-x">{maxQty > 0 ? qty : '—'}</span>
-              <button onClick={() => setQty(Math.min(maxQty, qty + (product.qtyStep || 1)))} disabled={qty >= maxQty} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
+              <button onClick={() => setQty(Math.max(step, qty - step))} disabled={qty <= step} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
+              <span className="flex h-10 w-12 items-center justify-center font-semibold border-x">{qty}</span>
+              <button onClick={() => setQty(Math.min(maxQty, qty + step))} disabled={qty >= maxQty} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
             </div>
           </div>
 
