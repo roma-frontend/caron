@@ -71,6 +71,7 @@ export default function EditProductPage() {
         id: productId,
         name: form.name,
         price: Number(form.price),
+        clearBrand: !form.brand,
         brand: form.brand || undefined,
         qtyStep: form.qtyStep || undefined,
         compareAtPrice: form.discountPercent === 0 ? 0 : (form.compareAtPrice || undefined),

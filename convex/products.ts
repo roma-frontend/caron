@@ -202,6 +202,7 @@ export const update = mutation({
     description: v.optional(v.string()), price: v.optional(v.number()),
     compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
+    clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
     sku: v.optional(v.string()),
     stock: v.optional(v.number()), isActive: v.optional(v.boolean()),
@@ -212,8 +213,9 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, stock, price, compareAtPrice, showInPromotions, ...rest } = args;
+    const { id, sessionToken: _, stock, price, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
     const old = await ctx.db.get(id);
+    if (clearBrand) { rest.brand = undefined; }
     if (stock !== undefined && old && old.stock <= 0 && stock > 0) {
       await ctx.scheduler.runAfter(0, api.backInStock.notifySubscribers, { productId: id, productName: old.name });
     }
