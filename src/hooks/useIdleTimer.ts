@@ -19,8 +19,8 @@ export function useIdleTimer({ onIdle, onLogout }: UseIdleTimerOptions) {
   const onIdleRef = useRef(onIdle);
   const onLogoutRef = useRef(onLogout);
 
-  onIdleRef.current = onIdle;
-  onLogoutRef.current = onLogout;
+  useEffect(() => { onIdleRef.current = onIdle; }, [onIdle]);
+  useEffect(() => { onLogoutRef.current = onLogout; }, [onLogout]);
 
   const clearAllTimers = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);

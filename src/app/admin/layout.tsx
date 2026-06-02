@@ -2,7 +2,7 @@
 
 import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
@@ -41,8 +41,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const storeName = useStoreName();
   const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
 
+  const sessionStartRef = useRef<number | null>(null);
+
+  useEffect(() => { sessionStartRef.current = Date.now(); }, []);
+
   useEffect(() => {
-    if (me === null) {
+    if (me === null && sessionStartRef.current && Date.now() - sessionStartRef.current > 3000) {
       toast.error('Սեսիան ավարտվել է, խնդրում ենք կրկին մուտք գործել');
       logoutStore();
       router.push('/login');
