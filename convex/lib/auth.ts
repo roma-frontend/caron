@@ -12,13 +12,27 @@ async function getSessionUser(
   ctx: QueryCtx | MutationCtx,
   sessionToken: string,
 ): Promise<{ _id: Id<'users'>; role: 'admin' | 'customer'; email: string; name: string } | null> {
+  // Try sessions table first
   const session = await ctx.db
     .query('sessions')
     .withIndex('by_token', (q) => q.eq('token', sessionToken))
     .unique();
-  if (!session || session.expiresAt < Date.now()) return null;
-  const user = await ctx.db.get(session.userId);
-  if (!user || !user.isActive) return null;
+  if (session) {
+    if (session.expiresAt < Date.now()) return null;
+    const user = await ctx.db.get(session.userId);
+    if (!user || !user.isActive) return null;
+    return { _id: user._id, role: user.role as 'admin' | 'customer', email: user.email, name: user.name };
+  }
+  // Fallback: check old sessionToken on user document (migration)
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_session_token', (q) => q.eq('sessionToken', sessionToken))
+    .unique();
+  if (!user || !user.isActive || !user.sessionExpiry || user.sessionExpiry < Date.now()) return null;
+  // Migrate to sessions table (only from mutation context)
+  if ('insert' in ctx.db) {
+    await (ctx.db as any).insert('sessions', { userId: user._id, token: sessionToken, expiresAt: user.sessionExpiry, createdAt: Date.now() });
+  }
   return { _id: user._id, role: user.role as 'admin' | 'customer', email: user.email, name: user.name };
 }
 

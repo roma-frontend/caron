@@ -7,19 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, Edit, SlidersHorizontal, AlertTriangle, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/store/auth';
 import type { Id } from '../../../../convex/_generated/dataModel';
-
-const FILTER_TYPES = [
-  { value: 'select', label: 'Ընտրություն' },
-  { value: 'multiselect', label: 'Բազմակի ընտրություն' },
-  { value: 'range', label: 'Միջակայք' },
-  { value: 'boolean', label: 'Այո/Ոչ' },
-] as const;
 
 export default function AdminFiltersPage() {
   const { sessionToken } = useAuth();
@@ -32,9 +24,9 @@ export default function AdminFiltersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<Id<'filterDefinitions'> | null>(null);
   const [deleteId, setDeleteId] = useState<Id<'filterDefinitions'> | null>(null);
-  const [form, setForm] = useState({ name: '', slug: '', type: 'select' as string, categoryId: '' as string, options: '', unit: '', order: 0 });
+  const [form, setForm] = useState({ name: '', slug: '', categoryId: '' as string, options: '', order: 0 });
 
-  const resetForm = () => setForm({ name: '', slug: '', type: 'select', categoryId: '', options: '', unit: '', order: 0 });
+  const resetForm = () => setForm({ name: '', slug: '', categoryId: '', options: '', order: 0 });
 
   const openCreate = () => {
     setEditingId(null);
@@ -45,22 +37,23 @@ export default function AdminFiltersPage() {
   const openEdit = (f: NonNullable<typeof filters>[number]) => {
     setEditingId(f._id);
     setForm({
-      name: f.name, slug: f.slug, type: f.type,
+      name: f.name, slug: f.slug,
       categoryId: f.categoryId, options: (f.options ?? []).join(', '),
-      unit: f.unit ?? '', order: f.order,
+      order: f.order,
     });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.slug || !form.categoryId) { toast.error('Լրացրեք անուն, slug և կատեգորիա'); return; }
+    if (!form.name || !form.slug || !form.categoryId) { toast.error('Լրացրեք անուն, slug и категория'); return; }
     try {
+      const options = form.options.split(',').map((s) => s.trim()).filter(Boolean);
       const data = {
         sessionToken: sessionToken ?? '',
-        name: form.name, slug: form.slug, type: form.type as 'select' | 'multiselect' | 'range' | 'boolean',
+        name: form.name, slug: form.slug, type: 'multiselect' as const,
         categoryId: form.categoryId as Id<'categories'>,
-        options: (form.type === 'select' || form.type === 'multiselect') ? form.options.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
-        unit: form.unit || undefined, order: form.order,
+        options: options.length > 0 ? options : undefined,
+        order: form.order,
       };
       if (editingId) {
         await updateFilter({ ...data, id: editingId });
@@ -71,12 +64,12 @@ export default function AdminFiltersPage() {
       }
       setDialogOpen(false);
       resetForm();
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Սխալ'); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Сшибка'); }
   };
 
   const handleDelete = async () => {
     if (!deleteId || !sessionToken) return;
-    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Սխալ ջնջելու ժամանակ'); }
+    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Сшибка'); }
   };
 
   const catMap: Record<string, string> = {};
@@ -88,8 +81,6 @@ export default function AdminFiltersPage() {
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(f);
   }
-
-  const typeLabel = (t: string) => FILTER_TYPES.find((ft) => ft.value === t)?.label ?? t;
 
   return (
     <div>
@@ -118,12 +109,11 @@ export default function AdminFiltersPage() {
                   <p className="text-sm font-medium">{f.name}</p>
                   <div className="flex flex-wrap items-center gap-2 mt-0.5">
                     <code className="text-[10px] text-muted-foreground">{f.slug}</code>
-                    <Badge variant="secondary" className="text-[10px]">{typeLabel(f.type)}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">բազմակի</Badge>
                     {f.options && f.options.length > 0 && (
                       <span className="text-[10px] text-muted-foreground">{f.options.length} տարբերակ</span>
                     )}
-                    {f.unit && <span className="text-[10px] text-muted-foreground">{f.unit}</span>}
-                    <span className="text-[10px] text-muted-foreground">հերթականություն: {f.order}</span>
+                    <span className="text-[10px] text-muted-foreground">: {f.order}</span>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
@@ -136,7 +126,6 @@ export default function AdminFiltersPage() {
         </div>
       ))}
 
-      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); resetForm(); } }}>
         <DialogContent className="sm:max-w-lg" showCloseButton={false}>
           <DialogHeader>
@@ -146,44 +135,28 @@ export default function AdminFiltersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Անվանում *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Օր.՝ Ապրանքանիշ" className="h-11" />
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Ор.՝ Апранканиш" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>Slug *</Label>
                 <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="brand" className="h-11 font-mono text-xs" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Տեսակ *</Label>
-                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v ?? 'select' })}>
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>{FILTER_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Կատեգորիա *</Label>
-                <Select value={form.categoryId} onValueChange={(v) => setForm({ ...form, categoryId: v ?? '' })}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Ընտրել..." /></SelectTrigger>
-                  <SelectContent>{categories?.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Категориа *</Label>
+              <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50">
+                <option value="">Интел...</option>
+                {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+              </select>
             </div>
-            {(form.type === 'select' || form.type === 'multiselect') && (
-              <div className="space-y-2">
-                <Label>Տարբերակներ (բաժանված ստորակետով)</Label>
-                <Input value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })} placeholder="Bosch, Mobil, Castrol, Shell" className="h-11" />
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Միավոր</Label>
-                <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="мм, լ, կգ..." className="h-11" />
-              </div>
-              <div className="space-y-2">
-                <Label>Հերթականություն</Label>
-                <Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} className="h-11" />
-              </div>
+            <div className="space-y-2">
+              <Label>Тарберакнер (бжанц стуракатов)</Label>
+              <Input value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })} placeholder="Bosch, Mobil, Castrol, Shell" className="h-11" />
+              <p className="text-[10px] text-muted-foreground">Առանց ստուրական տարբերակների, օրինակ. Bosch, Mobil, Castrol, Shell</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Карг</Label>
+              <Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} className="h-11" />
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -193,15 +166,14 @@ export default function AdminFiltersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
               <AlertTriangle className="h-6 w-6 text-destructive" />
             </div>
-            <DialogTitle className="text-center">Ջնջել ֆիլտրը?</DialogTitle>
-            <p className="text-center text-sm text-muted-foreground">Այս գործողությունը հնարավոր չէ հետարկել:</p>
+            <DialogTitle className="text-center">Ջնջե՞լ ֆիլտրը</DialogTitle>
+            <p className="text-center text-sm text-muted-foreground">Այս գործողությունը հնարավոր է չի կարող վերականգնել:</p>
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setDeleteId(null)}>Չեղարկել</Button>
