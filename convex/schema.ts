@@ -24,6 +24,16 @@ export default defineSchema(
     .index('by_role', ['role'])
     .index('by_session_token', ['sessionToken']),
 
+  // ─── Sessions (multi-session support) ─────────────────────────
+  sessions: defineTable({
+    userId: v.id('users'),
+    token: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index('by_token', ['token'])
+    .index('by_user', ['userId']),
+
   // ─── Categories ────────────────────────────────────────────────
   categories: defineTable({
     name: v.string(),

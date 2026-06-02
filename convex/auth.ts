@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import type { Id } from './_generated/dataModel';
 
 async function hashPassword(password: string): Promise<string> {
   const enc = new TextEncoder();
@@ -20,6 +21,12 @@ async function safeEqual(a: string, b: string): Promise<boolean> {
   return diff === 0;
 }
 
+async function createSession(ctx: any, userId: Id<'users'>, days: number): Promise<string> {
+  const token = crypto.randomUUID();
+  await ctx.db.insert('sessions', { userId, token, expiresAt: Date.now() + days * 24 * 60 * 60 * 1000, createdAt: Date.now() });
+  return token;
+}
+
 export const login = mutation({
   args: { email: v.string(), password: v.string() },
   handler: async (ctx, args) => {
@@ -36,8 +43,7 @@ export const login = mutation({
           const id = await ctx.db.insert('users', { name: 'Admin', email: adminEmail.toLowerCase(), role: 'admin', isActive: true, createdAt: Date.now() });
           user = (await ctx.db.get(id))!;
         }
-        const sessionToken = crypto.randomUUID();
-        await ctx.db.patch(user._id, { sessionToken, sessionExpiry: Date.now() + 7 * 24 * 60 * 60 * 1000 });
+        const sessionToken = await createSession(ctx, user._id, 7);
         return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone };
       }
     }
@@ -49,8 +55,7 @@ export const login = mutation({
     const passMatch = await safeEqual(inputHash, user.passwordHash);
     if (!passMatch) throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
     if (!user.isActive) throw new Error('Օգտագործողը չի գտնվել');
-    const sessionToken = crypto.randomUUID();
-    await ctx.db.patch(user._id, { sessionToken, sessionExpiry: Date.now() + 30 * 24 * 60 * 60 * 1000 });
+    const sessionToken = await createSession(ctx, user._id, 30);
     return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone };
   },
 });
@@ -58,8 +63,10 @@ export const login = mutation({
 export const me = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    const user = await ctx.db.query('users').withIndex('by_session_token', (q) => q.eq('sessionToken', args.sessionToken)).unique();
-    if (!user || !user.sessionExpiry || user.sessionExpiry < Date.now()) return null;
+    const session = await ctx.db.query('sessions').withIndex('by_token', (q) => q.eq('token', args.sessionToken)).unique();
+    if (!session || session.expiresAt < Date.now()) return null;
+    const user = await ctx.db.get(session.userId);
+    if (!user || !user.isActive) return null;
     return { id: user._id, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone };
   },
 });
@@ -67,8 +74,8 @@ export const me = query({
 export const logout = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    const user = await ctx.db.query('users').withIndex('by_session_token', (q) => q.eq('sessionToken', args.sessionToken)).unique();
-    if (user) await ctx.db.patch(user._id, { sessionToken: undefined, sessionExpiry: undefined });
+    const session = await ctx.db.query('sessions').withIndex('by_token', (q) => q.eq('token', args.sessionToken)).unique();
+    if (session) await ctx.db.delete(session._id);
   },
 });
 
@@ -88,8 +95,7 @@ export const register = mutation({
       isActive: true,
       createdAt: Date.now(),
     });
-    const sessionToken = crypto.randomUUID();
-    await ctx.db.patch(id, { sessionToken, sessionExpiry: Date.now() + 30 * 24 * 60 * 60 * 1000 });
+    const sessionToken = await createSession(ctx, id, 30);
     return { userId: id, sessionToken, name: args.name, email: args.email.toLowerCase(), role: 'customer' as const, customerType: 'retail' as const, discountPercent: undefined, phone: args.phone };
   },
 });
