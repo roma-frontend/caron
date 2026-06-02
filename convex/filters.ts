@@ -68,13 +68,13 @@ export const migrateTesak = mutation({
         .take(50)).find((f) => f.slug === 'type');
       if (!existing) {
         await ctx.db.insert('filterDefinitions', {
-          categoryId: cat._id, name: 'Тесак', slug: 'type',
+          categoryId: cat._id, name: 'Тэсак', slug: 'type',
           type: 'multiselect', options: [], order: 0,
         });
         added++;
       }
     }
-    return added > 0 ? `${added} категориям добавлен фильтр Тесак` : 'Все категории уже имеют фильтр Тесак';
+    return added > 0 ? `${added} Կատեգորիաների համար ավելացվել է ֆիլտրը Տեսակ` : 'Բոլոր կատեգորիաների համար արդեն կա Տեսակ ֆիլտր';
   },
 });
 

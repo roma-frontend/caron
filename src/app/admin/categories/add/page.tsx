@@ -27,7 +27,7 @@ function StepBasicInfo() {
 
   return (
     <div className="space-y-5">
-      <div><Label>Կատեգորիա *</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder="Կատեգորիա" className="h-11" /></div>
+      <div><Label>Կարգ</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder="Կատեգորիա" className="h-11" /></div>
       <div><Label>Slug</Label><Input value={(data.slug as string) ?? ''} onChange={(e) => update('slug', e.target.value)} placeholder="category-slug" className="h-11 font-mono" /></div>
       <div><Label>Նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Կատեգորիայի նկարագրություն" rows={3} /></div>
       <div>

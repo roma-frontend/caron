@@ -186,7 +186,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
       </Section>
 
       {/* Dynamic filters */}
-      {filterDefs?.map((def) => (
+      {filterDefs?.filter((def) => def.slug !== 'type').map((def) => (
         <Section key={def._id} title={def.name} k={def.slug} expanded={expanded} toggle={toggle}>
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
             <div className="flex flex-wrap gap-2">
