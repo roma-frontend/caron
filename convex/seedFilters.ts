@@ -83,7 +83,7 @@ export const run = mutation({
 
       lamps: [
         { name: 'Բրենդ', slug: 'brand', type: 'multiselect', options: ['Philips','Osram','Narva','Bosch','Hella','GE','MTF','Starline'] },
-        { name: 'Տեսակ', slug: 'lampType', type: 'select', options: ['LED','Հալոգեն','Քսենոն','HID'] },
+        { name: 'Տեսակ', slug: 'lampType', type: 'select', options: ['LED', 'Հալոգեն', 'Քսենոն', 'HID'] },
         { name: 'Սոկետ', slug: 'socket', type: 'select', options: ['H1','H3','H4','H7','H8','H11','H15','HB3','HB4','D1S','D2S','D3S','D4S','R5W','P21W','W5W'] },
         { name: 'Գույնի ջերմաստիճան', slug: 'kelvin', type: 'select', options: ['3000K (դեղին)','4000K (չեզոք)','4300K (սպիտակ)','5000K (սառը)','5500K (օր)','6000K (կապտավուն)','8000K (կապույտ)'] },
         { name: 'Լարում', slug: 'voltage', type: 'select', options: ['12V','24V'], unit: 'V' },
