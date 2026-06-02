@@ -165,7 +165,11 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {product.sku && <p className="mt-1 text-sm text-muted-foreground">SKU: {product.sku}</p>}
+          {product.sku && (
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1">
+              <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">{product.sku}</span>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center gap-3">
             <span className="text-2xl sm:text-3xl font-bold text-primary">{formatPrice(cartPrice)}</span>

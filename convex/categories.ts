@@ -46,9 +46,8 @@ export const create = mutation({
     await getAdminCaller(ctx, args.sessionToken);
     const { sessionToken: _, ...data } = args;
     const catId = await ctx.db.insert('categories', { ...data, createdAt: Date.now() });
-    // Auto-create Տեսակ filter for this category
     await ctx.db.insert('filterDefinitions', {
-      categoryId: catId, name: 'Տեսակ', slug: 'type',
+      categoryId: catId, name: '?????', slug: 'type',
       type: 'multiselect', options: [], order: 0,
     });
     return catId;

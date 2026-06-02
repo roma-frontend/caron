@@ -29,7 +29,8 @@ export const listPaginated = query({
     let result;
 
     if (args.search) {
-      result = await ctx.db
+      // Search by name (full-text) + SKU (exact)
+      const nameResults = await ctx.db
         .query('products')
         .withSearchIndex('search_products', (q) => {
           let s = q.search('name', args.search!);
@@ -37,6 +38,12 @@ export const listPaginated = query({
           return s.eq('isActive', true);
         })
         .paginate(paginationOpts);
+      // Also try exact SKU match
+      const skuResults = await ctx.db.query('products').filter((q) => q.eq(q.field('sku'), args.search!)).take(50);
+      const merged = new Map<string, typeof nameResults.page[number]>();
+      for (const p of nameResults.page) merged.set(p._id, p);
+      for (const p of skuResults) { if (!merged.has(p._id) && p.isActive && (!args.categoryId || p.categoryId === args.categoryId)) merged.set(p._id, p); }
+      result = { ...nameResults, page: Array.from(merged.values()).slice(0, paginationOpts.numItems) };
     } else if (byPrice && args.categoryId) {
       result = await ctx.db.query('products').withIndex('by_category_price', (q) => q.eq('categoryId', args.categoryId!)).order(priceDir).paginate(paginationOpts);
     } else if (byPrice) {
@@ -116,6 +123,11 @@ export const list = query({
           return search.eq('isActive', true);
         })
         .take(Math.min(args.limit ?? 20, 500));
+      // Also try SKU match
+      const skuMatch = await ctx.db.query('products').filter((q) => q.eq(q.field('sku'), args.search!)).take(50);
+      for (const p of skuMatch) {
+        if (p.isActive && (!args.categoryId || p.categoryId === args.categoryId) && !results.find((r) => r._id === p._id)) results.push(p);
+      }
       if (args.minPrice) results = results.filter((p) => p.price >= args.minPrice!);
       if (args.maxPrice) results = results.filter((p) => p.price <= args.maxPrice!);
       return results;
@@ -190,6 +202,14 @@ export const create = mutation({
     const now = Date.now();
     if (data.showInPromotions === undefined && data.compareAtPrice && data.compareAtPrice > data.price) {
       data.showInPromotions = true;
+    }
+    // Auto-generate SKU if not provided
+    if (!data.sku) {
+      const cat = await ctx.db.get(data.categoryId);
+      const prefix = cat ? cat.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase() : 'PRD';
+      const ts = now.toString(36).slice(-4).toUpperCase();
+      const rnd = Math.random().toString(36).substring(2, 4).toUpperCase();
+      data.sku = `${prefix}-${ts}${rnd}`;
     }
     return await ctx.db.insert('products', { ...data, createdAt: now, updatedAt: now });
   },
