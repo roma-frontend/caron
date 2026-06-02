@@ -57,6 +57,27 @@ export const update = mutation({
   },
 });
 
+export const migrateTesak = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const cats = await ctx.db.query('categories').collect();
+    let added = 0;
+    for (const cat of cats) {
+      const existing = (await ctx.db.query('filterDefinitions')
+        .withIndex('by_category', (q) => q.eq('categoryId', cat._id))
+        .take(50)).find((f) => f.slug === 'type');
+      if (!existing) {
+        await ctx.db.insert('filterDefinitions', {
+          categoryId: cat._id, name: 'Тесак', slug: 'type',
+          type: 'multiselect', options: [], order: 0,
+        });
+        added++;
+      }
+    }
+    return added > 0 ? `${added} категориям добавлен фильтр Тесак` : 'Все категории уже имеют фильтр Тесак';
+  },
+});
+
 export const listAll = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
