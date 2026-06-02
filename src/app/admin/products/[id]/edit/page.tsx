@@ -80,7 +80,8 @@ export default function EditProductPage() {
         sku: form.sku,
         images: images.filter(Boolean),
         attributes: form.attributes || undefined,
-      });
+        atgCode: form.atgCode || undefined,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.success('Ապրանքը հաջողությամբ թարմացվել է');
       router.push('/admin/products');
     } catch (e) {
@@ -156,7 +157,7 @@ export default function EditProductPage() {
               <div><Label>Պահեստ</Label><Input type="number" value={form.stock ?? ''} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className="h-11" /></div>
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <div><Label>ԱԳՏԱԱ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm({ ...form, atgCode: e.target.value })} placeholder="2601" className="h-11 font-mono" /></div>
+              <div><Label>ԱՏԳԱԱ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm({ ...form, atgCode: e.target.value })} placeholder="2601" className="h-11 font-mono" /></div>
             </div>
             <div><Label>Նկարագրություն</Label><Textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} /></div>
           </CardContent>

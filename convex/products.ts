@@ -238,7 +238,7 @@ export const update = mutation({
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
-    sku: v.optional(v.string()),
+    sku: v.optional(v.string()), atgCode: v.optional(v.string()),
     stock: v.optional(v.number()), isActive: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),

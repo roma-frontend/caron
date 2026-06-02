@@ -177,7 +177,7 @@ export default function ProductDetailPage() {
               )}
               {product.atgCode && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border bg-primary/5 px-2.5 py-1">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">АГТАА {product.atgCode}</span>
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">ԱՏԳԱԱ {product.atgCode}</span>
                 </div>
               )}
             </div>

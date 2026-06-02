@@ -90,7 +90,7 @@ function StepPricing() {
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div><Label>Բրենդ</Label><Input value={(data.brand as string) ?? ''} onChange={(e) => update('brand', e.target.value)} placeholder="Michelin, Bosch..." className="h-11" /></div>
-        <div><Label>ԱԳՏԱԱ ռոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
+        <div><Label>ԱՏԳԱԱ ռոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
         <div><Label>Արտիկուլ *</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="h-11 font-mono tracking-wider" /></div>
       </div>
       <div className="grid grid-cols-3 gap-4">
@@ -142,7 +142,7 @@ function StepAttributes() {
   };
 
   if (!categoryId) return <p className="text-sm text-muted-foreground">Նախ ընտրեք կատեգորիա</p>;
-  if (!filterDefs) return <p className="text-sm text-muted-foreground">Բեռնվում...</p>;
+  if (!filterDefs) return <p className="text-sm text-muted-foreground">Բեռնվում Է...</p>;
   if (filterDefs.length === 0) return <p className="text-sm text-muted-foreground">Այս կատեգորիան չունի բնութագրեր</p>;
 
   return (
