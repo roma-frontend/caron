@@ -234,8 +234,8 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               )}
             </div>
 
-            <div className="px-4 pb-4">
-              <div className="flex gap-1.5">
+            <div className="px-2 sm:px-4 pb-2 sm:pb-4">
+              <div className="flex items-center gap-1.5">
                 <div className="flex items-center rounded-lg border">
                   <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
                   <span className="flex h-9 w-8 items-center justify-center text-xs font-semibold border-x">{qty}</span>

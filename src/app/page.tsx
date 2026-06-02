@@ -28,6 +28,15 @@ const BRAND_COLORS: Record<string, string> = {
   Toyo: '#E60012', Kumho: '#009944',
 };
 
+function brandColor(name: string): string {
+  const known = BRAND_COLORS[name];
+  if (known) return known;
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const h = ((hash % 360) + 360) % 360;
+  return `hsl(${h}, 55%, 45%)`;
+}
+
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
 
 
@@ -119,8 +128,8 @@ export default function HomePage() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 h-0 bg-gradient-to-t from-black to-black/40 transition-all duration-300 group-hover:h-full" />
-                    <div className="absolute inset-x-0 bottom-0 translate-y-4 p-4 text-center opacity-100 transition-all duration-300 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                    <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black/70 to-transparent md:h-0 md:transition-all md:duration-300 md:group-hover:h-full" />
+                    <div className="absolute inset-x-0 bottom-0 p-4 text-center transition-all duration-300 md:translate-y-4 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                       <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow-lg">{p.name}</p>
                       <p className="mt-1 text-sm font-bold text-white drop-shadow-lg">{formatPrice(p.price)}</p>
                     </div>
@@ -172,7 +181,7 @@ export default function HomePage() {
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
             {brands?.slice(0, 8).map((b) => {
-              const color = BRAND_COLORS[b] || '#666';
+              const color = brandColor(b);
               return (
                 <Link key={b} href={`/products?brand=${encodeURIComponent(b)}`}
                   className="group relative flex h-20 w-[190px] items-center justify-center rounded-2xl border border-transparent bg-gradient-to-br from-card to-muted/30 px-6 shadow-xs transition-all duration-500 hover:scale-[1.03] hover:shadow-xl overflow-hidden"
@@ -238,8 +247,8 @@ export default function HomePage() {
           </div>
         </section>
         )}
-      </main>
       <RecentlyViewed />
+      </main>
       <Footer />
     </div>
   );
