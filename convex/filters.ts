@@ -31,16 +31,14 @@ export const create = mutation({
 });
 
 export const remove = mutation({
-  args: { sessionToken: v.string(), id: v.id('filterDefinitions') },
+  args: { id: v.id('filterDefinitions') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
     await ctx.db.delete(args.id);
   },
 });
 
 export const update = mutation({
   args: {
-    sessionToken: v.string(),
     id: v.id('filterDefinitions'),
     name: v.optional(v.string()),
     slug: v.optional(v.string()),
@@ -51,8 +49,7 @@ export const update = mutation({
     categoryId: v.optional(v.id('categories')),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
-    const { sessionToken: _, id, ...patch } = args;
+    const { id, ...patch } = args;
     await ctx.db.patch(id, patch);
   },
 });

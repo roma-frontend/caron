@@ -56,6 +56,12 @@ export const listPaginated = query({
 
     // Order-preserving filters (the DB already ordered the page)
     let filtered = result.page.filter((p) => p.isActive);
+    // Exclude products from inactive categories
+    const cats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
+    if (cats.length > 0) {
+      const inactiveIds = new Set(cats.map((c) => c._id));
+      filtered = filtered.filter((p) => !inactiveIds.has(p.categoryId));
+    }
     if (args.minPrice) filtered = filtered.filter((p) => p.price >= args.minPrice!);
     if (args.maxPrice) filtered = filtered.filter((p) => p.price <= args.maxPrice!);
     if (args.inStockOnly) filtered = filtered.filter((p) => p.stock > 0);
@@ -130,6 +136,8 @@ export const list = query({
       }
       if (args.minPrice) results = results.filter((p) => p.price >= args.minPrice!);
       if (args.maxPrice) results = results.filter((p) => p.price <= args.maxPrice!);
+      const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
+      if (inactiveCats.length > 0) { const ids = new Set(inactiveCats.map((c) => c._id)); results = results.filter((p) => !ids.has(p.categoryId)); }
       return results;
     }
     let products;
@@ -141,6 +149,12 @@ export const list = query({
     }
     if (args.minPrice) products = products.filter((p) => p.price >= args.minPrice!);
     if (args.maxPrice) products = products.filter((p) => p.price <= args.maxPrice!);
+    // Exclude inactive categories
+    const cats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
+    if (cats.length > 0) {
+      const inactiveIds = new Set(cats.map((c) => c._id));
+      products = products.filter((p) => !inactiveIds.has(p.categoryId));
+    }
     return products;
   },
 });

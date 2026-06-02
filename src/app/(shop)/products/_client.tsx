@@ -139,12 +139,14 @@ export default function ProductsPage() {
           </div>
           {filterDefs && filterDefs.length > 0 && (
             <div className="mb-4 space-y-2">
-              {filterDefs.filter((def) => def.slug === 'type').map((def) => {
+              {filterDefs.filter((def) => def.slug === 'type' || def.name === '?????').map((def) => {
                 const active = (filters.attributes?.[def.slug] as string[]) || [];
                 return (
                   <div key={def._id} className="flex flex-wrap items-center gap-1.5">
                     <span className="text-xs font-medium text-muted-foreground mr-1">{def.name}:</span>
-                    {def.options?.map((opt) => {
+                    {(!def.options || def.options.length === 0) ? (
+                      <span className="text-[10px] text-muted-foreground">(ավելացված տեսակներ չկան)</span>
+                    ) : def.options.map((opt) => {
                       const isActive = active.includes(opt);
                       return (
                         <button key={opt} onClick={() => {
@@ -163,6 +165,12 @@ export default function ProductsPage() {
                 );
               })}
             </div>
+          )}
+          {filters.categoryId && !filterDefs && (
+            <span className="text-[10px] text-muted-foreground">[Загрузка фильтров...]</span>
+          )}
+          {filters.categoryId && filterDefs && filterDefs.length === 0 && (
+            <span className="text-[10px] text-muted-foreground">[Нет фильтров для этой категории: {JSON.stringify(filterDefs)}]</span>
           )}
           {mounted && vehicle && (
             <div className="mb-5 flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2.5 text-sm">
