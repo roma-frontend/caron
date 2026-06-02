@@ -45,7 +45,13 @@ export const create = mutation({
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const { sessionToken: _, ...data } = args;
-    return await ctx.db.insert('categories', { ...data, createdAt: Date.now() });
+    const catId = await ctx.db.insert('categories', { ...data, createdAt: Date.now() });
+    // Auto-create Тесак filter for this category
+    await ctx.db.insert('filterDefinitions', {
+      categoryId: catId, name: 'Тесак', slug: 'type',
+      type: 'multiselect', options: [], order: 0,
+    });
+    return catId;
   },
 });
 
