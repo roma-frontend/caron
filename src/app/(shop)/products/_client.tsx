@@ -139,7 +139,7 @@ export default function ProductsPage() {
           </div>
           {filterDefs && filterDefs.length > 0 && (
             <div className="mb-4 space-y-2">
-              {filterDefs.map((def) => {
+              {filterDefs.filter((def) => def.slug === 'type').map((def) => {
                 const active = (filters.attributes?.[def.slug] as string[]) || [];
                 return (
                   <div key={def._id} className="flex flex-wrap items-center gap-1.5">
