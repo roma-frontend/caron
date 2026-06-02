@@ -91,7 +91,7 @@ function StepPricing() {
       <div className="grid grid-cols-3 gap-4">
         <div><Label>Բրենդ</Label><Input value={(data.brand as string) ?? ''} onChange={(e) => update('brand', e.target.value)} placeholder="Michelin, Bosch..." className="h-11" /></div>
         <div><Label>Քանակի քայլ</Label><Input type="number" value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
-        <div><Label>SKU</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ART-001" className="h-11" /></div>
+        <div><Label>Артикул *</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="h-11 font-mono tracking-wider" /></div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Առկայություն *</Label><Input type="number" value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>

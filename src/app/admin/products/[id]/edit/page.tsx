@@ -152,7 +152,7 @@ export default function EditProductPage() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div><Label>Բրենդ</Label><Input value={form.brand ?? ''} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-11" placeholder="Bosch, Mobil..." /></div>
-              <div><Label>Քանակի քայլ</Label><Input type="number" value={form.qtyStep ?? ''} onChange={(e) => setForm({ ...form, qtyStep: Number(e.target.value) })} className="h-11" placeholder="1" /></div>
+              <div><Label>Արտիկուլ</Label><Input value={form.sku ?? ''} onChange={(e) => setForm({ ...form, sku: e.target.value })} className="h-11 font-mono tracking-wider" placeholder="ANI-A7F3" /></div>
               <div><Label>Պահեստ</Label><Input type="number" value={form.stock ?? ''} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className="h-11" /></div>
             </div>
             <div><Label>Նկարագրություն</Label><Textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} /></div>
