@@ -135,7 +135,7 @@ export default function AdminFiltersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Անվանում *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Ор.՝ Апранканиш" className="h-11" />
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Ор.՝ Ապրանքանիշ" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>Slug *</Label>
@@ -143,19 +143,19 @@ export default function AdminFiltersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Категориа *</Label>
+              <Label>Կատեգորիա *</Label>
               <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50">
-                <option value="">Интел...</option>
+                <option value="">Ընրել...</option>
                 {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Тарберакнер (бжанц стуракатов)</Label>
+              <Label>Տեսակներ (առանց տեսակ)</Label>
               <Input value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })} placeholder="Bosch, Mobil, Castrol, Shell" className="h-11" />
-              <p className="text-[10px] text-muted-foreground">Առանց ստուրական տարբերակների, օրինակ. Bosch, Mobil, Castrol, Shell</p>
+              <p className="text-[10px] text-muted-foreground">Առանց տեսակ, օրինակ. Bosch, Mobil, Castrol, Shell</p>
             </div>
             <div className="space-y-2">
-              <Label>Карг</Label>
+              <Label>Կարգ</Label>
               <Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} className="h-11" />
             </div>
           </div>

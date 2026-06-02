@@ -108,7 +108,7 @@ export default function ProductsPage() {
   if (filters.inStockOnly) fchips.push({ key: 'stock', label: 'Միայն առկա', clear: () => setFilters({ ...filters, inStockOnly: undefined }) });
   for (const [k, v] of Object.entries(filters.attributes ?? {})) {
     const val = Array.isArray(v) ? v.join(', ') : String(v);
-    fchips.push({ key: k, label: `${k}: ${val}`, clear: () => { const a = { ...(filters.attributes ?? {}) }; delete a[k]; setFilters({ ...filters, attributes: Object.keys(a).length ? a : undefined }); } });
+    fchips.push({ key: k, label: val, clear: () => { const a = { ...(filters.attributes ?? {}) }; delete a[k]; setFilters({ ...filters, attributes: Object.keys(a).length ? a : undefined }); } });
   }
 
   return (
@@ -144,16 +144,26 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {fchips.length > 0 && (
-            <div className="mb-5 flex flex-wrap items-center gap-2">
-              {fchips.map((c) => (
-                <button key={c.key} onClick={c.clear} className="inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-xs transition-colors hover:border-primary/40 hover:text-primary">
-                  {c.label} <X className="h-3 w-3" />
-                </button>
-              ))}
-              <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'Դասավորել ֆիլտրերը'}</button>
+          {filters.categoryId || activeBrand || Object.keys(filters.attributes ?? {}).length > 0 || filters.onSale || filters.minRating || filters.minPrice || filters.maxPrice || filters.inStockOnly ? (
+            <div className="mb-5 space-y-3">
+              {filters.categoryId && (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold tracking-tight">{cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Категория'}</h2>
+                  <button onClick={() => setFilters({ ...filters, categoryId: undefined, attributes: undefined })} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                    <X className="h-3.5 w-3.5 inline" />
+                  </button>
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {fchips.filter((c) => c.key !== 'cat').map((c) => (
+                  <button key={c.key} onClick={c.clear} className="inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-xs transition-colors hover:border-primary/40 hover:text-primary">
+                    {c.label} <X className="h-3 w-3" />
+                  </button>
+                ))}
+                <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'Մաքրել ֆիլտրերը'}</button>
+              </div>
             </div>
-          )}
+          ) : null}
 
           {!brandLoading && (
             <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
