@@ -159,11 +159,11 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
               )}
 
               {isNew && !compareAtPrice && (
-                <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">New</Badge>
+                <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">Նոր</Badge>
               )}
 
               {isHit && !compareAtPrice && !isNew && (
-                <Badge className="absolute left-3 top-3 badge-hit text-xs font-bold shadow-lg">Hit</Badge>
+                <Badge className="absolute left-3 top-3 badge-hit text-xs font-bold shadow-lg">Թոփ</Badge>
               )}
 
               <button
