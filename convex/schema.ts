@@ -67,6 +67,12 @@ export default defineSchema(
     order: v.number(),
   }).index('by_category', ['categoryId']),
 
+  // ─── ATG Codes (Armenian Goods Classification) ────────────────
+  atgCodes: defineTable({
+    code: v.string(),
+    name: v.string(),
+  }).index('by_code', ['code']),
+
   // ─── Products ──────────────────────────────────────────────────
   products: defineTable({
     name: v.string(),
@@ -80,6 +86,7 @@ export default defineSchema(
     stock: v.number(),
     brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
+    atgCode: v.optional(v.string()),
     isActive: v.boolean(),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),

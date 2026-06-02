@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as atg from "../atg.js";
 import type * as auth from "../auth.js";
 import type * as backInStock from "../backInStock.js";
 import type * as cart from "../cart.js";
@@ -35,6 +36,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  atg: typeof atg;
   auth: typeof auth;
   backInStock: typeof backInStock;
   cart: typeof cart;

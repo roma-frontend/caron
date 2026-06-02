@@ -32,11 +32,12 @@ export const useCartStore = create<CartState>()(
       loadItems: (items) => set({ items, lastRemoved: null }),
       addItem: (item) => set((state) => {
         const existing = state.items.find((i) => i.id === item.id);
+        const step = item.qtyStep || 1;
         if (existing) {
           const max = existing.maxStock ?? Infinity;
-          return { items: state.items.map((i) => i.id === item.id ? { ...i, quantity: Math.min(i.quantity + 1, max) } : i) };
+          return { items: state.items.map((i) => i.id === item.id ? { ...i, quantity: Math.min(i.quantity + step, max) } : i) };
         }
-        return { items: [...state.items, { ...item, quantity: 1 }] };
+        return { items: [...state.items, { ...item, quantity: step }] };
       }),
       removeItem: (id) => set((state) => ({
         lastRemoved: state.items.find((i) => i.id === id) ?? null,
