@@ -37,3 +37,30 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+export const update = mutation({
+  args: {
+    sessionToken: v.string(),
+    id: v.id('filterDefinitions'),
+    name: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    type: v.optional(v.union(v.literal('select'), v.literal('multiselect'), v.literal('range'), v.literal('boolean'))),
+    options: v.optional(v.array(v.string())),
+    unit: v.optional(v.string()),
+    order: v.optional(v.number()),
+    categoryId: v.optional(v.id('categories')),
+  },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const { sessionToken: _, id, ...patch } = args;
+    await ctx.db.patch(id, patch);
+  },
+});
+
+export const listAll = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    return await ctx.db.query('filterDefinitions').order('asc').take(200);
+  },
+});
