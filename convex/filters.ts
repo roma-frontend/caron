@@ -79,9 +79,8 @@ export const migrateTesak = mutation({
 });
 
 export const listAll = query({
-  args: { sessionToken: v.string() },
-  handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+  args: {},
+  handler: async (ctx) => {
     return await ctx.db.query('filterDefinitions').order('asc').take(200);
   },
 });

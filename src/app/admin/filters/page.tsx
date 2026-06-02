@@ -15,7 +15,7 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 
 export default function AdminFiltersPage() {
   const { sessionToken } = useAuth();
-  const filters = useQuery(api.filters.listAll, sessionToken ? { sessionToken } : 'skip');
+  const filters = useQuery(api.filters.listAll, {});
   const categories = useQuery(api.categories.list, {});
   const createFilter = useMutation(api.filters.create);
   const updateFilter = useMutation(api.filters.update);
