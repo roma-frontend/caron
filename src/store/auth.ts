@@ -1,6 +1,7 @@
+"use client"
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { useEffect, useState } from 'react';
 
 interface AuthState {
   sessionToken: string | null;

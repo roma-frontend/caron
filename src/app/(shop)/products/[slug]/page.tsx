@@ -168,9 +168,18 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {product.sku && (
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1">
-              <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">{product.sku}</span>
+          {(product.sku || product.atgCode) && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {product.sku && (
+                <div className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">{product.sku}</span>
+                </div>
+              )}
+              {product.atgCode && (
+                <div className="inline-flex items-center gap-1.5 rounded-lg border bg-primary/5 px-2.5 py-1">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">АГТАА {product.atgCode}</span>
+                </div>
+              )}
             </div>
           )}
 

@@ -29,7 +29,7 @@ export default function EditProductPage() {
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState<{ name?: string; price?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; compareAtPrice?: number; discountPercent?: number; attributes?: Record<string, unknown> }>({});
+  const [form, setForm] = useState<{ name?: string; price?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; atgCode?: string; compareAtPrice?: number; discountPercent?: number; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +38,7 @@ export default function EditProductPage() {
 
   // Init form when product loads
   if (currentProduct && !form.name) {
-    setForm({ name: currentProduct.name, price: currentProduct.price, brand: currentProduct.brand, qtyStep: currentProduct.qtyStep, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
+    setForm({ name: currentProduct.name, price: currentProduct.price, brand: currentProduct.brand, qtyStep: currentProduct.qtyStep, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, atgCode: currentProduct.atgCode, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
     setImages(currentProduct.images ?? []);
   }
 
@@ -155,6 +155,9 @@ export default function EditProductPage() {
               <div><Label>Արտիկուլ</Label><Input value={form.sku ?? ''} onChange={(e) => setForm({ ...form, sku: e.target.value })} className="h-11 font-mono tracking-wider" placeholder="ANI-A7F3" /></div>
               <div><Label>Պահեստ</Label><Input type="number" value={form.stock ?? ''} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className="h-11" /></div>
             </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div><Label>ԱԳՏԱԱ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm({ ...form, atgCode: e.target.value })} placeholder="2601" className="h-11 font-mono" /></div>
+            </div>
             <div><Label>Նկարագրություն</Label><Textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} /></div>
           </CardContent>
         </Card>
@@ -182,6 +185,19 @@ export default function EditProductPage() {
                   )}
                 </div>
               ))}
+              {/* Orphan attributes — no matching filter definition */}
+              {form.attributes && Object.keys(form.attributes).filter((k) => !filterDefs.find((d) => d.slug === k) && k !== 'vehicleCompat' && k !== 'carBrand').length > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800 dark:bg-amber-950/20">
+                  <p className="mb-2 text-xs font-semibold text-amber-700 dark:text-amber-400">Հեռացված ֆիլտր (չկա ցուցակում):</p>
+                  {Object.entries(form.attributes ?? {}).filter(([k]) => !filterDefs.find((d) => d.slug === k) && k !== 'vehicleCompat' && k !== 'carBrand').map(([k, v]) => (
+                    <div key={k} className="mb-1 flex items-center gap-2 text-xs">
+                      <span className="font-mono text-muted-foreground">{k}: {String(v)}</span>
+                      <button onClick={() => { const a = { ...form.attributes }; delete a[k]; setForm({ ...form, attributes: Object.keys(a).length ? a : undefined }); }}
+                        className="text-destructive hover:text-destructive/80">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

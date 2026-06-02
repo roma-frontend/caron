@@ -204,7 +204,7 @@ export const create = mutation({
     compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
-    sku: v.optional(v.string()), stock: v.number(),
+    sku: v.optional(v.string()), atgCode: v.optional(v.string()), stock: v.number(),
     isActive: v.boolean(), isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
     attributes: v.optional(v.any()),
