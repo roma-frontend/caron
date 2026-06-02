@@ -194,7 +194,7 @@ export default function HomePage() {
           <div className="flex flex-wrap" style={{ gap: 'var(--space-4)' }}>
             {categories === undefined
               ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted flex-1 basis-[250px]" style={{ height: '8rem' }} />)
-              : categories.map((cat, i) => <CategoryCard key={cat._id} id={cat._id} name={cat.name} slug={cat.slug} description={cat.description} index={i} className="flex-1 basis-[250px]" />)}
+              : categories.map((cat, i) => <CategoryCard key={cat._id} id={cat._id} name={cat.name} slug={cat.slug} description={cat.description} index={i} className="flex-1 w-full" />)}
           </div>
         </section>
         )}
