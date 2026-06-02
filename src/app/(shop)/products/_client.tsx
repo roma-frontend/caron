@@ -40,6 +40,7 @@ export default function ProductsPage() {
   const [filters, setFilters] = useState<{
     categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
   }>({});
+  const filterDefs = useQuery(api.filters.getByCategory, filters.categoryId ? { categoryId: filters.categoryId as Id<'categories'> } : 'skip');
 
   /** Clear URL brand param without page reload */
   const clearUrlBrand = () => {
@@ -136,6 +137,33 @@ export default function ProductsPage() {
               </button>
             </div>
           </div>
+          {filterDefs && filterDefs.length > 0 && (
+            <div className="mb-4 space-y-2">
+              {filterDefs.map((def) => {
+                const active = (filters.attributes?.[def.slug] as string[]) || [];
+                return (
+                  <div key={def._id} className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs font-medium text-muted-foreground mr-1">{def.name}:</span>
+                    {def.options?.map((opt) => {
+                      const isActive = active.includes(opt);
+                      return (
+                        <button key={opt} onClick={() => {
+                          const next = isActive ? active.filter((v) => v !== opt) : [...active, opt];
+                          const attrs = { ...(filters.attributes ?? {}) };
+                          if (next.length > 0) attrs[def.slug] = next;
+                          else delete attrs[def.slug];
+                          setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
+                        }}
+                          className={`rounded-full border px-3 py-1 text-xs transition-all hover:scale-105 ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground hover:border-primary/40 hover:text-primary'}`}>
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {mounted && vehicle && (
             <div className="mb-5 flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2.5 text-sm">
               <Car className="h-4 w-4 text-primary" />
