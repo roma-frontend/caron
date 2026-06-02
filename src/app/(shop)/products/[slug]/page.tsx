@@ -41,6 +41,9 @@ export default function ProductDetailPage() {
   const settings = useSettings();
   const addViewed = useRecentlyViewedStore((s) => s.add);
   const productId = product?._id;
+  const filterDefs = useQuery(api.filters.getByCategory, product?.categoryId ? { categoryId: product.categoryId } : 'skip');
+  const attrNames: Record<string, string> = {};
+  if (filterDefs) for (const f of filterDefs) attrNames[f.slug] = f.name;
   const currentUser = useAuthStore((s) => s.user);
   const items = useCartStore((s) => s.items);
   const [qty, setQty] = useState(() => product?.qtyStep || 1);
@@ -228,7 +231,7 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').map(([key, val]) => (
                   <div key={key} className="flex justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
-                    <span className="text-muted-foreground">{key}</span>
+                    <span className="text-muted-foreground">{attrNames[key] || key}</span>
                     <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : String(val)}</span>
                   </div>
                 ))}
