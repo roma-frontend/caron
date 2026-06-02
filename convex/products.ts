@@ -216,6 +216,9 @@ export const create = mutation({
     if (data.showInPromotions === undefined && data.compareAtPrice && data.compareAtPrice > data.price) {
       data.showInPromotions = true;
     }
+    if (data.brand && (!data.attributes || !(data.attributes as any).brand)) {
+      data.attributes = { ...((data.attributes as any) ?? {}), brand: data.brand };
+    }
     // Auto-generate SKU if not provided
     if (!data.sku) {
       const cat = await ctx.db.get(data.categoryId);
@@ -247,6 +250,10 @@ export const update = mutation({
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const { id, sessionToken: _, stock, price, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
+    if (clearBrand) { rest.brand = undefined; }
+    if (rest.brand && (!rest.attributes || !(rest.attributes as any).brand)) {
+      rest.attributes = { ...((rest.attributes as any) ?? {}), brand: rest.brand };
+    }
     const old = await ctx.db.get(id);
     if (clearBrand) { rest.brand = undefined; }
     if (stock !== undefined && old && old.stock <= 0 && stock > 0) {
