@@ -73,8 +73,7 @@ export const listPaginated = query({
     if (args.attributes && typeof args.attributes === 'object') {
       const attrs = args.attributes as Record<string, unknown>;
       filtered = filtered.filter((p) => {
-        if (!p.attributes) return false;
-        const pa = p.attributes as Record<string, unknown>;
+        const pa = (p.attributes ?? {}) as Record<string, unknown>;
         for (const [key, val] of Object.entries(attrs)) {
           if (val === null || val === undefined || val === '') continue;
           // Special handling for carBrand — also check vehicleCompat
@@ -85,19 +84,19 @@ export const listPaginated = query({
               continue;
             }
           }
-          if (Array.isArray(val)) {
-            if (val.length === 0) continue;
-            const pVal = pa[key];
-            if (Array.isArray(pVal)) {
-              if (!val.some((v) => pVal.includes(v))) return false;
-            } else {
-              if (!val.includes(pVal as string)) return false;
+          // Check both attributes[key] and matching top-level field (e.g., brand, stock)
+          const topLevel = (p as Record<string, unknown>)[key];
+          const attrVal = pa[key];
+          const checkVal = (check: unknown) => {
+            if (Array.isArray(val)) {
+              if (val.length === 0) return true;
+              if (Array.isArray(check)) return val.some((v) => (check as string[]).includes(v));
+              return val.includes(check as string);
             }
-          } else if (typeof val === 'boolean') {
-            if (pa[key] !== val) return false;
-          } else {
-            if (pa[key] !== val) return false;
-          }
+            if (typeof val === 'boolean') return check === val;
+            return check === val;
+          };
+          if (!checkVal(topLevel) && !checkVal(attrVal)) return false;
         }
         return true;
       });
