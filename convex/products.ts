@@ -251,9 +251,10 @@ export const update = mutation({
     await getAdminCaller(ctx, args.sessionToken);
     const { id, sessionToken: _, stock, price, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
     if (clearBrand) { rest.brand = undefined; }
-    if (rest.brand && (!rest.attributes || !(rest.attributes as any).brand)) {
-      rest.attributes = { ...((rest.attributes as any) ?? {}), brand: rest.brand };
-    }
+    const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
+      if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
+      if (!rest.brand && rAttrs.brand && typeof rAttrs.brand === 'string') rest.brand = rAttrs.brand as string;
+      rest.attributes = Object.keys(rAttrs).length > 0 ? rAttrs : undefined;
     const old = await ctx.db.get(id);
     if (clearBrand) { rest.brand = undefined; }
     if (stock !== undefined && old && old.stock <= 0 && stock > 0) {

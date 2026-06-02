@@ -17,6 +17,7 @@ import type * as coupons from "../coupons.js";
 import type * as customers from "../customers.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
 import type * as pages from "../pages.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   customers: typeof customers;
   filters: typeof filters;
   "lib/auth": typeof lib_auth;
+  migrations: typeof migrations;
   notifications: typeof notifications;
   orders: typeof orders;
   pages: typeof pages;
