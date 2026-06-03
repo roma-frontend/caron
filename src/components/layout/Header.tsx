@@ -63,7 +63,7 @@ export function Header() {
 
   return (
     <>
-      {settings?.announcementEnabled !== false && <AnnouncementBar raw={settings?.announcementBar} phone={settings?.phone} />}
+      {settings !== undefined && settings?.announcementEnabled !== false && <AnnouncementBar raw={settings?.announcementBar} phone={settings?.phone} />}
       <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>
         <div className="mx-auto flex h-full items-center justify-between gap-1 px-2 sm:px-4" style={{ maxWidth: 'var(--container-max)' }}>
           {/* Logo */}
@@ -74,7 +74,7 @@ export function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden items-center gap-1 md:flex">
-            {settings?.enableCarSelector !== false && (
+            {settings !== undefined && settings?.enableCarSelector !== false && (
               <Link href="/car-selector" className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10">
                 <Car className="h-4 w-4" /> Ընտրել մակնիշ
               </Link>

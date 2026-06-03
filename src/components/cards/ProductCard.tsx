@@ -182,7 +182,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
                 </div>
               )}
 
-              {settings?.enableQuickView !== false && (
+              {settings !== undefined && settings?.enableQuickView !== false && (
                 <button
                   aria-label="Արագ դիտում"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickOpen(true); }}

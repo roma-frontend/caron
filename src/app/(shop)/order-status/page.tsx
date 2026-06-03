@@ -71,7 +71,7 @@ export default function OrderStatusPage() {
               </div>
 
               {/* Timeline */}
-              {settings?.enableTimeline !== false && order.status !== 'cancelled' ? (
+              {settings !== undefined && settings?.enableTimeline !== false && order.status !== 'cancelled' ? (
                 <div className="relative">
                   <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted" />
                   {STEPS.map((step, i) => {

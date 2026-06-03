@@ -131,7 +131,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
       )}
 
       {/* Price - Dual Range Slider */}
-      {settings?.enablePriceFilter !== false && <Section title="Գին" k="price" expanded={expanded} toggle={toggle}>
+      {settings !== undefined && settings?.enablePriceFilter !== false && <Section title="Գին" k="price" expanded={expanded} toggle={toggle}>
         <div className="flex gap-2 mb-3">
           <div className="flex-1">
             <label className="text-[10px] text-muted-foreground mb-1 block">Սկսած</label>

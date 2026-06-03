@@ -204,7 +204,7 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {product.stock <= 0 && settings?.enableBackInStock !== false && (
+          {product.stock <= 0 && settings !== undefined && settings?.enableBackInStock !== false && (
             <div className="mt-3">
               <BackInStockButton productId={product._id} />
             </div>
@@ -279,7 +279,7 @@ export default function ProductDetailPage() {
               <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <ShareButton productName={product.name} />
-            {settings?.enablePriceAlert !== false && (
+            {settings !== undefined && settings?.enablePriceAlert !== false && (
               <SubscribePriceButton productId={product._id} currentPrice={product.price} />
             )}
             <QuickBuyButton productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} />
@@ -294,7 +294,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {settings?.enableReviews !== false && <ProductReviews productId={product._id} />}
+      {settings !== undefined && settings?.enableReviews !== false && <ProductReviews productId={product._id} />}
 
       <RecentlyViewed />
 

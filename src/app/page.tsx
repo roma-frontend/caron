@@ -123,7 +123,7 @@ export default function HomePage() {
           </p>
 
           {/* Vehicle selector — signature auto-parts fitment pattern */}
-          {settings?.enableCarSelector !== false && (
+          {settings !== undefined && settings?.enableCarSelector !== false && (
             <div className="hero-fade-4 w-full" style={{ maxWidth: '46rem', marginBottom: 'var(--space-6)' }}>
               <VehicleSelector />
             </div>
@@ -188,7 +188,7 @@ export default function HomePage() {
         </section>
 
         {/* Categories */}
-        {settings?.showCategories !== false && (
+        {settings !== undefined && settings?.showCategories !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
           <div className="flex flex-wrap" style={{ gap: 'var(--space-4)' }}>
@@ -200,7 +200,7 @@ export default function HomePage() {
         )}
 
         {/* Brands — luxury showcase */}
-        {settings?.showBrands !== false && (
+        {settings !== undefined && settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center font-bold tracking-tight" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>
             <span className="bg-gradient-to-r from-foreground/80 via-foreground to-foreground/80 bg-clip-text text-transparent">Բրենդեր</span>
@@ -245,7 +245,7 @@ export default function HomePage() {
         )}
 
         {/* Featured Products — с хитовыми товарами в hero-стиле */}
-        {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
+        {settings !== undefined && settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
               <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
@@ -264,7 +264,7 @@ export default function HomePage() {
         )}
 
         {/* Features */}
-        {settings?.showFeatures !== false && (
+        {settings !== undefined && settings?.showFeatures !== false && (
         <section className="bg-muted/30" style={{ paddingBlock: 'var(--space-section)' }}>
           <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--space-6)' }}>
