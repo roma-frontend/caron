@@ -122,9 +122,18 @@ export default function HomePage() {
             {HOME.heroDesc}
           </p>
 
-          {/* Vehicle selector — signature auto-parts fitment pattern */}
-          {settings !== undefined && settings?.enableCarSelector !== false && (
-            <div className="hero-fade-4 w-full" style={{ maxWidth: '46rem', marginBottom: 'var(--space-6)' }}>
+          {/* Vehicle selector — signature auto-parts fitment pattern.
+              While settings load, keep the block in the layout but invisible to
+              avoid a layout shift / flicker. Collapse only once we know it's off. */}
+          {(settings === undefined || settings?.enableCarSelector !== false) && (
+            <div
+              className="hero-fade-4 w-full"
+              style={{
+                maxWidth: '46rem',
+                marginBottom: 'var(--space-6)',
+                visibility: settings === undefined ? 'hidden' : 'visible',
+              }}
+            >
               <VehicleSelector />
             </div>
           )}
