@@ -57,12 +57,18 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     if (args.text && args.text.length > 1000) throw new Error('Text too long');
+    if (!Number.isInteger(args.rating) || args.rating < 1 || args.rating > 5) {
+      throw new Error('Invalid rating');
+    }
+    if (!args.authorName.trim() || args.authorName.length > 100) {
+      throw new Error('Invalid author name');
+    }
     const id = await ctx.db.insert('reviews', {
       productId: args.productId,
       authorName: args.authorName,
       rating: args.rating,
       text: args.text,
-      isApproved: true,
+      isApproved: false,
       createdAt: Date.now(),
     });
     await recomputeRating(ctx, args.productId);

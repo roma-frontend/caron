@@ -25,8 +25,20 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
+    if (!Number.isFinite(args.value) || args.value < 0) {
+      throw new Error('Invalid coupon value');
+    }
+    if (args.type === 'percent' && args.value > 100) {
+      throw new Error('Percent coupon cannot exceed 100');
+    }
+    if (args.maxUses !== undefined && (!Number.isInteger(args.maxUses) || args.maxUses < 0)) {
+      throw new Error('Invalid maxUses');
+    }
+    if (args.minOrderAmount !== undefined && (!Number.isFinite(args.minOrderAmount) || args.minOrderAmount < 0)) {
+      throw new Error('Invalid minOrderAmount');
+    }
     const { sessionToken: _, ...data } = args;
-    return await ctx.db.insert('coupons', { ...data, usedCount: 0, createdAt: Date.now() });
+    return await ctx.db.insert('coupons', { ...data, code: data.code.toUpperCase(), usedCount: 0, createdAt: Date.now() });
   },
 });
 

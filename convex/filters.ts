@@ -31,14 +31,16 @@ export const create = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id('filterDefinitions') },
+  args: { sessionToken: v.string(), id: v.id('filterDefinitions') },
   handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
     await ctx.db.delete(args.id);
   },
 });
 
 export const update = mutation({
   args: {
+    sessionToken: v.string(),
     id: v.id('filterDefinitions'),
     name: v.optional(v.string()),
     slug: v.optional(v.string()),
@@ -49,14 +51,16 @@ export const update = mutation({
     categoryId: v.optional(v.id('categories')),
   },
   handler: async (ctx, args) => {
-    const { id, ...patch } = args;
+    await getAdminCaller(ctx, args.sessionToken);
+    const { id, sessionToken: _, ...patch } = args;
     await ctx.db.patch(id, patch);
   },
 });
 
 export const migrateTesak = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
     const cats = await ctx.db.query('categories').collect();
     let added = 0;
     for (const cat of cats) {

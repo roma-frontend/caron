@@ -41,7 +41,28 @@ export const create = mutation({
       serverSubtotal += product.price * item.quantity;
     }
 
-    const serverTotal = serverSubtotal + args.shipping;
+    // Server-side shipping validation against store settings — never trust
+    // the client-provided shipping amount.
+    if (!Number.isFinite(args.shipping) || args.shipping < 0) {
+      throw new Error('Առաքման սխալ արժեք');
+    }
+    const settings = await ctx.db.query('settings').first();
+    const freeThreshold = settings?.freeShippingThreshold ?? 0;
+    let serverShipping = args.shipping;
+    if (freeThreshold > 0 && serverSubtotal >= freeThreshold) {
+      // Free shipping unlocked — force 0 regardless of client input.
+      serverShipping = 0;
+    } else {
+      // Otherwise the only acceptable values are pickup (0) or a configured zone price.
+      const allowed = new Set<number>([0]);
+      if (typeof settings?.deliveryYerevan === 'number') allowed.add(settings.deliveryYerevan);
+      if (typeof settings?.deliveryRegions === 'number') allowed.add(settings.deliveryRegions);
+      if (!allowed.has(args.shipping)) {
+        throw new Error('Առաքման արժեքն անվավեր է. խնդրում ենք թարմացնել էջը');
+      }
+    }
+
+    const serverTotal = serverSubtotal + serverShipping;
 
     // Reject if client total differs by more than 1 AMD (rounding tolerance)
     if (Math.abs(serverTotal - args.total) > 1) {
@@ -60,6 +81,7 @@ export const create = mutation({
     const orderId = await ctx.db.insert('orders', {
       ...args,
       subtotal: serverSubtotal,
+      shipping: serverShipping,
       total: serverTotal,
       orderNumber,
       userId: caller?._id,

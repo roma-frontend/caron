@@ -50,7 +50,7 @@ export default function AdminFiltersPage() {
       const options = form.options.split(',').map((s) => s.trim()).filter(Boolean);
       const base = { name: form.name, slug: form.slug, type: 'multiselect' as const, categoryId: form.categoryId as Id<'categories'>, options: options.length > 0 ? options : undefined, order: form.order };
       if (editingId) {
-        await updateFilter({ ...base, id: editingId });
+        await updateFilter({ sessionToken: sessionToken ?? '', ...base, id: editingId });
         toast.success('Ֆիլտրը թարմացվել է');
       } else {
         await createFilter({ sessionToken: sessionToken ?? '', ...base });
@@ -63,7 +63,7 @@ export default function AdminFiltersPage() {
 
   const handleDelete = async () => {
     if (!deleteId || !sessionToken) return;
-    try { await removeFilter({ id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Сшибка'); }
+    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Сшибка'); }
   };
 
   const catMap: Record<string, string> = {};

@@ -44,7 +44,7 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
     setSending(true);
     try {
       await addReview({ productId, authorName: name, rating, text: text || undefined });
-      toast.success('Մեկնաբանությունը հաջողությամբ ավելացվեց');
+      toast.success('Մեկնաբանությունը հաջողությամբ ուղարկվեց և սպասում է հաստատման');
       setShowForm(false); setName(''); setText(''); setRating(5);
     } catch { toast.error('Մեկնաբանությունը չի ավելացվել'); } finally { setSending(false); }
   };

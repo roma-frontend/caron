@@ -89,12 +89,16 @@ export const logout = mutation({
 export const register = mutation({
   args: { name: v.string(), email: v.string(), phone: v.optional(v.string()), password: v.string() },
   handler: async (ctx, args) => {
-    const existing = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', args.email.toLowerCase())).unique();
+    const email = args.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Սխալ էլ․ հասցե');
+    if (!args.name.trim() || args.name.length > 100) throw new Error('Սխալ անուն');
+    if (args.password.length < 8) throw new Error('Գաղտնաբառը պետք է լինի առնվազն 8 նիշ');
+    const existing = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', email)).unique();
     if (existing) throw new Error('Այս էլ․ հասցեն արդեն գրանցված է');
     const passwordHash = await hashPassword(args.password);
     const id = await ctx.db.insert('users', {
       name: args.name,
-      email: args.email.toLowerCase(),
+      email: email,
       phone: args.phone,
       role: 'customer',
       customerType: 'retail',
@@ -103,6 +107,6 @@ export const register = mutation({
       createdAt: Date.now(),
     });
     const sessionToken = await createSession(ctx, id, 30);
-    return { userId: id, sessionToken, name: args.name, email: args.email.toLowerCase(), role: 'customer' as const, customerType: 'retail' as const, discountPercent: undefined, phone: args.phone };
+    return { userId: id, sessionToken, name: args.name, email: email, role: 'customer' as const, customerType: 'retail' as const, discountPercent: undefined, phone: args.phone };
   },
 });
