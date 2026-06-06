@@ -14,12 +14,12 @@ import { formatDateHy } from '@/lib/formatters';
 
 function Stars({ rating, interactive, onChange }: { rating: number; interactive?: boolean; onChange?: (r: number) => void }) {
   return (
-    <div className="flex gap-0.5" role={interactive ? 'radiogroup' : 'img'} aria-label={`${rating} из 5 звезд`}>
+    <div className="flex gap-0.5" role={interactive ? 'radiogroup' : 'img'} aria-label={`${rating} 5 աստղից`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star key={i}
           role={interactive ? 'radio' : undefined}
           aria-checked={interactive ? i === rating : undefined}
-          aria-label={interactive ? `${i} звезда` : undefined}
+          aria-label={interactive ? `${i} աստղ` : undefined}
           tabIndex={interactive ? 0 : undefined}
           className={`h-4 w-4 ${i <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'} ${interactive ? 'cursor-pointer hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm' : ''}`}
           onClick={() => interactive && onChange?.(i)}

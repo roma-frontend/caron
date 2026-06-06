@@ -35,7 +35,7 @@ export function useMouseGlow() {
   const [isHovered, setIsHovered] = useState(false);
 
   const handlers = {
-    onMouseMove: useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    onMouseMove: useCallback((e: React.MouseEvent<HTMLElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
       setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     }, []),

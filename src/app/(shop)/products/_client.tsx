@@ -139,7 +139,7 @@ export default function ProductsPage() {
           </div>
           {filterDefs && filterDefs.length > 0 && (
             <div className="mb-4 space-y-2">
-              {filterDefs.filter((def) => def.slug === 'type' || def.name === 'Тесак').map((def) => {
+              {filterDefs.filter((def) => def.slug === 'type' || def.name === 'Տեսակ').map((def) => {
                 const active = (filters.attributes?.[def.slug] as string[]) || [];
                 return (
                   <div key={def._id} className="flex flex-wrap items-center gap-1.5">
@@ -176,7 +176,7 @@ export default function ProductsPage() {
             <div className="mb-5 space-y-3">
               {filters.categoryId && (
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold tracking-tight">{cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Категория'}</h2>
+                  <h2 className="text-lg font-bold tracking-tight">{cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա'}</h2>
                   <button onClick={() => setFilters({ ...filters, categoryId: undefined, attributes: undefined })} className="text-xs text-muted-foreground hover:text-primary transition-colors">
                     <X className="h-3.5 w-3.5 inline" />
                   </button>

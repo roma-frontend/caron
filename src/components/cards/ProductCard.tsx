@@ -126,10 +126,13 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
         ) : (
           /* ─── Grid card mode (original) ─── */
           <div
-            className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm"
+            className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern"
             style={{
-              transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease',
-              transform: isHovered ? 'translateY(-6px) scale(1.02)' : 'translateY(0) scale(1)',
+              viewTransitionName: `product-img-${id}`,
+              transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
+              transform: isHovered
+                ? `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${(mousePos.y - 150) / -30}deg) rotateY(${(mousePos.x - 150) / 30}deg)`
+                : 'translateY(0) scale(1) perspective(1000px) rotateX(0deg) rotateY(0deg)',
               boxShadow: isHovered
                 ? 'var(--shadow-card-hover)'
                 : 'var(--shadow-card)',
@@ -209,7 +212,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
 
               {reviewCount && reviewCount > 0 ? (
                 <div className="mt-1.5 flex items-center gap-1" aria-label={`Գնահատական: ${rating} աստղ ${reviewCount} կարծիքից`}>
-                  <div className="flex" role="img" aria-label={`${Math.round(rating ?? 0)} из 5 звезд`}>
+                  <div className="flex" role="img" aria-label={`${Math.round(rating ?? 0)} 5 աստղից`}>
                     {[1, 2, 3, 4, 5].map((i) => <Star key={i} className={`h-3 w-3 ${i <= Math.round(rating ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} aria-hidden="true" />)}
                   </div>
                   <span className="text-[11px] text-muted-foreground">({reviewCount})</span>

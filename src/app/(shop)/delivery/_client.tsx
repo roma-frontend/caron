@@ -145,7 +145,7 @@ export default function DeliveryPage() {
         </p>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          {settings?.address ?? 'Երևան, Հայաստան'} · {settings?.phone ?? '+374 XX XXX XXX'}
+          {settings?.address ?? 'Երևան, Հայաստան'} {settings?.phone ?? '+374 XX XXX XXX'}
         </p>
       </div>
     </div>

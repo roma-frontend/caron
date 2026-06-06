@@ -578,6 +578,18 @@
   box-shadow: 0 2px 8px oklch(0.7 0.15 80 / 0.3);
 }
 
+/* Solid hit badge for Hero Mini Cards — opaque, high contrast on any background */
+.badge-hit-solid {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: 1px solid oklch(1 0 0 / 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.dark .badge-hit-solid {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-color: oklch(1 0 0 / 0.25);
+  color: #1a1a1a;
+}
+
 /* Gradient CTA Button */
 .btn-gradient {
   background: linear-gradient(135deg, oklch(0.55 0.15 248) 0%, oklch(0.47 0.15 248) 100%);
@@ -658,3 +670,81 @@
 .duration-200 { animation-duration: 0.2s; }
 .duration-300 { animation-duration: 0.3s; }
 .duration-500 { animation-duration: 0.5s; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODERNIZATION 2025-2026 — Borderless Cards, Text Balance, View Transitions
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Text balance for headings */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, var(--foreground), var(--muted-foreground));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Borderless modern card */
+.card-modern {
+  --card-border-rest: transparent;
+  --card-border-hover: color-mix(in oklch, var(--border) 50%, transparent);
+  border-color: var(--card-border-rest);
+  box-shadow: none;
+  transition: border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-modern:hover {
+  border-color: var(--card-border-hover);
+  box-shadow: 0 8px 32px -8px oklch(0.2 0.02 175 / 0.12);
+  transform: translateY(-2px);
+}
+.dark .card-modern:hover {
+  --card-border-hover: oklch(1 0 0 / 10%);
+  box-shadow: 0 8px 32px -8px oklch(0 0 0 / 0.3),
+              0 0 20px var(--primary) / 0.08;
+}
+
+/* View Transitions API fallback */
+::view-transition-old(product-image-*),
+::view-transition-new(product-image-*) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(product-image-*) {
+  opacity: 1;
+  transform: scale(1);
+}
+::view-transition-new(product-image-*) {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* Dark mode ambient glow for focused/active elements */
+.dark *:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring), 0 0 20px var(--primary) / 0.15;
+}
+
+/* Dark mode subtle borders on all card surfaces */
+.dark .rounded-2xl,
+.dark .rounded-3xl,
+.dark .rounded-xl {
+  border-color: oklch(1 0 0 / 6%);
+}
+.dark .rounded-2xl:hover,
+.dark .rounded-3xl:hover,
+.dark .rounded-xl:hover {
+  border-color: oklch(1 0 0 / 12%);
+}
+
+/* Dark mode body gradient background */
+.dark body {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, oklch(0.3 0.04 250 / 0.4), transparent),
+    var(--background);
+  background-attachment: fixed;
+}

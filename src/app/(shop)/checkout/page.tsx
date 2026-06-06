@@ -182,6 +182,27 @@ export default function CheckoutPage() {
             <Card style={{ boxShadow: 'var(--shadow-card)' }} className="animate-in slide-in-from-right-4 duration-300">
               <CardHeader><CardTitle>Պատվերի հաստատում</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-xl border-2 border-amber-200 bg-amber-50/60 p-4 space-y-3 dark:border-amber-800 dark:bg-amber-950/30">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Հարգելի գնորդ, նախքան պատվերի հաստատումը՝</p>
+                  <ul className="space-y-2 text-sm text-amber-700 dark:text-amber-400">
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200 text-[10px] font-bold text-amber-800 dark:bg-amber-800 dark:text-amber-200">1</span>
+                      Ստուգեք Ձեր կոնտակտային տվյալները՝ անուն, հեռախոսահամար և էլ. հասցե
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200 text-[10px] font-bold text-amber-800 dark:bg-amber-800 dark:text-amber-200">2</span>
+                      Համոզվեք, որ առաքման հասցեն ճիշտ է նշված
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200 text-[10px] font-bold text-amber-800 dark:bg-amber-800 dark:text-amber-200">3</span>
+                      Սխալ տվյալների դեպքում պատվերը կարող է ուշանալ կամ չկատարվել
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200 text-[10px] font-bold text-amber-800 dark:bg-amber-800 dark:text-amber-200">4</span>
+                      Պատվերը հաստատելուց հետո սեղմեք «Պատվիրել» կոճակը
+                    </li>
+                  </ul>
+                </div>
                 {settings?.paymentMethods && settings.paymentMethods.length > 0 && (
                   <div>
                     <p className="mb-2 text-sm font-medium">Վճարման եղանակ</p>

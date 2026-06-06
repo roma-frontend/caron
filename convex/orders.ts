@@ -64,11 +64,6 @@ export const create = mutation({
 
     const serverTotal = serverSubtotal + serverShipping;
 
-    // Reject if client total differs by more than 1 AMD (rounding tolerance)
-    if (Math.abs(serverTotal - args.total) > 1) {
-      throw new Error('Գնի անհամապատասխանություն. խնդրում ենք թարմացնել էջը');
-    }
-
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const now = Date.now();
 

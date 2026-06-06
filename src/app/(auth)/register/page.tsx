@@ -34,7 +34,7 @@ export default function RegisterPage() {
       toast.success('Գրանցումը հաջողվեց');
       router.push('/dashboard');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Сшибка');
+      toast.error(e instanceof Error ? e.message : 'Սխալ');
     } finally { setBusy(false); }
   };
 

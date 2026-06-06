@@ -83,6 +83,7 @@ export default defineSchema(
     categoryId: v.id('categories'),
     images: v.array(v.string()),
     sku: v.optional(v.string()),
+    oemNumbers: v.optional(v.array(v.string())),
     stock: v.number(),
     brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),

@@ -69,7 +69,7 @@ export const migrateTesak = mutation({
         .take(50)).find((f) => f.slug === 'type');
       if (!existing) {
         await ctx.db.insert('filterDefinitions', {
-          categoryId: cat._id, name: 'Тэсак', slug: 'type',
+          categoryId: cat._id, name: 'Տեսակ', slug: 'type',
           type: 'multiselect', options: [], order: 0,
         });
         added++;

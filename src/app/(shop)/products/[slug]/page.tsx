@@ -126,10 +126,10 @@ export default function ProductDetailPage() {
             </div>
             {imgs.length > 1 && (
               <>
-                <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Назад">
+                <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Հետ">
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <button onClick={() => emblaApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Вперед">
+                <button onClick={() => emblaApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Առաջ">
                   <ChevronRight className="h-5 w-5" />
                 </button>
                 {/* Dots */}
@@ -433,7 +433,7 @@ function RelatedProducts({ categoryId, currentId }: { categoryId: string; curren
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {filtered.map((p, i) => (
-        <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+        <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
       ))}
     </div>
   );

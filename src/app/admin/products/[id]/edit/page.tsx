@@ -19,6 +19,7 @@ import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { VehicleCompatSelector } from '@/components/admin/VehicleCompatSelector';
 import type { VehicleCompatEntry } from '@/components/admin/VehicleCompatSelector';
+import { OemNumbersInput } from '@/components/admin/OemNumbersInput';
 
 export default function EditProductPage() {
   const params = useParams();
@@ -29,7 +30,7 @@ export default function EditProductPage() {
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState<{ name?: string; price?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; atgCode?: string; compareAtPrice?: number; discountPercent?: number; attributes?: Record<string, unknown> }>({});
+  const [form, setForm] = useState<{ name?: string; price?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: string[]; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -38,11 +39,12 @@ export default function EditProductPage() {
 
   // Init form when product loads
   if (currentProduct && !form.name) {
-    setForm({ name: currentProduct.name, price: currentProduct.price, brand: currentProduct.brand, qtyStep: currentProduct.qtyStep, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, atgCode: currentProduct.atgCode, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
+    setForm({ name: currentProduct.name, price: currentProduct.price, brand: currentProduct.brand, qtyStep: currentProduct.qtyStep, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, oemNumbers: currentProduct.oemNumbers, atgCode: currentProduct.atgCode, categoryId: currentProduct.categoryId, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
     setImages(currentProduct.images ?? []);
   }
 
-  const filterDefs = useQuery(api.filters.getByCategory, currentProduct ? { categoryId: currentProduct.categoryId } : 'skip');
+  const categories = useQuery(api.categories.list, {});
+  const filterDefs = useQuery(api.filters.getByCategory, (form.categoryId || currentProduct?.categoryId) ? { categoryId: (form.categoryId || currentProduct!.categoryId) as Id<'categories'> } : 'skip');
 
   const setAttr = (slug: string, value: string) => {
     const base = form.attributes ?? {};
@@ -78,6 +80,8 @@ export default function EditProductPage() {
         stock: Number(form.stock),
         description: form.description,
         sku: form.sku,
+        categoryId: form.categoryId ? (form.categoryId as Id<'categories'>) : undefined,
+        oemNumbers: form.oemNumbers && form.oemNumbers.length > 0 ? form.oemNumbers : undefined,
         images: images.filter(Boolean),
         attributes: form.attributes || undefined,
         atgCode: form.atgCode || undefined,
@@ -134,6 +138,26 @@ export default function EditProductPage() {
           <CardHeader><CardTitle>Ապրանքի տվյալներ</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div><Label>Անվանում</Label><Input value={form.name ?? ''} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11" /></div>
+            <div>
+              <Label>Կատեգորիա</Label>
+              <Select
+                value={form.categoryId ?? currentProduct?.categoryId ?? ''}
+                onValueChange={(v) => { setForm({ ...form, categoryId: v ?? undefined, attributes: undefined }); }}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue>
+                    {categories
+                      ? categories.find((c) => c._id === (form.categoryId || currentProduct?.categoryId))?.name ?? 'Ընտրեք կատեգորիա'
+                      : 'Բեռնվում է...'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((c) => (
+                    <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div><Label>Գին (֏)</Label><Input type="number" value={form.price ?? ''} onChange={(e) => {
                 const p = Number(e.target.value);
@@ -154,6 +178,9 @@ export default function EditProductPage() {
             <div className="grid grid-cols-3 gap-4">
               <div><Label>Բրենդ</Label><Input value={form.brand ?? ''} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-11" placeholder="Bosch, Mobil..." /></div>
               <div><Label>Արտիկուլ</Label><Input value={form.sku ?? ''} onChange={(e) => setForm({ ...form, sku: e.target.value })} className="h-11 font-mono tracking-wider" placeholder="ANI-A7F3" /></div>
+              <div className="col-span-2">
+                <OemNumbersInput value={form.oemNumbers ?? []} onChange={(v) => setForm({ ...form, oemNumbers: v.length > 0 ? v : undefined })} />
+              </div>
               <div><Label>Պահեստ</Label><Input type="number" value={form.stock ?? ''} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className="h-11" /></div>
             </div>
             <div className="grid grid-cols-3 gap-4">

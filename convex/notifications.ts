@@ -173,7 +173,7 @@ export const sendReceiptToCustomer = action({
       .map(
         (item, i) =>
           `${i + 1}. <b>${String(item.name)}</b>\n` +
-          `   ${Number(item.quantity)} х ${fmt(Number(item.price))} ֏ = <b>${fmt(Number(item.price) * Number(item.quantity))} ֏</b>`,
+          `   ${Number(item.quantity)} × ${fmt(Number(item.price))} ֏ = <b>${fmt(Number(item.price) * Number(item.quantity))} ֏</b>`,
       )
       .join('\n\n');
 

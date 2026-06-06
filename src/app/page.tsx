@@ -10,7 +10,7 @@ import { ProductCard } from '@/components/cards/ProductCard';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { CategoryCard } from '@/components/cards/CategoryCard';
 import { VehicleSelector } from '@/components/VehicleSelector';
-import { useReveal, revealStyle } from '@/lib/motion';
+import { useReveal, revealStyle, useMouseGlow } from '@/lib/motion';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { formatPrice } from '@/lib/formatters';
@@ -96,97 +96,86 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        {/* Hero with mesh gradient orbs */}
-        <section className="relative flex min-h-[70vh] sm:min-h-[80vh] flex-col items-center justify-center overflow-hidden text-center" style={{ paddingInline: 'max(var(--space-container), 0.75rem)' }}>
-          {/* Animated orbs */}
+        {/* Hero — Bento Grid Layout (2025-2026) */}
+        <section className="relative overflow-hidden" style={{ paddingInline: 'max(var(--space-container), 0.75rem)', paddingBlock: 'var(--space-section)' }}>
+          {/* Animated orbs (reduced to 2 for less visual competition) */}
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-10%] top-[-20%] h-[800px] w-[800px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(100px)' }} />
             <div className="absolute right-[-15%] top-[10%] h-[700px] w-[700px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(100px)' }} />
-            <div className="absolute bottom-[-10%] left-[10%] h-[600px] w-[600px] rounded-full mesh-orb-3" style={{ background: 'radial-gradient(circle, var(--landing-orb-3) 0%, transparent 70%)', filter: 'blur(80px)' }} />
           </div>
 
-          {/* Badge */}
-          <div className="hero-fade-1 relative inline-flex items-center overflow-hidden rounded-full backdrop-blur-sm" style={{ gap: 'var(--space-3)', paddingInline: 'var(--space-6)', paddingBlock: 'var(--space-3)', border: '1px solid var(--landing-card-border)', background: 'var(--landing-card-bg)', marginBottom: 'var(--space-6)' }}>
-            <div className="badge-shimmer absolute inset-0" aria-hidden="true" />
-            <div className="pulse-dot rounded-full bg-primary" style={{ width: '0.5rem', height: '0.5rem' }} />
-            <span className="relative font-bold uppercase tracking-widest text-muted-foreground" style={{ fontSize: 'var(--text-xs)' }}>{HOME.heroBadge}</span>
-          </div>
+          <div className="mx-auto grid max-w-[var(--container-max)] gap-6 lg:grid-cols-12">
+            {/* Left Panel — Content (7 cols) */}
+            <div className="flex flex-col justify-center lg:col-span-7 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-md p-8 sm:p-12">
+              {/* Badge */}
+              <div className="hero-fade-1 relative inline-flex w-fit items-center overflow-hidden rounded-full backdrop-blur-sm" style={{ gap: 'var(--space-3)', paddingInline: 'var(--space-6)', paddingBlock: 'var(--space-3)', border: '1px solid var(--landing-card-border)', background: 'var(--landing-card-bg)', marginBottom: 'var(--space-6)' }}>
+                <div className="badge-shimmer absolute inset-0" aria-hidden="true" />
+                <div className="pulse-dot rounded-full bg-primary" style={{ width: '0.5rem', height: '0.5rem' }} />
+                <span className="relative font-bold uppercase tracking-widest text-muted-foreground" style={{ fontSize: 'var(--text-xs)' }}>{HOME.heroBadge}</span>
+              </div>
 
-          {/* Title */}
-          <h1 className="hero-fade-2 font-black tracking-tighter" style={{ fontSize: 'clamp(2rem, 6vw, 4.5rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)', overflowWrap: 'break-word' }}>
-            {HOME.heroTitle}
-          </h1>
+              {/* Title with gradient + balance */}
+              <h1 className="hero-fade-2 text-balance text-gradient font-black tracking-tighter" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)' }}>
+                {HOME.heroTitle}
+              </h1>
 
-          {/* Subtitle */}
-          <p className="hero-fade-3 mx-auto text-muted-foreground" style={{ fontSize: 'var(--text-lg)', maxWidth: '40rem', marginBottom: 'var(--space-8)', lineHeight: 'var(--line-height-relaxed)' }}>
-            {HOME.heroDesc}
-          </p>
+              {/* Subtitle */}
+              <p className="hero-fade-3 text-balance text-muted-foreground" style={{ fontSize: 'var(--text-lg)', maxWidth: '36rem', marginBottom: 'var(--space-8)', lineHeight: 'var(--line-height-relaxed)' }}>
+                {HOME.heroDesc}
+              </p>
 
-          {/* Vehicle selector — signature auto-parts fitment pattern.
-              While settings load, keep the block in the layout but invisible to
-              avoid a layout shift / flicker. Collapse only once we know it's off. */}
-          {(settings === undefined || settings?.enableCarSelector !== false) && (
-            <div
-              className="hero-fade-4 w-full"
-              style={{
-                maxWidth: '46rem',
-                marginBottom: 'var(--space-6)',
-                visibility: settings === undefined ? 'hidden' : 'visible',
-              }}
-            >
-              <VehicleSelector />
-            </div>
-          )}
+              {/* CTA */}
+              <div className="hero-fade-4 flex flex-col sm:flex-row" style={{ gap: 'var(--space-4)' }}>
+                <Link href="/products">
+                  <Button size="lg" style={{ gap: 'var(--space-2)' }}>
+                    {HOME.ctaCatalog} <ArrowRight style={{ height: '1rem', width: '1rem' }} />
+                  </Button>
+                </Link>
+                <Link href="/categories">
+                  <Button size="lg" variant="outline">{HOME.ctaCategories}</Button>
+                </Link>
+              </div>
 
-          {/* CTA */}
-          <div className="hero-fade-4 flex flex-col items-center sm:flex-row" style={{ gap: 'var(--space-4)' }}>
-            <Link href="/products">
-              <Button size="lg" style={{ gap: 'var(--space-2)' }}>
-                {HOME.ctaCatalog} <ArrowRight style={{ height: '1rem', width: '1rem' }} />
-              </Button>
-            </Link>
-            <Link href="/categories">
-              <Button size="lg" variant="outline">{HOME.ctaCategories}</Button>
-            </Link>
-          </div>
-
-          {/* Mini product grid in hero */}
-          {featured && featured.length > 0 && (
-            <div className="hero-fade-4 mt-10 w-full max-w-4xl mx-auto">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {featured.slice(0, 4).map((p, i) => (
-                  <Link key={p._id} href={`/products/${p.slug}`} className="group relative overflow-hidden rounded-xl border bg-card/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg" style={{ aspectRatio: '3/4' }}>
-                    {p.images?.[0] ? (
-                      <Image src={p.images[0]} alt={p.name} width={200} height={200} priority sizes="(max-width: 640px) 50vw, 200px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black/70 to-transparent md:h-0 md:transition-all md:duration-300 md:group-hover:h-full" />
-                    <div className="absolute inset-x-0 bottom-0 p-4 text-center transition-all duration-300 md:translate-y-4 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
-                      <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow-lg">{p.name}</p>
-                      <p className="mt-1 text-sm font-bold text-white drop-shadow-lg">{formatPrice(p.price)}</p>
-                    </div>
-                    {p.isFeatured && <Badge className="absolute left-2 top-2 px-2 py-0.5 text-[10px] font-bold group-hover:bg-white group-hover:text-black" variant="destructive">Թոփ</Badge>}
-                  </Link>
+              {/* Trust bar */}
+              <div className="hero-fade-4 mt-8 flex flex-wrap items-center" style={{ gap: 'var(--space-3) var(--space-6)' }}>
+                {[
+                  { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
+                  { Icon: Shield, label: 'Երաշխիք ապրանքների վրա' },
+                  { Icon: Clock, label: '24/7 աջակցություն' },
+                  { Icon: Star, label: 'Բնօրինակ որակ' },
+                ].map(({ Icon, label }) => (
+                  <span key={label} className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>
+                    <Icon className="h-4 w-4 text-primary" /> {label}
+                  </span>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Trust bar */}
-          <div className="hero-fade-4 flex flex-wrap items-center justify-center" style={{ gap: 'var(--space-3) var(--space-6)', marginTop: 'var(--space-6)' }}>
-            {[
-              { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
-              { Icon: Shield, label: 'Երաշխիք ապրանքների վրա' },
-              { Icon: Clock, label: '24/7 աջակցություն' },
-              { Icon: Star, label: 'Բնօրինակ որակ' },
-            ].map(({ Icon, label }) => (
-              <span key={label} className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>
-                <Icon className="h-4 w-4 text-primary" /> {label}
-              </span>
-            ))}
+            {/* Right Panel — Contextual Cards (5 cols) */}
+            <div className="flex flex-col gap-4 lg:col-span-5">
+              {/* Vehicle Selector Card */}
+              {(settings === undefined || settings?.enableCarSelector !== false) && (
+                <div
+                  className="hero-fade-4 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-md p-6"
+                  style={{ visibility: settings === undefined ? 'hidden' : 'visible' }}
+                >
+                  <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Ընտրել մեքենա</p>
+                  <VehicleSelector />
+                </div>
+              )}
+
+              {/* Top Sellers Mini Grid */}
+              {featured && featured.length > 0 && (
+                <div className="hero-fade-4 flex-1 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-md p-6">
+                  <p className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Թոփ վաճառք</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {featured.slice(0, 4).map((p, i) => (
+                      <HeroMiniCard key={p._id} product={p} index={i} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Scroll indicator */}
@@ -199,7 +188,7 @@ export default function HomePage() {
         {/* Categories */}
         {settings !== undefined && settings?.showCategories !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-          <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
+          <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
           <div className="flex flex-wrap" style={{ gap: 'var(--space-4)' }}>
             {categories === undefined
               ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted flex-1 basis-[250px]" style={{ height: '8rem' }} />)
@@ -211,8 +200,8 @@ export default function HomePage() {
         {/* Brands — luxury showcase */}
         {settings !== undefined && settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-          <h2 className="text-center font-bold tracking-tight" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>
-            <span className="bg-gradient-to-r from-foreground/80 via-foreground to-foreground/80 bg-clip-text text-transparent">Բրենդեր</span>
+          <h2 className="text-center text-balance font-bold tracking-tight" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>
+            <span className="text-gradient">Բրենդեր</span>
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
             {brands?.slice(0, 8).map((b) => {
@@ -253,17 +242,17 @@ export default function HomePage() {
         </section>
         )}
 
-        {/* Featured Products — с хитовыми товарами в hero-стиле */}
+        {/* Featured Products — ցուցադրված ապրանքներ */}
         {settings !== undefined && settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
-              <h2 className="text-center font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
+              <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
-                    <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} isHit={p.isFeatured} />
+                    <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} isHit={p.isFeatured} />
                   ))}
             </div>
             <div className="mt-8 flex justify-center">
@@ -286,5 +275,81 @@ export default function HomePage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+/* ─── Hero Mini Card — full ProductCard hover treatment ─── */
+function HeroMiniCard({ product, index }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index: number }) {
+  const { mousePos, isHovered, handlers } = useMouseGlow();
+  return (
+    <Link
+      href={`/products/${product.slug}`}
+      {...handlers}
+      className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern"
+      style={{
+        aspectRatio: '3/3',
+        viewTransitionName: `hero-product-${product._id}`,
+        transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
+        transform: isHovered
+          ? `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${(mousePos.y - 150) / -30}deg) rotateY(${(mousePos.x - 100) / 30}deg)`
+          : 'translateY(0) scale(1) perspective(1000px) rotateX(0deg) rotateY(0deg)',
+        boxShadow: isHovered ? 'var(--shadow-card-hover)' : 'var(--shadow-card)',
+      }}
+    >
+      {/* Mouse-follow radial glow (same as ProductCard) */}
+      {isHovered && (
+        <div
+          className="pointer-events-none absolute inset-0 -z-10 rounded-2xl"
+          style={{ background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, oklch(0.6 0.14 248 / 0.14), transparent 50%)`, filter: 'blur(30px)' }}
+        />
+      )}
+
+      {/* Image with subtle zoom on hover */}
+      {product.images?.[0] ? (
+        <Image
+          src={product.images[0]}
+          alt={product.name}
+          width={200}
+          height={200}
+          priority
+          sizes="(max-width: 640px) 50vw, 200px"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted/30 text-muted-foreground/30">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        </div>
+      )}
+
+      {/* Bottom gradient vignette — always visible on mobile, hover-only on desktop */}
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      {/* Info overlay — fade in/out only, no slide */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-14 text-center transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+        <p className="text-[11px] font-semibold text-white line-clamp-2 drop-shadow-md">{product.name}</p>
+        <p className="mt-1 text-sm font-bold text-white drop-shadow-md">{formatPrice(product.price)}</p>
+      </div>
+
+      {/* Featured badge — magnetic glass pill that follows mouse tilt */}
+      {product.isFeatured && (
+        <div
+          className="absolute left-2 top-2 z-10"
+          style={{
+            transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1)',
+            transform: isHovered
+              ? `translate(${(mousePos.x - 100) / 15}px, ${(mousePos.y - 120) / 15}px)`
+              : 'translate(0, 0)',
+          }}
+        >
+          <div className="badge-hit-solid relative overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide text-white shadow-lg transition-all duration-300 group-hover:shadow-[0_0_16px_oklch(0.7_0.15_80/0.6)] group-hover:scale-110">
+            <span className="relative z-10 flex items-center gap-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              <svg className="h-2.5 w-2.5 animate-pulse fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Թոփ
+            </span>
+            <div className="badge-shimmer absolute inset-0 z-0 opacity-40" aria-hidden="true" />
+          </div>
+        </div>
+      )}
+    </Link>
   );
 }

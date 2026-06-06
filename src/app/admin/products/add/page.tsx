@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { VehicleCompatSelector } from '@/components/admin/VehicleCompatSelector';
 import type { VehicleCompatEntry } from '@/components/admin/VehicleCompatSelector';
+import { OemNumbersInput } from '@/components/admin/OemNumbersInput';
 
 function StepBasicInfo() {
   const { data, update } = useWizardData();
@@ -29,6 +30,8 @@ function StepBasicInfo() {
     <div className="space-y-5">
       <div><Label>Անուն *</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder="Ապրանքի անուն" className="h-11" /></div>
       <div><Label>Slug</Label><Input value={(data.slug as string) ?? ''} onChange={(e) => update('slug', e.target.value)} placeholder="Ապրանքի սլագ" className="h-11 font-mono" /></div>
+      <div><Label>Արտիկուլ</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="h-11 font-mono tracking-wider" /></div>
+      <OemNumbersInput value={((data.oemNumbers as string[]) ?? [])} onChange={(v) => update('oemNumbers', v)} />
       <div>
         <Label>Կատեգորիա *</Label>
         <Select value={(data.categoryId as string) ?? ''} onValueChange={(v) => update('categoryId', v != null ? String(v) : null)}>
@@ -89,9 +92,8 @@ function StepPricing() {
         <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <div><Label>АГТА код</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
-        <div><Label>Артикул *</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="h-11 font-mono tracking-wider" /></div>
-        <div><Label>Количество *</Label><Input type="number" value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
+        <div><Label>ԱՏԳԱ կոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
+        <div><Label>Քանակ *</Label><Input type="number" value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div><Label>Քանակի քայլ</Label><Input type="number" value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
@@ -191,6 +193,7 @@ export default function AddProductPage() {
       price: Number(data.price),
       compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : undefined,
       sku: (data.sku as string) || undefined,
+      oemNumbers: ((data.oemNumbers as string[]) ?? []).length > 0 ? (data.oemNumbers as string[]) : undefined,
       atgCode: (data.atgCode as string) || undefined,
       stock: Number(data.stock),
       images: (data.images as string[]) ?? [],

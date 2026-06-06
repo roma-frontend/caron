@@ -22,9 +22,22 @@ export const active = query({
 export const getPromoProducts = query({
   args: {},
   handler: async (ctx) => {
+    const inactiveCats = await ctx.db
+      .query('categories')
+      .withIndex('by_active', (q) => q.eq('isActive', false))
+      .take(200);
+    const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
+
     const all = await ctx.db.query('products').collect();
     return all
-      .filter((p) => p.isActive && p.showInPromotions && p.compareAtPrice && p.compareAtPrice > p.price)
+      .filter((p) =>
+        p.isActive &&
+        p.stock > 0 &&
+        !inactiveCatIds.has(p.categoryId) &&
+        p.showInPromotions &&
+        p.compareAtPrice &&
+        p.compareAtPrice > p.price,
+      )
       .slice(0, 50);
   },
 });

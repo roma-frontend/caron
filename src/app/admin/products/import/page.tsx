@@ -22,6 +22,7 @@ interface ParsedRow {
   images: string[];
   category: string;
   sku?: string;
+  oemNumbers?: string[];
   stock: number;
   isActive: boolean;
   isFeatured: boolean;
@@ -62,6 +63,7 @@ const COLUMN_MAP: Record<string, string> = {
   name: 'name', slug: 'slug', description: 'description', price: 'price',
   compareatprice: 'compareAtPrice', category: 'category', sku: 'sku', stock: 'stock',
   isactive: 'isActive', isfeatured: 'isFeatured', showinpromotions: 'showInPromotions',
+  oemnumbers: 'oemNumbers', oem: 'oemNumbers',
   seotitle: 'seoTitle', seodescription: 'seoDescription',
   images: 'images', image: 'images',
 };
@@ -121,7 +123,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     vc.push(currentVc as { brand: string; model: string; yearFrom: number; yearTo: number });
   }
 
-  const slug = get('slug') || get('productslug') || values[0].toLowerCase().replace(/[^a-z0-9а-я]+/g, '-').replace(/-+$/, '');
+  const slug = get('slug') || get('productslug') || values[0].toLowerCase().replace(/[^a-z0-9\u0561-\u0587]+/g, '-').replace(/-+$/, '');
 
   return {
     name: get('name') || values[0],
@@ -131,6 +133,9 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     compareAtPrice: num('compareAtPrice') || undefined,
     category: catName,
     sku: get('sku') || undefined,
+    oemNumbers: (get('oemNumbers') || get('oem') || '').split(/[,;\s]+/).filter(Boolean).length > 0
+      ? (get('oemNumbers') || get('oem') || '').split(/[,;\s]+/).filter(Boolean)
+      : undefined,
     stock: num('stock') || num('quantity') || 1,
     isActive: bool('isActive'),
     isFeatured: bool('isFeatured'),
@@ -194,7 +199,7 @@ export default function ImportProductsPage() {
     setParsed(mapped);
     setErrors(errs);
     if (mapped.length === 0) { toast.error('Չհաջողվեց գտնել որևէ տող'); return; }
-    toast.success(`Հայտնաբերվել ${mapped.length} ապրանք${errs.length > 0 ? `, ${errs.length} сшибка` : ''}`);
+    toast.success(`Հայտնաբերվել է ${mapped.length} ապրանք${errs.length > 0 ? `, ${errs.length} սխալ` : ''}`);
   };
 
   const readXlsx = async (file: File): Promise<string> => {
@@ -221,12 +226,12 @@ export default function ImportProductsPage() {
       const text = file.name.endsWith('.xlsx') ? await readXlsx(file) : await decodeFile(file);
       parseText(text);
     } catch (e) {
-      toast.error(`Сшибка: ${e instanceof Error ? e.message : 'Նախատեսված ձևաչափ'}`);
+      toast.error(`Սխալ: ${e instanceof Error ? e.message : 'Նախատեսված ձևաչափ'}`);
     }
   };
 
   const handlePaste = () => {
-    if (!pasteText.trim()) { toast.error('Вставьте данные'); return; }
+    if (!pasteText.trim()) { toast.error('Տեղադրեք տվյալները'); return; }
     setErrors([]);
     setParsed(null);
     setDone(false);
@@ -246,9 +251,13 @@ export default function ImportProductsPage() {
         compareAtPrice: r.compareAtPrice || undefined,
         categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
         sku: r.sku || undefined,
+        oemNumbers: r.oemNumbers?.length ? r.oemNumbers : undefined,
         stock: r.stock,
         isActive: r.isActive,
         isFeatured: r.isFeatured || undefined,
+        showInPromotions: r.showInPromotions ?? undefined,
+        seoTitle: r.seoTitle || undefined,
+        seoDescription: r.seoDescription || undefined,
         images: r.images.length > 0 ? r.images : undefined,
       }));
       const result = await bulkCreate({ sessionToken, products });
@@ -281,7 +290,7 @@ export default function ImportProductsPage() {
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">կամ вставьте текст</span>
+              <span className="text-xs text-muted-foreground">կամ տեղադրեք տեքստը</span>
               <div className="h-px flex-1 bg-border" />
             </div>
             <textarea
@@ -313,6 +322,7 @@ export default function ImportProductsPage() {
                     ['compareAtPrice', 'Հին գին (ցուցադրվում է որպես կտրատված)'],
                     ['stock', 'Քանակ պահեստում (քանակ 1)'],
                     ['sku', 'Արտիկուլ ապրանքի'],
+                    ['oemNumbers / oem', 'OEM համարներ (բաժանել , ; կամ բացատ)'],
                     ['category', 'Կատեգորիա — պետք է համապատասխանի համակարգում գրված անվանմանը'],
                     ['isActive', 'Ակտիվ՝ yes/no/1/0 (լռելյային yes)'],
                     ['isFeatured', 'Առաջարկված՝ yes/no/1/0 (լռելյային no)'],
@@ -354,7 +364,7 @@ export default function ImportProductsPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-amber-600 mb-2">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">{errors.length} сшибка</span>
+              <span className="text-sm font-medium">{errors.length} սխալ</span>
             </div>
             <div className="max-h-32 overflow-y-auto space-y-1">{errors.map((e, i) => <p key={i} className="text-xs text-muted-foreground">{e}</p>)}</div>
           </CardContent>
@@ -376,6 +386,7 @@ export default function ImportProductsPage() {
                     <th className="p-2 text-left font-medium">Գին</th>
                     <th className="p-2 text-left font-medium">Կատեգորիա</th>
                     <th className="p-2 text-left font-medium">SKU</th>
+                    <th className="p-2 text-left font-medium">OEM</th>
                     <th className="p-2 text-left font-medium">Մնացորդ</th>
                     <th className="p-2 text-left font-medium">Նկար</th>
                     <th className="p-2 text-left font-medium">Ակտիվ</th>
@@ -388,6 +399,7 @@ export default function ImportProductsPage() {
                       <td className="p-2 whitespace-nowrap">{r.price.toLocaleString()} ֏</td>
                       <td className="p-2">{r.category}</td>
                       <td className="p-2 font-mono">{r.sku || '—'}</td>
+                      <td className="p-2 font-mono">{r.oemNumbers?.join(', ') || '—'}</td>
                       <td className="p-2">{r.stock}</td>
                       <td className="p-2">{r.images.length > 0 ? '✅' : '—'}</td>
                       <td className="p-2">{r.isActive ? '✅' : '❌'}</td>

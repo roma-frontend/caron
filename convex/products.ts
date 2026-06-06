@@ -168,17 +168,32 @@ export const getById = query({
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', args.slug)).unique();
+    const product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', args.slug)).unique();
+    if (!product) return null;
+    if (!product.isActive) return null;
+    const cat = await ctx.db.get(product.categoryId);
+    if (!cat?.isActive) return null;
+    return product;
   },
 });
 
 export const getFeatured = query({
   args: {},
   handler: async (ctx) => {
+    const inactiveCats = await ctx.db
+      .query('categories')
+      .withIndex('by_active', (q) => q.eq('isActive', false))
+      .take(200);
+    const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
+
+    const isAvailable = (p: { isActive: boolean; stock: number; categoryId: string }) =>
+      p.isActive && p.stock > 0 && !inactiveCatIds.has(p.categoryId as any);
+
     const featured = (await ctx.db
       .query('products')
       .withIndex('by_featured', (q) => q.eq('isFeatured', true))
-      .take(12)).filter((p) => p.isActive);
+      .take(12)).filter(isAvailable);
+
     if (featured.length >= 12) return featured.slice(0, 12);
 
     const need = 12 - featured.length;
@@ -190,7 +205,7 @@ export const getFeatured = query({
     const seen = new Set(featured.map((p) => p._id));
     for (const p of recent) {
       if (featured.length >= 12) break;
-      if (!seen.has(p._id)) featured.push(p);
+      if (!seen.has(p._id) && isAvailable(p)) featured.push(p);
     }
     return featured;
   },
@@ -203,7 +218,8 @@ export const create = mutation({
     compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
-    sku: v.optional(v.string()), atgCode: v.optional(v.string()), stock: v.number(),
+    sku: v.optional(v.string()), oemNumbers: v.optional(v.array(v.string())),
+    atgCode: v.optional(v.string()), stock: v.number(),
     isActive: v.boolean(), isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
     attributes: v.optional(v.any()),
@@ -240,7 +256,8 @@ export const update = mutation({
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
-    sku: v.optional(v.string()), atgCode: v.optional(v.string()),
+    sku: v.optional(v.string()), oemNumbers: v.optional(v.array(v.string())),
+    atgCode: v.optional(v.string()),
     stock: v.optional(v.number()), isActive: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
@@ -383,9 +400,13 @@ export const bulkCreate = mutation({
         compareAtPrice: v.optional(v.number()),
         categoryId: v.id('categories'),
         sku: v.optional(v.string()),
+        oemNumbers: v.optional(v.array(v.string())),
         stock: v.number(),
         isActive: v.boolean(),
         isFeatured: v.optional(v.boolean()),
+        showInPromotions: v.optional(v.boolean()),
+        seoTitle: v.optional(v.string()),
+        seoDescription: v.optional(v.string()),
         images: v.optional(v.array(v.string())),
       }),
     ),

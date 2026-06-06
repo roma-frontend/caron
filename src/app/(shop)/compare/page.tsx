@@ -80,7 +80,7 @@ export default function ComparePage() {
               ))}
             </tr>
 
-            {/* Совместимость */}
+            {/* Համատեղելիություն */}
             {allKeys.map((key) => {
               const values = items.map((i) => i.attributes[key] || '-');
               const isNumeric = values.every((v) => v !== '-' && !isNaN(Number(v)));

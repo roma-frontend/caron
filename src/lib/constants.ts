@@ -96,7 +96,7 @@ export const HOME = {
   get heroDesc() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
   get description() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
   ctaCatalog: 'Դիտել ցանկը',
-  ctaCategories: 'Դիտել կատեգորիաՆերը',
+  ctaCategories: 'Դիտել կատեգորիաները',
   categoriesTitle: 'Կատեգորիաներ',
   featuresTitle: 'Նախագծված հատկություններ',
 };

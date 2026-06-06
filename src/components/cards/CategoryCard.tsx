@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { Disc3, CircleDot, Droplet, Filter, Lightbulb, BatteryCharging, Wrench, Gauge, Package, ChevronRight } from 'lucide-react';
-import { useReveal, cardRevealStyle } from '@/lib/motion';
+import { useMouseGlow } from '@/lib/motion';
 import Image from 'next/image';
 
 interface CategoryCardProps {
@@ -39,34 +39,73 @@ export const CATEGORY_COLORS: Record<string, string> = {
   accessories: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
 };
 
+const CATEGORY_GLOW_COLORS: Record<string, string> = {
+  tires: 'oklch(0.6 0.05 250 / 0.15)',
+  discs: 'oklch(0.65 0.12 220 / 0.18)',
+  oils: 'oklch(0.75 0.14 80 / 0.18)',
+  filters: 'oklch(0.6 0.14 248 / 0.18)',
+  brakes: 'oklch(0.6 0.18 25 / 0.18)',
+  lamps: 'oklch(0.8 0.15 90 / 0.2)',
+  batteries: 'oklch(0.65 0.15 160 / 0.18)',
+  accessories: 'oklch(0.6 0.14 300 / 0.18)',
+};
+
 export function CategoryCard({ name, slug, description, imageUrl, productCount, index = 0, className }: CategoryCardProps) {
-  const { ref, visible } = useReveal();
+  const { mousePos, isHovered, handlers } = useMouseGlow();
   const Icon = CATEGORY_ICONS[slug] ?? Package;
   const color = CATEGORY_COLORS[slug] ?? 'bg-primary/10 text-primary';
+  const glowColor = CATEGORY_GLOW_COLORS[slug] ?? 'oklch(0.6 0.14 248 / 0.15)';
 
   return (
     <Link href={`/categories/${slug}`} className={className}>
-      <div ref={ref} style={cardRevealStyle(visible, index * 0.06)}>
-        <div className="group flex h-full items-center gap-4 rounded-2xl border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
-          {imageUrl ? (
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
-              <Image src={imageUrl} alt={name} width={56} height={56} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
-            </div>
-          ) : (
-            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${color}`}>
-              <Icon className="h-7 w-7" strokeWidth={1.75} />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold leading-tight transition-colors duration-200 group-hover:text-primary">{name}</h3>
-            {productCount !== undefined ? (
-              <p className="mt-0.5 text-sm text-muted-foreground">{productCount} ապրանք</p>
-            ) : description ? (
-              <p className="mt-0.5 truncate text-sm text-muted-foreground">{description}</p>
-            ) : null}
+      <div
+        {...handlers}
+        className="group relative flex h-full items-center gap-4 overflow-hidden rounded-2xl border bg-card/80 backdrop-blur-sm p-5 card-modern"
+        style={{
+          transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
+          transform: isHovered
+            ? `translateY(-6px) scale(1.01) perspective(800px) rotateX(${(mousePos.y - 40) / -40}deg) rotateY(${(mousePos.x - 150) / 40}deg)`
+            : 'translateY(0) scale(1) perspective(800px) rotateX(0deg) rotateY(0deg)',
+          boxShadow: isHovered ? 'var(--shadow-card-hover)' : 'var(--shadow-card)',
+        }}
+      >
+        {/* Mouse-follow radial glow — category-specific color */}
+        {isHovered && (
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 rounded-2xl"
+            style={{
+              background: `radial-gradient(350px circle at ${mousePos.x}px ${mousePos.y}px, ${glowColor}, transparent 60%)`,
+              filter: 'blur(25px)',
+            }}
+          />
+        )}
+
+        {/* Accent line on left edge */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: `linear-gradient(to bottom, ${glowColor.replace(/\/ [\d.]+\)/, '/ 0.8)')}, transparent)` }}
+        />
+
+        {imageUrl ? (
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+            <Image src={imageUrl} alt={name} width={56} height={56} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
           </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary" />
+        ) : (
+          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${color}`}>
+            <Icon className="h-7 w-7 transition-transform duration-300 group-hover:rotate-6" strokeWidth={1.75} />
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold leading-tight transition-colors duration-200 group-hover:text-primary">{name}</h3>
+          {productCount !== undefined ? (
+            <p className="mt-0.5 text-sm text-muted-foreground">{productCount} ապրանք</p>
+          ) : description ? (
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{description}</p>
+          ) : null}
         </div>
+
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
       </div>
     </Link>
   );

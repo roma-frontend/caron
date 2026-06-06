@@ -74,7 +74,18 @@ export const register = mutation({
 export const getByBrand = query({
   args: { brand: v.string() },
   handler: async (ctx, args) => {
+    const inactiveCats = await ctx.db
+      .query('categories')
+      .withIndex('by_active', (q) => q.eq('isActive', false))
+      .take(200);
+    const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
+
     const products = await ctx.db.query('products').collect();
-    return products.filter((p) => p.isActive && p.brand?.toLowerCase() === args.brand.toLowerCase()).slice(0, 200);
+    return products.filter((p) =>
+      p.isActive &&
+      p.stock > 0 &&
+      !inactiveCatIds.has(p.categoryId) &&
+      p.brand?.toLowerCase() === args.brand.toLowerCase(),
+    ).slice(0, 200);
   },
 });

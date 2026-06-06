@@ -45,7 +45,7 @@ export default function AdminFiltersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.slug || !form.categoryId) { toast.error('Լրացրեք անուն, slug и категория'); return; }
+    if (!form.name || !form.slug || !form.categoryId) { toast.error('Լրացրեք անուն, slug և կատեգորիա'); return; }
     try {
       const options = form.options.split(',').map((s) => s.trim()).filter(Boolean);
       const base = { name: form.name, slug: form.slug, type: 'multiselect' as const, categoryId: form.categoryId as Id<'categories'>, options: options.length > 0 ? options : undefined, order: form.order };
@@ -58,12 +58,12 @@ export default function AdminFiltersPage() {
       }
       setDialogOpen(false);
       resetForm();
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Сшибка'); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Սխալ'); }
   };
 
   const handleDelete = async () => {
     if (!deleteId || !sessionToken) return;
-    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Сшибка'); }
+    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Սխալ'); }
   };
 
   const catMap: Record<string, string> = {};
@@ -129,7 +129,7 @@ export default function AdminFiltersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Անվանում *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Ор.՝ Ապրանքանիշ" className="h-11" />
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Օր.՝ Ապրանքանիշ" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>Slug *</Label>
