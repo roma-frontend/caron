@@ -13,6 +13,8 @@ interface Props {
   className?: string;
 }
 
+const ZOOM_SIZE = 288; // w-72
+
 export function ProductImageZoom({ src, alt, width, height, priority, sizes, className = '' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [lensStyle, setLensStyle] = useState<React.CSSProperties>({ display: 'none' });
@@ -21,9 +23,10 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    const lensSize = 100;
+    const xRatio = (e.clientX - rect.left) / rect.width;
+    const yRatio = (e.clientY - rect.top) / rect.height;
+    const lensSize = 120;
+
     const lensLeft = Math.max(0, Math.min(rect.width - lensSize, e.clientX - rect.left - lensSize / 2));
     const lensTop = Math.max(0, Math.min(rect.height - lensSize, e.clientY - rect.top - lensSize / 2));
 
@@ -34,11 +37,24 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       width: lensSize,
       height: lensSize,
     });
+
+    // Position zoom panel to the right of the image on desktop, or below on narrow screens
+    const spaceRight = window.innerWidth - rect.right;
+    const showOnRight = spaceRight >= ZOOM_SIZE + 16;
+    const zoomLeft = showOnRight ? rect.right + 16 : Math.max(8, rect.left);
+    const zoomTop = showOnRight ? rect.top : rect.bottom + 8;
+
     setZoomStyle({
       display: 'block',
+      position: 'fixed',
+      left: zoomLeft,
+      top: zoomTop,
+      width: ZOOM_SIZE,
+      height: ZOOM_SIZE,
       backgroundImage: `url(${src})`,
-      backgroundSize: `${rect.width * 2}px ${rect.height * 2}px`,
-      backgroundPosition: `-${x * 2 - 50}% -${y * 2 - 50}%`,
+      backgroundSize: `${rect.width * 2.5}px ${rect.height * 2.5}px`,
+      backgroundPosition: `${-xRatio * 100 * 2.5 + 50}% ${-yRatio * 100 * 2.5 + 50}%`,
+      backgroundRepeat: 'no-repeat',
     });
   }, [src]);
 
@@ -55,8 +71,8 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       onMouseLeave={handleMouseLeave}
     >
       <Image src={src} alt={alt} width={width} height={height} priority={priority} sizes={sizes} className="h-full w-full object-cover select-none" draggable={false} />
-      <div className="pointer-events-none absolute border-2 border-primary/40 bg-white/10" style={lensStyle} />
-      <div className="pointer-events-none fixed z-[9999] h-72 w-72 rounded-xl border-2 border-border bg-white shadow-2xl dark:bg-neutral-900" style={zoomStyle} />
+      <div className="pointer-events-none absolute rounded-lg border-2 border-primary/50 bg-primary/10 shadow-[0_0_0_9999px_rgba(0,0,0,0.3)]" style={lensStyle} />
+      <div className="pointer-events-none rounded-xl border-2 border-border bg-background shadow-2xl bg-no-repeat" style={zoomStyle} />
     </div>
   );
 }
