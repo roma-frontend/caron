@@ -29,7 +29,7 @@ export const listPaginated = query({
     let result;
 
     if (args.search) {
-      // Search by name (full-text) + SKU (exact)
+      // Search by name (full-text) + SKU (exact) + OEM numbers
       const nameResults = await ctx.db
         .query('products')
         .withSearchIndex('search_products', (q) => {
@@ -40,9 +40,18 @@ export const listPaginated = query({
         .paginate(paginationOpts);
       // Also try exact SKU match
       const skuResults = await ctx.db.query('products').filter((q) => q.eq(q.field('sku'), args.search!)).take(50);
+      // Also try OEM number match (partial, case-insensitive)
+      const searchLower = args.search!.toLowerCase();
+      const oemResults = await ctx.db.query('products')
+        .withIndex('by_active', (q) => q.eq('isActive', true))
+        .take(200);
+      const oemMatches = oemResults.filter((p) =>
+        p.oemNumbers?.some((o) => o.toLowerCase().includes(searchLower))
+      );
       const merged = new Map<string, typeof nameResults.page[number]>();
       for (const p of nameResults.page) merged.set(p._id, p);
       for (const p of skuResults) { if (!merged.has(p._id) && p.isActive && (!args.categoryId || p.categoryId === args.categoryId)) merged.set(p._id, p); }
+      for (const p of oemMatches) { if (!merged.has(p._id) && p.isActive && (!args.categoryId || p.categoryId === args.categoryId)) merged.set(p._id, p); }
       result = { ...nameResults, page: Array.from(merged.values()).slice(0, paginationOpts.numItems) };
     } else if (byPrice && args.categoryId) {
       result = await ctx.db.query('products').withIndex('by_category_price', (q) => q.eq('categoryId', args.categoryId!)).order(priceDir).paginate(paginationOpts);
@@ -133,6 +142,17 @@ export const list = query({
       for (const p of skuMatch) {
         if (p.isActive && (!args.categoryId || p.categoryId === args.categoryId) && !results.find((r) => r._id === p._id)) results.push(p);
       }
+      // Also try OEM number match (partial, case-insensitive)
+      const searchLower = args.search!.toLowerCase();
+      const oemResults = await ctx.db.query('products')
+        .withIndex('by_active', (q) => q.eq('isActive', true))
+        .take(200);
+      const oemMatches = oemResults.filter((p) =>
+        p.oemNumbers?.some((o) => o.toLowerCase().includes(searchLower))
+      );
+      for (const p of oemMatches) {
+        if (p.isActive && (!args.categoryId || p.categoryId === args.categoryId) && !results.find((r) => r._id === p._id)) results.push(p);
+      }
       if (args.minPrice) results = results.filter((p) => p.price >= args.minPrice!);
       if (args.maxPrice) results = results.filter((p) => p.price <= args.maxPrice!);
       const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
@@ -174,6 +194,30 @@ export const getBySlug = query({
     const cat = await ctx.db.get(product.categoryId);
     if (!cat?.isActive) return null;
     return product;
+  },
+});
+
+export const searchByOem = query({
+  args: {
+    oem: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const searchLower = args.oem.toLowerCase();
+    const results = await ctx.db.query('products')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .take(300);
+    const trimmed = searchLower.trim();
+    const matches = results
+      .filter((p) => p.oemNumbers?.some((o) => o.toLowerCase().includes(trimmed)))
+      .slice(0, args.limit ?? 20);
+    // Exclude inactive categories
+    const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
+    if (inactiveCats.length > 0) {
+      const ids = new Set(inactiveCats.map((c) => c._id));
+      return matches.filter((p) => !ids.has(p.categoryId));
+    }
+    return matches;
   },
 });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Search, ActivityIcon, Menu, User, Heart, X, Grid3X3, Tag, Phone, Car, Info, Truck, BarChart3, ClipboardList } from 'lucide-react';
+import { ShoppingCart, Search, ActivityIcon, Menu, User, Heart, X, Grid3X3, Tag, Phone, Car, Info, Truck, BarChart3, ClipboardList, Barcode, ScanSearch } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -97,6 +97,18 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
+                {settings?.enableVinDecoder && (
+                  <Link href="/vin-decoder" className="block rounded-lg px-3 py-2.5 text-sm text-primary font-medium transition-colors hover:bg-primary/10"
+                    onFocus={() => setMoreOpen(true)} onBlur={(e) => { if (!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget as Node)) setMoreOpen(false); }}>
+                    VIN ապակոդավորում
+                  </Link>
+                )}
+                {settings?.enableOemSearch && (
+                  <Link href="/oem" className="block rounded-lg px-3 py-2.5 text-sm text-primary font-medium transition-colors hover:bg-primary/10"
+                    onFocus={() => setMoreOpen(true)} onBlur={(e) => { if (!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget as Node)) setMoreOpen(false); }}>
+                    OEM որոնում
+                  </Link>
+                )}
               </div>
             </div>
           </nav>
@@ -192,6 +204,16 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              {settings?.enableVinDecoder && (
+                <Link href="/vin-decoder" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10">
+                  <ScanSearch className="h-4 w-4 text-primary" /> VIN ապակոդավորում
+                </Link>
+              )}
+              {settings?.enableOemSearch && (
+                <Link href="/oem" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10">
+                  <Barcode className="h-4 w-4 text-primary" /> OEM որոնում
+                </Link>
+              )}
             </nav>
             </div>
 

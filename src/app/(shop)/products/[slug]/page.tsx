@@ -93,6 +93,7 @@ export default function ProductDetailPage() {
     description: product.description,
     image: product.images,
     sku: product.sku || undefined,
+    mpn: product.oemNumbers?.[0] || undefined,
     offers: {
       '@type': 'Offer',
       price: product.price,
@@ -167,7 +168,7 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {(product.sku || product.atgCode) && (
+          {(product.sku || product.atgCode || (product.oemNumbers && product.oemNumbers.length > 0)) && (
             <div className="mt-1 flex flex-wrap gap-1.5">
               {product.sku && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1">
@@ -179,6 +180,11 @@ export default function ProductDetailPage() {
                   <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">ԱՏԳԱԱ {product.atgCode}</span>
                 </div>
               )}
+              {product.oemNumbers?.map((oem) => (
+                <Link key={oem} href={`/oem/${encodeURIComponent(oem)}`} className="inline-flex items-center gap-1.5 rounded-lg border bg-blue-500/5 px-2.5 py-1 transition-colors hover:bg-blue-500/10 hover:border-blue-500/30">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-blue-600 dark:text-blue-400">OEM {oem}</span>
+                </Link>
+              ))}
             </div>
           )}
 

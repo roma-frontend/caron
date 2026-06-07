@@ -9,7 +9,7 @@ export const revalidate = 3600; // regenerate every hour
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  const staticRoutes: MetadataRoute.Sitemap = [
+    const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/products`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/categories`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
@@ -17,6 +17,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/delivery`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE_URL}/car-selector`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/vin-decoder`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/oem`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
   ];
 
   try {
@@ -41,7 +44,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }));
 
-    return [...staticRoutes, ...productRoutes, ...categoryRoutes];
+    // Collect unique OEM numbers from all products
+    const oemSet = new Set<string>();
+    for (const p of products ?? []) {
+      if (p.oemNumbers) {
+        for (const oem of p.oemNumbers) {
+          oemSet.add(oem.trim());
+        }
+      }
+    }
+    const oemRoutes: MetadataRoute.Sitemap = Array.from(oemSet).map((oem) => ({
+      url: `${BASE_URL}/oem/${encodeURIComponent(oem)}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }));
+
+    return [...staticRoutes, ...productRoutes, ...categoryRoutes, ...oemRoutes];
   } catch {
     // Fallback to static if Convex is unavailable
     return staticRoutes;
