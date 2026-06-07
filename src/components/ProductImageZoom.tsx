@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
@@ -14,97 +14,115 @@ interface Props {
   className?: string;
 }
 
-const ZOOM_SIZE = 320;
+const ZOOM_SIZE = 300;
+const SCALE = 2.5;
+const LENS_SIZE = 110;
 
-function updateZoom(
-  container: HTMLDivElement,
-  clientX: number,
-  clientY: number,
-  src: string,
-  setLensStyle: (s: React.CSSProperties) => void,
-  setZoomStyle: (s: React.CSSProperties) => void,
-) {
-  const rect = container.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return;
-
-  const xRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  const yRatio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-  const scale = 2.5;
-  const bgW = rect.width * scale;
-  const bgH = rect.height * scale;
-  const lensSize = 100;
-
-  setLensStyle({
-    display: 'block',
-    left: xRatio * rect.width - lensSize / 2,
-    top: yRatio * rect.height - lensSize / 2,
-    width: lensSize,
-    height: lensSize,
-  });
-
-  const cursorX = xRatio * rect.width;
-  const cursorY = yRatio * rect.height;
-  const bgX = -(cursorX * scale - ZOOM_SIZE / 2);
-  const bgY = -(cursorY * scale - ZOOM_SIZE / 2);
-
-  const spaceRight = window.innerWidth - rect.right;
-  const showOnRight = spaceRight >= ZOOM_SIZE + 16;
-
-  setZoomStyle({
-    display: 'block',
-    position: 'fixed',
-    left: showOnRight ? rect.right + 16 : Math.max(8, rect.left),
-    top: rect.top,
-    width: ZOOM_SIZE,
-    height: ZOOM_SIZE,
-    backgroundImage: `url(${src})`,
-    backgroundSize: `${bgW}px ${bgH}px`,
-    backgroundPosition: `${bgX}px ${bgY}px`,
-    backgroundRepeat: 'no-repeat',
-  });
-}
+const noop = () => () => {};
 
 export function ProductImageZoom({ src, alt, width, height, priority, sizes, className = '' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastMouse = useRef({ x: 0, y: 0 });
-  const [mounted, setMounted] = useState(false);
-  const [hovering, setHovering] = useState(false);
-  const [lensStyle, setLensStyle] = useState<React.CSSProperties>({ display: 'none' });
-  const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({ display: 'none' });
+  const dimRef = useRef<HTMLDivElement>(null);
+  const lensRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef<HTMLDivElement | null>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+  const active = useRef(false);
+  const rafId = useRef(0);
+  const isMobile = useRef(true);
+  const renderFn = useRef<() => void>(() => {});
 
-  useEffect(() => { setMounted(true); }, []);
-
-  const doUpdate = useCallback((e: { clientX: number; clientY: number }) => {
-    if (!containerRef.current) return;
-    lastMouse.current = { x: e.clientX, y: e.clientY };
-    updateZoom(containerRef.current, e.clientX, e.clientY, src, setLensStyle, setZoomStyle);
-  }, [src]);
-
-  const refresh = useCallback(() => {
-    if (!hovering || !containerRef.current) return;
-    updateZoom(containerRef.current, lastMouse.current.x, lastMouse.current.y, src, setLensStyle, setZoomStyle);
-  }, [hovering, src]);
+  // true only on client, avoids setState-in-effect warning
+  const mounted = useSyncExternalStore(noop, () => true, () => false);
 
   useEffect(() => {
-    if (!hovering) return;
-    window.addEventListener('scroll', refresh, { passive: true });
-    window.addEventListener('resize', refresh, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', refresh);
-      window.removeEventListener('resize', refresh);
-    };
-  }, [hovering, refresh]);
+    isMobile.current = window.innerWidth < 1024;
+    return () => cancelAnimationFrame(rafId.current);
+  }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    doUpdate(e);
-  }, [doUpdate]);
+  // Plain function — assigned to ref via useEffect (avoids render-time ref write)
+  const render = () => {
+    if (!active.current) return;
+    const c = containerRef.current;
+    const lens = lensRef.current;
+    const zoom = zoomRef.current;
+    if (!c) { rafId.current = requestAnimationFrame(renderFn.current); return; }
 
-  const handleMouseEnter = useCallback(() => setHovering(true), []);
+    const rect = c.getBoundingClientRect();
+    if (rect.width < 10) { rafId.current = requestAnimationFrame(renderFn.current); return; }
 
-  const handleMouseLeave = useCallback(() => {
-    setHovering(false);
-    setLensStyle({ display: 'none' });
-    setZoomStyle({ display: 'none' });
+    const mx = mouse.current.x;
+    const my = mouse.current.y;
+    const xR = Math.max(0, Math.min(1, (mx - rect.left) / rect.width));
+    const yR = Math.max(0, Math.min(1, (my - rect.top) / rect.height));
+
+    const lx = xR * rect.width - LENS_SIZE / 2;
+    const ly = yR * rect.height - LENS_SIZE / 2;
+
+    if (lens) {
+      lens.style.display = 'block';
+      lens.style.left = `${lx}px`;
+      lens.style.top = `${ly}px`;
+      lens.style.width = `${LENS_SIZE}px`;
+      lens.style.height = `${LENS_SIZE}px`;
+      lens.style.backgroundImage = `url(${src})`;
+      lens.style.backgroundSize = `${rect.width}px ${rect.height}px`;
+      lens.style.backgroundPosition = `${-lx}px ${-ly}px`;
+      lens.style.backgroundRepeat = 'no-repeat';
+    }
+
+    if (zoom) {
+      const cx = xR * rect.width;
+      const cy = yR * rect.height;
+      const bw = rect.width * SCALE;
+      const bh = rect.height * SCALE;
+      const bx = -(cx * SCALE - ZOOM_SIZE / 2);
+      const by = -(cy * SCALE - ZOOM_SIZE / 2);
+      const roomRight = window.innerWidth - rect.right;
+      const onRight = roomRight >= ZOOM_SIZE + 16;
+      const panelTop = Math.max(64, Math.min(rect.top, window.innerHeight - ZOOM_SIZE - 8));
+      const panelLeft = onRight ? rect.right + 16 : Math.max(8, rect.left);
+
+      zoom.style.display = 'block';
+      zoom.style.position = 'fixed';
+      zoom.style.zIndex = '9999';
+      zoom.style.left = `${panelLeft}px`;
+      zoom.style.top = `${panelTop}px`;
+      zoom.style.width = `${ZOOM_SIZE}px`;
+      zoom.style.height = `${ZOOM_SIZE}px`;
+      zoom.style.backgroundImage = `url(${src})`;
+      zoom.style.backgroundSize = `${bw}px ${bh}px`;
+      zoom.style.backgroundPosition = `${bx}px ${by}px`;
+      zoom.style.backgroundRepeat = 'no-repeat';
+    }
+
+    rafId.current = requestAnimationFrame(renderFn.current);
+  };
+
+  // Sync render fn into ref (allowed in useEffect)
+  useEffect(() => {
+    renderFn.current = render;
+  });
+
+  const onEnter = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile.current) return;
+    cancelAnimationFrame(rafId.current);
+    active.current = true;
+    mouse.current = { x: e.clientX, y: e.clientY };
+    if (dimRef.current) dimRef.current.style.display = 'block';
+    rafId.current = requestAnimationFrame(renderFn.current);
+  }, []);
+
+  const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile.current) return;
+    mouse.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  const onLeave = useCallback(() => {
+    active.current = false;
+    cancelAnimationFrame(rafId.current);
+    if (dimRef.current) dimRef.current.style.display = 'none';
+    if (lensRef.current) lensRef.current.style.display = 'none';
+    if (zoomRef.current) zoomRef.current.style.display = 'none';
   }, []);
 
   return (
@@ -112,9 +130,9 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       <div
         ref={containerRef}
         className={`relative overflow-hidden cursor-crosshair ${className}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseEnter={onEnter}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
       >
         <Image
           src={src} alt={alt} width={width} height={height}
@@ -122,20 +140,12 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
           className="h-full w-full object-cover select-none pointer-events-none"
           draggable={false}
         />
-        {/* Dim overlay when zoom active */}
-        {hovering && (
-          <div className="pointer-events-none absolute inset-0 bg-black/30 transition-opacity" />
-        )}
-        {/* Lens highlight */}
-        <div className="pointer-events-none absolute rounded-lg border-2 border-primary/50 bg-primary/10" style={lensStyle} />
+        <div ref={dimRef} className="pointer-events-none absolute inset-0 bg-black/30" style={{ display: 'none' }} />
+        <div ref={lensRef} className="pointer-events-none absolute z-10 rounded-lg border-2 border-primary bg-no-repeat" style={{ display: 'none' }} />
       </div>
-
       {mounted &&
         createPortal(
-          <div
-            className="pointer-events-none rounded-xl border-2 border-border bg-background shadow-2xl bg-no-repeat"
-            style={zoomStyle}
-          />,
+          <div ref={(el) => { zoomRef.current = el; }} className="pointer-events-none rounded-xl border-2 border-border bg-background shadow-2xl bg-no-repeat" style={{ display: 'none' }} />,
           document.body,
         )}
     </>
