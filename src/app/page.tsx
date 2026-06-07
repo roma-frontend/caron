@@ -189,10 +189,13 @@ export default function HomePage() {
         {settings !== undefined && settings?.showCategories !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
-          <div className="flex flex-wrap" style={{ gap: 'var(--space-4)' }}>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {categories === undefined
-              ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted flex-1 basis-[250px]" style={{ height: '8rem' }} />)
-              : categories.map((cat, i) => <CategoryCard key={cat._id} id={cat._id} name={cat.name} slug={cat.slug} description={cat.description} index={i} className="flex-1 w-full" />)}
+              ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '8rem' }} />)
+              : categories.slice(0, 4).map((cat, i) => <CategoryCard key={cat._id} id={cat._id} name={cat.name} slug={cat.slug} description={cat.description} index={i} />)}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <Link href="/categories"><Button size="lg" variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button></Link>
           </div>
         </section>
         )}
@@ -325,7 +328,7 @@ function HeroMiniCard({ product, index }: { product: NonNullable<ReturnType<type
       <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       {/* Info overlay — fade in/out only, no slide */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-14 text-center transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/80 to-transparent p-3 pt-14 text-center transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
         <p className="text-[11px] font-semibold text-white line-clamp-2 drop-shadow-md">{product.name}</p>
         <p className="mt-1 text-sm font-bold text-white drop-shadow-md">{formatPrice(product.price)}</p>
       </div>

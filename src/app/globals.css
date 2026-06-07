@@ -250,15 +250,15 @@
 }
 
 /* Hero animations */
-.hero-fade-1 { animation: heroFade 0.8s ease-out 0.1s both; }
-.hero-fade-2 { animation: heroFade 0.8s ease-out 0.3s both; }
-.hero-fade-3 { animation: heroFade 0.8s ease-out 0.5s both; }
-.hero-fade-4 { animation: heroFade 0.8s ease-out 0.7s both; }
+/* .hero-fade-1 { animation: heroFade 0.4s ease-out 0.1s both; }
+.hero-fade-2 { animation: heroFade 0.4s ease-out 0.1s both; }
+.hero-fade-3 { animation: heroFade 0.4s ease-out 0.5s both; }
+.hero-fade-4 { animation: heroFade 0.4s ease-out 0.7s both; }
 
 @keyframes heroFade {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(-24px); }
   to { opacity: 1; transform: translateY(0); }
-}
+} */
 
 /* Pulse dot */
 .pulse-dot {
