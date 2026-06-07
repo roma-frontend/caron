@@ -13,7 +13,6 @@ import { LoaderInline } from '@/components/ui/loader';
 import { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ProductFilters, SortBar } from '@/components/ProductFilters';
-import { OemSearchInline } from '@/components/OemSearchInline';
 import { NAV } from '@/lib/constants';
 import { useVehicleStore } from '@/store/vehicle';
 
@@ -165,12 +164,6 @@ export default function ProductsPage() {
               })}
             </div>
           )}
-          {mounted && settings?.enableOemSearch && (
-            <div className="mb-6 p-5 rounded-2xl border bg-card">
-              <OemSearchInline />
-            </div>
-          )}
-
           {mounted && vehicle && (
             <div className="mb-5 flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2.5 text-sm">
               <Car className="h-4 w-4 text-primary" />
