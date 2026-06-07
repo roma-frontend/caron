@@ -60,7 +60,7 @@ export function CategoryCard({ name, slug, description, imageUrl, productCount, 
     <Link href={`/categories/${slug}`} className={className}>
       <div
         {...handlers}
-        className="group relative flex h-full items-center gap-4 overflow-hidden rounded-2xl border bg-card/80 backdrop-blur-sm p-5 card-modern"
+        className="group relative flex flex-col sm:flex-row h-full items-start sm:items-center gap-4 overflow-hidden rounded-2xl border bg-card/80 backdrop-blur-sm p-5 card-modern"
         style={{
           transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
           transform: isHovered
@@ -105,7 +105,7 @@ export function CategoryCard({ name, slug, description, imageUrl, productCount, 
           ) : null}
         </div>
 
-        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
+        <ChevronRight className="hidden sm:block h-5 w-5 shrink-0 text-muted-foreground/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
       </div>
     </Link>
   );

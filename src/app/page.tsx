@@ -189,7 +189,7 @@ export default function HomePage() {
         {settings !== undefined && settings?.showCategories !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
             {categories === undefined
               ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '8rem' }} />)
               : categories.slice(0, 4).map((cat, i) => <CategoryCard key={cat._id} id={cat._id} name={cat.name} slug={cat.slug} description={cat.description} index={i} />)}
@@ -288,9 +288,8 @@ function HeroMiniCard({ product, index }: { product: NonNullable<ReturnType<type
     <Link
       href={`/products/${product.slug}`}
       {...handlers}
-      className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern"
+      className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern aspect-3/4 sm:aspect-square"
       style={{
-        aspectRatio: '3/3',
         viewTransitionName: `hero-product-${product._id}`,
         transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
         transform: isHovered
