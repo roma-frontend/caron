@@ -34,14 +34,22 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
   // true only on client, avoids setState-in-effect warning
   const mounted = useSyncExternalStore(noop, () => true, () => false);
 
+  const checkMobile = () => {
+    isMobile.current = window.innerWidth < 1024 || 'ontouchstart' in window;
+  };
+
   useEffect(() => {
-    isMobile.current = window.innerWidth < 1024;
-    return () => cancelAnimationFrame(rafId.current);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => {
+      cancelAnimationFrame(rafId.current);
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   // Plain function — assigned to ref via useEffect (avoids render-time ref write)
   const render = () => {
-    if (!active.current) return;
+    if (!active.current || isMobile.current) return;
     const c = containerRef.current;
     const lens = lensRef.current;
     const zoom = zoomRef.current;
@@ -129,7 +137,7 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
     <>
       <div
         ref={containerRef}
-        className={`relative overflow-hidden cursor-crosshair ${className}`}
+        className={`relative overflow-hidden max-lg:cursor-default cursor-crosshair ${className}`}
         onMouseEnter={onEnter}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
