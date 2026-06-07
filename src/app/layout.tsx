@@ -9,7 +9,6 @@ import { ThemedToaster } from '@/components/ThemedToaster';
 import { BrandTheme } from '@/components/BrandTheme';
 import { SettingsProvider } from '@/components/SettingsProvider';
 import { AnalyticsInjector } from '@/components/AnalyticsInjector';
-import { CookieConsent } from '@/components/CookieConsent';
 import { FloatingActions } from '@/components/FloatingActions';
 import { CartSync } from '@/components/CartSync';
 import { AdminOrderWatcher } from '@/components/AdminOrderWatcher';
@@ -184,6 +183,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AnalyticsInjector />
               <main id="main-content" className="min-h-dvh">{children}</main>
               <CookieConsentWrapper />
+              <CartSync />
               <AdminOrderWatcher />
             </SettingsProvider>
             <ThemedToaster />

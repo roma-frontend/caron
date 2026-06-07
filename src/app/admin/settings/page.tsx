@@ -505,16 +505,8 @@ export default function AdminSettingsPage() {
                 <span className="text-sm">{'Տեղեկացնել առկայության մասին'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Switch checked={flags.enableCrossSell !== false} onCheckedChange={(v) => saveField('enableCrossSell', v)} />
-                <span className="text-sm">{'Այս ապրանքի հետ գնում են'}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Switch checked={flags.enablePriceAlert !== false} onCheckedChange={(v) => saveField('enablePriceAlert', v)} />
                 <span className="text-sm">{'Զեղչի մասին ծանուցում'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={flags.enableCartRecovery !== false} onCheckedChange={(v) => saveField('enableCartRecovery', v)} />
-                <span className="text-sm">{'Հիշեցում լքված զամբյուղի մասին'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={flags.enablePickup !== false} onCheckedChange={(v) => saveField('enablePickup', v)} />
@@ -523,18 +515,6 @@ export default function AdminSettingsPage() {
               <div className="flex items-center gap-2">
                 <Switch checked={flags.enableTimeline !== false} onCheckedChange={(v) => saveField('enableTimeline', v)} />
                 <span className="text-sm">{'Պատվերի ժամանակացույց'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={flags.enableDailyReport !== false} onCheckedChange={(v) => saveField('enableDailyReport', v)} />
-                <span className="text-sm">{'Ամենօրյա հաշվետվություն'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={flags.enableLoyalty !== false} onCheckedChange={(v) => saveField('enableLoyalty', v)} />
-                <span className="text-sm">{'Բոնուսային միավորներ'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={flags.enableBulkOrder !== false} onCheckedChange={(v) => saveField('enableBulkOrder', v)} />
-                <span className="text-sm">{'Զանգվածային պատվեր'}</span>
               </div>
             </div>
               <div>

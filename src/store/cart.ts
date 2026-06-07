@@ -22,6 +22,8 @@ interface CartState {
   loadItems: (items: CartItem[]) => void;
   totalItems: () => number;
   totalPrice: () => number;
+  totalItemCount: () => number;
+  totalPriceValue: () => number;
 }
 
 export const useCartStore = create<CartState>()(

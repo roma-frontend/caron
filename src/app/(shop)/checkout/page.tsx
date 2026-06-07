@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const totalPrice = useCartStore((s) => s.totalPrice());
   const clearCart = useCartStore((s) => s.clearCart);
   const createOrder = useMutation(api.orders.create);
+  const applyCoupon = useMutation(api.coupons.apply);
   const settings = useSettings();
   const shippingCost = totalPrice >= (settings?.freeShippingThreshold ?? 20000) ? 0 : (settings?.deliveryYerevan ?? 0);
   const [loading, setLoading] = useState(false);
@@ -96,6 +97,9 @@ export default function CheckoutPage() {
         shipping: shippingCost,
         total: totalPrice + shippingCost,
       });
+      if (coupon) {
+        applyCoupon({ code: couponCode.trim() }).catch(() => {});
+      }
       clearCart();
       router.push(`/order-success?id=${orderId}`);
     } catch {

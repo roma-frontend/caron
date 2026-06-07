@@ -13,9 +13,11 @@ import { setAuthCookie } from '@/actions/auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/layout/Logo';
+import { useSettings } from '@/hooks/useSettings';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const settings = useSettings();
   const register = useMutation(api.auth.register);
   const setSession = useAuthStore((s) => s.setSession);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
@@ -37,6 +39,25 @@ export default function RegisterPage() {
       toast.error(e instanceof Error ? e.message : 'Սխալ');
     } finally { setBusy(false); }
   };
+
+  if (settings && settings.enableRegistration === false) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center px-4">
+        <div className="rounded-2xl border bg-background/80 p-5 sm:p-8 shadow-xl backdrop-blur-sm text-center">
+          <div className="mb-6">
+            <Link href="/" className="mb-4 flex flex-col items-center gap-3">
+              <Logo size={48} />
+            </Link>
+            <h1 className="text-2xl font-bold">Գրանցում</h1>
+            <p className="mt-3 text-muted-foreground">Գրանցումը ժամանակավոր անհասանելի է</p>
+          </div>
+          <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
+            Մուտք
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">

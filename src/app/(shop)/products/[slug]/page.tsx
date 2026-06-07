@@ -27,6 +27,7 @@ import { PRODUCT } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { ProductImageZoom } from '@/components/ProductImageZoom';
 const StickyBuyBar = dynamic(() => import('@/components/StickyBuyBar').then((m) => ({ default: m.StickyBuyBar })));
 const QuickBuyButton = dynamic(() => import('@/components/QuickBuy').then((m) => ({ default: m.QuickBuyButton })));
 import { useCompareStore } from '@/store/compare';
@@ -105,7 +106,9 @@ export default function ProductDetailPage() {
 
   return (
     <div data-product-content className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
-      <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
+      {settings?.enableBreadcrumbs !== false && (
+        <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
+      )}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -116,7 +119,7 @@ export default function ProductDetailPage() {
               <div className="flex">
                 {imgs.length > 0 ? imgs.map((img, i) => (
                   <div key={i} className="relative min-w-0 shrink-0 grow-0 basis-full aspect-square">
-                    <Image src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} sizes="(max-width: 1024px) 100vw, 50vw" className="h-full w-full object-cover" />
+                    <ProductImageZoom src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} sizes="(max-width: 1024px) 100vw, 50vw" className="h-full w-full" />
                   </div>
                 )) : (
                   <div className="min-w-0 shrink-0 grow-0 basis-full aspect-square flex items-center justify-center text-muted-foreground/20">
@@ -284,11 +287,15 @@ export default function ProductDetailPage() {
               onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success('Ավելացվեց համեմատման'); } }}>
               <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <ShareButton productName={product.name} />
+            {settings?.enableShareButtons !== false && (
+              <ShareButton productName={product.name} />
+            )}
             {settings !== undefined && settings?.enablePriceAlert !== false && (
               <SubscribePriceButton productId={product._id} currentPrice={product.price} />
             )}
-            <QuickBuyButton productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} />
+            {settings?.enableQuickBuy !== false && (
+              <QuickBuyButton productId={product._id} productName={product.name} productPrice={product.price} productImage={product.images?.[0]} />
+            )}
             </div>
           </div>
 

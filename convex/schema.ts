@@ -348,6 +348,12 @@ export default defineSchema(
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index('by_slug', ['slug']),
+
+  // ─── Newsletter Subscribers ────────────────────────────────────
+  newsletterSubscribers: defineTable({
+    email: v.string(),
+    createdAt: v.number(),
+  }).index('by_email', ['email']),
   },
   { schemaValidation: true },
 );
