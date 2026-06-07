@@ -49,12 +49,12 @@ export function CookieConsent({ text }: { text: string }) {
               </Link>
             </p>
           </div>
-          <button onClick={dismiss} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors">
+          <button onClick={dismiss} aria-label="Փակել" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
         <div className="mt-3 flex gap-2">
-          <button onClick={accept} className="flex-1 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
+          <button onClick={accept} className="flex-1 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white transition-all hover:bg-primary/90 active:scale-[0.98]">
             Ընդունել
           </button>
           <button onClick={dismiss} className="flex-1 rounded-xl border border-border/50 px-3 py-2 text-xs font-medium text-muted-foreground transition-all hover:bg-muted active:scale-[0.98]">
