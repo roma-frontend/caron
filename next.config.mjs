@@ -117,6 +117,12 @@ const nextConfig = {
         destination: 'https://caron.am/:path*',
         permanent: true,
       },
+      // Fix accidental /promotion (singular) → /promotions (plural)
+      {
+        source: '/promotion',
+        destination: '/promotions',
+        permanent: true,
+      },
     ];
   },
 };
