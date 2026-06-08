@@ -259,7 +259,7 @@ export const create = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
-    compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
+    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
     sku: v.optional(v.string()), oemNumbers: v.optional(v.array(v.string())),
@@ -273,6 +273,7 @@ export const create = mutation({
     await getAdminCaller(ctx, args.sessionToken);
     const { sessionToken: _, ...data } = args;
     const now = Date.now();
+    if (data.wholesalePrice === undefined) data.wholesalePrice = data.price;
     if (data.showInPromotions === undefined && data.compareAtPrice && data.compareAtPrice > data.price) {
       data.showInPromotions = true;
     }
@@ -296,7 +297,7 @@ export const update = mutation({
     sessionToken: v.string(),
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
-    compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
+    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
@@ -310,7 +311,7 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, stock, price, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
+    const { id, sessionToken: _, stock, price, wholesalePrice, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
     if (clearBrand) { rest.brand = undefined; }
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
@@ -342,6 +343,7 @@ export const update = mutation({
     }
     if (stock !== undefined) patch.stock = stock;
     if (price !== undefined) patch.price = price;
+    if (wholesalePrice !== undefined) patch.wholesalePrice = wholesalePrice;
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
   },
@@ -441,6 +443,7 @@ export const bulkCreate = mutation({
         slug: v.string(),
         description: v.string(),
         price: v.number(),
+        wholesalePrice: v.optional(v.number()),
         compareAtPrice: v.optional(v.number()),
         categoryId: v.id('categories'),
         sku: v.optional(v.string()),
@@ -462,11 +465,12 @@ export const bulkCreate = mutation({
     let updated = 0;
     for (const p of args.products) {
       const existing = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', p.slug)).unique();
+      const payload = { ...p, wholesalePrice: p.wholesalePrice ?? p.price, images: p.images ?? [], updatedAt: now };
       if (existing) {
-        await ctx.db.patch(existing._id, { ...p, images: p.images ?? [], updatedAt: now });
+        await ctx.db.patch(existing._id, payload);
         updated++;
       } else {
-        await ctx.db.insert('products', { ...p, images: p.images ?? [], createdAt: now, updatedAt: now });
+        await ctx.db.insert('products', { ...payload, createdAt: now });
         created++;
       }
     }

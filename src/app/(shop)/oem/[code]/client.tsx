@@ -7,6 +7,7 @@ interface Product {
   name: string;
   slug: string;
   price: number;
+  wholesalePrice?: number;
   compareAtPrice?: number;
   images: string[];
   stock: number;
@@ -37,6 +38,7 @@ export function ProductOemResults({
             slug={p.slug}
             name={p.name}
             price={p.price}
+            wholesalePrice={p.wholesalePrice}
             compareAtPrice={p.compareAtPrice}
             image={p.images?.[0]}
             stock={p.stock}

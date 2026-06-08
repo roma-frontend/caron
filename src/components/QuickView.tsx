@@ -21,6 +21,7 @@ interface QuickViewProps {
     slug?: string;
     name: string;
     price: number;
+    wholesalePrice?: number;
     compareAtPrice?: number;
     image?: string | null;
     description?: string;
@@ -36,9 +37,10 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product.id));
   const currentUser = useAuthStore((s) => s.user);
-  const cartPrice = currentUser?.customerType === 'wholesale'
-    ? Math.round(product.price * (1 - (currentUser?.discountPercent ?? 0) / 100))
-    : product.price;
+  const fallbackWholesale = typeof product.wholesalePrice === 'number' && product.wholesalePrice > 0
+    ? product.wholesalePrice
+    : Math.round(product.price * (1 - (currentUser?.discountPercent ?? 0) / 100));
+  const cartPrice = currentUser?.customerType === 'wholesale' ? fallbackWholesale : product.price;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

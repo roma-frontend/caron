@@ -24,6 +24,7 @@ interface ProductCardProps {
   name: string;
   slug?: string;
   price: number;
+  wholesalePrice?: number;
   compareAtPrice?: number;
   image?: string | null;
   category?: string;
@@ -54,7 +55,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, price, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -70,7 +71,8 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
   const [qty, setQty] = useState(step);
   const isWholesale = currentUser?.customerType === 'wholesale';
   const discount = currentUser?.discountPercent ?? 0;
-  const displayPrice = isWholesale ? Math.round(price * (1 - discount / 100)) : price;
+  const fallbackWholesale = typeof wholesalePrice === 'number' && wholesalePrice > 0 ? wholesalePrice : Math.round(price * (1 - discount / 100));
+  const displayPrice = isWholesale ? fallbackWholesale : price;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
   const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
@@ -257,7 +259,7 @@ export function ProductCard({ id, name, slug, price, compareAtPrice, image, cate
       <QuickView
         open={quickOpen}
         onOpenChange={setQuickOpen}
-        product={{ id, slug, name, price, compareAtPrice, image, description, inStock, rating, reviewCount, carBrand }}
+        product={{ id, slug, name, price, wholesalePrice, compareAtPrice, image, description, inStock, rating, reviewCount, carBrand }}
       />
     </>
   );

@@ -255,7 +255,7 @@ export default function HomePage() {
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
-                    <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} isHit={p.isFeatured} />
+                    <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} isHit={p.isFeatured} />
                   ))}
             </div>
             <div className="mt-8 flex justify-center">
@@ -288,7 +288,7 @@ function HeroMiniCard({ product, index }: { product: NonNullable<ReturnType<type
     <Link
       href={`/products/${product.slug}`}
       {...handlers}
-      className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern aspect-3/4 sm:aspect-square"
+      className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern aspect-3/4"
       style={{
         viewTransitionName: `hero-product-${product._id}`,
         transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',

@@ -86,7 +86,7 @@ export function Header() {
             {LINKS.map((link) => (
               <Link key={link.href} href={link.href} className="relative rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                 {link.label}
-                {navBadges[link.href] && <span className="absolute -right-2 -top-1.5"><NavBadge config={navBadges[link.href]} /></span>}
+                {navBadges[link.href] && <span className="absolute -right-2 -top-1.5 z-50"><NavBadge config={navBadges[link.href]} /></span>}
               </Link>
             ))}
             <div className="relative" onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>

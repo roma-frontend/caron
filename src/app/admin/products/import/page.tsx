@@ -18,6 +18,7 @@ interface ParsedRow {
   slug: string;
   description: string;
   price: number;
+  wholesalePrice?: number;
   compareAtPrice?: number;
   images: string[];
   category: string;
@@ -61,7 +62,7 @@ const BOOL_MAP: Record<string, boolean> = { yes: true, '1': true, да: true, '+
 
 const COLUMN_MAP: Record<string, string> = {
   name: 'name', slug: 'slug', description: 'description', price: 'price',
-  compareatprice: 'compareAtPrice', category: 'category', sku: 'sku', stock: 'stock',
+  compareatprice: 'compareAtPrice', wholesaleprice: 'wholesalePrice', wholesale: 'wholesalePrice', category: 'category', sku: 'sku', stock: 'stock',
   isactive: 'isActive', isfeatured: 'isFeatured', showinpromotions: 'showInPromotions',
   oemnumbers: 'oemNumbers', oem: 'oemNumbers',
   seotitle: 'seoTitle', seodescription: 'seoDescription',
@@ -130,6 +131,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     slug,
     description: get('description') || '',
     price: num('price') || num('cost') || 0,
+    wholesalePrice: num('wholesalePrice') || num('wholesale') || undefined,
     compareAtPrice: num('compareAtPrice') || undefined,
     category: catName,
     sku: get('sku') || undefined,
@@ -248,6 +250,7 @@ export default function ImportProductsPage() {
         slug: r.slug,
         description: r.description,
         price: r.price,
+        wholesalePrice: r.wholesalePrice || undefined,
         compareAtPrice: r.compareAtPrice || undefined,
         categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
         sku: r.sku || undefined,
@@ -318,7 +321,8 @@ export default function ImportProductsPage() {
                     ['name', 'Անվանում (պարտադիր)'],
                     ['slug', 'URL-հասցե (եթե դատարկ է — կգոյացվի անվանումից)'],
                     ['description', 'Ապրանքի նկարագրություն'],
-                    ['price', 'Գին դրամներով (պարտադիր)'],
+                    ['price', 'Մանրածախ գին դրամներով (պարտադիր)'],
+                    ['wholesalePrice', 'Մեծածախ գին (եթե դատարկ է — կօգտագործվի մանրածախ գինը)'],
                     ['compareAtPrice', 'Հին գին (ցուցադրվում է որպես կտրատված)'],
                     ['stock', 'Քանակ պահեստում (քանակ 1)'],
                     ['sku', 'Արտիկուլ ապրանքի'],

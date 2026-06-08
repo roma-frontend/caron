@@ -33,6 +33,7 @@ export function RecentlyViewed() {
               slug={item.slug}
               name={item.name}
               price={item.price}
+              wholesalePrice={p?.wholesalePrice}
               image={p?.images?.[0] ?? item.image}
               stock={p?.stock}
               inStock={(p?.stock ?? 0) > 0}

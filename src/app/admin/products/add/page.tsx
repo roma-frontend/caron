@@ -86,8 +86,11 @@ function StepPricing() {
 
   return (
     <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>Մանրածախ գին (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
+        <div><Label>Մեծածախ գին (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
+      </div>
       <div className="grid grid-cols-3 gap-4">
-        <div><Label>Գին (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
         <div><Label>Համեմատական գին (֏)</Label><Input type="number" value={(data.compareAtPrice as string) ?? ''} onChange={(e) => update('compareAtPrice', e.target.value)} placeholder="15000" className="h-11" /></div>
         <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
       </div>
@@ -191,6 +194,7 @@ export default function AddProductPage() {
       description: (data.description as string) || '',
       categoryId: data.categoryId as Id<'categories'>,
       price: Number(data.price),
+      wholesalePrice: data.wholesalePrice ? Number(data.wholesalePrice) : undefined,
       compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : undefined,
       sku: (data.sku as string) || undefined,
       oemNumbers: ((data.oemNumbers as string[]) ?? []).length > 0 ? (data.oemNumbers as string[]) : undefined,

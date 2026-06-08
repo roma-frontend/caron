@@ -30,7 +30,7 @@ export default function EditProductPage() {
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState<{ name?: string; price?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: string[]; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
+  const [form, setForm] = useState<{ name?: string; price?: number; wholesalePrice?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: string[]; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -39,7 +39,7 @@ export default function EditProductPage() {
 
   // Init form when product loads
   if (currentProduct && !form.name) {
-    setForm({ name: currentProduct.name, price: currentProduct.price, brand: currentProduct.brand, qtyStep: currentProduct.qtyStep, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, oemNumbers: currentProduct.oemNumbers, atgCode: currentProduct.atgCode, categoryId: currentProduct.categoryId, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
+    setForm({ name: currentProduct.name, price: currentProduct.price, wholesalePrice: currentProduct.wholesalePrice ?? currentProduct.price, brand: currentProduct.brand, qtyStep: currentProduct.qtyStep, compareAtPrice: currentProduct.compareAtPrice, stock: currentProduct.stock, description: currentProduct.description, sku: currentProduct.sku, oemNumbers: currentProduct.oemNumbers, atgCode: currentProduct.atgCode, categoryId: currentProduct.categoryId, attributes: (currentProduct.attributes as Record<string, string>) ?? {} });
     setImages(currentProduct.images ?? []);
   }
 
@@ -73,6 +73,7 @@ export default function EditProductPage() {
         id: productId,
         name: form.name,
         price: Number(form.price),
+        wholesalePrice: form.wholesalePrice ? Number(form.wholesalePrice) : undefined,
         clearBrand: !form.brand,
         brand: form.brand || undefined,
         qtyStep: form.qtyStep || undefined,
@@ -158,12 +159,15 @@ export default function EditProductPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div><Label>Գին (֏)</Label><Input type="number" value={form.price ?? ''} onChange={(e) => {
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Մանրածախ գին (֏)</Label><Input type="number" value={form.price ?? ''} onChange={(e) => {
                 const p = Number(e.target.value);
                 const d = form.discountPercent ?? 0;
                 setForm({ ...form, price: p, compareAtPrice: d > 0 && p > 0 ? Math.round(p / (1 - d / 100)) : form.compareAtPrice });
               }} className="h-11" /></div>
+              <div><Label>Մեծածախ գին (֏)</Label><Input type="number" value={form.wholesalePrice ?? ''} onChange={(e) => setForm({ ...form, wholesalePrice: Number(e.target.value) || 0 })} className="h-11" /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
               <div><Label>Համեմատ. գին (֏)</Label><Input type="number" value={form.compareAtPrice ?? ''} onChange={(e) => {
                 const cp = Number(e.target.value);
                 const p = form.price ?? 0;

@@ -52,7 +52,10 @@ export default function ProductDetailPage() {
   const step = product?.qtyStep || 1;
   const isWholesale = currentUser?.customerType === 'wholesale';
   const userDiscount = currentUser?.discountPercent ?? 0;
-  const cartPrice = product ? (isWholesale ? Math.round(product.price * (1 - userDiscount / 100)) : product.price) : 0;
+  const fallbackWholesale = typeof product?.wholesalePrice === 'number' && product.wholesalePrice > 0
+    ? product.wholesalePrice
+    : Math.round((product?.price ?? 0) * (1 - userDiscount / 100));
+  const cartPrice = product ? (isWholesale ? fallbackWholesale : product.price) : 0;
   const cartQty = product ? items.find((i) => i.id === product._id)?.quantity ?? 0 : 0;
   const maxQty = product ? Math.max(0, product.stock - cartQty) : 0;
 
@@ -446,7 +449,7 @@ function RelatedProducts({ categoryId, currentId }: { categoryId: string; curren
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {filtered.map((p, i) => (
-        <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+        <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
       ))}
     </div>
   );
