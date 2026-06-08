@@ -97,7 +97,7 @@ export default function HomePage() {
       <Header />
       <main className="flex-1">
         {/* Hero — Bento Grid Layout (2025-2026) */}
-        <section className="relative overflow-hidden" style={{ paddingInline: 'max(var(--space-container), 0.75rem)', paddingBlock: 'var(--space-section)' }}>
+        <section className="relative overflow-hidden" style={{ paddingInline: 'max(var(--space-container), 0.75rem)', paddingBlock: 'var(--space-section)', minHeight: '70vh' }}>
           {/* Animated orbs (reduced to 2 for less visual competition) */}
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-10%] top-[-20%] h-[800px] w-[800px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(100px)' }} />
