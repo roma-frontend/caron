@@ -163,9 +163,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="mask-icon" href="/favicon.svg" color="#0F6CBD" />
 
         <link rel="dns-prefetch" href="https://pub-*.r2.dev" />
-        <link rel="preconnect" href="https://*.convex.cloud" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://*.convex.site" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://*.r2.dev" crossOrigin="anonymous" />
+        {process.env.NEXT_PUBLIC_CONVEX_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_CONVEX_URL} crossOrigin="anonymous" />
+        )}
+        {process.env.NEXT_PUBLIC_CONVEX_URL && (
+          <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_URL} />
+        )}
       </head>
       <body
         className={`${inter.variable} ${playfair.variable} ${notoSansArmenian.variable} font-sans antialiased`}

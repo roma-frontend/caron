@@ -63,7 +63,11 @@ export function Header() {
 
   return (
     <>
-      {settings !== undefined && settings?.announcementEnabled !== false && <AnnouncementBar raw={settings?.announcementBar} phone={settings?.phone} />}
+      <div className="overflow-hidden transition-all duration-300" style={{ height: settings === undefined ? '2.25rem' : (settings?.announcementEnabled !== false && settings?.announcementBar ? undefined : '0') }}>
+        {settings !== undefined && settings?.announcementEnabled !== false && settings?.announcementBar && (
+          <AnnouncementBar raw={settings.announcementBar} phone={settings?.phone} />
+        )}
+      </div>
       <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>
         <div className="mx-auto flex h-full items-center justify-between gap-1 px-2 sm:px-4" style={{ maxWidth: 'var(--container-max)' }}>
           {/* Logo */}
