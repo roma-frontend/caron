@@ -1,7 +1,6 @@
 import { v } from 'convex/values';
-import { query, mutation, action } from './_generated/server';
-import { api } from './_generated/api';
-import { getAdminCaller } from './lib/auth';
+import { query, internalQuery, mutation, action } from './_generated/server';
+import { api, internal } from './_generated/api';
 
 export const subscribe = mutation({
   args: { contact: v.string() },
@@ -29,10 +28,9 @@ export const isSubscribed = query({
   },
 });
 
-export const list = query({
-  args: { sessionToken: v.string() },
-  handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+export const list = internalQuery({
+  args: {},
+  handler: async (ctx) => {
     return await ctx.db.query('promotionSubscribers').order('desc').take(500);
   },
 });
@@ -48,7 +46,7 @@ export const notifySubscribers = action({
     const token = settings?.telegramBotToken;
     if (!token) return;
 
-    const subscribers = await ctx.runQuery(api.promotionSubscribers.list, { sessionToken: '__internal__' }).catch(() => []);
+    const subscribers = await ctx.runQuery(internal.promotionSubscribers.list, {}).catch(() => []);
     if (subscribers.length === 0) return;
 
     const products = await Promise.all(
