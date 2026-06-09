@@ -3,6 +3,16 @@ import { query, mutation } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
 import { api } from './_generated/api';
+import { normalizeImageUrls } from './lib/imageUrl';
+
+function normalizeProductImages<T extends { images?: string[] }>(product: T): T {
+  if (!product.images || product.images.length === 0) return product;
+
+  const normalized = normalizeImageUrls(product.images) as string[];
+  const changed = normalized.some((img, index) => img !== product.images![index]);
+
+  return changed ? { ...product, images: normalized } : product;
+}
 
 export const listPaginated = query({
   args: {
@@ -115,7 +125,7 @@ export const listPaginated = query({
     if (args.search && byPrice) filtered = [...filtered].sort((a, b) => (priceDir === 'asc' ? a.price - b.price : b.price - a.price));
     else if (args.sort === 'popular') filtered = [...filtered].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
 
-    return { ...result, page: filtered };
+    return { ...result, page: filtered.map(normalizeProductImages) };
   },
 });
 
@@ -157,7 +167,7 @@ export const list = query({
       if (args.maxPrice) results = results.filter((p) => p.price <= args.maxPrice!);
       const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
       if (inactiveCats.length > 0) { const ids = new Set(inactiveCats.map((c) => c._id)); results = results.filter((p) => !ids.has(p.categoryId)); }
-      return results;
+      return results.map(normalizeProductImages);
     }
     let products;
     if (args.categoryId) {
@@ -174,14 +184,15 @@ export const list = query({
       const inactiveIds = new Set(cats.map((c) => c._id));
       products = products.filter((p) => !inactiveIds.has(p.categoryId));
     }
-    return products;
+    return products.map(normalizeProductImages);
   },
 });
 
 export const getById = query({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const product = await ctx.db.get(args.id);
+    return product ? normalizeProductImages(product) : null;
   },
 });
 
@@ -193,7 +204,7 @@ export const getBySlug = query({
     if (!product.isActive) return null;
     const cat = await ctx.db.get(product.categoryId);
     if (!cat?.isActive) return null;
-    return product;
+    return normalizeProductImages(product);
   },
 });
 
@@ -215,9 +226,9 @@ export const searchByOem = query({
     const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
     if (inactiveCats.length > 0) {
       const ids = new Set(inactiveCats.map((c) => c._id));
-      return matches.filter((p) => !ids.has(p.categoryId));
+      return matches.filter((p) => !ids.has(p.categoryId)).map(normalizeProductImages);
     }
-    return matches;
+    return matches.map(normalizeProductImages);
   },
 });
 
@@ -230,8 +241,8 @@ export const getFeatured = query({
       .take(200);
     const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
 
-    const isAvailable = (p: { isActive: boolean; stock: number; categoryId: string }) =>
-      p.isActive && p.stock > 0 && !inactiveCatIds.has(p.categoryId as any);
+    const isAvailable = (p: { isActive: boolean; stock: number; categoryId: (typeof inactiveCats)[number]['_id'] }) =>
+      p.isActive && p.stock > 0 && !inactiveCatIds.has(p.categoryId);
 
     const featured = (await ctx.db
       .query('products')
@@ -251,7 +262,7 @@ export const getFeatured = query({
       if (featured.length >= 12) break;
       if (!seen.has(p._id) && isAvailable(p)) featured.push(p);
     }
-    return featured;
+    return featured.map(normalizeProductImages);
   },
 });
 
@@ -277,8 +288,11 @@ export const create = mutation({
     if (data.showInPromotions === undefined && data.compareAtPrice && data.compareAtPrice > data.price) {
       data.showInPromotions = true;
     }
-    if (data.brand && (!data.attributes || !(data.attributes as any).brand)) {
-      data.attributes = { ...((data.attributes as any) ?? {}), brand: data.brand };
+    if (data.brand) {
+      const attrs = (data.attributes ?? {}) as Record<string, unknown>;
+      if (attrs.brand !== data.brand) {
+        data.attributes = { ...attrs, brand: data.brand };
+      }
     }
     // Auto-generate SKU if not provided
     if (!data.sku) {

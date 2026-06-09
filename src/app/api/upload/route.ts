@@ -5,6 +5,22 @@ import { requireAdminAuth } from '@/lib/adminAuth';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']);
 
+function buildImageUrl(key: string): string {
+  const base = process.env.R2_PUBLIC_URL?.replace(/\/+$/, '') ?? '';
+  const directUrl = `${base}/${key}`;
+
+  try {
+    const parsed = new URL(directUrl);
+    if (parsed.hostname.endsWith('.r2.cloudflarestorage.com')) {
+      return `/api/r2-image?url=${encodeURIComponent(directUrl)}`;
+    }
+  } catch {
+    // Keep default fallback below for malformed URLs.
+  }
+
+  return directUrl;
+}
+
 const R2 = new S3Client({
   region: 'auto',
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -53,7 +69,7 @@ export async function POST(req: NextRequest) {
       ContentType: file.type,
     }));
 
-    const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
+    const publicUrl = buildImageUrl(key);
 
     return NextResponse.json({ publicUrl, key });
   } catch (e) {

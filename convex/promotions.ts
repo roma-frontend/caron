@@ -2,11 +2,27 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
 import { api } from './_generated/api';
+import { normalizeImageUrl, normalizeImageUrls } from './lib/imageUrl';
+
+function normalizePromotionImages<T extends { imageUrl?: string | null; images?: string[] }>(promotion: T): T {
+  const imageUrl = normalizeImageUrl(promotion.imageUrl);
+  const images = normalizeImageUrls(promotion.images) as string[] | undefined;
+  const changed = imageUrl !== promotion.imageUrl || (images && promotion.images && images.some((img, i) => img !== promotion.images![i]));
+  return changed ? { ...promotion, imageUrl, images } : promotion;
+}
+
+function normalizeProductImages<T extends { images?: string[] }>(product: T): T {
+  if (!product.images || product.images.length === 0) return product;
+  const images = normalizeImageUrls(product.images) as string[];
+  const changed = images.some((img, i) => img !== product.images![i]);
+  return changed ? { ...product, images } : product;
+}
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query('promotions').order('desc').take(50);
+    const promotions = await ctx.db.query('promotions').order('desc').take(50);
+    return promotions.map(normalizePromotionImages);
   },
 });
 
@@ -15,7 +31,7 @@ export const active = query({
   handler: async (ctx) => {
     const now = Date.now();
     const all = await ctx.db.query('promotions').withIndex('by_active', (q) => q.eq('isActive', true)).take(50);
-    return all.filter((p) => p.startDate <= now && p.endDate >= now);
+    return all.filter((p) => p.startDate <= now && p.endDate >= now).map(normalizePromotionImages);
   },
 });
 
@@ -38,7 +54,8 @@ export const getPromoProducts = query({
         p.compareAtPrice &&
         p.compareAtPrice > p.price,
       )
-      .slice(0, 50);
+      .slice(0, 50)
+      .map(normalizeProductImages);
   },
 });
 

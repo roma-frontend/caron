@@ -29,6 +29,7 @@ export default function EditProductPage() {
   const { sessionToken } = useAuth();
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const [form, setForm] = useState<{ name?: string; price?: number; wholesalePrice?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: string[]; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
@@ -53,16 +54,47 @@ export default function EditProductPage() {
     setForm({ ...form, attributes: next });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const appendFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
     try {
-      const url = await upload(file);
-      if (!url) return;
-      setImages((prev) => [...prev, url]);
+      const uploaded: string[] = [];
+      for (const file of arr) {
+        const url = await upload(file);
+        if (url) uploaded.push(url);
+      }
+      if (uploaded.length > 0) {
+        setImages((prev) => [...prev, ...uploaded]);
+      }
     } catch {
       toast.error('Վերբեռնումը ձախողվեց');
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    await appendFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (uploading || !e.dataTransfer.files?.length) return;
+    await appendFiles(e.dataTransfer.files);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragActive) setDragActive(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
   };
 
   const handleSave = async () => {
@@ -117,6 +149,12 @@ export default function EditProductPage() {
         <Card>
           <CardHeader><CardTitle>Նկարներ</CardTitle></CardHeader>
           <CardContent>
+            <div
+              className={`rounded-xl border-2 border-dashed p-2 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/70 bg-muted/20'}`}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+            >
             <div className="grid grid-cols-3 gap-3">
               {images.filter(Boolean).map((img, i) => (
                 <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border">
@@ -129,6 +167,8 @@ export default function EditProductPage() {
               <button onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary" disabled={uploading}>
                 <ImagePlus className="h-8 w-8" />
               </button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </CardContent>

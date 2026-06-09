@@ -138,7 +138,7 @@ export default function ProductsPage() {
             </div>
           </div>
           {filterDefs && filterDefs.length > 0 && (
-            <div className="mb-4 space-y-2">
+            <div className="mb-4 space-y-2 rounded-xl border border-primary/15 bg-linear-to-br from-card via-primary/5 to-muted/40 p-4 shadow-sm backdrop-blur-sm">
               {filterDefs.filter((def) => def.slug === 'type' || def.name === 'Տեսակ').map((def) => {
                 const active = (filters.attributes?.[def.slug] as string[]) || [];
                 return (
@@ -154,7 +154,7 @@ export default function ProductsPage() {
                           else delete attrs[def.slug];
                           setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
                         }}
-                          className={`rounded-full border px-3 py-1 text-xs transition-all hover:scale-105 ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground hover:border-primary/40 hover:text-primary'}`}>
+                          className={`rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
                           {opt}
                         </button>
                       );

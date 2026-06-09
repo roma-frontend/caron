@@ -1,31 +1,41 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
+import { normalizeImageUrl } from './lib/imageUrl';
+
+function normalizeCategoryImage<T extends { imageUrl?: string | null }>(category: T): T {
+  const normalized = normalizeImageUrl(category.imageUrl);
+  if (normalized === category.imageUrl) return category;
+  return { ...category, imageUrl: normalized };
+}
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
+    const categories = await ctx.db
       .query('categories')
       .withIndex('by_active', (q) => q.eq('isActive', true))
       .take(100);
+    return categories.map(normalizeCategoryImage);
   },
 });
 
 export const listAll = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query('categories').order('desc').take(100);
+    const categories = await ctx.db.query('categories').order('desc').take(100);
+    return categories.map(normalizeCategoryImage);
   },
 });
 
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const category = await ctx.db
       .query('categories')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .unique();
+    return category ? normalizeCategoryImage(category) : null;
   },
 });
 
@@ -84,7 +94,7 @@ export const listWithCounts = query({
       .take(100);
     const products = await ctx.db.query('products').collect();
     return cats.map((c) => ({
-      ...c,
+      ...normalizeCategoryImage(c),
       count: products.filter((p) => p.categoryId === c._id && p.isActive).length,
     }));
   },

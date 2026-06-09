@@ -13,7 +13,7 @@ import { ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../../convex/_generated/dataModel';
 import { useUpload } from '@/hooks/useUpload';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { VehicleCompatSelector } from '@/components/admin/VehicleCompatSelector';
@@ -25,7 +25,52 @@ function StepBasicInfo() {
   const categories = useQuery(api.categories.list, {});
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
-  const handleImg = async (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f) return; try { const url = await upload(f); const imgs = ((data.images as string[]) ?? []); update('images', [...imgs, url]); } catch { toast.error('Error'); } };
+  const [dragActive, setDragActive] = useState(false);
+
+  const appendFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    try {
+      const uploaded: string[] = [];
+      for (const file of arr) {
+        const url = await upload(file);
+        if (url) uploaded.push(url);
+      }
+      if (uploaded.length > 0) {
+        const imgs = (data.images as string[]) ?? [];
+        update('images', [...imgs, ...uploaded]);
+      }
+    } catch {
+      toast.error('Error');
+    }
+  };
+
+  const handleImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    await appendFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (uploading || !e.dataTransfer.files?.length) return;
+    await appendFiles(e.dataTransfer.files);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragActive) setDragActive(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
   return (
     <div className="space-y-5">
       <div><Label>Անուն *</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder="Ապրանքի անուն" className="h-11" /></div>
@@ -42,7 +87,13 @@ function StepBasicInfo() {
       <div><Label>Նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Ապրանքի նկարագրություն" rows={4} /></div>
       <div>
         <Label>Պատկեր</Label>
-        <div className="mt-2 grid grid-cols-4 gap-2">
+        <div
+          className={`mt-2 rounded-xl border-2 border-dashed p-2 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/70 bg-muted/20'}`}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+        >
+        <div className="grid grid-cols-4 gap-2">
           {((data.images as string[]) ?? []).map((img, i) => (
             <div key={i} className="relative aspect-square overflow-hidden rounded-lg border">
               <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
@@ -52,6 +103,8 @@ function StepBasicInfo() {
           <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground hover:border-primary hover:text-primary">
             <ImagePlus className="h-6 w-6" />
           </button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImg} />
       </div>

@@ -96,94 +96,95 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        {/* Hero — Bento Grid Layout (2025-2026) */}
-        <section className="relative overflow-hidden" style={{ paddingInline: 'max(var(--space-container), 0.75rem)', paddingBlock: 'var(--space-section)', minHeight: '70vh' }}>
-          {/* Animated orbs (reduced to 2 for less visual competition) */}
+        {/* Hero — integrated section module */}
+        <section className="relative overflow-hidden" style={{ paddingInline: 'max(var(--space-container), 0.75rem)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-10)' }}>
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-            <div className="absolute left-[-10%] top-[-20%] h-[800px] w-[800px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(100px)' }} />
-            <div className="absolute right-[-15%] top-[10%] h-[700px] w-[700px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(100px)' }} />
+            <div className="absolute left-[-6%] top-[-25%] h-[620px] w-[620px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(95px)' }} />
+            <div className="absolute right-[-10%] top-[0%] h-[560px] w-[560px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(95px)' }} />
           </div>
 
-          <div className="mx-auto grid max-w-[var(--container-max)] gap-6 lg:grid-cols-12">
-            {/* Left Panel — Content (7 cols) */}
-            <div className="flex flex-col justify-center lg:col-span-7 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-md p-8 sm:p-12">
-              {/* Badge */}
-              <div className="hero-fade-1 relative inline-flex w-fit items-center overflow-hidden rounded-full backdrop-blur-sm" style={{ gap: 'var(--space-3)', paddingInline: 'var(--space-6)', paddingBlock: 'var(--space-3)', border: '1px solid var(--landing-card-border)', background: 'var(--landing-card-bg)', marginBottom: 'var(--space-6)' }}>
-                <div className="badge-shimmer absolute inset-0" aria-hidden="true" />
-                <div className="pulse-dot rounded-full bg-primary" style={{ width: '0.5rem', height: '0.5rem' }} />
-                <span className="relative font-bold uppercase tracking-widest text-muted-foreground" style={{ fontSize: 'var(--text-xs)' }}>{HOME.heroBadge}</span>
-              </div>
+          <div className="mx-auto max-w-[var(--container-max)]">
+            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 bg-card/55 shadow-[0_20px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+              <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: 'linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 100%)' }} />
 
-              {/* Title with gradient + balance */}
-              <h1 className="hero-fade-2 text-balance text-gradient font-black tracking-tighter" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)' }}>
-                {HOME.heroTitle}
-              </h1>
-
-              {/* Subtitle */}
-              <p className="hero-fade-3 text-balance text-muted-foreground" style={{ fontSize: 'var(--text-lg)', maxWidth: '36rem', marginBottom: 'var(--space-8)', lineHeight: 'var(--line-height-relaxed)' }}>
-                {HOME.heroDesc}
-              </p>
-
-              {/* CTA */}
-              <div className="hero-fade-4 flex flex-col sm:flex-row" style={{ gap: 'var(--space-4)' }}>
-                <Link href="/products">
-                  <Button size="lg" style={{ gap: 'var(--space-2)' }}>
-                    {HOME.ctaCatalog} <ArrowRight style={{ height: '1rem', width: '1rem' }} />
-                  </Button>
-                </Link>
-                <Link href="/categories">
-                  <Button size="lg" variant="outline">{HOME.ctaCategories}</Button>
-                </Link>
-              </div>
-
-              {/* Trust bar */}
-              <div className="hero-fade-4 mt-8 flex flex-wrap items-center" style={{ gap: 'var(--space-3) var(--space-6)' }}>
-                {[
-                  { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
-                  { Icon: Shield, label: 'Երաշխիք ապրանքների վրա' },
-                  { Icon: Clock, label: '24/7 աջակցություն' },
-                  { Icon: Star, label: 'Բնօրինակ որակ' },
-                ].map(({ Icon, label }) => (
-                  <span key={label} className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>
-                    <Icon className="h-4 w-4 text-primary" /> {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Panel — Contextual Cards (5 cols) */}
-            <div className="flex flex-col gap-4 lg:col-span-5">
-              {/* Vehicle Selector Card */}
-              {(settings === undefined || settings?.enableCarSelector !== false) && (
-                <div
-                  className="hero-fade-4 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-md p-6"
-                  style={{ visibility: settings === undefined ? 'hidden' : 'visible' }}
-                >
-                  <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Ընտրել մեքենա</p>
-                  <VehicleSelector />
+              <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-6 py-4 sm:px-8">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" /> {HOME.heroBadge}
                 </div>
-              )}
+                <div className="text-xs text-muted-foreground">Մասին բաժին: գլխավոր առաջարկներ</div>
+              </div>
 
-              {/* Top Sellers Mini Grid */}
-              {featured && featured.length > 0 && (
-                <div className="hero-fade-4 flex-1 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-md p-6">
-                  <p className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Թոփ վաճառք</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {featured.slice(0, 4).map((p, i) => (
-                      <HeroMiniCard key={p._id} product={p} index={i} />
-                    ))}
+              <div className="relative z-10 flex flex-col gap-7 px-6 py-8 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10 lg:py-10">
+                <div className="flex flex-1 flex-col justify-center">
+                  <h1 className="hero-fade-2 text-balance text-gradient font-black tracking-tighter" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)' }}>
+                    {HOME.heroTitle}
+                  </h1>
+
+                  <p className="hero-fade-3 text-balance text-muted-foreground" style={{ fontSize: 'var(--text-lg)', maxWidth: '36rem', marginBottom: 'var(--space-8)', lineHeight: 'var(--line-height-relaxed)' }}>
+                    {HOME.heroDesc}
+                  </p>
+
+                  <div className="hero-fade-4 flex flex-col sm:flex-row" style={{ gap: 'var(--space-4)' }}>
+                    <Link href="/products">
+                      <Button size="lg" style={{ gap: 'var(--space-2)' }}>
+                        {HOME.ctaCatalog} <ArrowRight style={{ height: '1rem', width: '1rem' }} />
+                      </Button>
+                    </Link>
+                    <Link href="/categories">
+                      <Button size="lg" variant="outline">{HOME.ctaCategories}</Button>
+                    </Link>
                   </div>
                 </div>
-              )}
+
+                {(settings === undefined || settings?.enableCarSelector !== false) && (
+                  <div
+                    className="hero-fade-4 w-full rounded-2xl border border-border/40 bg-card/70 p-5 shadow-xl backdrop-blur-md lg:w-[22rem]"
+                    style={{ visibility: settings === undefined ? 'hidden' : 'visible' }}
+                  >
+                    <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Ընտրել մեքենա</p>
+                    <VehicleSelector />
+                  </div>
+                )}
+              </div>
+
+              <div className="relative z-10 border-t border-border/50 px-6 py-4 sm:px-8">
+                <div className="hero-fade-4 flex flex-wrap items-center" style={{ gap: 'var(--space-3) var(--space-6)' }}>
+                  {[
+                    { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
+                    { Icon: Shield, label: 'Երաշխիք ապրանքների վրա' },
+                    { Icon: Clock, label: '24/7 աջակցություն' },
+                    { Icon: Star, label: 'Բնօրինակ որակ' },
+                  ].map(({ Icon, label }) => (
+                    <span key={label} className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>
+                      <Icon className="h-4 w-4 text-primary" /> {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Scroll indicator */}
-          <div className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center md:flex" style={{ gap: 'var(--space-2)' }} aria-hidden="true">
-            <span className="uppercase tracking-widest text-primary" style={{ fontSize: 'var(--text-xs)', opacity: 0.6 }}>↓</span>
-            <div className="scroll-line" style={{ width: '1px', height: '3rem', background: 'linear-gradient(to bottom, var(--primary), transparent)', opacity: 0.7 }} />
-          </div>
         </section>
+
+        {/* Top Sales — separate section under hero */}
+        {settings !== undefined && settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
+          <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
+            <div className="rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-md sm:p-8">
+              <div className="mb-5 flex items-center justify-between gap-2">
+                <h2 className="text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
+                <Link href="/products">
+                  <Button variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {featured === undefined
+                  ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '12rem' }} />)
+                  : featured.slice(0, 4).map((p, i) => (
+                      <HeroMiniCard key={p._id} product={p} index={i} />
+                    ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Categories */}
         {settings !== undefined && settings?.showCategories !== false && (
@@ -311,8 +312,7 @@ function HeroMiniCard({ product, index }: { product: NonNullable<ReturnType<type
         <Image
           src={product.images[0]}
           alt={product.name}
-          width={200}
-          height={200}
+          fill
           priority
           sizes="(max-width: 640px) 50vw, 200px"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
