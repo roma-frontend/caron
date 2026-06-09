@@ -104,6 +104,7 @@ export default defineSchema(
     updatedAt: v.number(),
   })
     .index('by_slug', ['slug'])
+    .index('by_sku', ['sku'])
     .index('by_category', ['categoryId'])
     .index('by_active', ['isActive'])
     .index('by_featured', ['isFeatured'])

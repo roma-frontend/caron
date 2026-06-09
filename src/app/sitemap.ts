@@ -49,7 +49,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const p of products ?? []) {
       if (p.oemNumbers) {
         for (const oem of p.oemNumbers) {
-          oemSet.add(oem.trim());
+          const code = typeof oem === 'string' ? oem : oem.code;
+          oemSet.add(code.trim());
         }
       }
     }

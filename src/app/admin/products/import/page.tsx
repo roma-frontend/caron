@@ -14,24 +14,24 @@ import { Badge } from '@/components/ui/badge';
 import * as XLSX from 'xlsx';
 
 interface ParsedRow {
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
+  name?: string;
+  slug?: string;
+  description?: string;
+  price?: number;
   wholesalePrice?: number;
   compareAtPrice?: number;
-  images: string[];
+  images?: string[];
   category: string;
   sku?: string;
-  oemNumbers?: string[];
-  stock: number;
-  isActive: boolean;
-  isFeatured: boolean;
+  oemNumbers?: Array<{ manufacturer: string; code: string }>;
+  stock?: number;
+  isActive?: boolean;
+  isFeatured?: boolean;
   showInPromotions?: boolean;
   seoTitle?: string;
   seoDescription?: string;
-  attributes: Record<string, string>;
-  vehicleCompat: Array<{ brand: string; model: string; yearFrom: number; yearTo: number }>;
+  attributes?: Record<string, string>;
+  vehicleCompat?: Array<{ brand: string; model: string; yearFrom: number; yearTo: number }>;
 }
 
 function splitLine(line: string, sep: string): string[] {
@@ -124,30 +124,70 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     vc.push(currentVc as { brand: string; model: string; yearFrom: number; yearTo: number });
   }
 
-  const slug = get('slug') || get('productslug') || values[0].toLowerCase().replace(/[^a-z0-9\u0561-\u0587]+/g, '-').replace(/-+$/, '');
-
-  return {
-    name: get('name') || values[0],
-    slug,
-    description: get('description') || '',
-    price: num('price') || num('cost') || 0,
-    wholesalePrice: num('wholesalePrice') || num('wholesale') || undefined,
-    compareAtPrice: num('compareAtPrice') || undefined,
+  // Только заполненные поля будут включены в результат
+  const result: ParsedRow = {
     category: catName,
-    sku: get('sku') || undefined,
-    oemNumbers: (get('oemNumbers') || get('oem') || '').split(/[,;\s]+/).filter(Boolean).length > 0
-      ? (get('oemNumbers') || get('oem') || '').split(/[,;\s]+/).filter(Boolean)
-      : undefined,
-    stock: num('stock') || num('quantity') || 1,
-    isActive: bool('isActive'),
-    isFeatured: bool('isFeatured'),
-    showInPromotions: get('showInPromotions') ? bool('showInPromotions') : undefined,
-    seoTitle: get('seoTitle') || undefined,
-    seoDescription: get('seoDescription') || undefined,
-    images: (get('images') || '').split(';').map((u) => u.trim()).filter(Boolean),
-    attributes: attrs,
-    vehicleCompat: vc,
   };
+
+  const nameVal = get('name') || values[0];
+  if (nameVal) result.name = nameVal;
+
+  const slugVal = get('slug') || get('productslug') || (nameVal && nameVal.toLowerCase().replace(/[^a-z0-9\u0561-\u0587]+/g, '-').replace(/-+$/, ''));
+  if (slugVal) result.slug = slugVal;
+
+  const descVal = get('description');
+  if (descVal) result.description = descVal;
+
+  const priceVal = num('price') || num('cost');
+  if (priceVal) result.price = priceVal;
+
+  const wpVal = num('wholesalePrice') || num('wholesale');
+  if (wpVal) result.wholesalePrice = wpVal;
+
+  const cpVal = num('compareAtPrice');
+  if (cpVal) result.compareAtPrice = cpVal;
+
+  const skuVal = get('sku');
+  if (skuVal) result.sku = skuVal;
+
+  const oemStr = get('oemNumbers') || get('oem');
+  if (oemStr) {
+    const codes = oemStr.split(/[,;\s]+/).filter(Boolean);
+    if (codes.length > 0) {
+      const manufacturer = get('oemManufacturer') || get('oem_manufacturer') || get('mfg') || 'Unknown';
+      result.oemNumbers = codes.map(code => ({
+        manufacturer,
+        code: code.trim().toUpperCase(),
+      }));
+    }
+  }
+
+  const stockVal = num('stock') || num('quantity');
+  if (stockVal) result.stock = stockVal;
+
+  const isActiveVal = get('isActive');
+  if (isActiveVal) result.isActive = bool('isActive');
+
+  const isFeaturedVal = get('isFeatured');
+  if (isFeaturedVal) result.isFeatured = bool('isFeatured');
+
+  const showPromoVal = get('showInPromotions');
+  if (showPromoVal) result.showInPromotions = bool('showInPromotions');
+
+  const seoTitleVal = get('seoTitle');
+  if (seoTitleVal) result.seoTitle = seoTitleVal;
+
+  const seoDescVal = get('seoDescription');
+  if (seoDescVal) result.seoDescription = seoDescVal;
+
+  const imagesVal = (get('images') || '').split(';').map((u) => u.trim()).filter(Boolean);
+  if (imagesVal.length > 0) result.images = imagesVal;
+
+  if (Object.keys(attrs).length > 0) result.attributes = attrs;
+
+  if (vc.length > 0) result.vehicleCompat = vc;
+
+  return result;
 }
 
 export default function ImportProductsPage() {
@@ -208,7 +248,7 @@ export default function ImportProductsPage() {
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(ws, { header: 1 });
+    const rows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(ws, { header: 1, defval: '' });
     return rows.map((r) => r.map((c) => {
       if (c == null) return '';
       const v = String(c);
@@ -245,24 +285,32 @@ export default function ImportProductsPage() {
     if (!parsed || !sessionToken) return;
     setImporting(true);
     try {
-      const products: Parameters<typeof bulkCreate>[0]['products'] = parsed.map((r) => ({
-        name: r.name,
-        slug: r.slug,
-        description: r.description,
-        price: r.price,
-        wholesalePrice: r.wholesalePrice || undefined,
-        compareAtPrice: r.compareAtPrice || undefined,
-        categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
-        sku: r.sku || undefined,
-        oemNumbers: r.oemNumbers?.length ? r.oemNumbers : undefined,
-        stock: r.stock,
-        isActive: r.isActive,
-        isFeatured: r.isFeatured || undefined,
-        showInPromotions: r.showInPromotions ?? undefined,
-        seoTitle: r.seoTitle || undefined,
-        seoDescription: r.seoDescription || undefined,
-        images: r.images.length > 0 ? r.images : undefined,
-      }));
+      type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
+      const products: BulkProduct[] = parsed.map((r) => {
+        const p: BulkProduct = {
+          category: r.category,
+          categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
+        };
+        // Передаем только заполненные поля
+        if (r.name !== undefined) p.name = r.name;
+        if (r.slug !== undefined) p.slug = r.slug;
+        if (r.description !== undefined) p.description = r.description;
+        if (r.price !== undefined) p.price = r.price;
+        if (r.wholesalePrice !== undefined) p.wholesalePrice = r.wholesalePrice;
+        if (r.compareAtPrice !== undefined) p.compareAtPrice = r.compareAtPrice;
+        if (r.sku !== undefined) p.sku = r.sku;
+        if (r.oemNumbers !== undefined && r.oemNumbers.length > 0) p.oemNumbers = r.oemNumbers;
+        if (r.stock !== undefined) p.stock = r.stock;
+        if (r.isActive !== undefined) p.isActive = r.isActive;
+        if (r.isFeatured !== undefined) p.isFeatured = r.isFeatured;
+        if (r.showInPromotions !== undefined) p.showInPromotions = r.showInPromotions;
+        if (r.seoTitle !== undefined) p.seoTitle = r.seoTitle;
+        if (r.seoDescription !== undefined) p.seoDescription = r.seoDescription;
+        if (r.images !== undefined && r.images.length > 0) p.images = r.images;
+        if (r.attributes !== undefined && Object.keys(r.attributes).length > 0) p.attributes = r.attributes;
+        if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
+        return p;
+      });
       const result = await bulkCreate({ sessionToken, products });
       toast.success(`${result}. Ատրիբուտները և համատեղելիությունը պետք է ավելացվի խմբագրիչի միջոցով.`);
       setDone(true);
@@ -399,14 +447,14 @@ export default function ImportProductsPage() {
                 <tbody>
                   {parsed.map((r, i) => (
                     <tr key={i} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="p-2 max-w-[200px] truncate" title={r.name}>{r.name}</td>
-                      <td className="p-2 whitespace-nowrap">{r.price.toLocaleString()} ֏</td>
+                      <td className="p-2 max-w-50 truncate" title={r.name || '—'}>{r.name || '—'}</td>
+                      <td className="p-2 whitespace-nowrap">{r.price ? r.price.toLocaleString() : '—'} ֏</td>
                       <td className="p-2">{r.category}</td>
                       <td className="p-2 font-mono">{r.sku || '—'}</td>
-                      <td className="p-2 font-mono">{r.oemNumbers?.join(', ') || '—'}</td>
-                      <td className="p-2">{r.stock}</td>
-                      <td className="p-2">{r.images.length > 0 ? '✅' : '—'}</td>
-                      <td className="p-2">{r.isActive ? '✅' : '❌'}</td>
+                      <td className="p-2 font-mono">{r.oemNumbers?.map(o => o.code).join(', ') || '—'}</td>
+                      <td className="p-2">{r.stock !== undefined ? r.stock : '—'}</td>
+                      <td className="p-2">{r.images && r.images.length > 0 ? '✅' : '—'}</td>
+                      <td className="p-2">{r.isActive ? '✅' : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

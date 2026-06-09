@@ -164,7 +164,7 @@ export const convertOemNumbersFormat = mutation({
       const isOldFormat = typeof oem[0] === 'string';
       if (!isOldFormat) continue;
 
-      const newOemNumbers = (oem as string[]).map((code) => ({
+      const newOemNumbers: Array<{ manufacturer: string; code: string }> = (oem as unknown as string[]).map((code) => ({
         manufacturer: 'Unknown',
         code: code,
       }));

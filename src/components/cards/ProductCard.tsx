@@ -94,7 +94,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
 
   return (
     <>
-      <div ref={ref} style={cardRevealStyle(visible, index * 0.06)} {...handlers}>
+      <div ref={ref} style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: '0 320px' }} {...handlers}>
         {compact ? (
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>

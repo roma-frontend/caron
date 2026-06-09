@@ -13,7 +13,7 @@ interface Product {
   stock: number;
   rating?: number;
   reviewCount?: number;
-  oemNumbers?: string[];
+  oemNumbers?: Array<string | { code: string; manufacturer?: string }>;
   attributes?: Record<string, unknown>;
   qtyStep?: number;
 }
@@ -29,7 +29,10 @@ export function ProductOemResults({
     <div className="p-2">
       {products.map((p, i) => {
         const matchedOem = p.oemNumbers?.find(
-          (o) => o.toLowerCase().includes(decoded.toLowerCase())
+          (o) => {
+            const code = typeof o === 'string' ? o : o.code;
+            return code.toLowerCase().includes(decoded.toLowerCase());
+          }
         );
         return (
           <ProductCard

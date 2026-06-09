@@ -186,11 +186,16 @@ export default function ProductDetailPage() {
                   <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">ԱՏԳԱԱ {product.atgCode}</span>
                 </div>
               )}
-              {product.oemNumbers?.map((oem) => (
-                <Link key={oem} href={`/oem/${encodeURIComponent(oem)}`} className="inline-flex items-center gap-1.5 rounded-lg border bg-blue-500/5 px-2.5 py-1 transition-colors hover:bg-blue-500/10 hover:border-blue-500/30">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-blue-600 dark:text-blue-400">OEM {oem}</span>
-                </Link>
-              ))}
+              {product.oemNumbers?.map((oem) => {
+                const code = typeof oem === 'string' ? oem : (oem as any).code;
+                const mfr = typeof oem === 'string' ? null : (oem as any).manufacturer;
+                return (
+                  <Link key={code} href={`/oem/${encodeURIComponent(code)}`} className="inline-flex items-center gap-1.5 rounded-lg border bg-blue-500/5 px-2.5 py-1 transition-colors hover:bg-blue-500/10 hover:border-blue-500/30">
+                    {mfr && mfr !== 'Unknown' && <span className="text-[10px] font-mono text-muted-foreground">{mfr}</span>}
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-blue-600 dark:text-blue-400">OEM {code}</span>
+                  </Link>
+                );
+              })}
             </div>
           )}
 

@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery, usePaginatedQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, ArrowLeft } from 'lucide-react';
 import { Loader, LoaderInline } from '@/components/ui/loader';
@@ -25,6 +24,8 @@ export default function CategoryPage() {
     minPrice?: number; maxPrice?: number; inStockOnly?: boolean; sort?: string; attributes?: Record<string, unknown>;
   }>({});
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
   const { results, status, loadMore } = usePaginatedQuery(
     api.products.listPaginated,
     category ? {
@@ -38,6 +39,17 @@ export default function CategoryPage() {
     } : 'skip',
     { initialNumItems: PAGE_SIZE },
   );
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && status === 'CanLoadMore') loadMore(PAGE_SIZE); },
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [status, loadMore]);
 
   if (!category) return <Loader />;
 
@@ -73,12 +85,7 @@ export default function CategoryPage() {
 
       {status === 'LoadingFirstPage' && <ProductGridSkeleton />}
 
-      {status === 'CanLoadMore' && (
-        <div className="mt-8 flex justify-center">
-          <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Ավելին'}</Button>
-        </div>
-      )}
-
+      <div ref={sentinelRef} />
       {status === 'LoadingMore' && <LoaderInline />}
         </div>
       </div>

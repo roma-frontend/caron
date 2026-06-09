@@ -30,8 +30,10 @@ export const listPaginated = query({
   },
   handler: async (ctx, args) => {
     const hasFilters = !!(args.minPrice || args.maxPrice || args.inStockOnly || args.onSale || args.minRating || args.attributes);
+    // When attribute filters are active we must over-fetch because filtering happens in-memory
+    // after the DB query. Fetch up to 2000 so we don't miss products beyond position 200.
     const paginationOpts = hasFilters
-      ? { ...args.paginationOpts, numItems: Math.max(args.paginationOpts.numItems ?? 20, 200) }
+      ? { ...args.paginationOpts, numItems: Math.max(args.paginationOpts.numItems ?? 20, args.attributes ? 2000 : 200) }
       : args.paginationOpts;
 
     const byPrice = args.sort === 'priceAsc' || args.sort === 'priceDesc';
@@ -56,7 +58,11 @@ export const listPaginated = query({
         .withIndex('by_active', (q) => q.eq('isActive', true))
         .take(200);
       const oemMatches = oemResults.filter((p) =>
-        p.oemNumbers?.some((o) => o.toLowerCase().includes(searchLower))
+        p.oemNumbers?.some((o) => {
+          const code = typeof o === 'string' ? o : o.code;
+          const manufacturer = typeof o === 'string' ? '' : o.manufacturer;
+          return code.toLowerCase().includes(searchLower) || manufacturer.toLowerCase().includes(searchLower);
+        })
       );
       const merged = new Map<string, typeof nameResults.page[number]>();
       for (const p of nameResults.page) merged.set(p._id, p);
@@ -158,7 +164,11 @@ export const list = query({
         .withIndex('by_active', (q) => q.eq('isActive', true))
         .take(200);
       const oemMatches = oemResults.filter((p) =>
-        p.oemNumbers?.some((o) => o.toLowerCase().includes(searchLower))
+        p.oemNumbers?.some((o) => {
+          const code = typeof o === 'string' ? o : o.code;
+          const manufacturer = typeof o === 'string' ? '' : o.manufacturer;
+          return code.toLowerCase().includes(searchLower) || manufacturer.toLowerCase().includes(searchLower);
+        })
       );
       for (const p of oemMatches) {
         if (p.isActive && (!args.categoryId || p.categoryId === args.categoryId) && !results.find((r) => r._id === p._id)) results.push(p);
@@ -273,7 +283,11 @@ export const create = mutation({
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
-    sku: v.optional(v.string()), oemNumbers: v.optional(v.array(v.string())),
+    sku: v.optional(v.string()),
+    oemNumbers: v.optional(v.array(v.object({
+      manufacturer: v.string(),
+      code: v.string(),
+    }))),
     atgCode: v.optional(v.string()), stock: v.number(),
     isActive: v.boolean(), isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
@@ -315,7 +329,11 @@ export const update = mutation({
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
-    sku: v.optional(v.string()), oemNumbers: v.optional(v.array(v.string())),
+    sku: v.optional(v.string()),
+    oemNumbers: v.optional(v.array(v.object({
+      manufacturer: v.string(),
+      code: v.string(),
+    }))),
     atgCode: v.optional(v.string()),
     stock: v.optional(v.number()), isActive: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
@@ -453,22 +471,28 @@ export const bulkCreate = mutation({
     sessionToken: v.string(),
     products: v.array(
       v.object({
-        name: v.string(),
-        slug: v.string(),
-        description: v.string(),
-        price: v.number(),
+        name: v.optional(v.string()),
+        slug: v.optional(v.string()),
+        description: v.optional(v.string()),
+        price: v.optional(v.number()),
         wholesalePrice: v.optional(v.number()),
         compareAtPrice: v.optional(v.number()),
+        category: v.optional(v.string()),
         categoryId: v.id('categories'),
         sku: v.optional(v.string()),
-        oemNumbers: v.optional(v.array(v.string())),
-        stock: v.number(),
-        isActive: v.boolean(),
+        oemNumbers: v.optional(v.array(v.object({
+          manufacturer: v.string(),
+          code: v.string(),
+        }))),
+        stock: v.optional(v.number()),
+        isActive: v.optional(v.boolean()),
         isFeatured: v.optional(v.boolean()),
         showInPromotions: v.optional(v.boolean()),
         seoTitle: v.optional(v.string()),
         seoDescription: v.optional(v.string()),
         images: v.optional(v.array(v.string())),
+        attributes: v.optional(v.any()),
+        vehicleCompat: v.optional(v.any()),
       }),
     ),
   },
@@ -477,17 +501,76 @@ export const bulkCreate = mutation({
     const now = Date.now();
     let created = 0;
     let updated = 0;
+    
     for (const p of args.products) {
-      const existing = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', p.slug)).unique();
-      const payload = { ...p, wholesalePrice: p.wholesalePrice ?? p.price, images: p.images ?? [], updatedAt: now };
+      // Поиск существующего товара по sku или slug
+      let existing = null;
+      
+      if (p.sku) {
+        existing = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', p.sku)).unique();
+      } else if (p.slug) {
+        const slug = p.slug;
+        existing = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', slug)).unique();
+      }
+      
       if (existing) {
-        await ctx.db.patch(existing._id, payload);
+        // Обновляем ТОЛЬКО переданные поля
+        const updatePayload: Record<string, any> = { updatedAt: now };
+        
+        // Передаём только заполненные поля
+        if (p.name !== undefined) updatePayload.name = p.name;
+        if (p.slug !== undefined) updatePayload.slug = p.slug;
+        if (p.description !== undefined) updatePayload.description = p.description;
+        if (p.price !== undefined) updatePayload.price = p.price;
+        if (p.wholesalePrice !== undefined) updatePayload.wholesalePrice = p.wholesalePrice;
+        if (p.compareAtPrice !== undefined) updatePayload.compareAtPrice = p.compareAtPrice;
+        if (p.categoryId !== undefined) updatePayload.categoryId = p.categoryId;
+        if (p.sku !== undefined) updatePayload.sku = p.sku;
+        if (p.oemNumbers !== undefined) updatePayload.oemNumbers = p.oemNumbers;
+        if (p.stock !== undefined) updatePayload.stock = p.stock;
+        if (p.isActive !== undefined) updatePayload.isActive = p.isActive;
+        if (p.isFeatured !== undefined) updatePayload.isFeatured = p.isFeatured;
+        if (p.showInPromotions !== undefined) updatePayload.showInPromotions = p.showInPromotions;
+        if (p.seoTitle !== undefined) updatePayload.seoTitle = p.seoTitle;
+        if (p.seoDescription !== undefined) updatePayload.seoDescription = p.seoDescription;
+        if (p.images !== undefined) updatePayload.images = p.images;
+        if (p.attributes !== undefined) updatePayload.attributes = p.attributes;
+        if (p.vehicleCompat !== undefined) updatePayload.vehicleCompat = p.vehicleCompat;
+        
+        await ctx.db.patch(existing._id, updatePayload);
         updated++;
       } else {
-        await ctx.db.insert('products', { ...payload, createdAt: now });
+        // Создаём новый товар с дефолтами
+        const createPayload: Record<string, unknown> = {
+          name: p.name || p.sku || 'Unnamed Product',
+          slug: p.slug || (p.sku ? p.sku.toLowerCase().replace(/[^a-z0-9-]/g, '-') : `product-${Date.now()}`),
+          description: p.description || '',
+          price: p.price ?? 0,
+          categoryId: p.categoryId,
+          images: p.images ?? [],
+          isActive: p.isActive ?? true,
+          stock: p.stock ?? 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+        
+        // Опциональные поля
+        if (p.wholesalePrice !== undefined) createPayload.wholesalePrice = p.wholesalePrice;
+        if (p.compareAtPrice !== undefined) createPayload.compareAtPrice = p.compareAtPrice;
+        if (p.sku !== undefined) createPayload.sku = p.sku;
+        if (p.oemNumbers !== undefined) createPayload.oemNumbers = p.oemNumbers;
+        if (p.isFeatured !== undefined) createPayload.isFeatured = p.isFeatured;
+        if (p.showInPromotions !== undefined) createPayload.showInPromotions = p.showInPromotions;
+        if (p.seoTitle !== undefined) createPayload.seoTitle = p.seoTitle;
+        if (p.seoDescription !== undefined) createPayload.seoDescription = p.seoDescription;
+        if (p.attributes !== undefined) createPayload.attributes = p.attributes;
+        if (p.vehicleCompat !== undefined) createPayload.vehicleCompat = p.vehicleCompat;
+        
+        await ctx.db.insert('products', createPayload as any);
         created++;
       }
     }
+    
     return `Ստեղծվել է ${created}, թարմացվել է ${updated} ապրանք`;
   },
 });

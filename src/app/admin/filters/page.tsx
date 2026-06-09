@@ -6,6 +6,7 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, Edit, SlidersHorizontal, AlertTriangle, GripVertical } from 'lucide-react';
@@ -145,7 +146,12 @@ export default function AdminFiltersPage() {
             </div>
             <div className="space-y-2">
               <Label>Տեսակներ (առանց տեսակ)</Label>
-              <Input value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })} placeholder="Bosch, Mobil, Castrol, Shell" className="h-11" />
+              <Textarea
+                value={form.options}
+                onChange={(e) => setForm({ ...form, options: e.target.value })}
+                placeholder="Bosch, Mobil, Castrol, Shell"
+                className="min-h-24 resize-y break-words [overflow-wrap:anywhere]"
+              />
               <p className="text-[10px] text-muted-foreground">Առանց տեսակ, օրինակ. Bosch, Mobil, Castrol, Shell</p>
             </div>
             <div className="space-y-2">
