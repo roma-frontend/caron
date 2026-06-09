@@ -187,8 +187,8 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.oemNumbers?.map((oem) => {
-                const code = typeof oem === 'string' ? oem : (oem as any).code;
-                const mfr = typeof oem === 'string' ? null : (oem as any).manufacturer;
+                const code = typeof oem === 'string' ? oem : oem.code;
+                const mfr = typeof oem === 'string' ? null : oem.manufacturer;
                 return (
                   <Link key={code} href={`/oem/${encodeURIComponent(code)}`} className="inline-flex items-center gap-1.5 rounded-lg border bg-blue-500/5 px-2.5 py-1 transition-colors hover:bg-blue-500/10 hover:border-blue-500/30">
                     {mfr && mfr !== 'Unknown' && <span className="text-[10px] font-mono text-muted-foreground">{mfr}</span>}
@@ -255,7 +255,7 @@ export default function ProductDetailPage() {
               <h3 className="mb-3 font-semibold">{'Ատրիբուտներ'}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').map(([key, val]) => (
-                  <div key={key} className="flex justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
+                  <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">{attrNames[key] || key}</span>
                     <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : String(val)}</span>
                   </div>

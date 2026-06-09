@@ -298,6 +298,13 @@ export const create = mutation({
     await getAdminCaller(ctx, args.sessionToken);
     const { sessionToken: _, ...data } = args;
     const now = Date.now();
+    if (data.sku) {
+      data.sku = data.sku.trim();
+      const existingBySku = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', data.sku!)).unique();
+      if (existingBySku) {
+        throw new Error(`Արտիկուլ "${data.sku}" արդեն գոյություն ունի`);
+      }
+    }
     if (data.wholesalePrice === undefined) data.wholesalePrice = data.price;
     if (data.showInPromotions === undefined && data.compareAtPrice && data.compareAtPrice > data.price) {
       data.showInPromotions = true;
@@ -312,9 +319,19 @@ export const create = mutation({
     if (!data.sku) {
       const cat = await ctx.db.get(data.categoryId);
       const prefix = cat ? cat.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase() : 'PRD';
-      const ts = now.toString(36).slice(-4).toUpperCase();
-      const rnd = Math.random().toString(36).substring(2, 4).toUpperCase();
-      data.sku = `${prefix}-${ts}${rnd}`;
+      let generatedSku = '';
+      for (let i = 0; i < 10; i++) {
+        const ts = now.toString(36).slice(-4).toUpperCase();
+        const rnd = Math.random().toString(36).substring(2, 4).toUpperCase();
+        const candidate = `${prefix}-${ts}${rnd}`;
+        const exists = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', candidate)).unique();
+        if (!exists) {
+          generatedSku = candidate;
+          break;
+        }
+      }
+      if (!generatedSku) throw new Error('Չհաջողվեց ստեղծել եզակի արտիկուլ');
+      data.sku = generatedSku;
     }
     return await ctx.db.insert('products', { ...data, createdAt: now, updatedAt: now });
   },
@@ -350,6 +367,15 @@ export const update = mutation({
       if (!rest.brand && rAttrs.brand && typeof rAttrs.brand === 'string') rest.brand = rAttrs.brand as string;
       rest.attributes = Object.keys(rAttrs).length > 0 ? rAttrs : undefined;
     const old = await ctx.db.get(id);
+    if (rest.sku !== undefined) {
+      const nextSku = rest.sku.trim();
+      if (!nextSku) throw new Error('Արտիկուլը դատարկ չի կարող լինել');
+      const existingBySku = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', nextSku)).unique();
+      if (existingBySku && existingBySku._id !== id) {
+        throw new Error(`Արտիկուլ "${nextSku}" արդեն գոյություն ունի`);
+      }
+      rest.sku = nextSku;
+    }
     if (clearBrand) { rest.brand = undefined; }
     if (stock !== undefined && old && old.stock <= 0 && stock > 0) {
       await ctx.scheduler.runAfter(0, api.backInStock.notifySubscribers, { productId: id, productName: old.name });
@@ -501,19 +527,38 @@ export const bulkCreate = mutation({
     const now = Date.now();
     let created = 0;
     let updated = 0;
+
+    // Reject duplicate SKUs inside the same import file.
+    const skuRows = new Map<string, number>();
+    for (let i = 0; i < args.products.length; i++) {
+      const sku = args.products[i].sku?.trim();
+      if (!sku) continue;
+      const firstRow = skuRows.get(sku);
+      if (firstRow !== undefined) {
+        throw new Error(`Արտիկուլ "${sku}" կրկնվում է ֆայլում (տողեր ${firstRow + 1} և ${i + 1})`);
+      }
+      skuRows.set(sku, i);
+    }
     
     for (const p of args.products) {
       // Поиск существующего товара по sku или slug
       let existing = null;
+      const nextSku = p.sku?.trim();
       
-      if (p.sku) {
-        existing = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', p.sku)).unique();
+      if (nextSku) {
+        existing = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', nextSku)).unique();
       } else if (p.slug) {
         const slug = p.slug;
         existing = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', slug)).unique();
       }
       
       if (existing) {
+        if (nextSku) {
+          const skuOwner = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', nextSku)).unique();
+          if (skuOwner && skuOwner._id !== existing._id) {
+            throw new Error(`Արտիկուլ "${nextSku}" արդեն գոյություն ունի`);
+          }
+        }
         // Обновляем ТОЛЬКО переданные поля
         const updatePayload: Record<string, any> = { updatedAt: now };
         
@@ -525,7 +570,7 @@ export const bulkCreate = mutation({
         if (p.wholesalePrice !== undefined) updatePayload.wholesalePrice = p.wholesalePrice;
         if (p.compareAtPrice !== undefined) updatePayload.compareAtPrice = p.compareAtPrice;
         if (p.categoryId !== undefined) updatePayload.categoryId = p.categoryId;
-        if (p.sku !== undefined) updatePayload.sku = p.sku;
+        if (nextSku !== undefined) updatePayload.sku = nextSku;
         if (p.oemNumbers !== undefined) updatePayload.oemNumbers = p.oemNumbers;
         if (p.stock !== undefined) updatePayload.stock = p.stock;
         if (p.isActive !== undefined) updatePayload.isActive = p.isActive;
@@ -540,10 +585,16 @@ export const bulkCreate = mutation({
         await ctx.db.patch(existing._id, updatePayload);
         updated++;
       } else {
+        if (nextSku) {
+          const existingBySku = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', nextSku)).unique();
+          if (existingBySku) {
+            throw new Error(`Արտիկուլ "${nextSku}" արդեն գոյություն ունի`);
+          }
+        }
         // Создаём новый товар с дефолтами
         const createPayload: Record<string, unknown> = {
-          name: p.name || p.sku || 'Unnamed Product',
-          slug: p.slug || (p.sku ? p.sku.toLowerCase().replace(/[^a-z0-9-]/g, '-') : `product-${Date.now()}`),
+          name: p.name || nextSku || 'Unnamed Product',
+          slug: p.slug || (nextSku ? nextSku.toLowerCase().replace(/[^a-z0-9-]/g, '-') : `product-${Date.now()}`),
           description: p.description || '',
           price: p.price ?? 0,
           categoryId: p.categoryId,
@@ -557,7 +608,7 @@ export const bulkCreate = mutation({
         // Опциональные поля
         if (p.wholesalePrice !== undefined) createPayload.wholesalePrice = p.wholesalePrice;
         if (p.compareAtPrice !== undefined) createPayload.compareAtPrice = p.compareAtPrice;
-        if (p.sku !== undefined) createPayload.sku = p.sku;
+        if (nextSku !== undefined) createPayload.sku = nextSku;
         if (p.oemNumbers !== undefined) createPayload.oemNumbers = p.oemNumbers;
         if (p.isFeatured !== undefined) createPayload.isFeatured = p.isFeatured;
         if (p.showInPromotions !== undefined) createPayload.showInPromotions = p.showInPromotions;

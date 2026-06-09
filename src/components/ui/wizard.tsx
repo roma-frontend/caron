@@ -20,6 +20,9 @@ interface WizardProps {
   onCancel?: () => void;
   submitLabel?: string;
   defaultData?: Record<string, unknown>;
+  renderStickySummary?: (ctx: { data: Record<string, unknown>; update: (key: string, value: unknown) => void }) => React.ReactNode;
+  submitOnly?: boolean;
+  hideProgress?: boolean;
 }
 
 const WizardContext = React.createContext<{
@@ -33,7 +36,7 @@ export function useWizardData() {
   return ctx;
 }
 
-export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծել', defaultData = {} }: WizardProps) {
+export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծել', defaultData = {}, renderStickySummary, submitOnly = false, hideProgress = false }: WizardProps) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Record<string, unknown>>(defaultData);
   const [submitting, setSubmitting] = useState(false);
@@ -55,22 +58,34 @@ export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծ�
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        {/* Progress */}
-        <div className="mb-6">
-          <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-4">
-            <div className="absolute inset-y-0 left-0 bg-primary rounded-full" style={{ width: `${progress}%`, transition: 'width 0.3s ease' }} />
+        {renderStickySummary && (
+          <div
+            className={cn(
+              'sticky top-0 z-20 -mx-4 mb-4 bg-background/95 px-4 pt-4 pb-3 backdrop-blur md:-mx-6 md:px-6 md:pt-6',
+              hideProgress ? 'mt-1 rounded-xl border' : '-mt-4 border-b md:-mt-6',
+            )}
+          >
+            {renderStickySummary({ data, update })}
           </div>
-          <div className="flex items-center justify-between">
-            {steps.map((s, i) => (
-              <div key={s.id} className="flex flex-col items-center flex-1 min-w-0">
-                <div className={cn('flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border-2 text-[10px] sm:text-xs font-semibold transition-all', i < step ? 'border-primary bg-primary text-primary-foreground' : i === step ? 'border-primary text-primary scale-110' : 'border-muted-foreground/30 text-muted-foreground')}>
-                  {i < step ? <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" /> : i + 1}
+        )}
+
+        {!hideProgress && (
+          <div className="mb-6">
+            <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-4">
+              <div className="absolute inset-y-0 left-0 bg-primary rounded-full" style={{ width: `${progress}%`, transition: 'width 0.3s ease' }} />
+            </div>
+            <div className="flex items-center justify-between">
+              {steps.map((s, i) => (
+                <div key={s.id} className="flex flex-col items-center flex-1 min-w-0">
+                  <div className={cn('flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border-2 text-[10px] sm:text-xs font-semibold transition-all', i < step ? 'border-primary bg-primary text-primary-foreground' : i === step ? 'border-primary text-primary scale-110' : 'border-muted-foreground/30 text-muted-foreground')}>
+                    {i < step ? <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" /> : i + 1}
+                  </div>
+                  <span className={cn('mt-1 text-[10px] sm:text-[11px] font-medium text-center truncate max-w-full px-0.5', i === step ? 'text-primary' : 'text-muted-foreground')}>{s.title}</span>
                 </div>
-                <span className={cn('mt-1 text-[10px] sm:text-[11px] font-medium text-center truncate max-w-full px-0.5', i === step ? 'text-primary' : 'text-muted-foreground')}>{s.title}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Content */}
         <AnimatePresence mode="wait">
@@ -85,12 +100,14 @@ export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծ�
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 border-t p-4 md:p-6 flex items-center justify-between gap-3">
-        <Button variant="outline" onClick={step > 0 ? () => setStep((s) => s - 1) : onCancel} disabled={submitting}>
-          <ChevronLeft className="h-4 w-4 mr-1" /> {step > 0 ? 'Առաջ' : 'Ետ'}
-        </Button>
-        <Button onClick={next} disabled={!canNext || submitting}>
-          {submitting ? 'Հարցազրույց...' : step === steps.length - 1 ? submitLabel : <><span>Առաջ</span><ChevronRight className="h-4 w-4 ml-1" /></>}
+      <div className="shrink-0 border-t p-4 md:p-6 flex items-center gap-3">
+        {!submitOnly && (
+          <Button variant="outline" onClick={step > 0 ? () => setStep((s) => s - 1) : onCancel} disabled={submitting}>
+            <ChevronLeft className="h-4 w-4 mr-1" /> {step > 0 ? 'Առաջ' : 'Ետ'}
+          </Button>
+        )}
+        <Button onClick={next} disabled={!canNext || submitting} className={cn(submitOnly && 'w-full')}>
+          {submitting ? 'Հարցազրույց...' : step === steps.length - 1 || submitOnly ? submitLabel : <><span>Առաջ</span><ChevronRight className="h-4 w-4 ml-1" /></>}
         </Button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -99,7 +99,10 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
 
 export default function AdminProductsPage() {
   const { sessionToken } = useAuth();
-  const products = useQuery(api.products.list, {});
+  const [queryLimit, setQueryLimit] = useState(20);
+  const restoreScrollY = useRef<number | null>(null);
+  const [cachedProducts, setCachedProducts] = useState<Awaited<ReturnType<typeof useQuery<typeof api.products.list>>> | undefined>(undefined);
+  const products = useQuery(api.products.list, { limit: queryLimit });
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
@@ -107,7 +110,9 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState('newest');
   const categories = useQuery(api.categories.list, {});
 
-  let filtered = products?.filter((p) => {
+  const effectiveProducts = products ?? cachedProducts;
+
+  let filtered = effectiveProducts?.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !(p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))) return false;
     if (catFilter !== 'all' && p.categoryId !== catFilter) return false;
     if (stockFilter === 'instock' && p.stock <= 0) return false;
@@ -126,12 +131,23 @@ export default function AdminProductsPage() {
     else if (sortBy === 'name') filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  useEffect(() => {
+    if (products) setCachedProducts(products);
+  }, [products]);
+
+  useEffect(() => {
+    if (restoreScrollY.current == null) return;
+    const y = restoreScrollY.current;
+    restoreScrollY.current = null;
+    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'auto' }));
+  }, [effectiveProducts?.length]);
+
   return (
     <div>
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-bold">Ապրանքներ</h1>
-          <p className="text-muted-foreground">{products?.length ?? 0} ապրանք</p>
+          <p className="text-muted-foreground">{effectiveProducts?.length ?? 0} ապրանք</p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/products/import"><Button variant="outline" size="sm" className="gap-2 text-xs"><Upload className="h-3.5 w-3.5" /> CSV</Button></Link>
@@ -194,6 +210,20 @@ export default function AdminProductsPage() {
           <Package className="h-16 w-16 text-muted-foreground/30" />
           <p className="text-muted-foreground">Ապրանքներ չեն գտնվել</p>
           <Link href="/admin/products/add"><Button>Ավելացնել ապրանք</Button></Link>
+        </div>
+      )}
+
+      {filtered && filtered.length > 0 && effectiveProducts && effectiveProducts.length >= queryLimit && queryLimit < 500 && (
+        <div className="mt-6 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => {
+              restoreScrollY.current = window.scrollY;
+              setQueryLimit((v) => Math.min(v + 20, 500));
+            }}
+          >
+            Բեռնել ավելին
+          </Button>
         </div>
       )}
     </div>
