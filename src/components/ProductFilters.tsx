@@ -89,7 +89,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['category', 'price', 'sale', 'rating']));
   const selectedCat = activeFilters.categoryId ?? categoryId;
   const filterDefs = useQuery(api.filters.getByCategory, selectedCat ? { categoryId: selectedCat } : 'skip');
-  const categories = useQuery(api.categories.list, {});
+  const categories = useQuery(api.categories.listWithCounts, {});
 
   const toggle = (key: string) => setExpanded((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
 
@@ -120,7 +120,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
       {!categoryId && categories && (
         <Section title="Կատեգորիա" k="category" expanded={expanded} toggle={toggle}>
           <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
+            {categories.filter((c) => c.count > 0).map((c) => (
               <Badge key={c._id} variant={activeFilters.categoryId === c._id ? 'default' : 'outline'}
                 className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
                 onClick={() => onFilterChange({ ...activeFilters, categoryId: activeFilters.categoryId === c._id ? undefined : c._id, attributes: undefined })}

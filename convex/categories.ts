@@ -9,6 +9,10 @@ function normalizeCategoryImage<T extends { imageUrl?: string | null }>(category
   return { ...category, imageUrl: normalized };
 }
 
+function normalizeCategoryKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -54,6 +58,17 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
+    const all = await ctx.db.query('categories').take(500);
+    const inputName = normalizeCategoryKey(args.name);
+    const inputSlug = normalizeCategoryKey(args.slug);
+
+    if (all.some((c) => normalizeCategoryKey(c.name) === inputName)) {
+      throw new Error('Category name must be unique');
+    }
+    if (all.some((c) => normalizeCategoryKey(c.slug) === inputSlug)) {
+      throw new Error('Category slug must be unique');
+    }
+
     const { sessionToken: _, ...data } = args;
     const catId = await ctx.db.insert('categories', { ...data, createdAt: Date.now() });
     await ctx.db.insert('filterDefinitions', {
@@ -80,8 +95,83 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
+
+    const current = await ctx.db.get(args.id);
+    if (!current) throw new Error('Category not found');
+
+    const nextName = args.name ?? current.name;
+    const nextSlug = args.slug ?? current.slug;
+    const inputName = normalizeCategoryKey(nextName);
+    const inputSlug = normalizeCategoryKey(nextSlug);
+
+    const all = await ctx.db.query('categories').take(500);
+    if (all.some((c) => c._id !== args.id && normalizeCategoryKey(c.name) === inputName)) {
+      throw new Error('Category name must be unique');
+    }
+    if (all.some((c) => c._id !== args.id && normalizeCategoryKey(c.slug) === inputSlug)) {
+      throw new Error('Category slug must be unique');
+    }
+
     const { id, sessionToken: _, ...patch } = args;
     await ctx.db.patch(id, patch);
+  },
+});
+
+export const mergeCategories = mutation({
+  args: {
+    sessionToken: v.string(),
+    sourceId: v.id('categories'),
+    targetId: v.id('categories'),
+  },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+
+    if (args.sourceId === args.targetId) {
+      throw new Error('Source and target category must be different');
+    }
+
+    const source = await ctx.db.get(args.sourceId);
+    const target = await ctx.db.get(args.targetId);
+    if (!source || !target) throw new Error('Category not found');
+
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_category', (q) => q.eq('categoryId', args.sourceId))
+      .collect();
+    for (const product of products) {
+      await ctx.db.patch(product._id, { categoryId: args.targetId, updatedAt: Date.now() });
+    }
+
+    const definitions = await ctx.db
+      .query('filterDefinitions')
+      .withIndex('by_category', (q) => q.eq('categoryId', args.sourceId))
+      .collect();
+    for (const definition of definitions) {
+      await ctx.db.patch(definition._id, { categoryId: args.targetId });
+    }
+
+    const promotions = await ctx.db.query('promotions').collect();
+    for (const promo of promotions) {
+      if (!promo.categoryIds || promo.categoryIds.length === 0) continue;
+      if (!promo.categoryIds.includes(args.sourceId)) continue;
+
+      const updated = Array.from(new Set(promo.categoryIds.map((id) => (id === args.sourceId ? args.targetId : id))));
+      await ctx.db.patch(promo._id, { categoryIds: updated });
+    }
+
+    const mergedSlug = `${source.slug}-merged-${Date.now()}`;
+    await ctx.db.patch(args.sourceId, {
+      isActive: false,
+      slug: mergedSlug,
+      name: `${source.name} (merged)`,
+    });
+
+    return {
+      movedProducts: products.length,
+      movedFilterDefinitions: definitions.length,
+      sourceId: args.sourceId,
+      targetId: args.targetId,
+    };
   },
 });
 
