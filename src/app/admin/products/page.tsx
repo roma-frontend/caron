@@ -154,12 +154,12 @@ export default function AdminProductsPage() {
           </SelectContent>
         </Select>
         <Select value={stockFilter} onValueChange={(v) => setStockFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Պահեստ", instock: "Առկա", low: "Ցածր (≤5)", out: "Սպառվել" }[stockFilter]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Պահեստ", instock: "Առկա", low: "Ցածր (≤5)", out: "Սպառված" }[stockFilter]}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Պահեստ</SelectItem>
             <SelectItem value="instock">Առկա</SelectItem>
             <SelectItem value="low">Ցածր (≤5)</SelectItem>
-            <SelectItem value="out">Սպառվել</SelectItem>
+            <SelectItem value="out">Սպառված</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? 'all')}>
