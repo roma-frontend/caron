@@ -38,7 +38,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
     <div ref={ref} style={revealStyle(visible, index * 0.05)}>
       <div className="group relative overflow-hidden rounded-2xl border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         {/* Image */}
-        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+        <div className="relative aspect-3/4 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
           ) : (
