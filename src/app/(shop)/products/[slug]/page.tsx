@@ -114,15 +114,15 @@ export default function ProductDetailPage() {
       )}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
         {/* Gallery — Embla carousel */}
-        <div>
+        <div className="lg:max-w-[560px]">
           <div className="relative overflow-hidden rounded-2xl border bg-muted/30 group/carousel">
             <div ref={emblaRef} className="overflow-hidden">
               <div className="flex">
                 {imgs.length > 0 ? imgs.map((img, i) => (
                   <div key={i} className="relative min-w-0 shrink-0 grow-0 basis-full aspect-square">
-                    <ProductImageZoom src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} sizes="(max-width: 1024px) 100vw, 50vw" className="h-full w-full" />
+                    <ProductImageZoom src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} fit="contain" className="h-full w-full bg-muted/20" sizes="(max-width: 1024px) 100vw, 560px" />
                   </div>
                 )) : (
                   <div className="min-w-0 shrink-0 grow-0 basis-full aspect-square flex items-center justify-center text-muted-foreground/20">
@@ -154,7 +154,7 @@ export default function ProductDetailPage() {
               {imgs.map((img, i) => (
                 <button key={i} onClick={() => emblaApi?.scrollTo(i)}
                   className={`h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-200 ${i === emblaIndex ? 'border-primary ring-1 ring-primary/30' : 'border-transparent opacity-70 hover:opacity-100 hover:border-muted-foreground/30'}`}>
-                  <Image src={img} alt="" width={150} height={150} sizes="64px" className="h-full w-full object-cover" />
+                  <Image src={img} alt="" width={150} height={150} sizes="64px" className="h-full w-full bg-muted/20 object-contain" />
                 </button>
               ))}
             </div>

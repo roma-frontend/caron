@@ -147,7 +147,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
               />
             )}
 
-            <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+            <div className="relative aspect-3/4 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
               {slug && <Link href={`/products/${slug}`} aria-label={name} className="absolute inset-0 z-[5]" />}
               {image && !imgError ? (
                 <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />

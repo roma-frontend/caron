@@ -60,7 +60,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
                   <DialogTitle className="text-center">Ջնջել ապրանքը</DialogTitle>
                   <DialogDescription className="text-center">
                     Համոզվա՞ծ եք, որ ցանկանում եք ջնջել<br />
-                    <strong>"{product.name}"</strong>
+                    <strong>{product.name}</strong>
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">

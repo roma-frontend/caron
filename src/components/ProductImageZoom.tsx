@@ -12,6 +12,7 @@ interface Props {
   priority?: boolean;
   sizes?: string;
   className?: string;
+  fit?: 'cover' | 'contain';
 }
 
 const ZOOM_SIZE = 300;
@@ -20,7 +21,7 @@ const LENS_SIZE = 110;
 
 const noop = () => () => {};
 
-export function ProductImageZoom({ src, alt, width, height, priority, sizes, className = '' }: Props) {
+export function ProductImageZoom({ src, alt, width, height, priority, sizes, className = '', fit = 'cover' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dimRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
@@ -145,7 +146,7 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
         <Image
           src={src} alt={alt} width={width} height={height}
           priority={priority} sizes={sizes}
-          className="h-full w-full object-cover select-none pointer-events-none"
+          className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} select-none pointer-events-none`}
           draggable={false}
         />
         <div ref={dimRef} className="pointer-events-none absolute inset-0 bg-black/30" style={{ display: 'none' }} />

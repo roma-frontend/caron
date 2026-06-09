@@ -17,8 +17,8 @@ export default function CategoriesPage() {
       <div className="grid" style={{ gap: 'var(--space-6)', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
         {categories.map((cat, i) => (
           <CategoryCard
-            key={cat.slug}
-            id={cat.slug}
+            key={cat._id}
+            id={cat._id}
             name={cat.name}
             slug={cat.slug}
             productCount={cat.count}
