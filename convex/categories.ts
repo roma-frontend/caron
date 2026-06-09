@@ -47,7 +47,7 @@ export const create = mutation({
     const { sessionToken: _, ...data } = args;
     const catId = await ctx.db.insert('categories', { ...data, createdAt: Date.now() });
     await ctx.db.insert('filterDefinitions', {
-      categoryId: catId, name: '?????', slug: 'type',
+      categoryId: catId, name: 'Անվանում', slug: 'type',
       type: 'multiselect', options: [], order: 0,
     });
     return catId;
