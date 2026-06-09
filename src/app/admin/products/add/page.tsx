@@ -76,7 +76,7 @@ function StepBasicInfo() {
       <div><Label>Անուն *</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder="Ապրանքի անուն" className="h-11" /></div>
       <div><Label>Slug</Label><Input value={(data.slug as string) ?? ''} onChange={(e) => update('slug', e.target.value)} placeholder="Ապրանքի սլագ" className="h-11 font-mono" /></div>
       <div><Label>Արտիկուլ</Label><Input value={(data.sku as string) ?? ''} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="h-11 font-mono tracking-wider" /></div>
-      <OemNumbersInput value={((data.oemNumbers as string[]) ?? [])} onChange={(v) => update('oemNumbers', v)} />
+      <OemNumbersInput value={((data.oemNumbers as any) ?? [])} onChange={(v) => update('oemNumbers', v)} />
       <div>
         <Label>Կատեգորիա *</Label>
         <Select value={(data.categoryId as string) ?? ''} onValueChange={(v) => update('categoryId', v != null ? String(v) : null)}>
@@ -250,7 +250,7 @@ export default function AddProductPage() {
       wholesalePrice: data.wholesalePrice ? Number(data.wholesalePrice) : undefined,
       compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : undefined,
       sku: (data.sku as string) || undefined,
-      oemNumbers: ((data.oemNumbers as string[]) ?? []).length > 0 ? (data.oemNumbers as string[]) : undefined,
+      oemNumbers: ((data.oemNumbers as any) ?? []).length > 0 ? (data.oemNumbers as any) : undefined,
       atgCode: (data.atgCode as string) || undefined,
       stock: Number(data.stock),
       images: (data.images as string[]) ?? [],

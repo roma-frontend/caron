@@ -220,7 +220,7 @@ export const searchByOem = query({
       .take(300);
     const trimmed = searchLower.trim();
     const matches = results
-      .filter((p) => p.oemNumbers?.some((o) => o.toLowerCase().includes(trimmed)))
+      .filter((p) => p.oemNumbers?.some((o) => o.code.toLowerCase().includes(trimmed) || o.manufacturer.toLowerCase().includes(trimmed)))
       .slice(0, args.limit ?? 20);
     // Exclude inactive categories
     const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);

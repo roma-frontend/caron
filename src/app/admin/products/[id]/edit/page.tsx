@@ -31,7 +31,7 @@ export default function EditProductPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  const [form, setForm] = useState<{ name?: string; price?: number; wholesalePrice?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: string[]; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
+  const [form, setForm] = useState<{ name?: string; price?: number; wholesalePrice?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: any; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 

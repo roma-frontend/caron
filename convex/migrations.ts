@@ -150,3 +150,29 @@ export const normalizeActiveCategorySlugs = mutation({
     return { updated };
   },
 });
+
+export const convertOemNumbersFormat = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').collect();
+    let updated = 0;
+
+    for (const product of products) {
+      const oem = product.oemNumbers;
+      if (!oem || oem.length === 0) continue;
+
+      const isOldFormat = typeof oem[0] === 'string';
+      if (!isOldFormat) continue;
+
+      const newOemNumbers = (oem as string[]).map((code) => ({
+        manufacturer: 'Unknown',
+        code: code,
+      }));
+
+      await ctx.db.patch(product._id, { oemNumbers: newOemNumbers });
+      updated++;
+    }
+
+    return { updated };
+  },
+});
