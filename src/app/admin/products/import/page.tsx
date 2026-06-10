@@ -123,7 +123,9 @@ const BOOL_MAP: Record<string, boolean> = { yes: true, '1': true, да: true, '+
 
 function normalizeAttributeKey(rawKey: string): string {
   const key = rawKey.trim().toLowerCase();
-  if (key === 'չափս' || key === 'size') return 'չափ';
+  if (key === 'չափս' || key === 'չափ' || key === 'size') return 'size';
+  if (key === 'տեսակ') return 'type';
+  if (key === 'ապրանքանիշ') return 'brand';
   return key;
 }
 
@@ -270,13 +272,46 @@ export default function ImportProductsPage() {
   const categoryNameById: Record<string, string> = {};
   if (categories) for (const c of categories) categoryNameById[c._id] = c.name;
 
-  const filterDefsByCategory: Record<string, Array<{ name: string; slug: string; options?: string[] }>> = {};
+  const filterDefsByCategory: Record<string, Array<{ id: string; name: string; slug: string; options?: string[] }>> = {};
   if (filterDefs) {
     for (const f of filterDefs) {
       if (!filterDefsByCategory[f.categoryId]) filterDefsByCategory[f.categoryId] = [];
-      filterDefsByCategory[f.categoryId].push({ name: f.name, slug: f.slug, options: f.options });
+      filterDefsByCategory[f.categoryId].push({ id: f._id, name: f.name, slug: f.slug, options: f.options });
     }
   }
+
+  const asciiFieldName = /^[\x20-\x7E]+$/;
+
+  const resolveAttributeKeyForCategory = (categoryName: string, rawKey: string): string | null => {
+    const key = rawKey.trim();
+    if (!key) return null;
+
+    const catId = categoriesMap[categoryName.toLowerCase().trim()];
+    const defs = catId ? (filterDefsByCategory[catId] ?? []) : [];
+    const normKey = normalizeFilterToken(key);
+
+    const matched = defs.find((d) => {
+      const slugNorm = normalizeFilterToken(d.slug);
+      const nameNorm = normalizeFilterToken(d.name);
+      return slugNorm === normKey || nameNorm === normKey;
+    });
+    if (matched) return matched.id;
+
+    if (asciiFieldName.test(key)) return key;
+    return null;
+  };
+
+  const sanitizeAttributesForCategory = (categoryName: string, attrs?: Record<string, string>): Record<string, string> | undefined => {
+    if (!attrs) return undefined;
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(attrs)) {
+      if (!v?.trim()) continue;
+      const safeKey = resolveAttributeKeyForCategory(categoryName, k);
+      if (!safeKey) continue;
+      out[safeKey] = v;
+    }
+    return Object.keys(out).length > 0 ? out : undefined;
+  };
 
   const getFilterOptionsForCategory = (categoryName: string, kind: 'brand' | 'type' | 'size'): string[] => {
     const catId = categoriesMap[categoryName.toLowerCase().trim()];
@@ -345,9 +380,11 @@ export default function ImportProductsPage() {
     }
 
     const attributes: Record<string, string> = {};
-    if (row.brand.trim()) attributes['ապրանքանիշ'] = row.brand.trim();
+    if (row.brand.trim()) attributes.brand = row.brand.trim();
     if (row.type.trim()) attributes['type'] = row.type.trim();
-    if (row.size.trim()) attributes['չափ'] = row.size.trim();
+    if (row.size.trim()) attributes.size = row.size.trim();
+
+    const safeAttributes = sanitizeAttributesForCategory(row.category.trim(), attributes);
 
     return {
       category: row.category.trim(),
@@ -355,7 +392,7 @@ export default function ImportProductsPage() {
       sku: row.sku.trim(),
       name: row.name.trim(),
       isActive: true,
-      ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
+      ...(safeAttributes ? { attributes: safeAttributes } : {}),
     };
   };
 
@@ -593,7 +630,8 @@ export default function ImportProductsPage() {
         if (r.seoTitle !== undefined) p.seoTitle = r.seoTitle;
         if (r.seoDescription !== undefined) p.seoDescription = r.seoDescription;
         if (r.images !== undefined && r.images.length > 0) p.images = r.images;
-        if (r.attributes !== undefined && Object.keys(r.attributes).length > 0) p.attributes = r.attributes;
+        const safeAttrs = sanitizeAttributesForCategory(r.category, r.attributes);
+        if (safeAttrs) p.attributes = safeAttrs;
         if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
         return p;
       };
@@ -632,7 +670,8 @@ export default function ImportProductsPage() {
       if (r.seoTitle !== undefined) p.seoTitle = r.seoTitle;
       if (r.seoDescription !== undefined) p.seoDescription = r.seoDescription;
       if (r.images !== undefined && r.images.length > 0) p.images = r.images;
-      if (r.attributes !== undefined && Object.keys(r.attributes).length > 0) p.attributes = r.attributes;
+      const safeAttrs = sanitizeAttributesForCategory(r.category, r.attributes);
+      if (safeAttrs) p.attributes = safeAttrs;
       if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
 
       await bulkCreate({ sessionToken, products: [p] });
