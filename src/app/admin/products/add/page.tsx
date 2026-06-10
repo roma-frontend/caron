@@ -5,12 +5,13 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Wizard, WizardStep, useWizardData } from '@/components/ui/wizard';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { ChevronDown, ImagePlus } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../../convex/_generated/dataModel';
 import { useUpload } from '@/hooks/useUpload';
@@ -495,6 +496,19 @@ export default function AddProductPage() {
 
   return (
     <div className="mx-auto min-h-[80vh] max-w-5xl px-4 py-8">
+      <div className="mb-5 flex items-center gap-3">
+        <Link
+          href="/admin/products"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          aria-label="Վերադառնալ ապրանքներին"
+          title="Վերադառնալ ապրանքներին"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">Նոր ապրանք</h1>
+        </div>
+      </div>
       <Card className="w-full overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-b from-card to-card/90" style={{ boxShadow: '0 24px 70px rgba(0,0,0,0.28)' }}>
         <Wizard
           steps={steps}
