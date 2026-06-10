@@ -6,6 +6,7 @@ interface Product {
   _id: string;
   name: string;
   slug: string;
+  atgCode?: string;
   price: number;
   wholesalePrice?: number;
   compareAtPrice?: number;
@@ -39,6 +40,7 @@ export function ProductOemResults({
             key={p._id}
             id={p._id}
             slug={p.slug}
+            atgCode={p.atgCode}
             name={p.name}
             price={p.price}
             wholesalePrice={p.wholesalePrice}

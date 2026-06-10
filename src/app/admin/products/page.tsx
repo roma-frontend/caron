@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { useAuth } from '@/store/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
+const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
+const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
 function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
@@ -40,9 +42,9 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
     <div ref={ref} style={revealStyle(visible, index * 0.05)}>
       <div className="group relative overflow-hidden rounded-2xl border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         {/* Image */}
-        <div className="relative aspect-3/4 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+        <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
           {product.images?.[0] ? (
-            <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110" />
           ) : (
             <div className="flex h-full items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
@@ -172,21 +174,21 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
 export default function AdminProductsPage() {
   const { sessionToken } = useAuth();
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const [queryLimit, setQueryLimit] = useState(20);
-  const restoreScrollY = useRef<number | null>(null);
-  const [cachedProducts, setCachedProducts] = useState<Awaited<ReturnType<typeof useQuery<typeof api.products.list>>> | undefined>(undefined);
-  const products = useQuery(api.products.list, { limit: queryLimit });
+  const [visibleCount, setVisibleCount] = useState(ADMIN_PRODUCTS_PAGE_SIZE);
+  const products = useQuery(api.products.list, { limit: ADMIN_PRODUCTS_FETCH_LIMIT });
   const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'grid';
+    const saved = window.localStorage.getItem(ADMIN_PRODUCTS_VIEW_KEY);
+    return saved === 'grid' || saved === 'list' ? saved : 'grid';
+  });
   const [catFilter, setCatFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const categories = useQuery(api.categories.list, {});
 
-  const effectiveProducts = products ?? cachedProducts;
-
-  let filtered = effectiveProducts?.filter((p) => {
+  let filtered = products?.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !(p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))) return false;
     if (catFilter !== 'all' && p.categoryId !== catFilter) return false;
     if (stockFilter === 'instock' && p.stock <= 0) return false;
@@ -206,33 +208,17 @@ export default function AdminProductsPage() {
   }
 
   useEffect(() => {
-    if (products) setCachedProducts(products);
-  }, [products]);
-
-  useEffect(() => {
-    if (restoreScrollY.current == null) return;
-    const y = restoreScrollY.current;
-    restoreScrollY.current = null;
-    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'auto' }));
-  }, [effectiveProducts?.length]);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(ADMIN_PRODUCTS_VIEW_KEY);
-    if (saved === 'grid' || saved === 'list') {
-      setViewMode(saved);
-    }
-  }, []);
-
-  useEffect(() => {
     window.localStorage.setItem(ADMIN_PRODUCTS_VIEW_KEY, viewMode);
   }, [viewMode]);
+
+  const visibleProducts = filtered?.slice(0, visibleCount);
 
   return (
     <div>
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-bold">Ապրանքներ</h1>
-          <p className="text-muted-foreground">{effectiveProducts?.length ?? 0} ապրանք</p>
+          <p className="text-muted-foreground">{products?.length ?? 0} ապրանք</p>
         </div>
         <div className="relative flex gap-2">
           <Button size="sm" className="gap-2" onClick={() => setAddMenuOpen((v) => !v)}>
@@ -309,11 +295,11 @@ export default function AdminProductsPage() {
 
       {viewMode === 'grid' ? (
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-          {filtered?.map((p, i) => <AdminProductCard key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
+          {visibleProducts?.map((p, i) => <AdminProductCard key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered?.map((p, i) => <AdminProductListRow key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
+          {visibleProducts?.map((p, i) => <AdminProductListRow key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
         </div>
       )}
 
@@ -325,14 +311,11 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {filtered && filtered.length > 0 && effectiveProducts && effectiveProducts.length >= queryLimit && queryLimit < 500 && (
+      {filtered && filtered.length > visibleCount && (
         <div className="mt-6 flex justify-center">
           <Button
             variant="outline"
-            onClick={() => {
-              restoreScrollY.current = window.scrollY;
-              setQueryLimit((v) => Math.min(v + 20, 500));
-            }}
+            onClick={() => setVisibleCount((v) => Math.min(v + ADMIN_PRODUCTS_PAGE_SIZE, ADMIN_PRODUCTS_FETCH_LIMIT))}
           >
             Բեռնել ավելին
           </Button>

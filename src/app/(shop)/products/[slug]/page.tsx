@@ -492,7 +492,7 @@ function RelatedProducts({ categoryId, currentId }: { categoryId: string; curren
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {filtered.map((p, i) => (
-        <ProductCard key={p._id} id={p._id} slug={p.slug} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
       ))}
     </div>
   );

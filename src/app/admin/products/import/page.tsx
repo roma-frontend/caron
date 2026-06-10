@@ -23,6 +23,7 @@ interface ParsedRow {
   images?: string[];
   category: string;
   sku?: string;
+  atgCode?: string;
   oemNumbers?: Array<{ manufacturer: string; code: string }>;
   stock?: number;
   isActive?: boolean;
@@ -36,6 +37,7 @@ interface ParsedRow {
 
 interface ManualRow {
   sku: string;
+  atgCode: string;
   name: string;
   category: string;
   brand: string;
@@ -44,7 +46,7 @@ interface ManualRow {
 }
 
 function emptyManualRow(): ManualRow {
-  return { sku: '', name: '', category: '', brand: '', type: '', size: '' };
+  return { sku: '', atgCode: '', name: '', category: '', brand: '', type: '', size: '' };
 }
 
 function normalizeHeaderToken(value: string): string {
@@ -205,6 +207,9 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
 
   const skuVal = get('sku');
   if (skuVal) result.sku = skuVal;
+
+  const atgVal = get('atgCode') || get('atg') || get('ատգաա');
+  if (atgVal) result.atgCode = atgVal;
 
   const oemStr = get('oemNumbers') || get('oem');
   if (oemStr) {
@@ -390,6 +395,7 @@ export default function ImportProductsPage() {
       category: row.category.trim(),
       categoryId: categoryId as Id<'categories'>,
       sku: row.sku.trim(),
+      ...(row.atgCode.trim() ? { atgCode: row.atgCode.trim() } : {}),
       name: row.name.trim(),
       isActive: true,
       ...(safeAttributes ? { attributes: safeAttributes } : {}),
@@ -407,6 +413,7 @@ export default function ImportProductsPage() {
 
     const aliases: Record<keyof ManualRow, string[]> = {
       sku: ['արտիկուլ', 'sku', 'article', 'code'],
+      atgCode: ['ատգաա', 'atgaa', 'atg', 'atg code', 'atgcode'],
       name: ['անվանում', 'name', 'product name', 'ապրանք'],
       category: ['կատեգորիա', 'category', 'cat'],
       brand: ['ապրանքանիշ', 'brand', 'արտադրող'],
@@ -422,15 +429,17 @@ export default function ImportProductsPage() {
 
     // Fallback by visual order when headers are missing/unknown.
     if (columnIndex.sku === undefined && headers.length > 0) columnIndex.sku = 0;
-    if (columnIndex.name === undefined && headers.length > 1) columnIndex.name = 1;
-    if (columnIndex.category === undefined && headers.length > 2) columnIndex.category = 2;
-    if (columnIndex.brand === undefined && headers.length > 3) columnIndex.brand = 3;
-    if (columnIndex.type === undefined && headers.length > 4) columnIndex.type = 4;
-    if (columnIndex.size === undefined && headers.length > 5) columnIndex.size = 5;
+    if (columnIndex.atgCode === undefined && headers.length > 1) columnIndex.atgCode = 1;
+    if (columnIndex.name === undefined && headers.length > 2) columnIndex.name = 2;
+    if (columnIndex.category === undefined && headers.length > 3) columnIndex.category = 3;
+    if (columnIndex.brand === undefined && headers.length > 4) columnIndex.brand = 4;
+    if (columnIndex.type === undefined && headers.length > 5) columnIndex.type = 5;
+    if (columnIndex.size === undefined && headers.length > 6) columnIndex.size = 6;
 
     const dataRows = matrix.slice(1).filter((r) => r.some((c) => String(c ?? '').trim() !== ''));
     const mappedRows: ManualRow[] = dataRows.map((r) => ({
       sku: columnIndex.sku !== undefined ? String(r[columnIndex.sku] ?? '').trim() : '',
+      atgCode: columnIndex.atgCode !== undefined ? String(r[columnIndex.atgCode] ?? '').trim() : '',
       name: columnIndex.name !== undefined ? String(r[columnIndex.name] ?? '').trim() : '',
       category: columnIndex.category !== undefined ? String(r[columnIndex.category] ?? '').trim() : '',
       brand: columnIndex.brand !== undefined ? String(r[columnIndex.brand] ?? '').trim() : '',
@@ -461,6 +470,7 @@ export default function ImportProductsPage() {
     const attrs = r.attributes ?? {};
     return {
       sku: r.sku ?? '',
+      atgCode: r.atgCode ?? '',
       name: r.name ?? '',
       category: r.category ?? '',
       brand: attrs['ապրանքանիշ'] ?? attrs['brand'] ?? '',
@@ -609,8 +619,9 @@ export default function ImportProductsPage() {
     setImporting(true);
     try {
       type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
-      const toBulkProduct = (r: ParsedRow): BulkProduct => {
-        const p: BulkProduct = {
+      type BulkProductWithAtg = BulkProduct & { atgCode?: string };
+      const toBulkProduct = (r: ParsedRow): BulkProductWithAtg => {
+        const p: BulkProductWithAtg = {
           category: r.category,
           categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
         };
@@ -622,6 +633,7 @@ export default function ImportProductsPage() {
         if (r.wholesalePrice !== undefined) p.wholesalePrice = r.wholesalePrice;
         if (r.compareAtPrice !== undefined) p.compareAtPrice = r.compareAtPrice;
         if (r.sku !== undefined) p.sku = r.sku;
+        if (r.atgCode !== undefined) p.atgCode = r.atgCode;
         if (r.oemNumbers !== undefined && r.oemNumbers.length > 0) p.oemNumbers = r.oemNumbers;
         if (r.stock !== undefined) p.stock = r.stock;
         if (r.isActive !== undefined) p.isActive = r.isActive;
@@ -635,7 +647,7 @@ export default function ImportProductsPage() {
         if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
         return p;
       };
-      const products: BulkProduct[] = parsed.map(toBulkProduct);
+      const products: BulkProductWithAtg[] = parsed.map(toBulkProduct);
       const result = await bulkCreate({ sessionToken, products });
       toast.success(`${result}. Ատրիբուտները և համատեղելիությունը պետք է ավելացվի խմբագրիչի միջոցով.`);
       setDone(true);
@@ -650,8 +662,9 @@ export default function ImportProductsPage() {
     setImportingRow(rowIndex);
     try {
       type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
+      type BulkProductWithAtg = BulkProduct & { atgCode?: string };
       const r = parsed[rowIndex];
-      const p: BulkProduct = {
+      const p: BulkProductWithAtg = {
         category: r.category,
         categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
       };
@@ -662,6 +675,7 @@ export default function ImportProductsPage() {
       if (r.wholesalePrice !== undefined) p.wholesalePrice = r.wholesalePrice;
       if (r.compareAtPrice !== undefined) p.compareAtPrice = r.compareAtPrice;
       if (r.sku !== undefined) p.sku = r.sku;
+      if (r.atgCode !== undefined) p.atgCode = r.atgCode;
       if (r.oemNumbers !== undefined && r.oemNumbers.length > 0) p.oemNumbers = r.oemNumbers;
       if (r.stock !== undefined) p.stock = r.stock;
       if (r.isActive !== undefined) p.isActive = r.isActive;
@@ -729,11 +743,12 @@ export default function ImportProductsPage() {
           </div>
 
           <div className="hidden overflow-auto rounded-lg border md:block">
-            <table className="w-full min-w-245 text-xs">
+            <table className="w-full min-w-[1320px] text-xs">
               <thead className="bg-muted">
                 <tr className="border-b">
                   <th className="p-2 text-left font-medium">Ավելացնել</th>
                   <th className="p-2 text-left font-medium">արտիկուլ</th>
+                  <th className="p-2 text-left font-medium">ԱՏԳԱԱ</th>
                   <th className="p-2 text-left font-medium">անվանում</th>
                   <th className="p-2 text-left font-medium">կատեգորիա</th>
                   <th className="p-2 text-left font-medium">ապրանքանիշ</th>
@@ -763,10 +778,11 @@ export default function ImportProductsPage() {
                         </Button>
                       </td>
                       <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="232325" /></td>
+                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder="8708" /></td>
                       <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="Կիվի" /></td>
                       <td className="p-2">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
                           value={row.category}
                           onChange={(e) => updateManualRow(i, 'category', e.target.value)}
                         >
@@ -778,11 +794,11 @@ export default function ImportProductsPage() {
                       </td>
                       <td className="p-2">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
                           value={row.brand}
                           onChange={(e) => updateManualRow(i, 'brand', e.target.value)}
                         >
-                          <option value="">{row.category ? 'Ապրանքանիշ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                          <option value="">{row.category ? 'Ապրանքանիշ' : 'Ընտրեք կատեգորիա'}</option>
                           {brandOptions.map((opt) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -790,11 +806,11 @@ export default function ImportProductsPage() {
                       </td>
                       <td className="p-2">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
                           value={row.type}
                           onChange={(e) => updateManualRow(i, 'type', e.target.value)}
                         >
-                          <option value="">{row.category ? 'Տեսակ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                          <option value="">{row.category ? 'Տեսակ' : 'Ընտրեք կատեգորիա'}</option>
                           {typeOptions.map((opt) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -802,11 +818,11 @@ export default function ImportProductsPage() {
                       </td>
                       <td className="p-2">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
                           value={row.size}
                           onChange={(e) => updateManualRow(i, 'size', e.target.value)}
                         >
-                          <option value="">{row.category ? 'Չափ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                          <option value="">{row.category ? 'Չափ' : 'Ընտրեք կատեգորիա'}</option>
                           {sizeOptions.map((opt) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -838,27 +854,28 @@ export default function ImportProductsPage() {
 
                   <div className="grid grid-cols-1 gap-2">
                     <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="արտիկուլ" />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder="ԱՏԳԱԱ" />
                     <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="անվանում" />
-                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.category} onChange={(e) => updateManualRow(i, 'category', e.target.value)}>
+                    <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.category} onChange={(e) => updateManualRow(i, 'category', e.target.value)}>
                       <option value="">Կատեգորիա</option>
                       {categories?.map((c) => (
                         <option key={c._id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
-                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)}>
-                      <option value="">{row.category ? 'ապրանքանիշ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                    <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)}>
+                      <option value="">{row.category ? 'ապրանքանիշ' : 'Ընտրեք կատեգորիա'}</option>
                       {brandOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
-                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)}>
-                      <option value="">{row.category ? 'տեսակ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                    <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)}>
+                      <option value="">{row.category ? 'տեսակ' : 'Ընտրեք կատեգորիա'}</option>
                       {typeOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
-                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)}>
-                      <option value="">{row.category ? 'չափ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                    <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)}>
+                      <option value="">{row.category ? 'չափ' : 'Ընտրեք կատեգորիա'}</option>
                       {sizeOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
@@ -931,6 +948,7 @@ export default function ImportProductsPage() {
                     ['compareAtPrice', 'Հին գին (ցուցադրվում է որպես կտրատված)'],
                     ['stock', 'Քանակ պահեստում (քանակ 1)'],
                     ['sku', 'Արտիկուլ ապրանքի'],
+                    ['atgCode', 'ԱՏԳԱԱ կոդ'],
                     ['oemNumbers / oem', 'OEM համարներ (բաժանել , ; կամ բացատ)'],
                     ['category', 'Կատեգորիա — պետք է համապատասխանի համակարգում գրված անվանմանը'],
                     ['isActive', 'Ակտիվ՝ yes/no/1/0 (լռելյային yes)'],

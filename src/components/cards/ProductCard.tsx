@@ -23,6 +23,7 @@ interface ProductCardProps {
   id: string;
   name: string;
   slug?: string;
+  atgCode?: string;
   price: number;
   wholesalePrice?: number;
   compareAtPrice?: number;
@@ -55,7 +56,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -104,6 +105,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
             </Link>
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
+              {atgCode && <p className="text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
@@ -148,10 +150,10 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
               />
             )}
 
-            <div className="relative aspect-3/4 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+            <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
               <Link href={detailHref} aria-label={name} className="absolute inset-0 z-[5]" />
               {image && !imgError ? (
-                <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
+                <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/30"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
@@ -207,11 +209,12 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
               <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </div>
 
-            <div className="p-4">
+            <div className="p-2">
               {category && <p className="mb-1 text-xs font-medium text-primary/70">{category}</p>}
               <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
                 <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
               </h3>
+              {atgCode && <p className="mt-1 text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
 
               {reviewCount && reviewCount > 0 ? (
                 <div className="mt-1.5 flex items-center gap-1" aria-label={`Գնահատական: ${rating} աստղ ${reviewCount} կարծիքից`}>
@@ -222,7 +225,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
                 </div>
               ) : null}
 
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span className="text-lg font-bold text-primary">{formatPrice(displayPrice)}</span>
                 {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
               </div>

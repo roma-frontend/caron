@@ -37,6 +37,17 @@ function filterValuesEqual(expected: unknown, actual: unknown): boolean {
   return false;
 }
 
+function normalizeSlugValue(value: string): string {
+  return value
+    .normalize('NFC')
+    .toLowerCase()
+    .trim()
+    .replace(/%20/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export const listPaginated = query({
   args: {
     categoryId: v.optional(v.id('categories')),
@@ -222,10 +233,18 @@ export const list = query({
     }
     let products;
     if (args.categoryId) {
-      products = await ctx.db.query('products').withIndex('by_category', (q) => q.eq('categoryId', args.categoryId!)).take(Math.min(args.limit ?? 20, 500));
+      products = await ctx.db
+        .query('products')
+        .withIndex('by_category', (q) => q.eq('categoryId', args.categoryId!))
+        .order('desc')
+        .take(Math.min(args.limit ?? 20, 500));
       products = products.filter((p) => p.isActive);
     } else {
-      products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(Math.min(args.limit ?? 20, 500));
+      products = await ctx.db
+        .query('products')
+        .withIndex('by_active', (q) => q.eq('isActive', true))
+        .order('desc')
+        .take(Math.min(args.limit ?? 20, 500));
     }
     if (args.minPrice) products = products.filter((p) => p.price >= args.minPrice!);
     if (args.maxPrice) products = products.filter((p) => p.price <= args.maxPrice!);
@@ -250,13 +269,39 @@ export const getById = query({
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    const normalized = args.slug.trim();
-    let product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', normalized)).unique();
-    if (!product) {
-      product = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', normalized)).unique();
+    const raw = args.slug.trim();
+    let decoded = raw;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {}
+
+    const candidates = Array.from(new Set([raw, decoded].map((s) => s.trim()).filter(Boolean)));
+
+    let product = null;
+    for (const candidate of candidates) {
+      product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', candidate)).unique();
+      if (product) break;
     }
-    if (!product && /^j[0-9a-z]{12,}$/i.test(normalized)) {
-      product = await ctx.db.get(normalized as Id<'products'>);
+    if (!product) {
+      for (const candidate of candidates) {
+        product = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', candidate)).unique();
+        if (product) break;
+      }
+    }
+    const idCandidate = candidates.find((s) => /^j[0-9a-z]{12,}$/i.test(s));
+    if (!product && idCandidate) {
+      product = await ctx.db.get(idCandidate as Id<'products'>);
+    }
+
+    if (!product) {
+      const targetNorm = normalizeSlugValue(decoded);
+      if (targetNorm) {
+        const recent = await ctx.db
+          .query('products')
+          .withIndex('by_active', (q) => q.eq('isActive', true))
+          .take(5000);
+        product = recent.find((p) => normalizeSlugValue(p.slug) === targetNorm) ?? null;
+      }
     }
     if (!product) return null;
     if (!product.isActive) return null;
@@ -554,6 +599,7 @@ export const bulkCreate = mutation({
         category: v.optional(v.string()),
         categoryId: v.id('categories'),
         sku: v.optional(v.string()),
+        atgCode: v.optional(v.string()),
         oemNumbers: v.optional(v.array(v.object({
           manufacturer: v.string(),
           code: v.string(),
@@ -673,6 +719,7 @@ export const bulkCreate = mutation({
         if (p.compareAtPrice !== undefined) updatePayload.compareAtPrice = p.compareAtPrice;
         if (p.categoryId !== undefined) updatePayload.categoryId = p.categoryId;
         if (nextSku !== undefined) updatePayload.sku = nextSku;
+        if (p.atgCode !== undefined) updatePayload.atgCode = p.atgCode;
         if (p.oemNumbers !== undefined) updatePayload.oemNumbers = p.oemNumbers;
         if (p.stock !== undefined) updatePayload.stock = p.stock;
         if (p.isActive !== undefined) updatePayload.isActive = p.isActive;
@@ -714,6 +761,7 @@ export const bulkCreate = mutation({
         if (p.wholesalePrice !== undefined) createPayload.wholesalePrice = p.wholesalePrice;
         if (p.compareAtPrice !== undefined) createPayload.compareAtPrice = p.compareAtPrice;
         if (nextSku !== undefined) createPayload.sku = nextSku;
+        if (p.atgCode !== undefined) createPayload.atgCode = p.atgCode;
         if (p.oemNumbers !== undefined) createPayload.oemNumbers = p.oemNumbers;
         if (p.isFeatured !== undefined) createPayload.isFeatured = p.isFeatured;
         if (p.showInPromotions !== undefined) createPayload.showInPromotions = p.showInPromotions;
