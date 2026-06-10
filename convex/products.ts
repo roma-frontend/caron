@@ -625,3 +625,20 @@ export const bulkCreate = mutation({
     return `Ստեղծվել է ${created}, թարմացվել է ${updated} ապրանք`;
   },
 });
+
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('products').order('asc').take(50000);
+  },
+});
+
+export const migrateAttributeKeys = mutation({
+  args: {
+    productId: v.id('products'),
+    newAttributes: v.any(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.productId, { attributes: args.newAttributes, updatedAt: Date.now() });
+  },
+});
