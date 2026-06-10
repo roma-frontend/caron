@@ -35,12 +35,12 @@ function SmoothCollapseSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-background px-2.5 py-2 text-xs">
-      <button type="button" onClick={onToggle} className="flex w-full items-center justify-between text-left">
-        <span className="font-medium text-muted-foreground">{title}</span>
-        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-300', open && 'rotate-180')} />
+    <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2.5 text-xs shadow-sm backdrop-blur-sm">
+      <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-3 text-left">
+        <span className="font-semibold tracking-wide text-foreground/85">{title}</span>
+        <ChevronDown className={cn('h-4 w-4 text-primary/80 transition-transform duration-300', open && 'rotate-180')} />
       </button>
-      <div className={cn('grid transition-all duration-300', open ? 'mt-2 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
+      <div className={cn('grid transition-all duration-300', open ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
         <div className="overflow-hidden">{children}</div>
       </div>
     </div>
@@ -71,6 +71,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
   const wholesalePrice = (data.wholesalePrice as string) ?? '';
   const stock = (data.stock as string) ?? '';
   const qtyStep = (data.qtyStep as string) ?? '';
+  const atgCode = (data.atgCode as string) ?? '';
 
   const setAttr = (slug: string, value: string) => {
     const next = { ...attributes, [slug]: value };
@@ -116,16 +117,22 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
   };
 
   return (
-    <div className="rounded-xl border bg-muted/20 p-3">
-      <h3 className="mb-2 text-sm font-semibold">Ապրանքի լրացում</h3>
+    <div className="rounded-2xl border border-border/70 bg-gradient-to-b from-card via-card/95 to-muted/20 p-5 shadow-lg">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-bold tracking-tight">Ապրանքի լրացում</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Լրացրեք հիմնական դաշտերը, իսկ լրացուցիչ բաժինները բացեք ըստ անհրաժեշտության</p>
+        </div>
+        <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">խելացի դաշտ</span>
+      </div>
 
       <div className="grid gap-3 text-xs sm:grid-cols-2">
-        <div>
-          <Label>1. Արտիկուլ</Label>
-          <Input value={sku} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="h-10 font-mono tracking-wider" />
+        <div className="rounded-xl border border-border/70 bg-background/80 p-3">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">1. Արտիկուլ</Label>
+          <Input value={sku} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="mt-1 h-11 border-border/70 bg-background/90 font-mono tracking-wider" />
         </div>
-        <div>
-          <Label>2. Ապրանքի անուն</Label>
+        <div className="rounded-xl border border-border/70 bg-background/80 p-3">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">2. Ապրանքի անուն</Label>
           <Input
             value={name}
             onChange={(e) => {
@@ -133,30 +140,35 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
               update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
             }}
             placeholder="Ապրանքի անուն"
-            className="h-10"
+            className="mt-1 h-11 border-border/70 bg-background/90"
           />
         </div>
-        <div>
-          <Label>3. Կատեգորիա</Label>
+        <div className="rounded-xl border border-border/70 bg-background/80 p-3">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">3. Կատեգորիա</Label>
           <select
             value={categoryId ?? ''}
             onChange={(e) => update('categoryId', e.target.value || null)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="mt-1 flex h-11 w-full rounded-md border border-border/70 bg-background/90 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
           >
             <option value="">Կատեգորիա</option>
             {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
           {!categoryName && <p className="mt-1 text-[11px] text-muted-foreground">Ընտրեք կատեգորիա</p>}
         </div>
+        <div className="rounded-xl border border-border/70 bg-background/80 p-3">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">4. ԱՏԳԱ կոդ</Label>
+          <Input value={atgCode} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="mt-1 h-11 border-border/70 bg-background/90 font-mono" />
+        </div>
       </div>
-      <div className="mt-2 space-y-2">
-        <SmoothCollapseSection title="4. Նկարագրություն" open={descOpen} onToggle={() => setDescOpen((v) => !v)}>
-          <Textarea className="mt-2" value={description} onChange={(e) => update('description', e.target.value)} placeholder="Ապրանքի նկարագրություն" rows={4} />
+
+      <div className="mt-3 space-y-2.5">
+        <SmoothCollapseSection title="5. Նկարագրություն" open={descOpen} onToggle={() => setDescOpen((v) => !v)}>
+          <Textarea className="mt-2 border-border/70 bg-background/90" value={description} onChange={(e) => update('description', e.target.value)} placeholder="Ապրանքի նկարագրություն" rows={4} />
         </SmoothCollapseSection>
 
-        <SmoothCollapseSection title="5. Պատկեր" open={imagesOpen} onToggle={() => setImagesOpen((v) => !v)}>
+        <SmoothCollapseSection title="6. Պատկեր" open={imagesOpen} onToggle={() => setImagesOpen((v) => !v)}>
           <div
-            className={`mt-2 rounded-xl border-2 border-dashed p-2 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/70 bg-muted/20'}`}
+            className={`mt-2 rounded-xl border-2 border-dashed p-3 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/60 bg-muted/25'}`}
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
@@ -183,18 +195,18 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
           </div>
         </SmoothCollapseSection>
 
-        <div className="rounded-lg border bg-background px-2.5 py-2 text-xs">
-          <div className="mb-2 font-medium text-muted-foreground">6. Գնային Տվյալներ</div>
+        <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-3 text-xs">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">7. Գնային Տվյալներ</div>
           <div className="grid grid-cols-2 gap-2">
-            <Input type="number" value={price} onChange={(e) => update('price', e.target.value)} placeholder="Մանրածախ" className="h-10" />
-            <Input type="number" value={wholesalePrice} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="Մեծածախ" className="h-10" />
-            <Input type="number" value={stock} onChange={(e) => update('stock', e.target.value)} placeholder="Քանակ" className="h-10" />
-            <Input type="number" value={qtyStep} onChange={(e) => update('qtyStep', e.target.value)} placeholder="Քայլ" className="h-10" />
+            <Input type="number" value={price} onChange={(e) => update('price', e.target.value)} placeholder="Մանրածախ" className="h-11 border-border/70 bg-background/90" />
+            <Input type="number" value={wholesalePrice} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="Մեծածախ" className="h-11 border-border/70 bg-background/90" />
+            <Input type="number" value={stock} onChange={(e) => update('stock', e.target.value)} placeholder="Քանակ" className="h-11 border-border/70 bg-background/90" />
+            <Input type="number" value={qtyStep} onChange={(e) => update('qtyStep', e.target.value)} placeholder="Քայլ" className="h-11 border-border/70 bg-background/90" />
           </div>
         </div>
 
-        <div className="rounded-lg border bg-background px-2.5 py-2 text-xs">
-          <div className="mb-2 font-medium text-muted-foreground">7. Բնութագրեր {attrEntries.length > 0 ? `(${attrEntries.length})` : ''}</div>
+        <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-3 text-xs">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">8. Բնութագրեր {attrEntries.length > 0 ? `(${attrEntries.length})` : ''}</div>
           {!categoryId ? (
             <p className="text-muted-foreground">Նախ ընտրեք կատեգորիա</p>
           ) : !filterDefs ? (
@@ -205,19 +217,19 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
             <div className="grid gap-2 sm:grid-cols-2">
               {filterDefs.map((def) => (
                 <div key={def._id}>
-                  <Label>{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
+                  <Label className="text-[11px] text-muted-foreground">{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
                     <Select value={attributes[def.slug] ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
-                      <SelectTrigger className="h-10"><SelectValue placeholder={def.name} /></SelectTrigger>
+                      <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={def.name} /></SelectTrigger>
                       <SelectContent>{def.options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : def.type === 'boolean' ? (
                     <Select value={attributes[def.slug] ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
-                      <SelectTrigger className="h-10"><SelectValue placeholder={def.name} /></SelectTrigger>
+                      <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={def.name} /></SelectTrigger>
                       <SelectContent><SelectItem value="true">Այո</SelectItem><SelectItem value="false">Ոչ</SelectItem></SelectContent>
                     </Select>
                   ) : (
-                    <Input value={attributes[def.slug] ?? ''} onChange={(e) => setAttr(def.slug, e.target.value)} placeholder={def.name} className="h-10" />
+                    <Input value={attributes[def.slug] ?? ''} onChange={(e) => setAttr(def.slug, e.target.value)} placeholder={def.name} className="h-11 border-border/70 bg-background/90" />
                   )}
                 </div>
               ))}
@@ -259,9 +271,8 @@ function StepBasicInfo() {
   return (
     <div className="space-y-3">
       <SmoothCollapseSection title="Լրացուցիչ գնային դաշտեր" open={priceExtraOpen} onToggle={() => setPriceExtraOpen((v) => !v)}>
-        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} className="h-10" min={0} max={100} /></div>
-          <div><Label>ԱՏԳԱ կոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} className="h-10 font-mono" /></div>
+        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-1">
+          <div><Label className="text-[11px] text-muted-foreground">Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} className="h-11 border-border/70 bg-background/90" min={0} max={100} /></div>
         </div>
       </SmoothCollapseSection>
 
@@ -273,8 +284,8 @@ function StepBasicInfo() {
 
       <SmoothCollapseSection title="SEO" open={seoOpen} onToggle={() => setSeoOpen((v) => !v)}>
         <div className="mt-2 space-y-3">
-          <div><Label>SEO վերնագիր</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-10" /></div>
-          <div><Label>SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} /></div>
+          <div><Label className="text-[11px] text-muted-foreground">SEO վերնագիր</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11 border-border/70 bg-background/90" /></div>
+          <div><Label className="text-[11px] text-muted-foreground">SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} className="border-border/70 bg-background/90" /></div>
         </div>
       </SmoothCollapseSection>
     </div>
@@ -429,31 +440,37 @@ export default function AddProductPage() {
   const create = useMutation(api.products.create);
   const { sessionToken } = useAuth();
 
+  const getMissingRequiredFields = (d: Record<string, unknown>): string[] => {
+    const attrs = (d.attributes as Record<string, unknown> | undefined) ?? {};
+    const missing: string[] = [];
+
+    if (!(d.sku as string | undefined)?.trim()) missing.push('Արտիկուլ');
+    if (!(d.name as string | undefined)?.trim()) missing.push('Ապրանքի անուն');
+    if (!(d.slug as string | undefined)?.trim()) missing.push('Slug');
+    if (!(d.categoryId as string | undefined)) missing.push('Կատեգորիա');
+    if (!(d.price as string | undefined)) missing.push('Մանրածախ գին');
+    if (!(d.wholesalePrice as string | undefined)) missing.push('Մեծածախ գին');
+    if (!(d.stock as string | undefined)) missing.push('Քանակ');
+    if (Object.keys(attrs).length === 0) missing.push('Բնութագրեր');
+
+    return missing;
+  };
+
   const steps: WizardStep[] = [
     {
       id: 'product-form',
       title: 'Ապրանքի ձև',
       content: <StepBasicInfo />,
-      validation: (d) => {
-        const attrs = (d.attributes as Record<string, unknown> | undefined) ?? {};
-        const hasImages = ((d.images as string[] | undefined) ?? []).length > 0;
-        return !!(
-          (d.sku as string | undefined)?.trim() &&
-          (d.name as string | undefined)?.trim() &&
-          (d.slug as string | undefined)?.trim() &&
-          (d.categoryId as string | undefined) &&
-          (d.description as string | undefined)?.trim() &&
-          (d.price as string | undefined) &&
-          (d.wholesalePrice as string | undefined) &&
-          (d.stock as string | undefined) &&
-          hasImages &&
-          Object.keys(attrs).length > 0
-        );
-      },
     },
   ];
 
   const handleComplete = async (data: Record<string, unknown>) => {
+    const missing = getMissingRequiredFields(data);
+    if (missing.length > 0) {
+      toast.error(`Լրացրեք պարտադիր դաշտերը: ${missing.join(', ')}`);
+      return;
+    }
+
     await create({
       sessionToken: sessionToken ?? '',
       name: data.name as string,
@@ -477,8 +494,8 @@ export default function AddProductPage() {
   };
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center">
-      <Card className="w-full max-w-2xl overflow-hidden rounded-2xl border-0" style={{ boxShadow: 'var(--shadow-xl)' }}>
+    <div className="mx-auto min-h-[80vh] max-w-5xl px-4 py-8">
+      <Card className="w-full overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-b from-card to-card/90" style={{ boxShadow: '0 24px 70px rgba(0,0,0,0.28)' }}>
         <Wizard
           steps={steps}
           onComplete={handleComplete}
