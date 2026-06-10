@@ -49,6 +49,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '*.r2.cloudflarestorage.com', pathname: '/**' },
       { protocol: 'https', hostname: 'pub-*.r2.dev', pathname: '/**' },
+      { protocol: 'https', hostname: 'drive.google.com', pathname: '/uc' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com', pathname: '/**' },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
