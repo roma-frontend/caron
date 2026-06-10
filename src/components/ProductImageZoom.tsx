@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
@@ -21,22 +21,34 @@ const LENS_SIZE = 110;
 
 const noop = () => () => {};
 
+function toZoomImageSrc(src: string): string {
+  // Reuse Next's optimizer endpoint to avoid client-side remote fetch edge cases in CSS backgrounds.
+  if (src.startsWith('data:') || src.startsWith('/_next/image?')) return src;
+  // Use allowed optimizer params (see next.config images.deviceSizes/imageSizes).
+  return `/_next/image?url=${encodeURIComponent(src)}&w=1200&q=75`;
+}
+
 export function ProductImageZoom({ src, alt, width, height, priority, sizes, className = '', fit = 'cover' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dimRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement | null>(null);
+  const zoomImgRef = useRef<HTMLImageElement | null>(null);
   const mouse = useRef({ x: 0, y: 0 });
   const active = useRef(false);
   const rafId = useRef(0);
   const isMobile = useRef(true);
   const renderFn = useRef<() => void>(() => {});
+  const [failedOptimizedFor, setFailedOptimizedFor] = useState<string | null>(null);
+  const optimizedSrc = toZoomImageSrc(src);
+  const zoomSrc = failedOptimizedFor === src ? src : optimizedSrc;
 
   // true only on client, avoids setState-in-effect warning
   const mounted = useSyncExternalStore(noop, () => true, () => false);
 
   const checkMobile = () => {
-    isMobile.current = window.innerWidth < 1024 || 'ontouchstart' in window;
+    // Enable zoom only on devices that actually have mouse-like hover precision.
+    isMobile.current = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   };
 
   useEffect(() => {
@@ -54,6 +66,7 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
     const c = containerRef.current;
     const lens = lensRef.current;
     const zoom = zoomRef.current;
+    const zoomImg = zoomImgRef.current;
     if (!c) { rafId.current = requestAnimationFrame(renderFn.current); return; }
 
     const rect = c.getBoundingClientRect();
@@ -73,13 +86,9 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       lens.style.top = `${ly}px`;
       lens.style.width = `${LENS_SIZE}px`;
       lens.style.height = `${LENS_SIZE}px`;
-      lens.style.backgroundImage = `url(${src})`;
-      lens.style.backgroundSize = `${rect.width}px ${rect.height}px`;
-      lens.style.backgroundPosition = `${-lx}px ${-ly}px`;
-      lens.style.backgroundRepeat = 'no-repeat';
     }
 
-    if (zoom) {
+    if (zoom && zoomImg) {
       const cx = xR * rect.width;
       const cy = yR * rect.height;
       const bw = rect.width * SCALE;
@@ -98,10 +107,10 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       zoom.style.top = `${panelTop}px`;
       zoom.style.width = `${ZOOM_SIZE}px`;
       zoom.style.height = `${ZOOM_SIZE}px`;
-      zoom.style.backgroundImage = `url(${src})`;
-      zoom.style.backgroundSize = `${bw}px ${bh}px`;
-      zoom.style.backgroundPosition = `${bx}px ${by}px`;
-      zoom.style.backgroundRepeat = 'no-repeat';
+
+      zoomImg.style.width = `${bw}px`;
+      zoomImg.style.height = `${bh}px`;
+      zoomImg.style.transform = `translate(${bx}px, ${by}px)`;
     }
 
     rafId.current = requestAnimationFrame(renderFn.current);
@@ -150,11 +159,23 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
           draggable={false}
         />
         <div ref={dimRef} className="pointer-events-none absolute inset-0 bg-black/30" style={{ display: 'none' }} />
-        <div ref={lensRef} className="pointer-events-none absolute z-10 rounded-lg border-2 border-primary bg-no-repeat" style={{ display: 'none' }} />
+        <div ref={lensRef} className="pointer-events-none absolute z-10 rounded-lg border-2 border-primary bg-primary/10" style={{ display: 'none' }} />
       </div>
       {mounted &&
         createPortal(
-          <div ref={(el) => { zoomRef.current = el; }} className="pointer-events-none rounded-xl border-2 border-border bg-background shadow-2xl bg-no-repeat" style={{ display: 'none' }} />,
+          <div ref={(el) => { zoomRef.current = el; }} className="pointer-events-none overflow-hidden rounded-xl border-2 border-border bg-background shadow-2xl" style={{ display: 'none' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={zoomImgRef}
+              src={zoomSrc}
+              alt=""
+              className="absolute left-0 top-0 max-w-none select-none"
+              draggable={false}
+              onError={() => {
+                if (zoomSrc !== src) setFailedOptimizedFor(src);
+              }}
+            />
+          </div>,
           document.body,
         )}
     </>
