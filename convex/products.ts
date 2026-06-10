@@ -14,6 +14,26 @@ function normalizeProductImages<T extends { images?: string[] }>(product: T): T 
   return changed ? { ...product, images: normalized } : product;
 }
 
+function normalizeFilterValue(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function filterValuesEqual(expected: unknown, actual: unknown): boolean {
+  if (expected === actual) return true;
+  if (typeof expected === 'string' && typeof actual === 'string') {
+    const a = normalizeFilterValue(expected);
+    const b = normalizeFilterValue(actual);
+    if (!a || !b) return false;
+    return a === b || a.includes(b) || b.includes(a);
+  }
+  return false;
+}
+
 export const listPaginated = query({
   args: {
     categoryId: v.optional(v.id('categories')),
@@ -97,10 +117,16 @@ export const listPaginated = query({
     // Attribute filtering (arbitrary keys can't be indexed)
     if (args.attributes && typeof args.attributes === 'object') {
       const attrs = args.attributes as Record<string, unknown>;
+      const filterDefs = await ctx.db.query('filterDefinitions').take(500);
+      const idToSlug = new Map(filterDefs.map((f) => [f._id as string, f.slug]));
+      const slugToId = new Map(filterDefs.map((f) => [f.slug, f._id as string]));
+      const idToDef = new Map(filterDefs.map((f) => [f._id as string, f]));
+      const slugToDef = new Map(filterDefs.map((f) => [f.slug, f]));
       filtered = filtered.filter((p) => {
         const pa = (p.attributes ?? {}) as Record<string, unknown>;
         for (const [key, val] of Object.entries(attrs)) {
           if (val === null || val === undefined || val === '') continue;
+
           // Special handling for carBrand — also check vehicleCompat
           if (key === 'carBrand' && typeof val === 'string') {
             const compat = pa.vehicleCompat as Array<{ brand: string }> | undefined;
@@ -111,17 +137,29 @@ export const listPaginated = query({
           }
           // Check both attributes[key] and matching top-level field (e.g., brand, stock)
           const topLevel = (p as Record<string, unknown>)[key];
-          const attrVal = pa[key];
+          const aliasKeys = new Set<string>([key]);
+          const slugKey = idToSlug.get(key);
+          if (slugKey) aliasKeys.add(slugKey);
+          const idKey = slugToId.get(key);
+          if (idKey) aliasKeys.add(idKey);
           const checkVal = (check: unknown) => {
             if (Array.isArray(val)) {
               if (val.length === 0) return true;
-              if (Array.isArray(check)) return val.some((v) => (check as string[]).includes(v));
-              return val.includes(check as string);
+              if (Array.isArray(check)) return val.some((v) => (check as unknown[]).some((c) => filterValuesEqual(v, c)));
+              return val.some((v) => filterValuesEqual(v, check));
             }
             if (typeof val === 'boolean') return check === val;
-            return check === val;
+            return filterValuesEqual(val, check);
           };
-          if (!checkVal(topLevel) && !checkVal(attrVal)) return false;
+          let attrMatch = Array.from(aliasKeys).some((k) => checkVal(pa[k]));
+
+          // Fallback for legacy data where products may still store values under an old filter _id key.
+          // If the current filter key doesn't exist, try matching by value across attribute values.
+          if (!attrMatch && (idToDef.has(key) || slugToDef.has(key))) {
+            attrMatch = Object.values(pa).some((raw) => checkVal(raw));
+          }
+
+          if (!checkVal(topLevel) && !attrMatch) return false;
         }
         return true;
       });

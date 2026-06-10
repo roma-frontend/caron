@@ -34,6 +34,15 @@ import { useCompareStore } from '@/store/compare';
 import { GitCompareArrows } from 'lucide-react';
 import Image from 'next/image';
 
+function normalizeAttrText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const product = useQuery(api.products.getBySlug, { slug: slug as string });
@@ -44,7 +53,36 @@ export default function ProductDetailPage() {
   const productId = product?._id;
   const filterDefs = useQuery(api.filters.getByCategory, product?.categoryId ? { categoryId: product.categoryId } : 'skip');
   const attrNames: Record<string, string> = {};
-  if (filterDefs) for (const f of filterDefs) attrNames[f.slug] = f.name;
+  if (filterDefs) {
+    for (const f of filterDefs) {
+      attrNames[f._id] = f.name;
+      attrNames[f.slug] = f.name;
+    }
+  }
+  const resolveAttrLabel = (key: string, val: unknown) => {
+    if (attrNames[key]) return attrNames[key];
+    if (filterDefs) {
+      const values = Array.isArray(val) ? val : [val];
+      const normalizedValues = values
+        .filter((v): v is string => typeof v === 'string')
+        .map(normalizeAttrText)
+        .filter(Boolean);
+
+      if (normalizedValues.length > 0) {
+        const matchedDef = filterDefs.find((def) =>
+          (def.options ?? []).some((opt) => {
+            const nOpt = normalizeAttrText(opt);
+            return normalizedValues.some((v) => v === nOpt || v.includes(nOpt) || nOpt.includes(v));
+          }),
+        );
+        if (matchedDef) return matchedDef.name;
+      }
+    }
+
+    // Hide technical Convex-like ids from storefront users.
+    if (/^j[0-9a-z]{12,}$/i.test(key)) return 'Ատրիբուտ';
+    return key;
+  };
   const currentUser = useAuthStore((s) => s.user);
   const items = useCartStore((s) => s.items);
   const [qty, setQty] = useState(1);
@@ -256,8 +294,8 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').map(([key, val]) => (
                   <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
-                    <span className="text-muted-foreground">{attrNames[key] || key}</span>
-                    <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : String(val)}</span>
+                    <span className="text-muted-foreground">{resolveAttrLabel(key, val)}</span>
+                    <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : Array.isArray(val) ? val.join(', ') : String(val)}</span>
                   </div>
                 ))}
               </div>

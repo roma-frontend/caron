@@ -2,6 +2,39 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
 
+function normalizeOptionValue(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function mapToCanonicalOption(value: unknown, options: string[]): unknown {
+  if (!options.length) return value;
+  const normalizedOptions = options.map((opt) => ({ raw: opt, norm: normalizeOptionValue(opt) }));
+
+  const mapOne = (input: string): string => {
+    const norm = normalizeOptionValue(input);
+    if (!norm) return input;
+    const exact = normalizedOptions.find((o) => o.norm === norm);
+    if (exact) return exact.raw;
+    const includes = normalizedOptions.find((o) => o.norm.includes(norm) || norm.includes(o.norm));
+    return includes?.raw ?? input;
+  };
+
+  if (Array.isArray(value)) {
+    const mapped = value
+      .filter((v): v is string => typeof v === 'string')
+      .map(mapOne);
+    return Array.from(new Set(mapped));
+  }
+
+  if (typeof value === 'string') return mapOne(value);
+  return value;
+}
+
 export const getByCategory = query({
   args: { categoryId: v.id('categories') },
   handler: async (ctx, args) => {
@@ -53,11 +86,44 @@ export const update = mutation({
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const { id, sessionToken: _, slug, ...patch } = args;
+    const existing = await ctx.db.get(id);
+    if (!existing) throw new Error('Ֆիլտրը չի գտնվել');
     // IMPORTANT: slug cannot be changed after creation to avoid breaking filter system
     // Filters are identified by _id, not slug, so slug is now immutable
     if (slug !== undefined) {
       throw new Error('Ֆիլտրի slug-ը չի կարող փոխվել հետո: Օգտագործեք միայն name դաշտը');
     }
+
+    // When filter options are updated (including renamed labels), remap product values
+    // for this filter to canonical new options, for both _id and legacy slug keys.
+    if (patch.options && patch.options.length > 0) {
+      const products = await ctx.db
+        .query('products')
+        .withIndex('by_category', (q) => q.eq('categoryId', existing.categoryId))
+        .collect();
+
+      for (const product of products) {
+        const attrs = (product.attributes ?? {}) as Record<string, unknown>;
+        let changed = false;
+        const nextAttrs: Record<string, unknown> = { ...attrs };
+
+        const keysToRemap = [id as string, existing.slug];
+        for (const key of keysToRemap) {
+          if (!(key in nextAttrs)) continue;
+          const currentVal = nextAttrs[key];
+          const mappedVal = mapToCanonicalOption(currentVal, patch.options);
+          if (JSON.stringify(mappedVal) !== JSON.stringify(currentVal)) {
+            nextAttrs[key] = mappedVal;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          await ctx.db.patch(product._id, { attributes: nextAttrs });
+        }
+      }
+    }
+
     await ctx.db.patch(id, patch);
   },
 });

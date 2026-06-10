@@ -74,9 +74,9 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
   const qtyStep = (data.qtyStep as string) ?? '';
   const atgCode = (data.atgCode as string) ?? '';
 
-  const setAttr = (slug: string, value: string) => {
-    const next = { ...attributes, [slug]: value };
-    if (!value) delete next[slug];
+  const setAttr = (filterId: string, value: string) => {
+    const next = { ...attributes, [filterId]: value };
+    if (!value) delete next[filterId];
     update('attributes', next);
   };
 
@@ -220,17 +220,17 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
                 <div key={def._id}>
                   <Label className="text-[11px] text-muted-foreground">{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
-                    <Select value={attributes[def.slug] ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
+                    <Select value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
                       <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={def.name} /></SelectTrigger>
                       <SelectContent>{def.options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : def.type === 'boolean' ? (
-                    <Select value={attributes[def.slug] ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
+                    <Select value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
                       <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={def.name} /></SelectTrigger>
                       <SelectContent><SelectItem value="true">Այո</SelectItem><SelectItem value="false">Ոչ</SelectItem></SelectContent>
                     </Select>
                   ) : (
-                    <Input value={attributes[def.slug] ?? ''} onChange={(e) => setAttr(def.slug, e.target.value)} placeholder={def.name} className="h-11 border-border/70 bg-background/90" />
+                    <Input value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={def.name} className="h-11 border-border/70 bg-background/90" />
                   )}
                 </div>
               ))}
@@ -400,9 +400,9 @@ function StepAttributes() {
   const filterDefs = useQuery(api.filters.getByCategory, categoryId ? { categoryId: categoryId as Id<'categories'> } : 'skip');
   const attrs = ((data.attributes as Record<string, string>) ?? {});
 
-  const setAttr = (slug: string, value: string) => {
-    const next = { ...attrs, [slug]: value };
-    if (!value) delete next[slug];
+  const setAttr = (filterId: string, value: string) => {
+    const next = { ...attrs, [filterId]: value };
+    if (!value) delete next[filterId];
     update('attributes', next);
   };
 
@@ -417,17 +417,17 @@ function StepAttributes() {
           <div key={def._id}>
             <Label>{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
             {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
-              <Select value={attrs[def.slug] ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
+              <Select value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
                 <SelectTrigger className="h-11"><SelectValue placeholder={def.name} /></SelectTrigger>
                 <SelectContent>{def.options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
               </Select>
             ) : def.type === 'boolean' ? (
-              <Select value={attrs[def.slug] ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
+              <Select value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
                 <SelectTrigger className="h-11"><SelectValue placeholder={def.name} /></SelectTrigger>
                 <SelectContent><SelectItem value="true">Այո</SelectItem><SelectItem value="false">Ոչ</SelectItem></SelectContent>
               </Select>
             ) : (
-              <Input value={attrs[def.slug] ?? ''} onChange={(e) => setAttr(def.slug, e.target.value)} placeholder={def.name} className="h-11" />
+              <Input value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={def.name} className="h-11" />
             )}
           </div>
         ))}

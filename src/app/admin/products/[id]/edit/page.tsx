@@ -47,10 +47,10 @@ export default function EditProductPage() {
   const categories = useQuery(api.categories.list, {});
   const filterDefs = useQuery(api.filters.getByCategory, (form.categoryId || currentProduct?.categoryId) ? { categoryId: (form.categoryId || currentProduct!.categoryId) as Id<'categories'> } : 'skip');
 
-  const setAttr = (slug: string, value: string) => {
+  const setAttr = (filterId: string, value: string) => {
     const base = form.attributes ?? {};
-    const next: Record<string, unknown> = { ...base, [slug]: value };
-    if (!value) delete next[slug];
+    const next: Record<string, unknown> = { ...base, [filterId]: value };
+    if (!value) delete next[filterId];
     setForm({ ...form, attributes: next });
   };
 
@@ -243,25 +243,25 @@ export default function EditProductPage() {
                 <div key={def._id}>
                   <Label>{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
-                    <Select value={((form.attributes ?? {})[def.slug] as string) ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
+                    <Select value={(((form.attributes ?? {})[def._id] ?? (form.attributes ?? {})[def.slug] ?? '') as string)} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
                       <SelectTrigger className="h-11"><SelectValue placeholder={def.name} /></SelectTrigger>
                       <SelectContent>{def.options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : def.type === 'boolean' ? (
-                    <Select value={((form.attributes ?? {})[def.slug] as string) ?? ''} onValueChange={(v) => setAttr(def.slug, v != null ? String(v) : '')}>
+                    <Select value={(((form.attributes ?? {})[def._id] ?? (form.attributes ?? {})[def.slug] ?? '') as string)} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
                       <SelectTrigger className="h-11"><SelectValue placeholder={def.name} /></SelectTrigger>
                       <SelectContent><SelectItem value="true">{'այո'}</SelectItem><SelectItem value="false">{'ոչ'}</SelectItem></SelectContent>
                     </Select>
                   ) : (
-                    <Input value={((form.attributes ?? {})[def.slug] as string) ?? ''} onChange={(e) => setAttr(def.slug, e.target.value)} placeholder={def.name} className="h-11" />
+                    <Input value={(((form.attributes ?? {})[def._id] ?? (form.attributes ?? {})[def.slug] ?? '') as string)} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={def.name} className="h-11" />
                   )}
                 </div>
               ))}
               {/* Orphan attributes — no matching filter definition */}
-              {form.attributes && Object.keys(form.attributes).filter((k) => !filterDefs.find((d) => d.slug === k) && k !== 'vehicleCompat' && k !== 'carBrand').length > 0 && (
+              {form.attributes && Object.keys(form.attributes).filter((k) => !filterDefs.find((d) => d._id === k || d.slug === k) && k !== 'vehicleCompat' && k !== 'carBrand').length > 0 && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800 dark:bg-amber-950/20">
                   <p className="mb-2 text-xs font-semibold text-amber-700 dark:text-amber-400">Հեռացված ֆիլտր (չկա ցուցակում):</p>
-                  {Object.entries(form.attributes ?? {}).filter(([k]) => !filterDefs.find((d) => d.slug === k) && k !== 'vehicleCompat' && k !== 'carBrand').map(([k, v]) => (
+                  {Object.entries(form.attributes ?? {}).filter(([k]) => !filterDefs.find((d) => d._id === k || d.slug === k) && k !== 'vehicleCompat' && k !== 'carBrand').map(([k, v]) => (
                     <div key={k} className="mb-1 flex items-center gap-2 text-xs">
                       <span className="font-mono text-muted-foreground">{k}: {String(v)}</span>
                       <button onClick={() => { const a = { ...form.attributes }; delete a[k]; setForm({ ...form, attributes: Object.keys(a).length ? a : undefined }); }}

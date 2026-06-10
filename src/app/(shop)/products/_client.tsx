@@ -140,7 +140,10 @@ export default function ProductsPage() {
           {filterDefs && filterDefs.length > 0 && (
             <div className="mb-4 space-y-2 rounded-xl border border-primary/15 bg-linear-to-br from-card via-primary/5 to-muted/40 p-4 shadow-sm backdrop-blur-sm">
               {filterDefs.filter((def) => def.slug === 'type' || def.name === 'Տեսակ').map((def) => {
-                const active = (filters.attributes?.[def.slug] as string[]) || [];
+                const active =
+                  ((filters.attributes?.[def._id] as string[]) ||
+                    (filters.attributes?.[def.slug] as string[]) ||
+                    []);
                 return (
                   <div key={def._id} className="flex flex-wrap items-center gap-1.5">
                     <span className="text-xs font-medium text-muted-foreground mr-1">{def.name}:</span>
@@ -150,8 +153,10 @@ export default function ProductsPage() {
                         <button key={opt} onClick={() => {
                           const next = isActive ? active.filter((v) => v !== opt) : [...active, opt];
                           const attrs = { ...(filters.attributes ?? {}) };
-                          if (next.length > 0) attrs[def.slug] = next;
-                          else delete attrs[def.slug];
+                          // Store by filter _id (canonical key). Remove legacy slug key if present.
+                          if (next.length > 0) attrs[def._id] = next;
+                          else delete attrs[def._id];
+                          delete attrs[def.slug];
                           setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
                         }}
                           className={`rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
