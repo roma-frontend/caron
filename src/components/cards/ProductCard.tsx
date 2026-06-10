@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useReveal, useMouseGlow, cardRevealStyle } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useVehicleStore } from '@/store/vehicle';
 import { useSettings } from '@/hooks/useSettings';
+import { normalizeImageUrl } from '../../../convex/lib/imageUrl';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { PRODUCT } from '@/lib/constants';
@@ -61,6 +62,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
   const { mousePos, isHovered, handlers } = useMouseGlow();
+  const normalizedImage = useMemo(() => normalizeImageUrl(image), [image]);
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
   const toggleFav = useFavoritesStore((s) => s.toggle);
@@ -101,7 +103,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
             <Link href={detailHref} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-              {image ? <Image src={image} alt={name} width={64} height={64} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
+              {normalizedImage ? <Image src={normalizedImage} alt={name} width={64} height={64} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
             </Link>
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
@@ -155,8 +157,8 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
 
             <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
               <Link href={detailHref} aria-label={name} className="absolute inset-0 z-[5]" />
-              {image && !imgError ? (
-                <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-fill" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
+              {normalizedImage && !imgError ? (
+                <Image src={normalizedImage} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-fill" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/30"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
