@@ -5,7 +5,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Info, File as FileIcon } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Info, File as FileIcon, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
@@ -34,13 +34,61 @@ interface ParsedRow {
   vehicleCompat?: Array<{ brand: string; model: string; yearFrom: number; yearTo: number }>;
 }
 
+interface ManualRow {
+  sku: string;
+  name: string;
+  category: string;
+  brand: string;
+  type: string;
+  size: string;
+}
+
+function emptyManualRow(): ManualRow {
+  return { sku: '', name: '', category: '', brand: '', type: '', size: '' };
+}
+
+function normalizeHeaderToken(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\uFEFF/g, '')
+    .replace(/["'`]/g, '')
+    .replace(/[_\-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseTabularText(text: string): string[][] {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter((l) => l.trim());
+  return lines.map((line) => splitLine(line, '\t'));
+}
+
 function splitLine(line: string, sep: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === '"') {
+      if (!inQuotes) {
+        // Treat quote as a field wrapper only at field start; otherwise keep it literal (e.g. 16").
+        if (current.length === 0) {
+          inQuotes = true;
+          continue;
+        }
+        current += ch;
+        continue;
+      }
+
+      // Inside quoted field: "" is an escaped quote.
+      if (line[i + 1] === '"') {
+        current += '"';
+        i++;
+        continue;
+      }
+
+      inQuotes = false;
+      continue;
+    }
     if (ch === sep && !inQuotes) { result.push(current.trim()); current = ''; continue; }
     current += ch;
   }
@@ -54,24 +102,14 @@ function parseCsv(text: string): { headers: string[]; rows: string[][] } {
   if (lines.length < 2) throw new Error('CSV ֆայլը պետք է ունենա վերնագրի տող և առնվազն մեկ տվյալների տող։');
   const sep = lines[0].includes(';') ? ';' : ',';
   const headers = splitLine(lines[0], sep).map((h) => h.trim().toLowerCase());
-  const rows = lines.slice(1).map((l) => splitLine(l, sep));
+  const rows = lines
+    .slice(1)
+    .map((l) => splitLine(l, sep))
+    .filter((cells) => cells.some((c) => c.trim() !== ''));
   return { headers, rows };
 }
 
 const BOOL_MAP: Record<string, boolean> = { yes: true, '1': true, да: true, '+': true, այո: true, no: false, '0': false, нет: false, '-': false, not: false, ոչ: false };
-
-const COLUMN_MAP: Record<string, string> = {
-  name: 'name', slug: 'slug', description: 'description', price: 'price',
-  compareatprice: 'compareAtPrice', wholesaleprice: 'wholesalePrice', wholesale: 'wholesalePrice', category: 'category', sku: 'sku', stock: 'stock',
-  isactive: 'isActive', isfeatured: 'isFeatured', showinpromotions: 'showInPromotions',
-  oemnumbers: 'oemNumbers', oem: 'oemNumbers',
-  seotitle: 'seoTitle', seodescription: 'seoDescription',
-  images: 'images', image: 'images',
-};
-
-function getColumnAliases(): string[] {
-  return Object.keys(COLUMN_MAP);
-}
 
 function normalizeAttributeKey(rawKey: string): string {
   const key = rawKey.trim().toLowerCase();
@@ -204,12 +242,203 @@ export default function ImportProductsPage() {
   const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
+  const [importingRow, setImportingRow] = useState<number | null>(null);
+  const [importedRows, setImportedRows] = useState<Set<number>>(new Set());
   const [done, setDone] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string[] | null>(null);
   const [pasteText, setPasteText] = useState('');
+  const [manualRows, setManualRows] = useState<ManualRow[]>([emptyManualRow()]);
+  const [manualImportingRow, setManualImportingRow] = useState<number | null>(null);
+  const [manualImportingAll, setManualImportingAll] = useState(false);
+  const [manualImportedRows, setManualImportedRows] = useState<Set<number>>(new Set());
+  const [moveToManualCount, setMoveToManualCount] = useState(15);
+  const [excelPasteText, setExcelPasteText] = useState('');
 
   const categoriesMap: Record<string, string> = {};
   if (categories) for (const c of categories) categoriesMap[c.name.toLowerCase()] = c._id;
+
+  const isManualRowReady = (r: ManualRow) =>
+    Boolean(r.sku.trim() && r.name.trim() && r.category.trim());
+
+  const updateManualRow = (index: number, key: keyof ManualRow, value: string) => {
+    setManualRows((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [key]: value };
+      return next;
+    });
+  };
+
+  const addManualRow = () => setManualRows((prev) => [...prev, emptyManualRow()]);
+
+  const removeManualRow = (index: number) => {
+    setManualRows((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+    setManualImportedRows((prev) => {
+      const next = new Set<number>();
+      for (const i of prev) {
+        if (i < index) next.add(i);
+        else if (i > index) next.add(i - 1);
+      }
+      return next;
+    });
+  };
+
+  const manualRowToBulkProduct = (row: ManualRow) => {
+    const categoryId = categoriesMap[row.category.toLowerCase().trim()];
+    if (!categoryId) {
+      throw new Error(`Կատեգորիա "${row.category}" չի գտնվել`);
+    }
+
+    const attributes: Record<string, string> = {};
+    if (row.brand.trim()) attributes['ապրանքանիշ'] = row.brand.trim();
+    if (row.type.trim()) attributes['type'] = row.type.trim();
+    if (row.size.trim()) attributes['չափ'] = row.size.trim();
+
+    return {
+      category: row.category.trim(),
+      categoryId: categoryId as Id<'categories'>,
+      sku: row.sku.trim(),
+      name: row.name.trim(),
+      isActive: true,
+      ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
+    };
+  };
+
+  const fillManualRowsFromExcelGrid = (text: string) => {
+    const matrix = parseTabularText(text);
+    if (matrix.length < 2) {
+      toast.error('Պետք է լինի առնվազն վերնագրի տող և մեկ տվյալների տող');
+      return;
+    }
+
+    const headers = matrix[0].map((h) => normalizeHeaderToken(String(h ?? '')));
+
+    const aliases: Record<keyof ManualRow, string[]> = {
+      sku: ['արտիկուլ', 'sku', 'article', 'code'],
+      name: ['անվանում', 'name', 'product name', 'ապրանք'],
+      category: ['կատեգորիա', 'category', 'cat'],
+      brand: ['ապրանքանիշ', 'brand', 'արտադրող'],
+      type: ['տեսակ', 'type'],
+      size: ['չափ', 'չափս', 'size'],
+    };
+
+    const columnIndex: Partial<Record<keyof ManualRow, number>> = {};
+    (Object.keys(aliases) as Array<keyof ManualRow>).forEach((key) => {
+      const idx = headers.findIndex((h) => aliases[key].includes(h));
+      if (idx >= 0) columnIndex[key] = idx;
+    });
+
+    // Fallback by visual order when headers are missing/unknown.
+    if (columnIndex.sku === undefined && headers.length > 0) columnIndex.sku = 0;
+    if (columnIndex.name === undefined && headers.length > 1) columnIndex.name = 1;
+    if (columnIndex.category === undefined && headers.length > 2) columnIndex.category = 2;
+    if (columnIndex.brand === undefined && headers.length > 3) columnIndex.brand = 3;
+    if (columnIndex.type === undefined && headers.length > 4) columnIndex.type = 4;
+    if (columnIndex.size === undefined && headers.length > 5) columnIndex.size = 5;
+
+    const dataRows = matrix.slice(1).filter((r) => r.some((c) => String(c ?? '').trim() !== ''));
+    const mappedRows: ManualRow[] = dataRows.map((r) => ({
+      sku: columnIndex.sku !== undefined ? String(r[columnIndex.sku] ?? '').trim() : '',
+      name: columnIndex.name !== undefined ? String(r[columnIndex.name] ?? '').trim() : '',
+      category: columnIndex.category !== undefined ? String(r[columnIndex.category] ?? '').trim() : '',
+      brand: columnIndex.brand !== undefined ? String(r[columnIndex.brand] ?? '').trim() : '',
+      type: columnIndex.type !== undefined ? String(r[columnIndex.type] ?? '').trim() : '',
+      size: columnIndex.size !== undefined ? String(r[columnIndex.size] ?? '').trim() : '',
+    }));
+
+    if (mappedRows.length === 0) {
+      toast.error('Չհաջողվեց գտնել տվյալների տողեր');
+      return;
+    }
+
+    setManualRows(mappedRows);
+    setManualImportedRows(new Set());
+    setManualImportingRow(null);
+    toast.success(`Excel-ից լրացվեց ${mappedRows.length} տող`);
+  };
+
+  const handleExcelManualPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const text = e.clipboardData.getData('text/plain');
+    if (!text?.trim()) return;
+    e.preventDefault();
+    setExcelPasteText(text);
+    fillManualRowsFromExcelGrid(text);
+  };
+
+  const parsedToManualRow = (r: ParsedRow): ManualRow => {
+    const attrs = r.attributes ?? {};
+    return {
+      sku: r.sku ?? '',
+      name: r.name ?? '',
+      category: r.category ?? '',
+      brand: attrs['ապրանքանիշ'] ?? attrs['brand'] ?? '',
+      type: attrs['type'] ?? attrs['տեսակ'] ?? '',
+      size: attrs['չափ'] ?? attrs['size'] ?? '',
+    };
+  };
+
+  const handleMoveParsedToManual = () => {
+    if (!parsed || parsed.length === 0) {
+      toast.error('Նախ ներբեռնեք կամ պարսեք տվյալները');
+      return;
+    }
+    const n = Math.max(1, Math.min(moveToManualCount || 1, parsed.length));
+    const nextRows = parsed.slice(0, n).map(parsedToManualRow);
+    setManualRows(nextRows.length > 0 ? nextRows : [emptyManualRow()]);
+    setManualImportedRows(new Set());
+    setManualImportingRow(null);
+    toast.success(`Տեղափոխվեց ${nextRows.length} տող «Ավելացնել շատ» ձևի մեջ`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleManualImportOne = async (rowIndex: number) => {
+    if (!sessionToken) return;
+    const row = manualRows[rowIndex];
+    if (!isManualRowReady(row)) {
+      toast.error(`Տող ${rowIndex + 1}: լրացրեք sku, name, category`);
+      return;
+    }
+    setManualImportingRow(rowIndex);
+    try {
+      const product = manualRowToBulkProduct(row);
+      await bulkCreate({ sessionToken, products: [product] });
+      setManualImportedRows((prev) => new Set(prev).add(rowIndex));
+      toast.success(`Տող ${rowIndex + 1} ավելացվեց`);
+    } catch (e) {
+      toast.error(`Տող ${rowIndex + 1}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+    } finally {
+      setManualImportingRow(null);
+    }
+  };
+
+  const handleManualImportAll = async () => {
+    if (!sessionToken) return;
+    const candidates = manualRows
+      .map((row, idx) => ({ row, idx }))
+      .filter(({ row, idx }) => isManualRowReady(row) && !manualImportedRows.has(idx));
+
+    if (candidates.length === 0) {
+      toast.error('Ավելացնելու պատրաստ տողեր չկան');
+      return;
+    }
+
+    setManualImportingAll(true);
+    try {
+      const products = candidates.map(({ row }) => manualRowToBulkProduct(row));
+      await bulkCreate({ sessionToken, products });
+      setManualImportedRows((prev) => {
+        const next = new Set(prev);
+        for (const { idx } of candidates) next.add(idx);
+        return next;
+      });
+      toast.success(`Ավելացվեց ${candidates.length} ապրանք`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Անհայտ սխալ');
+    } finally {
+      setManualImportingAll(false);
+    }
+  };
 
   const decodeFile = async (file: File): Promise<string> => {
     const buf = await file.arrayBuffer();
@@ -228,13 +457,6 @@ export default function ImportProductsPage() {
       return;
     }
     const { headers, rows } = parseCsv(text);
-    const info: string[] = [
-      `Բաժանարար: "${text.includes(';') ? ';' : ','}"`,
-      `Վերնագրեր: ${headers.join(', ')}`,
-      `Առաջին տող: ${rows[0]?.join(' | ') || '(դատարկ)'}`,
-      `Կատեգորիաներ DB: ${Object.keys(categoriesMap).join(', ')}`,
-    ];
-    setDebugInfo(info);
     const mapped: ParsedRow[] = [];
     const errs: string[] = [];
     for (let i = 0; i < rows.length; i++) {
@@ -254,11 +476,13 @@ export default function ImportProductsPage() {
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(ws, { header: 1, defval: '' });
+    const rawRows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(ws, { header: 1, defval: '' });
+    const rows = rawRows.filter((r, idx) => idx === 0 || r.some((c) => String(c ?? '').trim() !== ''));
     return rows.map((r) => r.map((c) => {
       if (c == null) return '';
       const v = String(c);
-      return v.includes(';') || v.includes(',') ? `"${v}"` : v;
+      const escaped = v.replace(/"/g, '""');
+      return /[;,\n\r"]/.test(v) ? `"${escaped}"` : escaped;
     }).join(';')).join('\n');
   };
 
@@ -268,7 +492,8 @@ export default function ImportProductsPage() {
     setErrors([]);
     setParsed(null);
     setDone(false);
-    setDebugInfo(null);
+    setImportedRows(new Set());
+    setImportingRow(null);
     setPasteText('');
     try {
       const text = file.name.endsWith('.xlsx') ? await readXlsx(file) : await decodeFile(file);
@@ -283,7 +508,8 @@ export default function ImportProductsPage() {
     setErrors([]);
     setParsed(null);
     setDone(false);
-    setDebugInfo(null);
+    setImportedRows(new Set());
+    setImportingRow(null);
     parseText(pasteText);
   };
 
@@ -292,7 +518,7 @@ export default function ImportProductsPage() {
     setImporting(true);
     try {
       type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
-      const products: BulkProduct[] = parsed.map((r) => {
+      const toBulkProduct = (r: ParsedRow): BulkProduct => {
         const p: BulkProduct = {
           category: r.category,
           categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
@@ -316,13 +542,53 @@ export default function ImportProductsPage() {
         if (r.attributes !== undefined && Object.keys(r.attributes).length > 0) p.attributes = r.attributes;
         if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
         return p;
-      });
+      };
+      const products: BulkProduct[] = parsed.map(toBulkProduct);
       const result = await bulkCreate({ sessionToken, products });
       toast.success(`${result}. Ատրիբուտները և համատեղելիությունը պետք է ավելացվի խմբագրիչի միջոցով.`);
       setDone(true);
+      setImportedRows(new Set(parsed.map((_, idx) => idx)));
     } catch (e) {
       toast.error(`Սխալ ներմուծում: ${e instanceof Error ? e.message : 'Անհայտ սխալ'}`);
     } finally { setImporting(false); }
+  };
+
+  const handleImportOne = async (rowIndex: number) => {
+    if (!parsed || !sessionToken || importedRows.has(rowIndex)) return;
+    setImportingRow(rowIndex);
+    try {
+      type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
+      const r = parsed[rowIndex];
+      const p: BulkProduct = {
+        category: r.category,
+        categoryId: categoriesMap[r.category.toLowerCase().trim()] as Id<'categories'>,
+      };
+      if (r.name !== undefined) p.name = r.name;
+      if (r.slug !== undefined) p.slug = r.slug;
+      if (r.description !== undefined) p.description = r.description;
+      if (r.price !== undefined) p.price = r.price;
+      if (r.wholesalePrice !== undefined) p.wholesalePrice = r.wholesalePrice;
+      if (r.compareAtPrice !== undefined) p.compareAtPrice = r.compareAtPrice;
+      if (r.sku !== undefined) p.sku = r.sku;
+      if (r.oemNumbers !== undefined && r.oemNumbers.length > 0) p.oemNumbers = r.oemNumbers;
+      if (r.stock !== undefined) p.stock = r.stock;
+      if (r.isActive !== undefined) p.isActive = r.isActive;
+      if (r.isFeatured !== undefined) p.isFeatured = r.isFeatured;
+      if (r.showInPromotions !== undefined) p.showInPromotions = r.showInPromotions;
+      if (r.seoTitle !== undefined) p.seoTitle = r.seoTitle;
+      if (r.seoDescription !== undefined) p.seoDescription = r.seoDescription;
+      if (r.images !== undefined && r.images.length > 0) p.images = r.images;
+      if (r.attributes !== undefined && Object.keys(r.attributes).length > 0) p.attributes = r.attributes;
+      if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
+
+      await bulkCreate({ sessionToken, products: [p] });
+      setImportedRows((prev) => new Set(prev).add(rowIndex));
+      toast.success(`Տող ${rowIndex + 2}: ներմուծվեց`);
+    } catch (e) {
+      toast.error(`Տող ${rowIndex + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+    } finally {
+      setImportingRow(null);
+    }
   };
 
   const catKeys = Object.keys(categoriesMap);
@@ -333,6 +599,144 @@ export default function ImportProductsPage() {
         <Link href="/admin/products"><Button variant="ghost" size="icon-sm"><ArrowLeft className="h-4 w-4" /></Button></Link>
         <h1 className="text-2xl font-bold">Ներմուծել CSV ֆայլից</h1>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex flex-col items-start justify-between gap-2 text-base sm:flex-row sm:items-center">
+            <span className="flex items-center gap-2"><FileIcon className="h-5 w-5 text-primary" /> Ավելացնել շատ (ձեռքով)</span>
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <Button size="sm" variant="outline" className="gap-1" onClick={addManualRow}><Plus className="h-3.5 w-3.5" /> Տող</Button>
+              <Button
+                size="sm"
+                className="gap-1"
+                onClick={handleManualImportAll}
+                disabled={manualImportingAll || manualRows.filter((r, i) => isManualRowReady(r) && !manualImportedRows.has(i)).length <= 1}
+              >
+                {manualImportingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                Ավելացնել բոլորը
+              </Button>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+            <p className="mb-2 text-xs font-medium">Excel-ից copy/paste</p>
+            <textarea
+              value={excelPasteText}
+              onChange={(e) => setExcelPasteText(e.target.value)}
+              onPaste={handleExcelManualPaste}
+              placeholder="Excel-ում ընտրեք վերնագիր + տողերը, Ctrl+C, հետո այստեղ Ctrl+V"
+              className="h-24 w-full rounded-md border bg-background p-2 text-xs"
+            />
+            <div className="mt-2 flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => fillManualRowsFromExcelGrid(excelPasteText)} disabled={!excelPasteText.trim()}>
+                Դնել ձևի մեջ
+              </Button>
+            </div>
+          </div>
+
+          <div className="hidden overflow-auto rounded-lg border md:block">
+            <table className="w-full min-w-245 text-xs">
+              <thead className="bg-muted">
+                <tr className="border-b">
+                  <th className="p-2 text-left font-medium">Ավելացնել</th>
+                  <th className="p-2 text-left font-medium">արտիկուլ</th>
+                  <th className="p-2 text-left font-medium">անվանում</th>
+                  <th className="p-2 text-left font-medium">կատեգորիա</th>
+                  <th className="p-2 text-left font-medium">ապրանքանիշ</th>
+                  <th className="p-2 text-left font-medium">տեսակ</th>
+                  <th className="p-2 text-left font-medium">չափ</th>
+                  <th className="p-2 text-left font-medium">գործողություն</th>
+                </tr>
+              </thead>
+              <tbody>
+                {manualRows.map((row, i) => {
+                  const rowReady = isManualRowReady(row);
+                  const alreadyAdded = manualImportedRows.has(i);
+                  return (
+                    <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="p-2">
+                        <Button
+                          size="sm"
+                          disabled={!rowReady || alreadyAdded || manualImportingAll || manualImportingRow === i}
+                          onClick={() => handleManualImportOne(i)}
+                          className="h-7 px-2 text-[11px]"
+                          variant={alreadyAdded ? 'outline' : 'default'}
+                        >
+                          {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? 'Ավելացված' : 'Ավելացնել'}
+                        </Button>
+                      </td>
+                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="232325" /></td>
+                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="Կիվի" /></td>
+                      <td className="p-2">
+                        <select
+                          className="h-8 w-full rounded-md border bg-background px-2"
+                          value={row.category}
+                          onChange={(e) => updateManualRow(i, 'category', e.target.value)}
+                        >
+                          <option value="">Կատեգորիա</option>
+                          {categories?.map((c) => (
+                            <option key={c._id} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)} placeholder="Hito" /></td>
+                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)} placeholder="Metal Type hook (Classic)" /></td>
+                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)} placeholder="16'' 400mm" /></td>
+                      <td className="p-2">
+                        <Button size="icon-sm" variant="ghost" onClick={() => removeManualRow(i)} disabled={manualRows.length <= 1}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-3 md:hidden">
+            {manualRows.map((row, i) => {
+              const rowReady = isManualRowReady(row);
+              const alreadyAdded = manualImportedRows.has(i);
+              return (
+                <div key={i} className="rounded-lg border bg-muted/20 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">Տող {i + 1}</span>
+                    <Button size="icon-sm" variant="ghost" onClick={() => removeManualRow(i)} disabled={manualRows.length <= 1}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2">
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="արտիկուլ" />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="անվանում" />
+                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.category} onChange={(e) => updateManualRow(i, 'category', e.target.value)}>
+                      <option value="">Կատեգորիա</option>
+                      {categories?.map((c) => (
+                        <option key={c._id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)} placeholder="ապրանքանիշ" />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)} placeholder="տեսակ" />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)} placeholder="չափ" />
+                  </div>
+
+                  <Button
+                    size="sm"
+                    className="mt-3 w-full"
+                    disabled={!rowReady || alreadyAdded || manualImportingAll || manualImportingRow === i}
+                    onClick={() => handleManualImportOne(i)}
+                    variant={alreadyAdded ? 'outline' : 'default'}
+                  >
+                    {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? 'Ավելացված' : 'Ավելացնել'}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-2 text-xs text-muted-foreground">
+            Պարտադիր դաշտեր՝ արտիկուլ, անվանում, կատեգորիա։ Այլ սյունակները կամընտրական են։
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="mb-6">
         <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-5 w-5 text-primary" /> Ներբեռնել ֆայլ</CardTitle></CardHeader>
@@ -437,10 +841,31 @@ export default function ImportProductsPage() {
             Ապրանքի ({parsed.length} Նախադիտում)
           </CardTitle></CardHeader>
           <CardContent>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="text-xs text-muted-foreground">Ներմուծված: {importedRows.size} / {parsed.length}</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={parsed.length}
+                  value={moveToManualCount}
+                  onChange={(e) => setMoveToManualCount(Number(e.target.value) || 1)}
+                  className="h-8 w-20 rounded-md border bg-background px-2 text-xs"
+                />
+                <Button size="sm" variant="outline" onClick={handleMoveParsedToManual}>
+                  Տեղափոխել «Ավելացնել շատ»
+                </Button>
+                <Button onClick={handleImport} disabled={importing || done} size="sm" className="gap-2">
+                  {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {importing ? 'Ներմուծվում է...' : `Ավելացնել բոլորը (${parsed.length})`}
+                </Button>
+              </div>
+            </div>
             <div className="max-h-80 overflow-auto rounded-lg border">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-muted">
                   <tr className="border-b">
+                    <th className="p-2 text-left font-medium">Ավելացնել</th>
                     <th className="p-2 text-left font-medium">Անվանում</th>
                     <th className="p-2 text-left font-medium">Գին</th>
                     <th className="p-2 text-left font-medium">Կատեգորիա</th>
@@ -454,6 +879,17 @@ export default function ImportProductsPage() {
                 <tbody>
                   {parsed.map((r, i) => (
                     <tr key={i} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="p-2">
+                        <Button
+                          size="sm"
+                          variant={importedRows.has(i) ? 'outline' : 'default'}
+                          disabled={importing || importingRow === i || importedRows.has(i)}
+                          onClick={() => handleImportOne(i)}
+                          className="h-7 px-2 text-[11px]"
+                        >
+                          {importingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : importedRows.has(i) ? 'Ավելացված' : 'Ավելացնել'}
+                        </Button>
+                      </td>
                       <td className="p-2 max-w-50 truncate" title={r.name || '—'}>{r.name || '—'}</td>
                       <td className="p-2 whitespace-nowrap">{r.price ? r.price.toLocaleString() : '—'} ֏</td>
                       <td className="p-2">{r.category}</td>
@@ -475,7 +911,7 @@ export default function ImportProductsPage() {
 
             <Button onClick={handleImport} disabled={importing || done} size="lg" className="mt-4 w-full gap-2">
               {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : done ? <CheckCircle2 className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-              {importing ? 'Ներմուծվում է...' : done ? 'Ներմուծվել է' : `Ներմուծել ${parsed.length} ապրանք`}
+              {importing ? 'Ներմուծվում է...' : done ? 'Ներմուծվել է' : `Ավելացնել բոլորը (${parsed.length})`}
             </Button>
           </CardContent>
         </Card>

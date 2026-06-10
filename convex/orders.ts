@@ -98,6 +98,78 @@ export const create = mutation({
   },
 });
 
+export const validateCart = mutation({
+  args: {
+    items: v.array(
+      v.object({
+        productId: v.id('products'),
+        quantity: v.number(),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const normalizedItems: Array<{
+      id: string;
+      name: string;
+      price: number;
+      image: string | null;
+      quantity: number;
+      maxStock: number;
+      qtyStep: number;
+    }> = [];
+
+    const issues: string[] = [];
+    let changed = false;
+
+    for (const input of args.items) {
+      const product = await ctx.db.get(input.productId);
+      if (!product || !product.isActive) {
+        changed = true;
+        issues.push('Որոշ ապրանքներ այլևս հասանելի չեն');
+        continue;
+      }
+
+      if (product.stock <= 0) {
+        changed = true;
+        issues.push(`Ապրանքը սպառված է: ${product.name}`);
+        continue;
+      }
+
+      const step = Math.max(1, product.qtyStep ?? 1);
+      const requested = Math.max(step, Math.floor(input.quantity));
+      const maxByStock = Math.max(0, Math.floor(product.stock / step) * step);
+      const clamped = Math.min(requested, maxByStock > 0 ? maxByStock : product.stock);
+
+      const finalQty = Math.max(step, clamped);
+      if (finalQty !== input.quantity) {
+        changed = true;
+        issues.push(`Քանակը թարմացվեց ըստ պահեստի: ${product.name}`);
+      }
+
+      normalizedItems.push({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] ?? null,
+        quantity: finalQty,
+        maxStock: product.stock,
+        qtyStep: step,
+      });
+    }
+
+    const subtotal = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    if (normalizedItems.length !== args.items.length) changed = true;
+
+    return {
+      changed,
+      items: normalizedItems,
+      subtotal,
+      issues,
+    };
+  },
+});
+
 export const listAdmin = query({
   args: {
     sessionToken: v.string(),
@@ -211,7 +283,45 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, ...patch } = args;
+    const { id, status, paymentStatus } = args;
+    const patch = { status, paymentStatus };
+
+    const order = await ctx.db.get(id);
+    if (!order) throw new Error('Պատվերը չի գտնվել');
+
+    const prevStatus = order.status;
+    const nextStatus = args.status ?? prevStatus;
+
+    if (nextStatus !== prevStatus) {
+      // Cancelled -> restore stock back to catalog
+      if (nextStatus === 'cancelled' && prevStatus !== 'cancelled') {
+        for (const item of order.items) {
+          const product = await ctx.db.get(item.productId);
+          if (!product) continue;
+          await ctx.db.patch(item.productId, { stock: product.stock + item.quantity, updatedAt: Date.now() });
+        }
+      }
+
+      // Re-open cancelled order -> reserve stock again
+      if (prevStatus === 'cancelled' && nextStatus !== 'cancelled') {
+        for (const item of order.items) {
+          const product = await ctx.db.get(item.productId);
+          if (!product || !product.isActive) {
+            throw new Error(`Ապրանքը հասանելի չէ: ${item.name}`);
+          }
+          if (product.stock < item.quantity) {
+            throw new Error(`Անբավարար պաշար: ${product.name}`);
+          }
+        }
+
+        for (const item of order.items) {
+          const product = await ctx.db.get(item.productId);
+          if (!product) continue;
+          await ctx.db.patch(item.productId, { stock: product.stock - item.quantity, updatedAt: Date.now() });
+        }
+      }
+    }
+
     await ctx.db.patch(id, { ...patch, updatedAt: Date.now() });
   },
 });

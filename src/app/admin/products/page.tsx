@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Edit, Package, Search, Upload, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Edit, Package, Search, Upload, AlertTriangle, LayoutGrid, List } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -16,6 +16,8 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+
+const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 
 function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
@@ -97,13 +99,85 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
   );
 }
 
+function AdminProductListRow({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
+  const { ref, visible } = useReveal();
+  const remove = useMutation(api.products.remove);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await remove({ sessionToken, id: product._id });
+      toast.success('Ապրանքը ջնջվել է');
+      setDeleteOpen(false);
+    } catch {
+      toast.error('Սխալ ջնջելու ժամանակ');
+    } finally { setDeleting(false); }
+  };
+
+  return (
+    <div ref={ref} style={revealStyle(visible, index * 0.03)} className="rounded-2xl border bg-card p-3 shadow-card">
+      <div className="flex items-center gap-3">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
+          {product.images?.[0] ? (
+            <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">■</div>
+          )}
+          {product.isFeatured && <Badge className="absolute left-1 top-1 h-5 px-1 text-[10px]">★</Badge>}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{product.name}</p>
+          <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-sm font-bold text-primary">{formatPrice(product.price)}</span>
+            <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
+              {product.stock > 0 ? `Պահեստ: ${product.stock}` : 'Անհասանելի'}
+            </Badge>
+            {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 gap-1">
+          <Link href={`/admin/products/${product._id}/edit`}>
+            <Button size="icon-sm" variant="secondary" className="h-8 w-8"><Edit className="h-3.5 w-3.5" /></Button>
+          </Link>
+          <Button size="icon-sm" variant="destructive" className="h-8 w-8" onClick={() => setDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5" /></Button>
+          <Dialog open={deleteOpen}>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <DialogTitle className="text-center">Ջնջել ապրանքը</DialogTitle>
+                <DialogDescription className="text-center">
+                  Համոզվա՞ծ եք, որ ցանկանում եք ջնջել<br />
+                  <strong>{product.name}</strong>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" className="flex-1" disabled={deleting} onClick={() => setDeleteOpen(false)}>Չեղարկել</Button>
+                <Button variant="destructive" className="flex-1" disabled={deleting} onClick={handleDelete}>{deleting ? 'Ջնջվում է...' : 'Ջնջել'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminProductsPage() {
   const { sessionToken } = useAuth();
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [queryLimit, setQueryLimit] = useState(20);
   const restoreScrollY = useRef<number | null>(null);
   const [cachedProducts, setCachedProducts] = useState<Awaited<ReturnType<typeof useQuery<typeof api.products.list>>> | undefined>(undefined);
   const products = useQuery(api.products.list, { limit: queryLimit });
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [catFilter, setCatFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -142,6 +216,17 @@ export default function AdminProductsPage() {
     requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'auto' }));
   }, [effectiveProducts?.length]);
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem(ADMIN_PRODUCTS_VIEW_KEY);
+    if (saved === 'grid' || saved === 'list') {
+      setViewMode(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(ADMIN_PRODUCTS_VIEW_KEY, viewMode);
+  }, [viewMode]);
+
   return (
     <div>
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -149,9 +234,22 @@ export default function AdminProductsPage() {
           <h1 className="text-3xl font-bold">Ապրանքներ</h1>
           <p className="text-muted-foreground">{effectiveProducts?.length ?? 0} ապրանք</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/products/import"><Button variant="outline" size="sm" className="gap-2 text-xs"><Upload className="h-3.5 w-3.5" /> CSV</Button></Link>
-          <Link href="/admin/products/add"><Button size="sm" className="gap-2"><Plus className="h-3.5 w-3.5" /> Ավելացնել</Button></Link>
+        <div className="relative flex gap-2">
+          <Button size="sm" className="gap-2" onClick={() => setAddMenuOpen((v) => !v)}>
+            <Plus className="h-3.5 w-3.5" /> Ավելացնել
+          </Button>
+          {addMenuOpen && (
+            <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl border bg-popover p-2 shadow-lg">
+              <Link href="/admin/products/add" onClick={() => setAddMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">Ավելացնել</Button>
+              </Link>
+              <Link href="/admin/products/import" onClick={() => setAddMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Upload className="h-3.5 w-3.5" /> Ավելացնել շատ
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -197,13 +295,27 @@ export default function AdminProductsPage() {
             <SelectItem value="stockAsc">Պահեստ ↑</SelectItem>
           </SelectContent>
         </Select>
+        <div className="ml-auto flex items-center gap-1 rounded-lg border bg-background p-1">
+          <button onClick={() => setViewMode('grid')} className={`rounded-md p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`} aria-label="Grid view">
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button onClick={() => setViewMode('list')} className={`rounded-md p-1.5 transition-colors ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`} aria-label="List view">
+            <List className="h-4 w-4" />
+          </button>
+        </div>
         </div>
       </div>
       <p className="mb-4 text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-        {filtered?.map((p, i) => <AdminProductCard key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
-      </div>
+      {viewMode === 'grid' ? (
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+          {filtered?.map((p, i) => <AdminProductCard key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtered?.map((p, i) => <AdminProductListRow key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
+        </div>
+      )}
 
       {filtered?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
