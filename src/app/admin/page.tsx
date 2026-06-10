@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,7 +56,7 @@ function StatCard({
 export default function AdminDashboard() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
-  const products = useQuery(api.products.list, {});
+  const products = useQuery(api.products.listAll, {});
   const categories = useQuery(api.categories.list, {});
 
   const lowStock =
