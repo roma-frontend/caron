@@ -4,7 +4,9 @@ import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
 import { api } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
+
+type ProductInsert = Omit<Doc<'products'>, '_id' | '_creationTime'>;
 
 function normalizeProductImages<T extends { images?: string[] }>(product: T): T {
   if (!product.images || product.images.length === 0) return product;
@@ -688,7 +690,7 @@ export const bulkCreate = mutation({
           }
         }
         // Создаём новый товар с дефолтами
-        const createPayload: Record<string, unknown> = {
+        const createPayload: ProductInsert = {
           name: p.name || nextSku || 'Unnamed Product',
           slug: p.slug || (nextSku ? nextSku.toLowerCase().replace(/[^a-z0-9-]/g, '-') : `product-${Date.now()}`),
           description: p.description || '',
@@ -714,7 +716,6 @@ export const bulkCreate = mutation({
           const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
           if (safeAttrs) createPayload.attributes = safeAttrs;
         }
-        if (p.vehicleCompat !== undefined) createPayload.vehicleCompat = p.vehicleCompat;
         
         await ctx.db.insert('products', createPayload);
         created++;
