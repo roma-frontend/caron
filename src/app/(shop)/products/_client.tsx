@@ -199,7 +199,7 @@ export default function ProductsPage() {
           ) : null}
 
           {!brandLoading && (
-            <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+            <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
               {results.map((p, i) => (
                 <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
               ))}

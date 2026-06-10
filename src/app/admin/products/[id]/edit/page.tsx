@@ -21,6 +21,8 @@ import { VehicleCompatSelector } from '@/components/admin/VehicleCompatSelector'
 import type { VehicleCompatEntry } from '@/components/admin/VehicleCompatSelector';
 import { OemNumbersInput } from '@/components/admin/OemNumbersInput';
 
+type OemEntry = { manufacturer: string; code: string };
+
 export default function EditProductPage() {
   const params = useParams();
   const router = useRouter();
@@ -31,8 +33,9 @@ export default function EditProductPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  const [form, setForm] = useState<{ name?: string; price?: number; wholesalePrice?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: any; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
+  const [form, setForm] = useState<{ name?: string; price?: number; wholesalePrice?: number; brand?: string; qtyStep?: number; stock?: number; description?: string; sku?: string; oemNumbers?: OemEntry[]; atgCode?: string; compareAtPrice?: number; discountPercent?: number; categoryId?: string; attributes?: Record<string, unknown> }>({});
   const [images, setImages] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Load product data
@@ -149,28 +152,80 @@ export default function EditProductPage() {
         <Card>
           <CardHeader><CardTitle>Նկարներ</CardTitle></CardHeader>
           <CardContent>
-            <div
-              className={`rounded-xl border-2 border-dashed p-2 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/70 bg-muted/20'}`}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-            >
-            <div className="grid grid-cols-3 gap-3">
-              {images.filter(Boolean).map((img, i) => (
-                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border">
-                  <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" loading="eager" />
-                  <button onClick={() => setImages(images.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                    <X className="h-3 w-3" />
+            <div className="space-y-3">
+              {images.filter(Boolean).length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const activeImages = images.filter(Boolean);
+                      if (selectedImages.length === activeImages.length) {
+                        setSelectedImages([]);
+                      } else {
+                        setSelectedImages(activeImages.map((_, idx) => idx));
+                      }
+                    }}
+                    className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-primary hover:text-primary"
+                  >
+                    {selectedImages.length === images.filter(Boolean).length ? 'Սեղմել ընտրությունը' : 'Ընտրել բոլորը'}
+                  </button>
+                  {selectedImages.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImages((prev) => prev.filter((_, idx) => !selectedImages.includes(idx)));
+                        setSelectedImages([]);
+                      }}
+                      className="rounded-full border border-destructive/70 bg-destructive/10 px-3 py-1 text-[11px] font-medium text-destructive transition hover:bg-destructive/20"
+                    >
+                      Ջնջել ընտրվածները ({selectedImages.length})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImages([]);
+                      setSelectedImages([]);
+                    }}
+                    className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-destructive hover:text-destructive"
+                  >
+                    Ջնջել բոլոր նկարները
                   </button>
                 </div>
-              ))}
-              <button onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary" disabled={uploading}>
-                <ImagePlus className="h-8 w-8" />
-              </button>
+              )}
+              <div
+                className={`rounded-xl border-2 border-dashed p-2 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/70 bg-muted/20'}`}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+              >
+              <div className="grid grid-cols-3 gap-3">
+                {images.filter(Boolean).map((img, i) => {
+                  const selected = selectedImages.includes(i);
+                  return (
+                    <div key={`${img}-${i}`} className={`group relative aspect-square overflow-hidden rounded-lg border transition-all ${selected ? 'border-primary ring-2 ring-primary/30' : 'border-border/70'}`}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedImages((prev) => prev.includes(i) ? prev.filter((idx) => idx !== i) : [...prev, i])}
+                        className={`absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border text-[12px] transition ${selected ? 'border-primary bg-primary text-white shadow-lg' : 'border-white/80 bg-white/95 text-muted-foreground shadow-sm hover:border-primary hover:text-primary'}`}
+                      >
+                        {selected ? '✓' : '+'}
+                      </button>
+                      <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" loading="eager" />
+                      <button onClick={() => setImages(images.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+                <button onClick={() => fileRef.current?.click()} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary" disabled={uploading}>
+                  <ImagePlus className="h-8 w-8" />
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
+              </div>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
           </CardContent>
         </Card>
 
@@ -285,7 +340,8 @@ export default function EditProductPage() {
                 if (newCompat.length > 0) {
                   setForm({ ...form, attributes: { ...base, vehicleCompat: newCompat } });
                 } else {
-                  const { vehicleCompat: _, ...rest } = base as Record<string, unknown>;
+                  const rest = { ...base } as Record<string, unknown>;
+                  delete rest.vehicleCompat;
                   setForm({ ...form, attributes: Object.keys(rest).length > 0 ? rest : undefined });
                 }
               }}
