@@ -78,6 +78,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
   const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
   const maxQty = stock != null ? Math.max(0, stock - cartQty) : Infinity;
   const atLimit = stock != null && cartQty >= stock;
+  const detailHref = `/products/${encodeURIComponent(slug ?? id)}`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -98,11 +99,11 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
         {compact ? (
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
-            <Link href={`/products/${slug}`} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+            <Link href={detailHref} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
               {image ? <Image src={image} alt={name} width={64} height={64} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
             </Link>
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-              <Link href={`/products/${slug}`} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
+              <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
@@ -148,7 +149,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
             )}
 
             <div className="relative aspect-3/4 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
-              {slug && <Link href={`/products/${slug}`} aria-label={name} className="absolute inset-0 z-[5]" />}
+              <Link href={detailHref} aria-label={name} className="absolute inset-0 z-[5]" />
               {image && !imgError ? (
                 <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
               ) : (
@@ -209,7 +210,7 @@ export function ProductCard({ id, name, slug, price, wholesalePrice, compareAtPr
             <div className="p-4">
               {category && <p className="mb-1 text-xs font-medium text-primary/70">{category}</p>}
               <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
-                {slug ? <Link href={`/products/${slug}`} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link> : name}
+                <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
               </h3>
 
               {reviewCount && reviewCount > 0 ? (

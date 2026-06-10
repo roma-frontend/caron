@@ -250,7 +250,14 @@ export const getById = query({
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    const product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', args.slug)).unique();
+    const normalized = args.slug.trim();
+    let product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', normalized)).unique();
+    if (!product) {
+      product = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', normalized)).unique();
+    }
+    if (!product && /^j[0-9a-z]{12,}$/i.test(normalized)) {
+      product = await ctx.db.get(normalized as Id<'products'>);
+    }
     if (!product) return null;
     if (!product.isActive) return null;
     const cat = await ctx.db.get(product.categoryId);
