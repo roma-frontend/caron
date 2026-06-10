@@ -226,7 +226,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
               ) : null}
 
               <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span className="text-lg font-bold text-primary">{formatPrice(displayPrice)}</span>
+                <span className="text-md font-bold text-primary">{formatPrice(displayPrice)}</span>
                 {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
               </div>
 
