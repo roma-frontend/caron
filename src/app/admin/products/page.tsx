@@ -187,9 +187,15 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const categories = useQuery(api.categories.list, {});
+  const searchTerm = search.trim().toLowerCase();
 
   let filtered = products?.filter((p) => {
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !(p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))) return false;
+    if (searchTerm) {
+      const byName = p.name.toLowerCase().includes(searchTerm);
+      const bySku = p.sku?.toLowerCase().includes(searchTerm) ?? false;
+      const byAtg = p.atgCode?.toLowerCase().includes(searchTerm) ?? false;
+      if (!byName && !bySku && !byAtg) return false;
+    }
     if (catFilter !== 'all' && p.categoryId !== catFilter) return false;
     if (stockFilter === 'instock' && p.stock <= 0) return false;
     if (stockFilter === 'low' && (p.stock > 5 || p.stock <= 0)) return false;
