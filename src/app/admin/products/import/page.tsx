@@ -73,6 +73,12 @@ function getColumnAliases(): string[] {
   return Object.keys(COLUMN_MAP);
 }
 
+function normalizeAttributeKey(rawKey: string): string {
+  const key = rawKey.trim().toLowerCase();
+  if (key === 'չափս' || key === 'size') return 'չափ';
+  return key;
+}
+
 function parseRow(headers: string[], values: string[], categoriesMap: Record<string, string>): ParsedRow {
   const get = (key: string) => {
     const h = headers.map((h) => h.toLowerCase().trim());
@@ -97,7 +103,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     if (!v) continue;
 
     if (h.startsWith('attr_') || h.startsWith('attribute_') || h.startsWith('filter_')) {
-      const key = h.replace(/^(attr_|attribute_|filter_)/, '');
+      const key = normalizeAttributeKey(h.replace(/^(attr_|attribute_|filter_)/, ''));
       if (key) attrs[key] = v;
       continue;
     }
@@ -393,10 +399,11 @@ export default function ImportProductsPage() {
               <div>
                 <p className="mb-1.5 font-semibold text-foreground">Ատրիբուտներ / ֆիլտրեր</p>
                 <p className="mb-2 text-muted-foreground">Յուրաքանչյուր ֆիլտրի համար ավելացրու սյունակ <code className="text-primary">attr_ՖիլտրիԱնվանում</code></p>
+                <p className="mb-2 text-muted-foreground">Չափի համար օգտագործեք <code className="text-primary">attr_չափ</code> (նաև <code className="text-primary">attr_չափս</code> և <code className="text-primary">attr_size</code> կպահվեն որպես <code className="text-primary">չափ</code>)</p>
                 <details>
                   <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Կատեգորիաների օրինակներ</summary>
                    <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-muted p-3 leading-relaxed text-muted-foreground">
-{`Անիվներ:   attr_ապրանքանիշ, attr_սեզոն, attr_լայնություն, attr_պրոֆիլ, attr_տրամագիծ
+{`Անիվներ:   attr_ապրանքանիշ, attr_սեզոն, attr_լայնություն, attr_պրոֆիլ, attr_չափ, attr_տրամագիծ
 Յուղեր:    attr_ապրանքանիշ, attr_մածուցիկություն, attr_յուղի_տեսակ, attr_ծավալ, attr_api_դաս
 Անվահեծ:   attr_ապրանքանիշ, attr_արգելակի_տեսակ, attr_առանցք, attr_նյութ`}
                   </pre>
