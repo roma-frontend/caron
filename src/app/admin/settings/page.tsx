@@ -711,6 +711,9 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Filter Migration */}
+          <FilterMigrationCard sessionToken={sessionToken || ''} />
         </TabsContent>
 
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full gap-2 mt-6">
@@ -719,5 +722,61 @@ export default function AdminSettingsPage() {
         </Button>
       </Tabs>
     </div>
+  );
+}
+
+function FilterMigrationCard({ sessionToken }: { sessionToken: string }) {
+  const [migrating, setMigrating] = useState(false);
+
+  const handleMigrate = async () => {
+    if (!confirm('Սա կգծանցի բոլոր ապրանքների ֆիլտր հատկանիշները նոր համակարգին:\n\nՑանց ընդհանուր սխալ առաջացի՞ք:')) {
+      return;
+    }
+
+    setMigrating(true);
+    try {
+      const res = await fetch('/api/admin/migrate-filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Migration failed');
+      }
+
+      const result = await res.json();
+      toast.success(`Գծանցում հաջողված։ ${result.updated} ապրանք թարմացվել է`);
+    } catch (error: any) {
+      toast.error(`Գծանցում ձախողվեց։ ${error.message}`);
+    } finally {
+      setMigrating(false);
+    }
+  };
+
+  return (
+    <Card className="border-warning/50 bg-warning/5">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg text-warning">
+          <Power className="h-5 w-5" />
+          {'Ֆիլտրի համակարգ միգրացիա'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Արդիական ֆիլտրային համակարգը կօգտագործի ֆիլտրի ID-ը շարականմամբ, այլ ոչ թե slug-ը: Սա թույլ կտա անվտանգ փոփոխել ֆիլտրի անունը, առանց համակարգի խախտման:
+        </p>
+        <div className="bg-muted/50 p-3 rounded-lg text-xs">
+          <p className="font-mono text-muted-foreground">
+            Սա կվերանվանի բոլոր product.attributes բանալիները «slug» -ից «filter_id» -ի:
+          </p>
+        </div>
+        <Button onClick={handleMigrate} disabled={migrating} className="w-full gap-2">
+          <Power className="h-4 w-4" />
+          {migrating ? 'Գծանցվում է...' : 'Գործարկել միգրացիա'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

@@ -100,10 +100,10 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
     onFilterChange({ ...activeFilters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
   };
 
-  const toggleMulti = (slug: string, option: string) => {
-    const current = ((activeFilters.attributes || {})[slug] as string[]) || [];
+  const toggleMulti = (filterId: string, option: string) => {
+    const current = ((activeFilters.attributes || {})[filterId] as string[]) || [];
     const next = current.includes(option) ? current.filter((v) => v !== option) : [...current, option];
-    updateAttr(slug, next);
+    updateAttr(filterId, next);
   };
 
   const activeCount = (activeFilters.categoryId ? 1 : 0) + (activeFilters.minPrice ? 1 : 0) + (activeFilters.maxPrice ? 1 : 0) + (activeFilters.inStockOnly ? 1 : 0) + (activeFilters.onSale ? 1 : 0) + (activeFilters.minRating ? 1 : 0) + Object.keys(activeFilters.attributes || {}).length;
@@ -187,18 +187,18 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
 
       {/* Dynamic filters */}
       {filterDefs?.map((def) => (
-        <Section key={def._id} title={def.name} k={def.slug} expanded={expanded} toggle={toggle}>
+        <Section key={def._id} title={def.name} k={def._id} expanded={expanded} toggle={toggle}>
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
             <div className="flex flex-wrap gap-2">
               {def.options.map((opt) => {
                 const isMulti = def.type === 'multiselect';
                 const active = isMulti
-                  ? ((activeFilters.attributes?.[def.slug] as string[]) || []).includes(opt)
-                  : activeFilters.attributes?.[def.slug] === opt;
+                  ? ((activeFilters.attributes?.[def._id] as string[]) || []).includes(opt)
+                  : activeFilters.attributes?.[def._id] === opt;
                 return (
                   <Badge key={opt} variant={active ? 'default' : 'outline'}
                     className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
-                    onClick={() => isMulti ? toggleMulti(def.slug, opt) : updateAttr(def.slug, active ? null : opt)}
+                    onClick={() => isMulti ? toggleMulti(def._id, opt) : updateAttr(def._id, active ? null : opt)}
                   >{opt}</Badge>
                 );
               })}
@@ -207,15 +207,15 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
           {def.type === 'boolean' && (
             <label className="flex items-center gap-2 cursor-pointer text-sm">
               <input type="checkbox" className="rounded border-input accent-primary"
-                checked={!!(activeFilters.attributes?.[def.slug])}
-                onChange={(e) => updateAttr(def.slug, e.target.checked || undefined)} />
+                checked={!!(activeFilters.attributes?.[def._id])}
+                onChange={(e) => updateAttr(def._id, e.target.checked || undefined)} />
               {def.name}
             </label>
           )}
           {def.type === 'range' && (
             <div className="flex gap-2 items-center">
               <Input type="number" placeholder="Նվազագույն" className="h-8 text-xs"
-                onChange={(e) => updateAttr(def.slug, e.target.value ? Number(e.target.value) : null)} />
+                onChange={(e) => updateAttr(def._id, e.target.value ? Number(e.target.value) : null)} />
               {def.unit && <span className="text-xs text-muted-foreground">{def.unit}</span>}
             </div>
           )}

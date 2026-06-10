@@ -176,3 +176,40 @@ export const convertOemNumbersFormat = mutation({
     return { updated };
   },
 });
+
+export const migrateFilterAttributeKeysToId = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Build mapping of slug -> _id for all filterDefinitions
+    const filterDefs = await ctx.db.query('filterDefinitions').collect();
+    const slugToId = new Map<string, string>(filterDefs.map((f) => [f.slug, f._id]));
+
+    const products = await ctx.db.query('products').collect();
+    let updated = 0;
+
+    for (const product of products) {
+      const attrs = (product.attributes ?? {}) as Record<string, unknown>;
+      const newAttrs: Record<string, unknown> = {};
+      let changed = false;
+
+      for (const [key, value] of Object.entries(attrs)) {
+        const filterId = slugToId.get(key);
+        if (filterId) {
+          // This key is a slug, map it to the _id
+          newAttrs[filterId] = value;
+          changed = true;
+        } else {
+          // Not a slug (might be brand, etc.), keep as is
+          newAttrs[key] = value;
+        }
+      }
+
+      if (changed) {
+        await ctx.db.patch(product._id, { attributes: newAttrs });
+        updated++;
+      }
+    }
+
+    return { updated, message: `Migrated ${updated} products to use filter _id instead of slug` };
+  },
+});
