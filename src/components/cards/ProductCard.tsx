@@ -130,19 +130,22 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
           </div>
         ) : (
           /* ─── Grid card mode (original) ─── */
-          <div
-            className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern"
-            style={{
-              viewTransitionName: `product-img-${id}`,
-              transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
-              transform: isHovered
-                ? `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${(mousePos.y - 150) / -30}deg) rotateY(${(mousePos.x - 150) / 30}deg)`
-                : 'translateY(0) scale(1) perspective(1000px) rotateX(0deg) rotateY(0deg)',
-              boxShadow: isHovered
-                ? 'var(--shadow-card-hover)'
-                : 'var(--shadow-card)',
-            }}
-          >
+          <div className="relative overflow-hidden rounded-2xl">
+            <div
+              className="group relative border bg-background/80 backdrop-blur-sm card-modern rounded-2xl"
+              style={{
+                viewTransitionName: `product-img-${id}`,
+                transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
+                transform: isHovered
+                  ? `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${(mousePos.y - 150) / -30}deg) rotateY(${(mousePos.x - 150) / 30}deg)`
+                  : 'translateY(0) scale(1) perspective(1000px) rotateX(0deg) rotateY(0deg)',
+                transformStyle: 'preserve-3d',
+                backfaceVisibility: 'hidden',
+                boxShadow: isHovered
+                  ? 'var(--shadow-card-hover)'
+                  : 'var(--shadow-card)',
+              }}
+            >
             {isHovered && (
               <div
                 className="pointer-events-none absolute inset-0 -z-10 rounded-2xl"
@@ -153,7 +156,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
             <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
               <Link href={detailHref} aria-label={name} className="absolute inset-0 z-[5]" />
               {image && !imgError ? (
-                <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
+                <Image src={image} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-fill" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/30"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
@@ -243,7 +246,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
               )}
             </div>
 
-            <div className="px-2 sm:px-4 pb-2 sm:pb-4">
+              <div className="px-2 sm:px-4 pb-2 sm:pb-4">
               <div className="flex items-center gap-1.5">
                 <div className="flex items-center rounded-lg border">
                   <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
@@ -255,6 +258,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
                   <ShoppingCart data-cart-icon className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
             </div>
           </div>
         )}
