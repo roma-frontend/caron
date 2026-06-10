@@ -57,6 +57,16 @@ function normalizeHeaderToken(value: string): string {
     .trim();
 }
 
+function normalizeFilterToken(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\uFEFF/g, '')
+    .replace(/["'`]/g, '')
+    .replace(/[_\-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function parseTabularText(text: string): string[][] {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter((l) => l.trim());
   return lines.map((line) => splitLine(line, '\t'));
@@ -237,6 +247,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
 export default function ImportProductsPage() {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const categories = useQuery(api.categories.list, {});
+  const filterDefs = useQuery(api.filters.listAll, {});
   const bulkCreate = useMutation(api.products.bulkCreate);
   const fileRef = useRef<HTMLInputElement>(null);
   const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
@@ -255,6 +266,49 @@ export default function ImportProductsPage() {
 
   const categoriesMap: Record<string, string> = {};
   if (categories) for (const c of categories) categoriesMap[c.name.toLowerCase()] = c._id;
+
+  const categoryNameById: Record<string, string> = {};
+  if (categories) for (const c of categories) categoryNameById[c._id] = c.name;
+
+  const filterDefsByCategory: Record<string, Array<{ name: string; slug: string; options?: string[] }>> = {};
+  if (filterDefs) {
+    for (const f of filterDefs) {
+      if (!filterDefsByCategory[f.categoryId]) filterDefsByCategory[f.categoryId] = [];
+      filterDefsByCategory[f.categoryId].push({ name: f.name, slug: f.slug, options: f.options });
+    }
+  }
+
+  const getFilterOptionsForCategory = (categoryName: string, kind: 'brand' | 'type' | 'size'): string[] => {
+    const catId = categoriesMap[categoryName.toLowerCase().trim()];
+    if (!catId) return [];
+    const defs = filterDefsByCategory[catId] ?? [];
+    if (defs.length === 0) return [];
+
+    const aliases: Record<'brand' | 'type' | 'size', string[]> = {
+      brand: ['brand', 'ապրանքանիշ'],
+      type: ['type', 'տեսակ'],
+      size: ['size', 'չափ', 'չափս'],
+    };
+
+    const target = defs.find((d) => {
+      const slugNorm = normalizeFilterToken(d.slug);
+      const nameNorm = normalizeFilterToken(d.name);
+      return aliases[kind].some((a) => {
+        const aliasNorm = normalizeFilterToken(a);
+        return slugNorm === aliasNorm || nameNorm === aliasNorm;
+      });
+    });
+
+    const options = target?.options ?? [];
+    return options.filter((o) => o && o.trim().length > 0);
+  };
+
+  const withCurrentValue = (options: string[], current: string): string[] => {
+    const v = current.trim();
+    if (!v) return options;
+    if (options.some((o) => o.toLowerCase() === v.toLowerCase())) return options;
+    return [v, ...options];
+  };
 
   const isManualRowReady = (r: ManualRow) =>
     Boolean(r.sku.trim() && r.name.trim() && r.category.trim());
@@ -653,6 +707,9 @@ export default function ImportProductsPage() {
                 {manualRows.map((row, i) => {
                   const rowReady = isManualRowReady(row);
                   const alreadyAdded = manualImportedRows.has(i);
+                  const brandOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'brand'), row.brand);
+                  const typeOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'type'), row.type);
+                  const sizeOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'size'), row.size);
                   return (
                     <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="p-2">
@@ -680,9 +737,42 @@ export default function ImportProductsPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)} placeholder="Hito" /></td>
-                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)} placeholder="Metal Type hook (Classic)" /></td>
-                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)} placeholder="16'' 400mm" /></td>
+                      <td className="p-2">
+                        <select
+                          className="h-8 w-full rounded-md border bg-background px-2"
+                          value={row.brand}
+                          onChange={(e) => updateManualRow(i, 'brand', e.target.value)}
+                        >
+                          <option value="">{row.category ? 'Ապրանքանիշ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                          {brandOptions.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-2">
+                        <select
+                          className="h-8 w-full rounded-md border bg-background px-2"
+                          value={row.type}
+                          onChange={(e) => updateManualRow(i, 'type', e.target.value)}
+                        >
+                          <option value="">{row.category ? 'Տեսակ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                          {typeOptions.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-2">
+                        <select
+                          className="h-8 w-full rounded-md border bg-background px-2"
+                          value={row.size}
+                          onChange={(e) => updateManualRow(i, 'size', e.target.value)}
+                        >
+                          <option value="">{row.category ? 'Չափ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                          {sizeOptions.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="p-2">
                         <Button size="icon-sm" variant="ghost" onClick={() => removeManualRow(i)} disabled={manualRows.length <= 1}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </td>
@@ -697,6 +787,9 @@ export default function ImportProductsPage() {
             {manualRows.map((row, i) => {
               const rowReady = isManualRowReady(row);
               const alreadyAdded = manualImportedRows.has(i);
+              const brandOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'brand'), row.brand);
+              const typeOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'type'), row.type);
+              const sizeOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'size'), row.size);
               return (
                 <div key={i} className="rounded-lg border bg-muted/20 p-3">
                   <div className="mb-2 flex items-center justify-between">
@@ -713,9 +806,24 @@ export default function ImportProductsPage() {
                         <option key={c._id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
-                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)} placeholder="ապրանքանիշ" />
-                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)} placeholder="տեսակ" />
-                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)} placeholder="չափ" />
+                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)}>
+                      <option value="">{row.category ? 'ապրանքանիշ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                      {brandOptions.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)}>
+                      <option value="">{row.category ? 'տեսակ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                      {typeOptions.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                    <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)}>
+                      <option value="">{row.category ? 'չափ' : 'Սկզբում ընտրեք կատեգորիա'}</option>
+                      {sizeOptions.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <Button

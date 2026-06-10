@@ -4,6 +4,7 @@ import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
 import { api } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
+import type { Id } from './_generated/dataModel';
 
 function normalizeProductImages<T extends { images?: string[] }>(product: T): T {
   if (!product.images || product.images.length === 0) return product;
@@ -566,6 +567,60 @@ export const bulkCreate = mutation({
     let created = 0;
     let updated = 0;
 
+    const asciiFieldName = /^[\x20-\x7E]+$/;
+    const filterIndexCache = new Map<string, {
+      byId: Set<string>;
+      bySlug: Map<string, string>;
+      byName: Map<string, string>;
+    }>();
+
+    const getFilterIndexForCategory = async (categoryId: Id<'categories'>) => {
+      const cached = filterIndexCache.get(categoryId);
+      if (cached) return cached;
+
+      const defs = await ctx.db
+        .query('filterDefinitions')
+        .withIndex('by_category', (q) => q.eq('categoryId', categoryId))
+        .take(100);
+
+      const index = {
+        byId: new Set(defs.map((d) => d._id)),
+        bySlug: new Map(defs.map((d) => [d.slug.toLowerCase().trim(), d._id])),
+        byName: new Map(defs.map((d) => [d.name.toLowerCase().trim(), d._id])),
+      };
+      filterIndexCache.set(categoryId, index);
+      return index;
+    };
+
+    const sanitizeAttributes = async (categoryId: Id<'categories'>, attributes: unknown): Promise<Record<string, unknown> | undefined> => {
+      if (!attributes || typeof attributes !== 'object') return undefined;
+
+      const index = await getFilterIndexForCategory(categoryId);
+      const result: Record<string, unknown> = {};
+
+      for (const [rawKey, value] of Object.entries(attributes as Record<string, unknown>)) {
+        const key = rawKey.trim();
+        if (!key) continue;
+
+        let targetKey: string | undefined;
+
+        if (index.byId.has(key)) {
+          targetKey = key;
+        } else {
+          const norm = key.toLowerCase().trim();
+          targetKey = index.bySlug.get(norm) ?? index.byName.get(norm);
+          if (!targetKey && asciiFieldName.test(key)) {
+            targetKey = key;
+          }
+        }
+
+        if (!targetKey) continue;
+        result[targetKey] = value;
+      }
+
+      return Object.keys(result).length > 0 ? result : undefined;
+    };
+
     // Reject duplicate SKUs inside the same import file.
     const skuRows = new Map<string, number>();
     for (let i = 0; i < args.products.length; i++) {
@@ -598,7 +653,7 @@ export const bulkCreate = mutation({
           }
         }
         // Обновляем ТОЛЬКО переданные поля
-        const updatePayload: Record<string, any> = { updatedAt: now };
+        const updatePayload: Record<string, unknown> = { updatedAt: now };
         
         // Передаём только заполненные поля
         if (p.name !== undefined) updatePayload.name = p.name;
@@ -617,7 +672,10 @@ export const bulkCreate = mutation({
         if (p.seoTitle !== undefined) updatePayload.seoTitle = p.seoTitle;
         if (p.seoDescription !== undefined) updatePayload.seoDescription = p.seoDescription;
         if (p.images !== undefined) updatePayload.images = p.images;
-        if (p.attributes !== undefined) updatePayload.attributes = p.attributes;
+        if (p.attributes !== undefined) {
+          const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
+          updatePayload.attributes = safeAttrs;
+        }
         if (p.vehicleCompat !== undefined) updatePayload.vehicleCompat = p.vehicleCompat;
         
         await ctx.db.patch(existing._id, updatePayload);
@@ -652,10 +710,13 @@ export const bulkCreate = mutation({
         if (p.showInPromotions !== undefined) createPayload.showInPromotions = p.showInPromotions;
         if (p.seoTitle !== undefined) createPayload.seoTitle = p.seoTitle;
         if (p.seoDescription !== undefined) createPayload.seoDescription = p.seoDescription;
-        if (p.attributes !== undefined) createPayload.attributes = p.attributes;
+        if (p.attributes !== undefined) {
+          const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
+          if (safeAttrs) createPayload.attributes = safeAttrs;
+        }
         if (p.vehicleCompat !== undefined) createPayload.vehicleCompat = p.vehicleCompat;
         
-        await ctx.db.insert('products', createPayload as any);
+        await ctx.db.insert('products', createPayload);
         created++;
       }
     }
