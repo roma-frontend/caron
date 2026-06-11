@@ -11,9 +11,8 @@ import { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ProductFilters } from '@/components/ProductFilters';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { useSettings } from '@/hooks/useSettings';
 import Link from 'next/link';
-
-const PAGE_SIZE = 20;
 
 export default function CategoryPage() {
   const params = useParams();
@@ -23,6 +22,8 @@ export default function CategoryPage() {
   const [filters, setFilters] = useState<{
     minPrice?: number; maxPrice?: number; inStockOnly?: boolean; sort?: string; attributes?: Record<string, unknown>;
   }>({});
+  const settings = useSettings();
+  const PAGE_SIZE = settings?.productsPerPage || 20;
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +50,7 @@ export default function CategoryPage() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [status, loadMore]);
+  }, [status, loadMore, PAGE_SIZE]);
 
   if (!category) return <Loader />;
 
@@ -83,7 +84,7 @@ export default function CategoryPage() {
         <div className="py-16 text-center text-muted-foreground">{'Ոչ մի ապրանք չի գտնվել'}</div>
       )}
 
-      {status === 'LoadingFirstPage' && <ProductGridSkeleton />}
+      {status === 'LoadingFirstPage' && <ProductGridSkeleton count={PAGE_SIZE} />}
 
       <div ref={sentinelRef} />
       {status === 'LoadingMore' && <LoaderInline />}

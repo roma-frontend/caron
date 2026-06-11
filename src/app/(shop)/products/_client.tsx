@@ -210,7 +210,7 @@ export default function ProductsPage() {
             <div className="py-16 text-center text-muted-foreground">{'Ոչ մի ապրանք չի գտնվել'}</div>
           )}
 
-          {(status === 'LoadingFirstPage' || brandLoading) && <ProductGridSkeleton />}
+          {(status === 'LoadingFirstPage' || brandLoading) && <ProductGridSkeleton count={PAGE_SIZE} />}
 
           {status === 'CanLoadMore' && (
             <div className="mt-8 flex justify-center">
