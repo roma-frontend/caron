@@ -81,15 +81,15 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-2">
+        <div className="p-3">
+          <div className="flex flex-col justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold">{product.name}</h3>
+              <h3 className="truncate text-sm font-semibold text-wrap">{product.name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
             </div>
-            <span className="shrink-0 text-lg font-bold text-primary">{formatPrice(product.price)}</span>
+            <span className="shrink-0 text-md font-bold text-primary">{formatPrice(product.price)}</span>
           </div>
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-3 flex flex-col justify-between gap-2">
             <span className="text-xs text-muted-foreground">Պահեստ: {product.stock}</span>
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
               {product.stock > 0 ? 'Պահեստում է' : 'Անհասանելի'}

@@ -101,7 +101,7 @@ export function AdminOrderWatcher() {
           ),
           {
             duration: 8000,
-            position: 'top-center',
+            position: 'top-right',
           },
         );
       }
