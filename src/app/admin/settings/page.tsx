@@ -748,8 +748,8 @@ function FilterMigrationCard({ sessionToken }: { sessionToken: string }) {
 
       const result = await res.json();
       toast.success(`Գծանցում հաջողված։ ${result.updated} ապրանք թարմացվել է`);
-    } catch (error: any) {
-      toast.error(`Գծանցում ձախողվեց։ ${error.message}`);
+    } catch (error) {
+      toast.error(`Գծանցում ձախողվեց։ ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setMigrating(false);
     }

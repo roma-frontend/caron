@@ -26,6 +26,7 @@ interface ProductCardProps {
   slug?: string;
   atgCode?: string;
   price: number;
+  sku?: string;
   wholesalePrice?: number;
   compareAtPrice?: number;
   image?: string | null;
@@ -57,7 +58,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -219,7 +220,7 @@ export function ProductCard({ id, name, slug, atgCode, price, wholesalePrice, co
               <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
                 <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
               </h3>
-              {atgCode && <p className="mt-1 text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
+              {sku && <p className="mt-1 text-[10px] text-muted-foreground">Արտիկուլ: <span className="font-mono">{sku}</span></p>}
 
               {reviewCount && reviewCount > 0 ? (
                 <div className="mt-1.5 flex items-center gap-1" aria-label={`Գնահատական: ${rating} աստղ ${reviewCount} կարծիքից`}>
