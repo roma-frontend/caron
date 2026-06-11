@@ -15,7 +15,7 @@ export function ProductCardSkeleton() {
 
 export function ProductGridSkeleton({ count = 8, className }: { count?: number; className?: string }) {
   return (
-    <div className={`grid gap-5 min-h-[400px] ${className ?? ''}`} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+    <div className={`grid gap-5 min-h-[400px] ${className ?? ''}`} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
       {Array.from({ length: count }).map((_, i) => <ProductCardSkeleton key={i} />)}
     </div>
   );

@@ -707,7 +707,7 @@ export default function ImportProductsPage() {
         <h1 className="text-2xl font-bold">Ներմուծել CSV ֆայլից</h1>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex flex-col items-start justify-between gap-2 text-base sm:flex-row sm:items-center">
             <span className="flex items-center gap-2"><FileIcon className="h-5 w-5 text-primary" /> Ավելացնել շատ (ձեռքով)</span>
@@ -742,19 +742,19 @@ export default function ImportProductsPage() {
             </div>
           </div>
 
-          <div className="hidden overflow-auto rounded-lg border md:block">
-            <table className="w-full min-w-[1320px] text-xs">
+          <div className="hidden rounded-lg border md:block overflow-x-auto overflow-y-visible">
+            <table className="text-xs border-collapse" style={{tableLayout: 'fixed'}}>
               <thead className="bg-muted">
                 <tr className="border-b">
-                  <th className="p-2 text-left font-medium">Ավելացնել</th>
-                  <th className="p-2 text-left font-medium">արտիկուլ</th>
-                  <th className="p-2 text-left font-medium">ԱՏԳԱԱ</th>
-                  <th className="p-2 text-left font-medium">անվանում</th>
-                  <th className="p-2 text-left font-medium">կատեգորիա</th>
-                  <th className="p-2 text-left font-medium">ապրանքանիշ</th>
-                  <th className="p-2 text-left font-medium">տեսակ</th>
-                  <th className="p-2 text-left font-medium">չափ</th>
-                  <th className="p-2 text-left font-medium">գործողություն</th>
+                  <th className="p-2 text-left font-medium w-[70px]">Ավելացնել</th>
+                  <th className="p-2 text-left font-medium w-[90px]">Արտիկուլ</th>
+                  <th className="p-2 text-left font-medium w-[90px]">ԱՏԳԱԱ</th>
+                  <th className="p-2 text-left font-medium w-[90px]">Անվանում</th>
+                  <th className="p-2 text-left font-medium w-[130px]">Կատեգորիա</th>
+                  <th className="p-2 text-left font-medium w-[130px]">Ապրանքանիշ</th>
+                  <th className="p-2 text-left font-medium w-[130px]">Տեսակ</th>
+                  <th className="p-2 text-left font-medium w-[100px]">Չափ</th>
+                  <th className="p-2 text-left font-medium w-[50px]">Ջնջել</th>
                 </tr>
               </thead>
               <tbody>
@@ -766,7 +766,7 @@ export default function ImportProductsPage() {
                   const sizeOptions = withCurrentValue(getFilterOptionsForCategory(row.category, 'size'), row.size);
                   return (
                     <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="p-2">
+                      <td className="p-2 w-[70px]">
                         <Button
                           size="sm"
                           disabled={!rowReady || alreadyAdded || manualImportingAll || manualImportingRow === i}
@@ -777,12 +777,12 @@ export default function ImportProductsPage() {
                           {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? 'Ավելացված' : 'Ավելացնել'}
                         </Button>
                       </td>
-                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="232325" /></td>
-                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder="8708" /></td>
-                      <td className="p-2"><input className="h-8 w-full rounded-md border bg-background px-2" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="Կիվի" /></td>
-                      <td className="p-2">
+                      <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="232325" /></td>
+                      <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder="8708" /></td>
+                      <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="Լամպեր" /></td>
+                      <td className="p-2 w-[130px]">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8 text-xs"
                           value={row.category}
                           onChange={(e) => updateManualRow(i, 'category', e.target.value)}
                         >
@@ -792,9 +792,9 @@ export default function ImportProductsPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="p-2">
+                      <td className="p-2 w-[130px]">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8 text-xs"
                           value={row.brand}
                           onChange={(e) => updateManualRow(i, 'brand', e.target.value)}
                         >
@@ -804,9 +804,9 @@ export default function ImportProductsPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="p-2">
+                      <td className="p-2 w-[130px]">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8 text-xs"
                           value={row.type}
                           onChange={(e) => updateManualRow(i, 'type', e.target.value)}
                         >
@@ -816,9 +816,9 @@ export default function ImportProductsPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="p-2">
+                      <td className="p-2 w-[100px]">
                         <select
-                          className="h-8 w-full rounded-md border bg-background px-2 pr-8"
+                          className="h-8 w-full rounded-md border bg-background px-2 pr-8 text-xs"
                           value={row.size}
                           onChange={(e) => updateManualRow(i, 'size', e.target.value)}
                         >
@@ -828,7 +828,7 @@ export default function ImportProductsPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="p-2">
+                      <td className="p-2 w-[50px]">
                         <Button size="icon-sm" variant="ghost" onClick={() => removeManualRow(i)} disabled={manualRows.length <= 1}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </td>
                     </tr>
@@ -1000,7 +1000,7 @@ export default function ImportProductsPage() {
       )}
 
       {parsed && parsed.length > 0 && (
-        <Card className="mb-6">
+        <Card className="mb-6 overflow-visible">
           <CardHeader><CardTitle className="flex items-center gap-2 text-base">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
             Ապրանքի ({parsed.length} Նախադիտում)
@@ -1026,7 +1026,7 @@ export default function ImportProductsPage() {
                 </Button>
               </div>
             </div>
-            <div className="max-h-80 overflow-auto rounded-lg border">
+            <div className="max-h-80 overflow-x-auto overflow-y-auto rounded-lg border">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-muted">
                   <tr className="border-b">

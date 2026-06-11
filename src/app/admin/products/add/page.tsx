@@ -60,6 +60,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
   const [descOpen, setDescOpen] = useState(false);
   const [imagesOpen, setImagesOpen] = useState(false);
   const [oemOpen, setOemOpen] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<number[]>([]);
 
   const sku = (data.sku as string) ?? '';
   const name = (data.name as string) ?? '';
@@ -168,26 +169,79 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
         </SmoothCollapseSection>
 
         <SmoothCollapseSection title="6. Պատկեր" open={imagesOpen} onToggle={() => setImagesOpen((v) => !v)}>
-          <div
-            className={`mt-2 rounded-xl border-2 border-dashed p-3 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/60 bg-muted/25'}`}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-          >
-            <div className="grid grid-cols-4 gap-2">
-              {images.map((img, i) => (
-                <div key={img + i} className="relative aspect-square overflow-hidden rounded-lg border">
-                  <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
-                  <button onClick={() => update('images', images.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white text-[10px]">✕</button>
-                </div>
-              ))}
-              <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground hover:border-primary hover:text-primary">
-                <ImagePlus className="h-6 w-6" />
-              </button>
+          <div className="mt-2 space-y-3">
+            {images.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedImages.length === images.length) {
+                      setSelectedImages([]);
+                    } else {
+                      setSelectedImages(images.map((_, idx) => idx));
+                    }
+                  }}
+                  className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-primary hover:text-primary"
+                >
+                  {selectedImages.length === images.length ? 'Սեղմել ընտրությունը' : 'Ընտրել բոլորը'}
+                </button>
+                {selectedImages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      update('images', images.filter((_, idx) => !selectedImages.includes(idx)));
+                      setSelectedImages([]);
+                    }}
+                    className="rounded-full border border-destructive/70 bg-destructive/10 px-3 py-1 text-[11px] font-medium text-destructive transition hover:bg-destructive/20"
+                  >
+                    Ջնջել ընտրվածները ({selectedImages.length})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    update('images', []);
+                    setSelectedImages([]);
+                  }}
+                  className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-destructive hover:text-destructive"
+                >
+                  Ջնջել բոլոր նկարները
+                </button>
+              </div>
+            )}
+            <div
+              className={`rounded-xl border-2 border-dashed p-3 transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border/60 bg-muted/25'}`}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+            >
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((img, i) => {
+                  const selected = selectedImages.includes(i);
+                  return (
+                    <div key={`${img}-${i}`} className={`relative aspect-square overflow-hidden rounded-lg border transition-all ${selected ? 'border-primary ring-2 ring-primary/30' : 'border-border/70'}`}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedImages((prev) => prev.includes(i) ? prev.filter((idx) => idx !== i) : [...prev, i]);
+                        }}
+                        className={`absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border text-[12px] transition ${selected ? 'border-primary bg-primary text-white shadow-lg' : 'border-white/80 bg-white/95 text-muted-foreground shadow-sm hover:border-primary hover:text-primary'}`}
+                      >
+                        {selected ? '✓' : '+'}
+                      </button>
+                      <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
+                      <button onClick={() => update('images', images.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white text-[10px]">✕</button>
+                    </div>
+                  );
+                })}
+                <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground hover:border-primary hover:text-primary">
+                  <ImagePlus className="h-6 w-6" />
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { if (!e.target.files?.length) return; await appendFiles(e.target.files); e.target.value = ''; }} />
+          <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={async (e) => { if (!e.target.files?.length) return; await appendFiles(e.target.files); e.target.value = ''; }} />
         </SmoothCollapseSection>
 
         <SmoothCollapseSection title="OEM համարներ" open={oemOpen} onToggle={() => setOemOpen((v) => !v)}>

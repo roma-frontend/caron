@@ -233,7 +233,8 @@ export default function AdminProductsPage() {
           {addMenuOpen && (
             <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl border bg-popover p-2 shadow-lg">
               <Link href="/admin/products/add" onClick={() => setAddMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start">Ավելացնել</Button>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Plus className="h-3.5 w-3.5" /> Ավելացնել</Button>
               </Link>
               <Link href="/admin/products/import" onClick={() => setAddMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
@@ -300,7 +301,7 @@ export default function AdminProductsPage() {
       <p className="mb-4 text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
 
       {viewMode === 'grid' ? (
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
           {visibleProducts?.map((p, i) => <AdminProductCard key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
         </div>
       ) : (
