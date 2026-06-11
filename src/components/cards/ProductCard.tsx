@@ -249,12 +249,12 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               )}
             </div>
 
-              <div className="px-2 sm:px-4 pb-2 sm:pb-4">
+              <div className="px-2 pb-2 sm:pb-4">
               <div className="flex items-center gap-1.5">
                 <div className="flex items-center rounded-lg border">
-                  <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
-                  <span className="flex h-9 w-8 items-center justify-center text-xs font-semibold border-x">{qty}</span>
-                  <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
+                  <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-8 w-7 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
+                  <span className="flex h-8 w-7 items-center justify-center text-xs font-semibold border-x">{qty}</span>
+                  <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-8 w-7 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
                 </div>
                 <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku }); }}
                   aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
