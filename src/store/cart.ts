@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number;
   maxStock?: number;
   qtyStep?: number;
+  sku?: string;
 }
 
 interface CartState {

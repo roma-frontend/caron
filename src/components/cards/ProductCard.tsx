@@ -88,7 +88,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
     e.preventDefault();
     e.stopPropagation();
     if (atLimit) return;
-    for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step });
+    for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku });
     const cartIcon = document.querySelector('[data-cart-icon]')?.closest('button');
     cartIcon?.classList.add('cart-bounce');
     setTimeout(() => cartIcon?.classList.remove('cart-bounce'), 400);
@@ -124,7 +124,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                     <span className="flex h-full w-6 items-center justify-center text-[10px] font-semibold border-x">{qty}</span>
                     <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-r-lg disabled:opacity-30">+</button>
                   </div>
-                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step }); }}>
+                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku }); }}>
                     <ShoppingCart className="h-3 w-3" />
                   </Button>
                 </div>
@@ -256,7 +256,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                   <span className="flex h-9 w-8 items-center justify-center text-xs font-semibold border-x">{qty}</span>
                   <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-9 w-8 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
                 </div>
-                <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step }); }}
+                <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock || atLimit} onClick={(e) => { e.preventDefault(); for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku }); }}
                   aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
                   <ShoppingCart data-cart-icon className="h-4 w-4" />
                 </Button>

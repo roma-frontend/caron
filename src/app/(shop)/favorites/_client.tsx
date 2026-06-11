@@ -49,6 +49,7 @@ export default function FavoritesPage() {
               compareAtPrice={product.compareAtPrice}
               image={product.images?.[0]}
               inStock={product.stock > 0}
+              sku={product.sku}
               stock={product.stock}
               rating={product.rating}
               reviewCount={product.reviewCount}

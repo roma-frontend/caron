@@ -65,6 +65,7 @@ export default function CartPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+                  {item.sku && <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>SKU: {item.sku}</p>}
                 <p className="font-bold text-primary" style={{ fontSize: 'var(--text-sm)' }}>{formatPrice(item.price)}</p>
                 <div className="mt-auto flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
