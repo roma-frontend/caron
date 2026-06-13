@@ -1,5 +1,6 @@
-﻿'use client';
+'use client';
 
+import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Truck, Shield, Clock, Star } from 'lucide-react';
@@ -62,6 +63,18 @@ function brandColor(name: string): string {
   return `hsl(${h}, 55%, 45%)`;
 }
 
+function brandTextColor(hexOrHsl: string): string {
+  // For hsl(...) generated colors, lightness is always 45% → dark enough → white text
+  if (hexOrHsl.startsWith('hsl')) return '#fff';
+  // For hex colors, compute relative luminance
+  const hex = hexOrHsl.replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.45 ? '#111' : '#fff';
+}
+
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
 
 
@@ -78,11 +91,15 @@ function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; ind
         </div>
         <div>
           <h3 className="font-semibold">{feature.title}</h3>
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{feature.desc}</p>
+          <p className="text-white/70" style={{ fontSize: 'var(--text-sm)' }}>{feature.desc}</p>
         </div>
       </div>
     </div>
   );
+}
+
+function PingPongVideo({ src, className }: { src: string; className?: string }) {
+  return <video src={src} autoPlay muted loop playsInline preload="auto" className={className} aria-hidden="true" />;
 }
 
 export default function HomePage() {
@@ -105,23 +122,30 @@ export default function HomePage() {
           </div>
 
           <div className="mx-auto max-w-[var(--container-max)]">
-            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 bg-card/55 shadow-[0_20px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+              {/* Video background — Ken Burns zoom + ping-pong */}
+              <PingPongVideo src="/hero.mp4" className="absolute inset-0 h-full w-full object-cover hero-video" />
+              {/* Blue tint overlay */}
+              <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply" />
+              {/* Dark overlay for readability */}
+              <div className="absolute inset-0 bg-black/40" />
+              {/* Vignette */}
+              <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%)' }} />
               <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: 'linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 100%)' }} />
 
-              <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-6 py-4 sm:px-8">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" /> {HOME.heroBadge}
+              <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-white/20 px-6 py-4 sm:px-8">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white" /> {HOME.heroBadge}
                 </div>
-                <div className="text-xs text-muted-foreground">Մասին բաժին: գլխավոր առաջարկներ</div>
               </div>
 
-              <div className="relative z-10 flex flex-col gap-7 px-6 py-8 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10 lg:py-10">
+              <div className="relative z-10 flex flex-col gap-7 px-6 py-8 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10 lg:py-10 text-white">
                 <div className="flex flex-1 flex-col justify-center">
-                  <h1 className="hero-fade-2 text-balance text-gradient font-black tracking-tighter" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)' }}>
+                  <h1 className="hero-fade-2 text-balance font-black tracking-tighter text-white" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)', textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
                     {HOME.heroTitle}
                   </h1>
 
-                  <p className="hero-fade-3 text-balance text-muted-foreground" style={{ fontSize: 'var(--text-lg)', maxWidth: '36rem', marginBottom: 'var(--space-8)', lineHeight: 'var(--line-height-relaxed)' }}>
+                  <p className="hero-fade-3 text-balance text-white/75" style={{ fontSize: 'var(--text-lg)', maxWidth: '36rem', marginBottom: 'var(--space-8)', lineHeight: 'var(--line-height-relaxed)' }}>
                     {HOME.heroDesc}
                   </p>
 
@@ -132,7 +156,7 @@ export default function HomePage() {
                       </Button>
                     </Link>
                     <Link href="/categories">
-                      <Button size="lg" variant="outline">{HOME.ctaCategories}</Button>
+                      <Button size="lg" variant="outline" className="border-white/50 bg-white/10 text-white hover:bg-white/20 hover:border-white/70 hover:text-white">{HOME.ctaCategories}</Button>
                     </Link>
                   </div>
                 </div>
@@ -142,13 +166,13 @@ export default function HomePage() {
                     className="hero-fade-4 w-full rounded-2xl border border-border/40 bg-card/70 p-5 shadow-xl backdrop-blur-md lg:w-[22rem]"
                     style={{ visibility: settings === undefined ? 'hidden' : 'visible' }}
                   >
-                    <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Ընտրել մեքենա</p>
+                    <p className="mb-3 text-sm font-semibold text-white/60 uppercase tracking-wider">Ընտրել մեքենա</p>
                     <VehicleSelector />
                   </div>
                 )}
               </div>
 
-              <div className="relative z-10 border-t border-border/50 px-6 py-4 sm:px-8">
+              <div className="relative z-10 border-t border-white/20 px-6 py-4 sm:px-8">
                 <div className="hero-fade-4 flex flex-wrap items-center" style={{ gap: 'var(--space-3) var(--space-6)' }}>
                   {[
                     { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
@@ -156,8 +180,8 @@ export default function HomePage() {
                     { Icon: Clock, label: '24/7 աջակցություն' },
                     { Icon: Star, label: 'Բնօրինակ որակ' },
                   ].map(({ Icon, label }) => (
-                    <span key={label} className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>
-                      <Icon className="h-4 w-4 text-primary" /> {label}
+                    <span key={label} className="flex items-center gap-2 text-white/70" style={{ fontSize: 'var(--text-sm)' }}>
+                      <Icon className="h-4 w-4 text-white/80" /> {label}
                     </span>
                   ))}
                 </div>
@@ -225,8 +249,8 @@ export default function HomePage() {
                   <div className="absolute -inset-1 rounded-3xl opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-30"
                     style={{ background: `radial-gradient(circle, ${color}20, transparent 70%)` }} />
                   {/* Brand initial — luxury monogram */}
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black tracking-widest shadow-inner"
-                    style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: '#fff' }}>
+                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-black tracking-widest"
+                    style={{ background: color, color: brandTextColor(color), boxShadow: `0 2px 8px ${color}66` }}>
                     {b.charAt(0)}
                   </div>
                   {/* Brand name — typographic logotype style */}
