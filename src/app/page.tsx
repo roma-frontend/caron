@@ -115,15 +115,15 @@ export default function HomePage() {
       <Header />
       <main className="flex-1">
         {/* Hero — integrated section module */}
-        <section className="relative overflow-hidden" style={{ paddingInline: 'max(var(--space-container), 0.75rem)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-10)' }}>
+        <section className="relative overflow-hidden lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-6%] top-[-25%] h-[620px] w-[620px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(95px)' }} />
             <div className="absolute right-[-10%] top-[0%] h-[560px] w-[560px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(95px)' }} />
           </div>
 
-          <div className="mx-auto max-w-[var(--container-max)]">
+          <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden rounded-[2rem] border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+              className="group relative overflow-hidden lg:rounded-[2rem] border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[86.5svh] lg:min-h-0 flex flex-col"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--sx', `${e.clientX - r.left}px`);
@@ -148,7 +148,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="relative z-10 flex flex-col gap-7 px-6 py-8 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10 lg:py-10 text-white">
+              <div className="relative z-10 flex flex-1 flex-col gap-7 px-6 py-8 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10 lg:py-10 text-white justify-center">
                 <div className="flex flex-1 flex-col justify-center">
                   <h1 className="hero-fade-2 text-balance font-black tracking-tighter text-white" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', lineHeight: 'var(--line-height-tight)', marginBottom: 'var(--space-6)', textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
                     {HOME.heroTitle}
