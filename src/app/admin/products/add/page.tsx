@@ -270,7 +270,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
             <p className="text-muted-foreground">Այս կատեգորիան չունի բնութագրեր</p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
-              {filterDefs.map((def) => (
+              {filterDefs.filter((def) => def.slug !== 'brand').map((def) => (
                 <div key={def._id}>
                   <Label className="text-[11px] text-muted-foreground">{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
@@ -368,6 +368,7 @@ function ChevronSection({ title, children }: { title: string; children: React.Re
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepPricing() {
   const { data, update } = useWizardData();
 
@@ -414,6 +415,7 @@ function StepPricing() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepSEO() {
   const { data, update } = useWizardData();
   return (
@@ -426,6 +428,7 @@ function StepSEO() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepVehicle() {
   const { data, update } = useWizardData();
   const attrs = ((data.attributes as Record<string, unknown>) ?? {});
@@ -448,6 +451,7 @@ function StepVehicle() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepAttributes() {
   const { data, update } = useWizardData();
   const categoryId = data.categoryId as string | undefined;
@@ -467,7 +471,7 @@ function StepAttributes() {
   return (
     <ChevronSection title="3. Բնութագրեր">
       <div className="space-y-4">
-        {filterDefs.map((def) => (
+        {filterDefs.filter((def) => def.slug !== 'brand').map((def) => (
           <div key={def._id}>
             <Label>{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
             {(def.type === 'select' || def.type === 'multiselect') && def.options ? (

@@ -3,19 +3,16 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, Smartphone, FileSpreadsheet, CheckCircle, Truck, Package } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
-import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { useSettings } from '@/hooks/useSettings';
-import Link from 'next/link';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending: { label: 'Սպասում', color: 'bg-yellow-100 text-yellow-800' },

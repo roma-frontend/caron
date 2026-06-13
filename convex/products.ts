@@ -32,7 +32,7 @@ function filterValuesEqual(expected: unknown, actual: unknown): boolean {
     const a = normalizeFilterValue(expected);
     const b = normalizeFilterValue(actual);
     if (!a || !b) return false;
-    return a === b || a.includes(b) || b.includes(a);
+    return a === b;
   }
   return false;
 }
@@ -134,8 +134,6 @@ export const listPaginated = query({
       const filterDefs = await ctx.db.query('filterDefinitions').take(500);
       const idToSlug = new Map(filterDefs.map((f) => [f._id as string, f.slug]));
       const slugToId = new Map(filterDefs.map((f) => [f.slug, f._id as string]));
-      const idToDef = new Map(filterDefs.map((f) => [f._id as string, f]));
-      const slugToDef = new Map(filterDefs.map((f) => [f.slug, f]));
       filtered = filtered.filter((p) => {
         const pa = (p.attributes ?? {}) as Record<string, unknown>;
         for (const [key, val] of Object.entries(attrs)) {
@@ -166,12 +164,6 @@ export const listPaginated = query({
             return filterValuesEqual(val, check);
           };
           let attrMatch = Array.from(aliasKeys).some((k) => checkVal(pa[k]));
-
-          // Fallback for legacy data where products may still store values under an old filter _id key.
-          // If the current filter key doesn't exist, try matching by value across attribute values.
-          if (!attrMatch && (idToDef.has(key) || slugToDef.has(key))) {
-            attrMatch = Object.values(pa).some((raw) => checkVal(raw));
-          }
 
           if (!checkVal(topLevel) && !attrMatch) return false;
         }
@@ -369,11 +361,27 @@ export const getFeatured = query({
   },
 });
 
+export const getRetailDiscounted = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .order('desc')
+      .take(500);
+    return products
+      .filter((p) => p.stock > 0 && p.retailDiscount && p.retailDiscount > 0)
+      .map(normalizeProductImages);
+  },
+});
+
 export const create = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
-    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
+    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
+    categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
     sku: v.optional(v.string()),
@@ -435,7 +443,9 @@ export const update = mutation({
     sessionToken: v.string(),
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
-    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
+    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
+    categoryId: v.optional(v.id('categories')),
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
@@ -453,7 +463,7 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, stock, price, wholesalePrice, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
+    const { id, sessionToken: _, stock, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, showInPromotions, clearBrand, ...rest } = args;
     if (clearBrand) { rest.brand = undefined; }
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
@@ -495,6 +505,8 @@ export const update = mutation({
     if (stock !== undefined) patch.stock = stock;
     if (price !== undefined) patch.price = price;
     if (wholesalePrice !== undefined) patch.wholesalePrice = wholesalePrice;
+    if (retailDiscount !== undefined) patch.retailDiscount = retailDiscount > 0 ? retailDiscount : undefined;
+    if (wholesaleDiscount !== undefined) patch.wholesaleDiscount = wholesaleDiscount > 0 ? wholesaleDiscount : undefined;
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
   },
