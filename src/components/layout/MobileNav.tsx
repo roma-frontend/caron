@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { Home, LayoutGrid, ShoppingCart, Heart, User } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
@@ -21,7 +20,7 @@ export function MobileNav() {
   const cartCount = useCartStore((s) => s.totalItems());
   const favCount = useFavoritesStore((s) => s.count());
   const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  const mounted = typeof window !== 'undefined';
 
   // On a product detail page the sticky buy-bar takes over the bottom.
   if (/^\/products\/.+/.test(pathname)) return null;

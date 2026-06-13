@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Save, ArrowLeft, ImagePlus, Package, X, Search } from 'lucide-react';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';

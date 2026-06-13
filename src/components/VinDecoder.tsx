@@ -65,12 +65,6 @@ export function VinDecoder() {
     }
   };
 
-  const searchByVin = () => {
-    if (result?.searchQuery) {
-      router.push(`/products?q=${encodeURIComponent(result.vin)}`);
-    }
-  };
-
   const mainFields = [
     { label: 'Մակնիշ', value: result?.make },
     { label: 'Մոդել', value: result?.model },

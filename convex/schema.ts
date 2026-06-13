@@ -81,6 +81,8 @@ export default defineSchema(
     price: v.number(),
     wholesalePrice: v.optional(v.number()),
     compareAtPrice: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()),
+    wholesaleDiscount: v.optional(v.number()),
     categoryId: v.id('categories'),
     images: v.array(v.string()),
     sku: v.optional(v.string()),

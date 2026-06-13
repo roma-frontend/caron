@@ -1,6 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
 
 const VARIANTS = {
   hot: {

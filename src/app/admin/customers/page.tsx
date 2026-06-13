@@ -3,12 +3,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader } from '@/components/ui/loader';
-import { LayoutGrid, List, Search, UserCog, Percent, Phone, Mail, Shield, ShieldOff } from 'lucide-react';
+import { LayoutGrid, List, Search, Percent, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { formatDateHy } from '@/lib/formatters';
@@ -19,7 +18,6 @@ export default function AdminCustomersPage() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'retail' | 'wholesale'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [page, setPage] = useState(0);
   const PAGE_SIZE = 24;
 
   const customers = useQuery(api.customers.list, sessionToken ? {
@@ -123,7 +121,7 @@ export default function AdminCustomersPage() {
   );
 }
 
-function CustomerCard({ customer, sessionToken, onToggleType, onSetDiscount }: {
+function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onSetDiscount }: {
   customer: { _id: Id<'users'>; name: string; email: string; phone?: string; role: string; customerType?: string; discountPercent?: number; isActive: boolean; createdAt: number };
   sessionToken: string; onToggleType: () => void; onSetDiscount: (d: number) => void;
 }) {

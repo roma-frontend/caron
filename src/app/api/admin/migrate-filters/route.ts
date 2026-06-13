@@ -17,19 +17,19 @@ export async function POST(req: NextRequest) {
       sessionToken,
     });
     return NextResponse.json(result);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 400 });
   }
 }
 
 // Unauthenticated one-time migration endpoint (for system setup)
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const client = new ConvexHttpClient(CONVEX_URL);
     
     // Build mapping of slug -> _id for all filterDefinitions
     const filterDefs = await client.query(api.filters.listAll);
-    const slugToId = new Map(filterDefs.map((f: any) => [f.slug, f._id]));
+    const slugToId = new Map(filterDefs.map((f: { slug: string; _id: string }) => [f.slug, f._id]));
 
     const products = await client.query(api.products.listAll);
     let updated = 0;
@@ -63,8 +63,8 @@ export async function GET(req: NextRequest) {
       updated, 
       message: `Գծանցվել են ${updated} ապրանքներ` 
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 400 });
   }
 }
 

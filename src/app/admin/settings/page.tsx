@@ -25,7 +25,6 @@ import {
   Eye,
   EyeOff,
   ShoppingCart,
-  Building2,
   Smartphone,
   BarChart3,
 } from 'lucide-react';

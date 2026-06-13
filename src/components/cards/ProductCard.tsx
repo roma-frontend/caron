@@ -29,6 +29,8 @@ interface ProductCardProps {
   sku?: string;
   wholesalePrice?: number;
   compareAtPrice?: number;
+  retailDiscount?: number;
+  wholesaleDiscount?: number;
   image?: string | null;
   category?: string;
   inStock?: boolean;
@@ -58,7 +60,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -74,9 +76,14 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const step = qtyStep || 1;
   const [qty, setQty] = useState(step);
   const isWholesale = currentUser?.customerType === 'wholesale';
-  const discount = currentUser?.discountPercent ?? 0;
-  const fallbackWholesale = typeof wholesalePrice === 'number' && wholesalePrice > 0 ? wholesalePrice : Math.round(price * (1 - discount / 100));
-  const displayPrice = isWholesale ? fallbackWholesale : price;
+  const userDiscount = currentUser?.discountPercent ?? 0;
+  // Product-level wholesale discount overrides customer discount
+  const effectiveWholesaleDiscount = wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : userDiscount;
+  const fallbackWholesale = typeof wholesalePrice === 'number' && wholesalePrice > 0
+    ? Math.round(wholesalePrice * (1 - (wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : 0) / 100))
+    : Math.round(price * (1 - effectiveWholesaleDiscount / 100));
+  const retailDisplayPrice = retailDiscount && retailDiscount > 0 ? Math.round(price * (1 - retailDiscount / 100)) : price;
+  const displayPrice = isWholesale ? fallbackWholesale : retailDisplayPrice;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
   const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
@@ -112,8 +119,9 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
-                  {compareAtPrice && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(compareAtPrice)}</span>}
-                  {isWholesale && discount > 0 && <span className="text-[10px] font-bold text-primary">-{discount}%</span>}
+                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(price)}</span>}
+                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive">-{retailDiscount}%</span>}
+                  {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={(e) => { e.preventDefault(); toggleFav({ id, name, price, image: image ?? null }); }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
@@ -166,17 +174,21 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                 </div>
               )}
 
-              {compareAtPrice && (
+              {(retailDiscount != null && retailDiscount > 0) ? (
+                <Badge className="absolute left-3 top-3 bg-destructive text-white text-xs font-bold shadow-lg">
+                  -{retailDiscount}%
+                </Badge>
+              ) : compareAtPrice ? (
                 <Badge className="absolute left-3 top-3 bg-destructive text-white text-xs font-bold shadow-lg">
                   -{discountPercent(price, compareAtPrice)}%
                 </Badge>
-              )}
+              ) : null}
 
-              {isNew && !compareAtPrice && (
+              {isNew && !retailDiscount && !compareAtPrice && (
                 <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">Նոր</Badge>
               )}
 
-              {isHit && !compareAtPrice && !isNew && (
+              {isHit && !retailDiscount && !compareAtPrice && !isNew && (
                 <Badge className="absolute left-3 top-3 badge-hit text-xs font-bold shadow-lg">Թոփ</Badge>
               )}
 
@@ -215,7 +227,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </div>
 
-            <div className="p-2">
+            <div className="p-3">
               {category && <p className="mb-1 text-xs font-medium text-primary/70">{category}</p>}
               <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
                 <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
@@ -233,7 +245,10 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
 
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span className="text-md font-bold text-primary">{formatPrice(displayPrice)}</span>
-                {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
+                {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
+                {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive">-{retailDiscount}%</span>}
+                {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-xs text-muted-foreground line-through">{formatPrice(isWholesale ? (wholesalePrice ?? price) : price)}</span>}
+                {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
               </div>
 
               {fits && (

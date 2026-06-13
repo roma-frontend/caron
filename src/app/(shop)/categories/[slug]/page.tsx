@@ -5,14 +5,13 @@ import { useParams } from 'next/navigation';
 import { useQuery, usePaginatedQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
-import { Search, ArrowLeft } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Loader, LoaderInline } from '@/components/ui/loader';
 import { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ProductFilters } from '@/components/ProductFilters';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { useSettings } from '@/hooks/useSettings';
-import Link from 'next/link';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -76,7 +75,7 @@ export default function CategoryPage() {
         <div className="flex-1 min-w-0">
         <div className="grid" style={{ gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
         {results.map((p, i) => (
-          <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+          <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
         ))}
       </div>
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, FolderTree, Package, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, Edit, FolderTree, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import Link from 'next/link';

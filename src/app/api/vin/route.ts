@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       manufacturer: manufacturer || null,
       searchQuery: [make, model, year].filter(Boolean).join(' '),
     });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { error: 'VIN ապակոդավորման սխալ: Փորձեք կրկին:' },
       { status: 500 }

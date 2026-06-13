@@ -50,9 +50,10 @@ export const getPromoProducts = query({
         p.isActive &&
         p.stock > 0 &&
         !inactiveCatIds.has(p.categoryId) &&
-        p.showInPromotions &&
-        p.compareAtPrice &&
-        p.compareAtPrice > p.price,
+        (
+          (p.showInPromotions && p.compareAtPrice && p.compareAtPrice > p.price) ||
+          (p.retailDiscount != null && p.retailDiscount > 0)
+        ),
       )
       .slice(0, 50)
       .map(normalizeProductImages);

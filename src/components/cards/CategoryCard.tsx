@@ -50,7 +50,7 @@ const CATEGORY_GLOW_COLORS: Record<string, string> = {
   accessories: 'oklch(0.6 0.14 300 / 0.18)',
 };
 
-export function CategoryCard({ name, slug, description, imageUrl, productCount, index = 0, className }: CategoryCardProps) {
+export function CategoryCard({ name, slug, description, imageUrl, productCount, index: _index = 0, className }: CategoryCardProps) {
   const { mousePos, isHovered, handlers } = useMouseGlow();
   const Icon = CATEGORY_ICONS[slug] ?? Package;
   const color = CATEGORY_COLORS[slug] ?? 'bg-primary/10 text-primary';

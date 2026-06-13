@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
   const filterDefs = useQuery(api.filters.getByCategory, selectedCat ? { categoryId: selectedCat } : 'skip');
   const categories = useQuery(api.categories.listWithCounts, {});
 
-  const toggle = (key: string) => setExpanded((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  const toggle = (key: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
 
   const updateAttr = (slug: string, value: unknown) => {
     const attrs = { ...(activeFilters.attributes || {}) } as FilterValues;

@@ -2,8 +2,7 @@
 
 import { useCompareStore } from '@/store/compare';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { X, GitCompareArrows, ShoppingCart, Star, TrendingDown, Check } from 'lucide-react';
+import { X, GitCompareArrows, ShoppingCart, TrendingDown, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { toast } from 'sonner';
@@ -68,7 +67,7 @@ export default function ComparePage() {
           <tbody>
             <tr className="border-t">
               <td className="p-3 text-sm font-medium text-muted-foreground">{'Գին'}</td>
-              {items.map((item, idx) => (
+              {items.map((item) => (
                 <td key={item.id} className={`p-3 text-center text-lg font-bold ${item.price === bestPrice && items.length > 1 ? 'text-green-600' : 'text-primary'}`}>
                   <motion.span initial={{ scale: 1 }} animate={item.price === bestPrice ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.5 }}>
                     {formatPrice(item.price)}
@@ -91,7 +90,6 @@ export default function ComparePage() {
                   {items.map((item) => {
                     const val = item.attributes[key] || '-';
                     const numVal = isNumeric ? Number(val) : null;
-                    const isMax = numVal !== null && maxVal !== null && numVal === maxVal;
                     return (
                       <td key={item.id} className="p-3 text-center">
                         <span className="text-sm">{val}</span>

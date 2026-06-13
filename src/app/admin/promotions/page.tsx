@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Edit, Tag, Percent, Calendar, Clock, Package, Search, X, ShoppingBag, ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Edit, Tag, Percent, Calendar, Clock, Package, Search, ShoppingBag, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';

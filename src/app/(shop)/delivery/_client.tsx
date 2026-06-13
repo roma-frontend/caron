@@ -9,22 +9,6 @@ import { Truck, Clock, MapPin, Package, CheckCircle } from 'lucide-react';
 
 
 // moved inside component
-const METHODS_STATIC = [
-  {
-    icon: Truck,
-    title: 'Առաքում Երևանում',
-    time: '1-3 օր',
-    price: 'dynamic',
-    desc: 'Արագ և անվտանգ առաքում Երևանի տարածքում',
-  },
-  {
-    icon: Package,
-    title: 'Առաքում մարզեր',
-    time: '2-5 օր',
-    price: '0 ֏',
-    desc: 'Առաքում Հայաստանի բոլոր մարզեր',
-  },
-];
 
 const STEPS = [
   {
@@ -63,7 +47,6 @@ export default function DeliveryPage() {
       desc: 'Առաքում Հայաստանի բոլոր մարզեր',
     },
   ];
-  const freeThreshold = settings?.freeShippingThreshold ?? 20000;
   return (
     <CmsPageWrapper slug="delivery">
     <div

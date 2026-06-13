@@ -10,6 +10,8 @@ interface Product {
   price: number;
   wholesalePrice?: number;
   compareAtPrice?: number;
+  retailDiscount?: number;
+  wholesaleDiscount?: number;
   images: string[];
   stock: number;
   rating?: number;
@@ -29,7 +31,7 @@ export function ProductOemResults({
   return (
     <div className="p-2">
       {products.map((p, i) => {
-        const matchedOem = p.oemNumbers?.find(
+        p.oemNumbers?.find(
           (o) => {
             const code = typeof o === 'string' ? o : o.code;
             return code.toLowerCase().includes(decoded.toLowerCase());
@@ -45,6 +47,8 @@ export function ProductOemResults({
             price={p.price}
             wholesalePrice={p.wholesalePrice}
             compareAtPrice={p.compareAtPrice}
+            retailDiscount={p.retailDiscount}
+            wholesaleDiscount={p.wholesaleDiscount}
             image={p.images?.[0]}
             stock={p.stock}
             inStock={p.stock > 0}

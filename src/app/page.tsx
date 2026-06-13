@@ -15,7 +15,6 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { formatPrice } from '@/lib/formatters';
 import { useSettings } from '@/hooks/useSettings';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 
 const BRAND_COLORS: Record<string, string> = {
@@ -90,7 +89,9 @@ export default function HomePage() {
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
   const allProds = useQuery(api.products.list, { limit: 500 });
+  const discounted = useQuery(api.products.getRetailDiscounted, {});
   const brands = allProds ? [...new Set(allProds.filter((p) => p.brand).map((p) => p.brand as string))].sort() : undefined;
+  const discountedSample = discounted?.slice(0, 4);
   const settings = useSettings();
   return (
     <div className="flex min-h-screen flex-col">
@@ -170,7 +171,7 @@ export default function HomePage() {
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-md sm:p-8">
               <div className="mb-5 flex items-center justify-between gap-2">
-                <h2 className="text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
+                <h2 className="text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Ցանկ</h2>
                 <Link href="/products">
                   <Button variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
@@ -256,11 +257,56 @@ export default function HomePage() {
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
-                    <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} isHit={p.isFeatured} />
+                    <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} isHit={p.isFeatured} />
                   ))}
             </div>
             <div className="mt-8 flex justify-center">
               <Link href="/products"><Button size="lg" variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button></Link>
+            </div>
+          </section>
+        )}
+
+        {/* Discounts */}
+        {(discountedSample === undefined || discountedSample.length > 0) && (
+          <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
+            <div className="rounded-3xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card/60 to-orange-500/5 p-6 backdrop-blur-md sm:p-8">
+              <div className="mb-5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                    <span className="text-lg">🔥</span>
+                  </div>
+                  <h2 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Զեղչեր</h2>
+                </div>
+                <Link href="/discounts">
+                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {discountedSample === undefined
+                  ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '12rem' }} />)
+                  : discountedSample.map((p, i) => (
+                      <ProductCard
+                        key={p._id}
+                        id={p._id}
+                        slug={p.slug}
+                        name={p.name}
+                        price={p.price}
+                        wholesalePrice={p.wholesalePrice}
+                        retailDiscount={p.retailDiscount}
+                        wholesaleDiscount={p.wholesaleDiscount}
+                        image={p.images?.[0]}
+                        inStock={p.stock > 0}
+                        stock={p.stock}
+                        sku={p.sku}
+                        atgCode={p.atgCode}
+                        qtyStep={p.qtyStep}
+                        rating={p.rating}
+                        reviewCount={p.reviewCount}
+                        attributes={p.attributes as Record<string, unknown>}
+                        index={i}
+                      />
+                    ))}
+              </div>
             </div>
           </section>
         )}
@@ -283,7 +329,7 @@ export default function HomePage() {
 }
 
 /* ─── Hero Mini Card — full ProductCard hover treatment ─── */
-function HeroMiniCard({ product, index }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index: number }) {
+function HeroMiniCard({ product }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index?: number }) {
   const { mousePos, isHovered, handlers } = useMouseGlow();
   return (
     <Link

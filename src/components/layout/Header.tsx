@@ -5,7 +5,7 @@ import { ShoppingCart, Search, ActivityIcon, Menu, User, Heart, X, Grid3X3, Tag,
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { NAV, SITE } from '@/lib/constants';
+import { NAV } from '@/lib/constants';
 import { useState, useSyncExternalStore } from 'react';
 
 const subscribe = () => () => {};
