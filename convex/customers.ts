@@ -37,6 +37,7 @@ export const updateCustomer = mutation({
     isActive: v.optional(v.boolean()),
     name: v.optional(v.string()),
     phone: v.optional(v.string()),
+    address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
@@ -68,6 +69,14 @@ export const register = mutation({
     const sessionExpiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
     await ctx.db.patch(id, { sessionToken, sessionExpiry });
     return { userId: id, sessionToken, name: args.name, email: args.email.toLowerCase(), role: 'customer' as const };
+  },
+});
+
+export const deleteCustomer = mutation({
+  args: { sessionToken: v.string(), userId: v.id('users') },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    await ctx.db.delete(args.userId);
   },
 });
 

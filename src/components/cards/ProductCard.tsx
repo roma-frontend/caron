@@ -75,14 +75,20 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const currentUser = useAuthStore((s) => s.user);
   const step = qtyStep || 1;
   const [qty, setQty] = useState(step);
-  const isWholesale = currentUser?.customerType === 'wholesale';
-  const userDiscount = currentUser?.discountPercent ?? 0;
-  // Product-level wholesale discount overrides customer discount
-  const effectiveWholesaleDiscount = wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : userDiscount;
-  const fallbackWholesale = typeof wholesalePrice === 'number' && wholesalePrice > 0
-    ? Math.round(wholesalePrice * (1 - (wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : 0) / 100))
-    : Math.round(price * (1 - effectiveWholesaleDiscount / 100));
-  const retailDisplayPrice = retailDiscount && retailDiscount > 0 ? Math.round(price * (1 - retailDiscount / 100)) : price;
+  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
+  const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
+  // Product-level wholesale discount only applies to wholesale customers
+  // If product explicitly sets wholesaleDiscount, it overrides customer's personal discount
+  const effectiveWholesaleDiscount = isWholesale
+    ? (wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : (wholesaleDiscount == null ? userDiscount : 0))
+    : 0;
+  const baseWholesale = isWholesale
+    ? (typeof wholesalePrice === 'number' && wholesalePrice > 0
+        ? Math.round(wholesalePrice * (1 - (wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : 0) / 100))
+        : Math.round(price * (1 - effectiveWholesaleDiscount / 100)))
+    : price;
+  const fallbackWholesale = isWholesale ? baseWholesale : price;
+  const retailDisplayPrice = !isWholesale && retailDiscount && retailDiscount > 0 ? Math.round(price * (1 - retailDiscount / 100)) : price;
   const displayPrice = isWholesale ? fallbackWholesale : retailDisplayPrice;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
@@ -174,17 +180,17 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                 </div>
               )}
 
-              {(retailDiscount != null && retailDiscount > 0) ? (
+              {(!isWholesale && retailDiscount != null && retailDiscount > 0) ? (
                 <Badge className="absolute left-3 top-3 bg-destructive text-white text-xs font-bold shadow-lg">
                   -{retailDiscount}%
                 </Badge>
-              ) : compareAtPrice ? (
+              ) : (!isWholesale && compareAtPrice) ? (
                 <Badge className="absolute left-3 top-3 bg-destructive text-white text-xs font-bold shadow-lg">
                   -{discountPercent(price, compareAtPrice)}%
                 </Badge>
               ) : null}
 
-              {isNew && !retailDiscount && !compareAtPrice && (
+              {isNew && (isWholesale || !retailDiscount) && !compareAtPrice && (
                 <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">Նոր</Badge>
               )}
 
@@ -247,8 +253,8 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                 <span className="text-md font-bold text-primary">{formatPrice(displayPrice)}</span>
                 {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
                 {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive">-{retailDiscount}%</span>}
-                {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-xs text-muted-foreground line-through">{formatPrice(isWholesale ? (wholesalePrice ?? price) : price)}</span>}
-                {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
+                {isWholesale && effectiveWholesaleDiscount > 0 && displayPrice < price && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
+                {isWholesale && effectiveWholesaleDiscount > 0 && displayPrice < price && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
               </div>
 
               {fits && (

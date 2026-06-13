@@ -88,12 +88,24 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
   const step = product?.qtyStep || 1;
-  const isWholesale = currentUser?.customerType === 'wholesale';
-  const userDiscount = currentUser?.discountPercent ?? 0;
-  const fallbackWholesale = typeof product?.wholesalePrice === 'number' && product.wholesalePrice > 0
-    ? product.wholesalePrice
-    : Math.round((product?.price ?? 0) * (1 - userDiscount / 100));
-  const cartPrice = product ? (isWholesale ? fallbackWholesale : product.price) : 0;
+  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
+  const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
+  // If product explicitly sets wholesaleDiscount, it overrides customer's personal discount
+  const effectiveDiscount = isWholesale
+    ? (product?.wholesaleDiscount != null && product.wholesaleDiscount > 0
+        ? product.wholesaleDiscount
+        : (product?.wholesaleDiscount == null ? userDiscount : 0))
+    : 0;
+  const baseWholesale = isWholesale
+    ? (typeof product?.wholesalePrice === 'number' && product.wholesalePrice > 0
+        ? product.wholesalePrice
+        : Math.round((product?.price ?? 0) * (1 - effectiveDiscount / 100)))
+    : (product?.price ?? 0);
+  const fallbackWholesale = isWholesale ? baseWholesale : (product?.price ?? 0);
+  const retailDisplayPrice = !isWholesale && product?.retailDiscount && product.retailDiscount > 0
+    ? Math.round((product.price) * (1 - product.retailDiscount / 100))
+    : product?.price ?? 0;
+  const cartPrice = product ? (isWholesale ? fallbackWholesale : retailDisplayPrice) : 0;
   const cartQty = product ? items.find((i) => i.id === product._id)?.quantity ?? 0 : 0;
   const maxQty = product ? Math.max(0, product.stock - cartQty) : 0;
 
@@ -245,7 +257,10 @@ export default function ProductDetailPage() {
                 <Badge className="bg-destructive text-white">-{discountPercent(product.price, product.compareAtPrice)}%</Badge>
               </>
             ) : cartPrice !== product.price ? (
-              <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+              <>
+                <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+                {product.retailDiscount && product.retailDiscount > 0 && !isWholesale && <Badge className="bg-destructive text-white">-{product.retailDiscount}%</Badge>}
+              </>
             ) : null}
           </div>
 

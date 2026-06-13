@@ -375,6 +375,20 @@ export const getRetailDiscounted = query({
   },
 });
 
+export const getWholesaleDiscounted = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .order('desc')
+      .take(500);
+    return products
+      .filter((p) => p.stock > 0 && p.wholesaleDiscount && p.wholesaleDiscount > 0)
+      .map(normalizeProductImages);
+  },
+});
+
 export const create = mutation({
   args: {
     sessionToken: v.string(),

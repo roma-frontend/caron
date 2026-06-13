@@ -16,6 +16,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { formatPrice } from '@/lib/formatters';
 import { useSettings } from '@/hooks/useSettings';
+import { useAuthStore } from '@/store/auth';
 import Image from 'next/image';
 
 const BRAND_COLORS: Record<string, string> = {
@@ -107,8 +108,12 @@ export default function HomePage() {
   const featured = useQuery(api.products.getFeatured, {});
   const allProds = useQuery(api.products.list, { limit: 500 });
   const discounted = useQuery(api.products.getRetailDiscounted, {});
+  const wholesaleDiscounted = useQuery(api.products.getWholesaleDiscounted, {});
+  const user = useAuthStore((s) => s.user);
+  const isWholesale = user?.customerType === 'wholesale' && user?.role !== 'admin';
   const brands = allProds ? [...new Set(allProds.filter((p) => p.brand).map((p) => p.brand as string))].sort() : undefined;
-  const discountedSample = discounted?.slice(0, 4);
+  const discountedSample = isWholesale ? wholesaleDiscounted?.slice(0, 4) : discounted?.slice(0, 4);
+  const hasDiscounts = isWholesale ? (wholesaleDiscounted === undefined || wholesaleDiscounted.length > 0) : (discounted === undefined || discounted.length > 0);
   const settings = useSettings();
   return (
     <div className="flex min-h-screen flex-col">
@@ -300,7 +305,7 @@ export default function HomePage() {
         )}
 
         {/* Discounts */}
-        {(discountedSample === undefined || discountedSample.length > 0) && (
+        {hasDiscounts && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card/60 to-orange-500/5 p-6 backdrop-blur-md sm:p-8">
               <div className="mb-5 flex items-center justify-between gap-2">
@@ -364,6 +369,16 @@ export default function HomePage() {
 /* ─── Hero Mini Card — full ProductCard hover treatment ─── */
 function HeroMiniCard({ product }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index?: number }) {
   const { mousePos, isHovered, handlers } = useMouseGlow();
+  const currentUser = useAuthStore((s) => s.user);
+  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
+  const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
+  const displayPrice = isWholesale
+    ? (typeof product.wholesalePrice === 'number' && product.wholesalePrice > 0
+        ? product.wholesalePrice
+        : Math.round(product.price * (1 - userDiscount / 100)))
+    : (product.retailDiscount && product.retailDiscount > 0
+        ? Math.round(product.price * (1 - product.retailDiscount / 100))
+        : product.price);
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -409,7 +424,7 @@ function HeroMiniCard({ product }: { product: NonNullable<ReturnType<typeof useQ
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/80 to-transparent p-3 pt-14 text-center transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
         <p className="text-[11px] font-semibold text-white line-clamp-2 drop-shadow-md">{product.name}</p>
         {product.sku && <p className="mt-1 text-[10px] text-white drop-shadow-md">Արտիկուլ: <span className="font-mono">{product.sku}</span></p>}
-        <p className="mt-1 text-sm font-bold text-white drop-shadow-md">{formatPrice(product.price)}</p>
+        <p className="mt-1 text-sm font-bold text-white drop-shadow-md">{formatPrice(displayPrice)}</p>
       </div>
 
       {/* Featured badge — magnetic glass pill that follows mouse tilt */}

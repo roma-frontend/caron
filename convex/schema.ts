@@ -11,6 +11,7 @@ export default defineSchema(
     googleId: v.optional(v.string()),
     role: v.union(v.literal('admin'), v.literal('customer')),
     phone: v.optional(v.string()),
+    address: v.optional(v.string()),
     isActive: v.boolean(),
     customerType: v.optional(v.union(v.literal('retail'), v.literal('wholesale'))),
     discountPercent: v.optional(v.number()),

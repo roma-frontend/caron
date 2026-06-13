@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react';
 import { Flame, SlidersHorizontal, TrendingDown, Clock, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth';
 
 type SortKey = 'discount' | 'price_asc' | 'price_desc' | 'newest';
 
@@ -18,20 +19,28 @@ const SORTS: { key: SortKey; label: string }[] = [
 ];
 
 export default function DiscountsClient() {
-  const products = useQuery(api.products.getRetailDiscounted, {});
+  const currentUser = useAuthStore((s) => s.user);
+  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
+
+  const retailProducts = useQuery(api.products.getRetailDiscounted, isWholesale ? 'skip' : {});
+  const wholesaleProducts = useQuery(api.products.getWholesaleDiscounted, isWholesale ? {} : 'skip');
+  const products = isWholesale ? wholesaleProducts : retailProducts;
+
   const [sort, setSort] = useState<SortKey>('discount');
 
   const sorted = useMemo(() => {
     if (!products) return [];
     return [...products].sort((a, b) => {
-      if (sort === 'discount') return (b.retailDiscount ?? 0) - (a.retailDiscount ?? 0);
+      if (sort === 'discount') return isWholesale
+        ? (b.wholesaleDiscount ?? 0) - (a.wholesaleDiscount ?? 0)
+        : (b.retailDiscount ?? 0) - (a.retailDiscount ?? 0);
       if (sort === 'price_asc') return a.price - b.price;
       if (sort === 'price_desc') return b.price - a.price;
       return b._creationTime - a._creationTime;
     });
   }, [products, sort]);
 
-  const maxDiscount = products ? Math.max(...products.map((p) => p.retailDiscount ?? 0)) : 0;
+  const maxDiscount = products ? Math.max(...products.map((p) => isWholesale ? (p.wholesaleDiscount ?? 0) : (p.retailDiscount ?? 0))) : 0;
 
   return (
     <div className="min-h-screen">
