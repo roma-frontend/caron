@@ -123,7 +123,7 @@ export default function HomePage() {
 
           <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden lg:rounded-[2rem] border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[86.5svh] lg:min-h-0 flex flex-col"
+              className="group relative overflow-hidden lg:rounded-[2rem] border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[87svh] lg:min-h-0 flex flex-col"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--sx', `${e.clientX - r.left}px`);
