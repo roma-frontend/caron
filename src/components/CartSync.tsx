@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { toast } from 'sonner';
 
-const REMINDER_MS = 20 * 1000; // 20 seconds for testing (change to 30 * 60 * 1000 for production)
+const REMINDER_MS = 30 * 60 * 1000; // 30 minutes for testing (change to 20 * 1000 for production)
 
 function playCartSound() {
   try {
@@ -29,6 +30,7 @@ function playCartSound() {
 export function CartSync() {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const items = useCartStore((s) => s.items);
+  const router = useRouter();
   const saveCart = useMutation(api.cart.save);
   const savedCartJson = useQuery(api.cart.get, sessionToken ? { sessionToken } : 'skip');
   const initialized = useRef(false);
@@ -76,11 +78,11 @@ export function CartSync() {
       if (count === 0) return;
       reminderShown.current = true;
       playCartSound();
-      toast('🛒 Ձեր զամբյուղն սպասում է', {
+      toast('Ձեր զամբյուղն սպասում է', {
         description: (
           <div className="flex flex-col gap-2 mt-1">
             <span>{count} ապրանք պահված է ձեր զամբյուղում:</span>
-            <button onClick={() => { window.location.href = '/cart'; }}
+            <button onClick={() => router.push('/cart')}
               className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
               Տեսնել զամբյուղը
             </button>
@@ -91,7 +93,7 @@ export function CartSync() {
     }, REMINDER_MS);
 
     return () => clearTimeout(reminderTimer.current);
-  }, [items.length]);
+  }, [items.length, router]);
 
   return null;
 }
