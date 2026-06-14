@@ -123,7 +123,12 @@ export default function ProductsPage() {
       </div>
 
       <div className="lg:flex lg:gap-8">
-        <ProductFilters onFilterChange={setFilters} activeFilters={filters} />
+        <ProductFilters onFilterChange={(f) => {
+          // If brand attribute was just set via sidebar, clear the URL brand filter
+          const hasBrandAttr = f.attributes && Object.values(f.attributes).length > 0;
+          if (hasBrandAttr && filters.brand) { clearUrlBrand(); setFilters({ ...f, brand: undefined }); }
+          else setFilters(f);
+        }} activeFilters={filters} />
 
         <div className="flex-1 min-w-0">
           <div className="mb-5 flex flex-col items-start sm:items-center justify-between gap-3">
