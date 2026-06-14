@@ -50,6 +50,8 @@ export function Header() {
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const hasFavs = mounted && favCount > 0;
   const storeName = useStoreName();
+  const announcementBar = settings?.announcementBar;
+  const showAnnouncement = settings?.announcementEnabled !== false && Boolean(announcementBar);
   const navBadges = (() => {
     try {
       const raw = settings?.navBadges;
@@ -63,9 +65,9 @@ export function Header() {
 
   return (
     <>
-      <div className="overflow-hidden transition-all duration-300" style={{ height: settings === undefined ? '2.25rem' : (settings?.announcementEnabled !== false && settings?.announcementBar ? undefined : '0') }}>
-        {settings !== undefined && settings?.announcementEnabled !== false && settings?.announcementBar && (
-          <AnnouncementBar raw={settings.announcementBar} phone={settings?.phone} />
+      <div className="overflow-hidden" style={{ height: showAnnouncement ? undefined : '0' }}>
+        {showAnnouncement && (
+          <AnnouncementBar raw={announcementBar} phone={settings?.phone} />
         )}
       </div>
       <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>

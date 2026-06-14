@@ -97,8 +97,25 @@ function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; ind
   );
 }
 
+type PriorityVideoProps = React.VideoHTMLAttributes<HTMLVideoElement> & {
+  fetchPriority?: 'high' | 'low' | 'auto';
+};
+
 function PingPongVideo({ src, className }: { src: string; className?: string }) {
-  return <video src={src} autoPlay muted loop playsInline preload="auto" className={className} aria-hidden="true" />;
+  const videoProps: PriorityVideoProps = {
+    src,
+    autoPlay: true,
+    muted: true,
+    loop: true,
+    playsInline: true,
+    preload: 'auto',
+    width: 1920,
+    height: 1080,
+    fetchPriority: 'high',
+    'aria-hidden': true,
+  };
+
+  return <video {...videoProps} className={className} />;
 }
 
 export default function HomePage() {
@@ -202,7 +219,7 @@ export default function HomePage() {
         </section>
 
         {/* Top Sales — separate section under hero */}
-        {settings !== undefined && settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
+        {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-md sm:p-8">
               <div className="mb-5 flex items-center justify-between gap-2">
@@ -223,7 +240,7 @@ export default function HomePage() {
         )}
 
         {/* Categories */}
-        {settings !== undefined && settings?.showCategories !== false && (
+        {settings?.showCategories !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
           <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
@@ -238,12 +255,15 @@ export default function HomePage() {
         )}
 
         {/* Brands — luxury showcase */}
-        {settings !== undefined && settings?.showBrands !== false && (
+        {settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center text-balance font-bold tracking-tight" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>
             <span className="text-gradient">Բրենդեր</span>
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
+            {brands === undefined && Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-20 w-[190px] animate-pulse rounded-2xl bg-muted" />
+            ))}
             {brands?.slice(0, 8).map((b) => {
               const color = brandColor(b);
               return (
@@ -283,7 +303,7 @@ export default function HomePage() {
         )}
 
         {/* Featured Products — ցուցադրված ապրանքներ */}
-        {settings !== undefined && settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
+        {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
               <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
@@ -313,7 +333,7 @@ export default function HomePage() {
                   <h2 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Զեղչեր</h2>
                 </div>
                 <Link href="/discounts">
-                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
+                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -347,7 +367,7 @@ export default function HomePage() {
         )}
 
         {/* Features */}
-        {settings !== undefined && settings?.showFeatures !== false && (
+        {settings?.showFeatures !== false && (
         <section className="bg-muted/30" style={{ paddingBlock: 'var(--space-section)' }}>
           <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--space-6)' }}>
@@ -364,7 +384,7 @@ export default function HomePage() {
 }
 
 /* ─── Hero Mini Card — full ProductCard hover treatment ─── */
-function HeroMiniCard({ product }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index?: number }) {
+function HeroMiniCard({ product, index = 0 }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index?: number }) {
   const { mousePos, isHovered, handlers } = useMouseGlow();
   const currentUser = useAuthStore((s) => s.user);
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
@@ -404,9 +424,10 @@ function HeroMiniCard({ product }: { product: NonNullable<ReturnType<typeof useQ
           src={product.images[0]}
           alt={product.name}
           fill
-          fetchPriority="high"
+          loading={index < 2 ? 'eager' : 'lazy'}
+          fetchPriority={index < 2 ? 'high' : 'auto'}
           sizes="(max-width: 640px) 50vw, 200px"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted/30 text-muted-foreground/30">

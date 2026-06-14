@@ -170,7 +170,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               />
             )}
 
-            <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+            <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
               <Link href={detailHref} aria-label={name} className="absolute inset-0 z-[5]" />
               {normalizedImage && !imgError ? (
                 <Image src={normalizedImage} alt={name} fill sizes="(max-width: 640px) 50vw, 240px" loading={index < 4 ? 'eager' : 'lazy'} fetchPriority={index < 2 ? 'high' : 'auto'} className="object-fill" placeholder={index < 4 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
