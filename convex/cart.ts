@@ -9,7 +9,7 @@ export const save = mutation({
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx, args.sessionToken);
-    if (!caller) throw new Error('Not authenticated');
+    if (!caller) return; // silently skip if not authenticated
     await ctx.db.patch(caller._id, { cartJson: args.cartJson });
   },
 });

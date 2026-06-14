@@ -49,22 +49,15 @@ export function CartSync() {
 
   const prevToken = useRef(sessionToken);
 
-  // On logout: save cart to server first, then clear local
+  // On logout: clear local cart (server already has latest from debounced save)
   useEffect(() => {
     const prev = prevToken.current;
     prevToken.current = sessionToken;
     if (prev && !sessionToken && initialized.current) {
-      const items = useCartStore.getState().items;
-      if (items.length > 0) {
-        saveCart({ sessionToken: prev, cartJson: JSON.stringify(items) }).finally(() => {
-          useCartStore.getState().clearCart();
-        });
-      } else {
-        useCartStore.getState().clearCart();
-      }
+      useCartStore.getState().clearCart();
       initialized.current = false;
     }
-  }, [sessionToken, saveCart]);
+  }, [sessionToken]);
 
   // Save cart to server on changes (debounced)
   useEffect(() => {
