@@ -35,6 +35,13 @@ export default defineSchema(
     .index('by_token', ['token'])
     .index('by_user', ['userId']),
 
+  authAttempts: defineTable({
+    key: v.string(),
+    failures: v.number(),
+    lockedUntil: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
+
   // ─── Categories ────────────────────────────────────────────────
   categories: defineTable({
     name: v.string(),

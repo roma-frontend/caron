@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
-import { query, mutation, action } from './_generated/server';
-import { api } from './_generated/api';
+import { mutation, internalQuery, internalMutation, internalAction } from './_generated/server';
+import { internal } from './_generated/api';
 
 export const subscribe = mutation({
   args: { productId: v.id('products'), email: v.string(), priceAtSubscribe: v.number() },
@@ -14,29 +14,29 @@ export const subscribe = mutation({
   },
 });
 
-export const listByProduct = query({
+export const listByProduct = internalQuery({
   args: { productId: v.id('products') },
   handler: async (ctx, args) => {
     return await ctx.db.query('priceAlerts').withIndex('by_product', (q) => q.eq('productId', args.productId)).filter((q) => q.eq(q.field('notified'), false)).collect();
   },
 });
 
-export const markNotified = mutation({
+export const markNotified = internalMutation({
   args: { id: v.id('priceAlerts') },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { notified: true });
   },
 });
 
-export const checkAndNotify = action({
+export const checkAndNotify = internalAction({
   args: { productId: v.id('products'), newPrice: v.number() },
   handler: async (ctx, args) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) return;
 
-    const subscribers = await ctx.runQuery(api.priceAlerts.listByProduct, { productId: args.productId });
+    const subscribers = await ctx.runQuery(internal.priceAlerts.listByProduct, { productId: args.productId });
 
     for (const sub of subscribers) {
       if (args.newPrice < sub.priceAtSubscribe) {
@@ -58,7 +58,7 @@ export const checkAndNotify = action({
           });
         } catch {}
       }
-      await ctx.runMutation(api.priceAlerts.markNotified, { id: sub._id });
+      await ctx.runMutation(internal.priceAlerts.markNotified, { id: sub._id });
     }
   },
 });

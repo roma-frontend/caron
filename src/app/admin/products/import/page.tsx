@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import type { Id } from '../../../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
-import * as XLSX from 'xlsx';
 
 interface ParsedRow {
   name?: string;
@@ -573,23 +572,14 @@ export default function ImportProductsPage() {
     toast.success(`Հայտնաբերվել է ${mapped.length} ապրանք${errs.length > 0 ? `, ${errs.length} սխալ` : ''}`);
   };
 
-  const readXlsx = async (file: File): Promise<string> => {
-    const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rawRows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(ws, { header: 1, defval: '' });
-    const rows = rawRows.filter((r, idx) => idx === 0 || r.some((c) => String(c ?? '').trim() !== ''));
-    return rows.map((r) => r.map((c) => {
-      if (c == null) return '';
-      const v = String(c);
-      const escaped = v.replace(/"/g, '""');
-      return /[;,\n\r"]/.test(v) ? `"${escaped}"` : escaped;
-    }).join(';')).join('\n');
-  };
-
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.name.endsWith('.xlsx')) {
+      toast.error('XLSX ներմուծումը ժամանակավորապես անջատված է անվտանգության պատճառով։ Պահպանեք ֆայլը CSV UTF-8 ձևաչափով։');
+      e.target.value = '';
+      return;
+    }
     setErrors([]);
     setParsed(null);
     setDone(false);
@@ -597,7 +587,7 @@ export default function ImportProductsPage() {
     setImportingRow(null);
     setPasteText('');
     try {
-      const text = file.name.endsWith('.xlsx') ? await readXlsx(file) : await decodeFile(file);
+      const text = await decodeFile(file);
       parseText(text);
     } catch (e) {
       toast.error(`Սխալ: ${e instanceof Error ? e.message : 'Նախատեսված ձևաչափ'}`);
@@ -910,7 +900,7 @@ export default function ImportProductsPage() {
             <p className="text-sm font-medium">Կտտացրու, որպեսզի ընտրես CSV-ֆայլ</p>
             <p className="mt-1 text-xs text-muted-foreground">Արտահանված Excel-ից: Ֆայլ → Պահպանել որպես → CSV UTF-8</p>
           </div>
-          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx" className="hidden" onChange={handleFile} />
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={handleFile} />
 
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">

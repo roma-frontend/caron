@@ -34,10 +34,10 @@ import { useAuthStore } from '@/store/auth';
 
 export default function AdminSettingsPage() {
   const router = useRouter();
-  const settings = useQuery(api.settings.get, {});
+  const sessionToken = useAuthStore((s) => s.sessionToken);
+  const settings = useQuery(api.settings.get, sessionToken ? { sessionToken } : 'skip');
   const save = useMutation(api.settings.save);
   const sendTest = useAction(api.notifications.sendTest);
-  const sessionToken = useAuthStore((s) => s.sessionToken);
 
   const [form, setForm] = useState<Record<string, string | number>>({});
   const [loaded, setLoaded] = useState(false);

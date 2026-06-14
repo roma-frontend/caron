@@ -67,6 +67,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     const u = me ?? currentUser;
     if (u) {
+      // Prefill fields once user data arrives; keep user-entered values intact.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm((prev) => ({
         ...prev,
         name: prev.name || u.name || '',

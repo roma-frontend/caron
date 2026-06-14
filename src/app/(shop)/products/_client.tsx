@@ -45,6 +45,8 @@ export default function ProductsPage() {
     if (!urlBrand || !allFilterDefs) return;
     const brandDef = allFilterDefs.find((d) => d.slug === 'brand');
     const match = brandDef?.options?.find((o) => o.toLowerCase() === urlBrand.toLowerCase());
+    // Normalize the URL value after filter definitions load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (match && match !== urlBrand) setFilters((f) => ({ ...f, brand: match }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allFilterDefs]);

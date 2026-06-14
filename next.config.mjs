@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+import path from 'node:path';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
@@ -40,6 +41,9 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   typescript: { ignoreBuildErrors: false },
+  turbopack: {
+    root: path.resolve(process.cwd()),
+  },
 
   images: {
     // Allow the local R2 proxy route to pass dynamic encoded URLs via query string.
@@ -119,8 +123,8 @@ const nextConfig = {
       // Redirect www to non-www (handled by Vercel, but good to have)
       {
         source: '/:path*',
-        has: [{ type: 'host', value: 'www.caron.am' }],
-        destination: 'https://caron.am/:path*',
+        has: [{ type: 'host', value: 'www.caron.group' }],
+        destination: 'https://caron.group/:path*',
         permanent: true,
       },
       // Fix accidental /promotion (singular) → /promotions (plural)

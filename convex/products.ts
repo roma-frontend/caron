@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
-import { api } from './_generated/api';
+import { internal } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
 import type { Doc, Id } from './_generated/dataModel';
 
@@ -166,7 +166,7 @@ export const listPaginated = query({
             if (typeof val === 'boolean') return check === val;
             return filterValuesEqual(val, check);
           };
-          let attrMatch = Array.from(aliasKeys).some((k) => checkVal(pa[k]));
+          const attrMatch = Array.from(aliasKeys).some((k) => checkVal(pa[k]));
 
           if (!checkVal(topLevel) && !attrMatch) return false;
         }
@@ -535,10 +535,10 @@ export const update = mutation({
     }
     if (clearBrand) { rest.brand = undefined; }
     if (stock !== undefined && old && old.stock <= 0 && stock > 0) {
-      await ctx.scheduler.runAfter(0, api.backInStock.notifySubscribers, { productId: id, productName: old.name });
+      await ctx.scheduler.runAfter(0, internal.backInStock.notifySubscribers, { productId: id, productName: old.name });
     }
     if (price !== undefined && old && price < old.price) {
-      await ctx.scheduler.runAfter(0, api.priceAlerts.checkAndNotify, { productId: id, newPrice: price });
+      await ctx.scheduler.runAfter(0, internal.priceAlerts.checkAndNotify, { productId: id, newPrice: price });
     }
     const patch: Record<string, unknown> = { ...rest };
     if (compareAtPrice !== undefined) {

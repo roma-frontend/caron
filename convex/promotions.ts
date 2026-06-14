@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
-import { api } from './_generated/api';
+import { internal } from './_generated/api';
 import { normalizeImageUrl, normalizeImageUrls } from './lib/imageUrl';
 
 function normalizePromotionImages<T extends { imageUrl?: string | null; images?: string[] }>(promotion: T): T {
@@ -116,7 +116,7 @@ export const update = mutation({
 
     const added = newIds.filter((id) => !oldIds.includes(id));
     if (added.length > 0) {
-      await ctx.scheduler.runAfter(0, api.promotionSubscribers.notifySubscribers, {
+      await ctx.scheduler.runAfter(0, internal.promotionSubscribers.notifySubscribers, {
         promotionId: id,
         promotionTitle: old?.title ?? '',
         newProductIds: added,

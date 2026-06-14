@@ -1,10 +1,11 @@
 import { v } from 'convex/values';
-import { query, mutation } from './_generated/server';
+import { query, internalQuery, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
 
 export const get = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
     const settings = await ctx.db.query('settings').first();
     return settings ?? {
       storeName: 'Caron Armenia',
@@ -92,6 +93,13 @@ export const getPublic = query({
     if (!s) return null;
     const { telegramBotToken, telegramChatId, ...pub } = s;
     return pub;
+  },
+});
+
+export const getSecret = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('settings').first();
   },
 });
 

@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query, internalQuery, mutation, action } from './_generated/server';
+import { query, internalQuery, mutation, internalAction } from './_generated/server';
 import { api, internal } from './_generated/api';
 
 export const subscribe = mutation({
@@ -35,14 +35,14 @@ export const list = internalQuery({
   },
 });
 
-export const notifySubscribers = action({
+export const notifySubscribers = internalAction({
   args: {
     promotionId: v.id('promotions'),
     promotionTitle: v.string(),
     newProductIds: v.array(v.id('products')),
   },
   handler: async (ctx, args) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     if (!token) return;
 

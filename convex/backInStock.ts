@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
-import { query, mutation, action } from './_generated/server';
-import { api } from './_generated/api';
+import { query, mutation, internalQuery, internalMutation, internalAction } from './_generated/server';
+import { internal } from './_generated/api';
 import { getAdminCaller } from './lib/auth';
 
 export const subscribe = mutation({
@@ -12,15 +12,15 @@ export const subscribe = mutation({
   },
 });
 
-export const notifySubscribers = action({
+export const notifySubscribers = internalAction({
   args: { productId: v.id('products'), productName: v.string() },
   handler: async (ctx, args) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) return;
 
-    const subscribers = await ctx.runQuery(api.backInStock.listByProduct, { productId: args.productId });
+    const subscribers = await ctx.runQuery(internal.backInStock.listByProduct, { productId: args.productId });
     const text = [
       `<b>✅ Ապրանքը վերականգնվել է</b>`,
       ``,
@@ -38,7 +38,7 @@ export const notifySubscribers = action({
           body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
         });
       } catch {}
-      await ctx.runMutation(api.backInStock.markNotified, { id: sub._id });
+      await ctx.runMutation(internal.backInStock.markNotified, { id: sub._id });
     }
   },
 });
@@ -51,14 +51,14 @@ export const list = query({
   },
 });
 
-export const listByProduct = query({
+export const listByProduct = internalQuery({
   args: { productId: v.id('products') },
   handler: async (ctx, args) => {
     return await ctx.db.query('backInStock').withIndex('by_product', (q) => q.eq('productId', args.productId)).filter((q) => q.eq(q.field('notified'), false)).collect();
   },
 });
 
-export const markNotified = mutation({
+export const markNotified = internalMutation({
   args: { id: v.id('backInStock') },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { notified: true });

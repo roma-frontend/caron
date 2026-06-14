@@ -1,6 +1,4 @@
 'use client';
-
-import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Truck, Shield, Clock, Star } from 'lucide-react';
@@ -106,7 +104,6 @@ function PingPongVideo({ src, className }: { src: string; className?: string }) 
 export default function HomePage() {
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
-  const allProds = useQuery(api.products.list, { limit: 500 });
   const brands = useQuery(api.products.getBrands, {});
   const discounted = useQuery(api.products.getRetailDiscounted, {});
   const wholesaleDiscounted = useQuery(api.products.getWholesaleDiscounted, {});
@@ -118,9 +115,9 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">
+      <div className="flex-1">
         {/* Hero — integrated section module */}
-        <section className="relative overflow-hidden lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
+          <section className="relative min-h-[87svh] overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-6%] top-[-25%] h-[620px] w-[620px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(95px)' }} />
             <div className="absolute right-[-10%] top-[0%] h-[560px] w-[560px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(95px)' }} />
@@ -360,7 +357,7 @@ export default function HomePage() {
         </section>
         )}
       <RecentlyViewed />
-      </main>
+      </div>
       <Footer />
     </div>
   );
@@ -407,7 +404,7 @@ function HeroMiniCard({ product }: { product: NonNullable<ReturnType<typeof useQ
           src={product.images[0]}
           alt={product.name}
           fill
-          priority
+          fetchPriority="high"
           sizes="(max-width: 640px) 50vw, 200px"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
