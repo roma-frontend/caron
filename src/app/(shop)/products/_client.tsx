@@ -38,7 +38,7 @@ export default function ProductsPage() {
   const urlBrand = params.get('brand');
   const [filters, setFilters] = useState<{
     categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
-  }>({});
+  }>(() => urlBrand ? { brand: urlBrand } : {});
   const filterDefs = useQuery(api.filters.getByCategory, filters.categoryId ? { categoryId: filters.categoryId as Id<'categories'> } : 'skip');
 
   /** Clear URL brand param without page reload */
@@ -99,7 +99,7 @@ export default function ProductsPage() {
   }
 
   const fchips: { key: string; label: string; clear: () => void }[] = [];
-  if (activeBrand) fchips.push({ key: 'brand', label: `${activeBrand}`, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });
+  if (activeBrand) fchips.push({ key: 'brand', label: activeBrand, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });
   if (filters.categoryId) fchips.push({ key: 'cat', label: cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա', clear: () => setFilters({ ...filters, categoryId: undefined, attributes: undefined }) });
   if (filters.onSale) fchips.push({ key: 'sale', label: 'Զեղչված', clear: () => setFilters({ ...filters, onSale: undefined }) });
   if (filters.minRating) fchips.push({ key: 'rating', label: `${filters.minRating}★+`, clear: () => setFilters({ ...filters, minRating: undefined }) });
@@ -107,6 +107,7 @@ export default function ProductsPage() {
   if (filters.maxPrice) fchips.push({ key: 'max', label: `Գին ≤ ${filters.maxPrice}`, clear: () => setFilters({ ...filters, maxPrice: undefined }) });
   if (filters.inStockOnly) fchips.push({ key: 'stock', label: 'Միայն առկա', clear: () => setFilters({ ...filters, inStockOnly: undefined }) });
   for (const [k, v] of Object.entries(filters.attributes ?? {})) {
+    if (k === 'brand') continue;
     const val = Array.isArray(v) ? v.join(', ') : String(v);
     fchips.push({ key: k, label: val, clear: () => { const a = { ...(filters.attributes ?? {}) }; delete a[k]; setFilters({ ...filters, attributes: Object.keys(a).length ? a : undefined }); } });
   }
@@ -176,7 +177,7 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {filters.categoryId || activeBrand || Object.keys(filters.attributes ?? {}).length > 0 || filters.onSale || filters.minRating || filters.minPrice || filters.maxPrice || filters.inStockOnly ? (
+          {filters.categoryId || Object.keys(filters.attributes ?? {}).length > 0 || filters.onSale || filters.minRating || filters.minPrice || filters.maxPrice || filters.inStockOnly ? (
             <div className="mb-5 space-y-3">
               {filters.categoryId && (
                 <div className="flex items-center gap-2">
