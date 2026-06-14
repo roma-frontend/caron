@@ -107,17 +107,11 @@ export default function HomePage() {
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
   const allProds = useQuery(api.products.list, { limit: 500 });
-  const allFilterDefs = useQuery(api.filters.listAll, {});
+  const brands = useQuery(api.products.getBrands, {});
   const discounted = useQuery(api.products.getRetailDiscounted, {});
   const wholesaleDiscounted = useQuery(api.products.getWholesaleDiscounted, {});
   const user = useAuthStore((s) => s.user);
   const isWholesale = user?.customerType === 'wholesale' && user?.role !== 'admin';
-  const brandOptions = allFilterDefs?.find((d) => d.slug === 'brand')?.options;
-  const brands = (allProds && allFilterDefs) ? [...new Set(allProds.map((p) => {
-    const raw = ((p.attributes as Record<string, unknown> | undefined)?.brand as string | undefined);
-    if (!raw) return undefined;
-    return brandOptions?.find((o) => o.toLowerCase() === raw.toLowerCase()) ?? raw;
-  }).filter(Boolean) as string[])].sort() : undefined;
   const discountedSample = isWholesale ? wholesaleDiscounted?.slice(0, 4) : discounted?.slice(0, 4);
   const hasDiscounts = isWholesale ? (wholesaleDiscounted === undefined || wholesaleDiscounted.length > 0) : (discounted === undefined || discounted.length > 0);
   const settings = useSettings();

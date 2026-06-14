@@ -253,6 +253,19 @@ export const list = query({
   },
 });
 
+export const getBrands = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).collect();
+    const brands = new Set<string>();
+    for (const p of products) {
+      const b = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined ?? p.brand;
+      if (b) brands.add(b);
+    }
+    return [...brands].sort();
+  },
+});
+
 export const getById = query({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {
@@ -436,7 +449,9 @@ export const create = mutation({
     // Sync brand from filterDef brand attribute (stored by filterId)
     if (!data.brand) {
       const attrs = (data.attributes ?? {}) as Record<string, unknown>;
-      const brandDef = await ctx.db.query('filterDefinitions').filter((q) => q.eq(q.field('slug'), 'brand')).first();
+      const brandDef = data.categoryId
+        ? await ctx.db.query('filterDefinitions').withIndex('by_category', (q) => q.eq('categoryId', data.categoryId!)).filter((q) => q.eq(q.field('slug'), 'brand')).first()
+        : undefined;
       if (brandDef) {
         const val = attrs[brandDef._id as string];
         const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
@@ -495,9 +510,12 @@ export const update = mutation({
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
       if (!rest.brand && rAttrs.brand && typeof rAttrs.brand === 'string') rest.brand = rAttrs.brand as string;
-      // Sync from filterDef brand (stored by filterId)
-      if (!rest.brand) {
-        const brandDef = await ctx.db.query('filterDefinitions').filter((q) => q.eq(q.field('slug'), 'brand')).first();
+      // Sync brand from filterDef brand attribute only if it has a value for this product's category
+      {
+        const catId = args.categoryId ?? (await ctx.db.get(id))?.categoryId;
+        const brandDef = catId
+          ? await ctx.db.query('filterDefinitions').withIndex('by_category', (q) => q.eq('categoryId', catId)).filter((q) => q.eq(q.field('slug'), 'brand')).first()
+          : undefined;
         if (brandDef) {
           const val = rAttrs[brandDef._id as string];
           const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);

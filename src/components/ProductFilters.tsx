@@ -13,7 +13,7 @@ import { PRODUCT } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
 
 type FilterValues = Record<string, unknown>;
-type Filters = { categoryId?: Id<'categories'>; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
+type Filters = { categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
 
 interface Props {
   categoryId?: Id<'categories'>;
@@ -191,14 +191,25 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
             <div className="flex flex-wrap gap-2">
               {def.options.map((opt) => {
+                const isBrand = def.slug === 'brand';
                 const isMulti = def.type === 'multiselect';
-                const active = isMulti
-                  ? ((activeFilters.attributes?.[def._id] as string[]) || []).includes(opt)
-                  : activeFilters.attributes?.[def._id] === opt;
+                const active = isBrand
+                  ? activeFilters.brand?.toLowerCase() === opt.toLowerCase()
+                  : isMulti
+                    ? ((activeFilters.attributes?.[def._id] as string[]) || []).includes(opt)
+                    : activeFilters.attributes?.[def._id] === opt;
                 return (
                   <Badge key={opt} variant={active ? 'default' : 'outline'}
                     className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
-                    onClick={() => isMulti ? toggleMulti(def._id, opt) : updateAttr(def._id, active ? null : opt)}
+                    onClick={() => {
+                      if (isBrand) {
+                        onFilterChange({ ...activeFilters, brand: active ? undefined : opt });
+                      } else if (isMulti) {
+                        toggleMulti(def._id, opt);
+                      } else {
+                        updateAttr(def._id, active ? null : opt);
+                      }
+                    }}
                   >{opt}</Badge>
                 );
               })}
