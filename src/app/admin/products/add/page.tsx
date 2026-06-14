@@ -130,11 +130,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
 
       <div className="grid gap-3 text-xs sm:grid-cols-2">
         <div className="rounded-xl border border-border/70 bg-background/80 p-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">1. Արտիկուլ</Label>
-          <Input value={sku} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="mt-1 h-11 border-border/70 bg-background/90 font-mono tracking-wider" />
-        </div>
-        <div className="rounded-xl border border-border/70 bg-background/80 p-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">2. Ապրանքի անուն</Label>
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">1. Ապրանքի անուն</Label>
           <Input
             value={name}
             onChange={(e) => {
@@ -144,6 +140,10 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
             placeholder="Ապրանքի անուն"
             className="mt-1 h-11 border-border/70 bg-background/90"
           />
+        </div>
+        <div className="rounded-xl border border-border/70 bg-background/80 p-3">
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">2. Արտիկուլ</Label>
+          <Input value={sku} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="mt-1 h-11 border-border/70 bg-background/90 font-mono tracking-wider" />
         </div>
         <div className="rounded-xl border border-border/70 bg-background/80 p-3">
           <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">3. Կատեգորիա</Label>
