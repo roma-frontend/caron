@@ -307,6 +307,13 @@
   scrollbar-width: none;
 }
 
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Smaller container padding on very small screens */
 @media (max-width: 374px) {
   :root {

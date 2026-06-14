@@ -122,14 +122,14 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
               {atgCode && <p className="text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                   <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
                   {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(price)}</span>}
-                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive">-{retailDiscount}%</span>}
-                  {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
+                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive shrink-0">-{retailDiscount}%</span>}
+                  {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary shrink-0">-{effectiveWholesaleDiscount}%</span>}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <button onClick={(e) => { e.preventDefault(); toggleFav({ id, name, price, image: image ?? null }); }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>

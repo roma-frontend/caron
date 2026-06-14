@@ -152,15 +152,15 @@ export default function ProductsPage() {
             </div>
           </div>
           {filterDefs && filterDefs.length > 0 && (
-            <div className="mb-4 space-y-2 rounded-xl border border-primary/15 bg-linear-to-br from-card via-primary/5 to-muted/40 p-4 shadow-sm backdrop-blur-sm">
+            <div className="mb-4 rounded-xl border border-primary/15 bg-linear-to-br from-card via-primary/5 to-muted/40 px-3 py-3 shadow-sm backdrop-blur-sm">
               {filterDefs.filter((def) => def.slug === 'type' || def.name === 'Տեսակ').map((def) => {
                 const active =
                   ((filters.attributes?.[def._id] as string[]) ||
                     (filters.attributes?.[def.slug] as string[]) ||
                     []);
                 return (
-                  <div key={def._id} className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs font-medium text-muted-foreground mr-1">{def.name}:</span>
+                  <div key={def._id} className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0">{def.name}:</span>
                     {def.options?.map((opt) => {
                       const isActive = active.includes(opt);
                       return (
@@ -173,7 +173,7 @@ export default function ProductsPage() {
                           delete attrs[def.slug];
                           setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
                         }}
-                          className={`rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
+                          className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
                           {opt}
                         </button>
                       );
