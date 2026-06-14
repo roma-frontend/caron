@@ -131,7 +131,7 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{product.name}</p>
+          <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-sm font-bold text-primary">{formatPrice(product.price)}</span>
