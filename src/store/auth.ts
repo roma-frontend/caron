@@ -1,7 +1,6 @@
-"use client"
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useCartStore } from './cart';
 
 interface AuthState {
   sessionToken: string | null;
@@ -19,7 +18,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       _hasHydrated: false,
       setSession: (token, user) => set({ sessionToken: token, user }),
-      logout: () => set({ sessionToken: null, user: null }),
+      logout: () => { set({ sessionToken: null, user: null }); useCartStore.getState().clearCart(); },
       setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),
     {
