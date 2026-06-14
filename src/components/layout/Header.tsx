@@ -71,7 +71,7 @@ export function Header() {
         )}
       </div>
       <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>
-        <div className="mx-auto flex h-full items-center justify-between gap-1 px-2 sm:px-4" style={{ maxWidth: 'var(--container-max)' }}>
+        <div className="mx-auto flex h-full items-center justify-between gap-1 px-4" style={{ maxWidth: 'var(--container-max)' }}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Logo size={36} />
