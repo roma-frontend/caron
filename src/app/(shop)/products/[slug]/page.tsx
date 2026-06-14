@@ -214,9 +214,6 @@ export default function ProductDetailPage() {
         {/* Info */}
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
-          {product.brand && (
-            <span className="mt-1 inline-block text-sm font-semibold text-primary">{product.brand}</span>
-          )}
 
           {stats && stats.count > 0 && (
             <div className="mt-2 flex items-center gap-1.5">

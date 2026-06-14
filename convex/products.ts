@@ -430,6 +430,16 @@ export const create = mutation({
         data.attributes = { ...attrs, brand: data.brand };
       }
     }
+    // Sync brand from filterDef brand attribute (stored by filterId)
+    if (!data.brand) {
+      const attrs = (data.attributes ?? {}) as Record<string, unknown>;
+      const brandDef = await ctx.db.query('filterDefinitions').filter((q) => q.eq(q.field('slug'), 'brand')).first();
+      if (brandDef) {
+        const val = attrs[brandDef._id as string];
+        const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
+        if (brandVal) { data.brand = brandVal; (data.attributes as Record<string, unknown>).brand = brandVal; }
+      }
+    }
     // Auto-generate SKU if not provided
     if (!data.sku) {
       const cat = await ctx.db.get(data.categoryId);
@@ -482,6 +492,15 @@ export const update = mutation({
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
       if (!rest.brand && rAttrs.brand && typeof rAttrs.brand === 'string') rest.brand = rAttrs.brand as string;
+      // Sync from filterDef brand (stored by filterId)
+      if (!rest.brand) {
+        const brandDef = await ctx.db.query('filterDefinitions').filter((q) => q.eq(q.field('slug'), 'brand')).first();
+        if (brandDef) {
+          const val = rAttrs[brandDef._id as string];
+          const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
+          if (brandVal) { rest.brand = brandVal; rAttrs.brand = brandVal; }
+        }
+      }
       rest.attributes = Object.keys(rAttrs).length > 0 ? rAttrs : undefined;
     const old = await ctx.db.get(id);
     if (rest.sku !== undefined) {

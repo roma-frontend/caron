@@ -270,7 +270,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
             <p className="text-muted-foreground">Այս կատեգորիան չունի բնութագրեր</p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
-              {filterDefs.filter((def) => def.slug !== 'brand').map((def) => (
+              {filterDefs.map((def) => (
                 <div key={def._id}>
                   <Label className="text-[11px] text-muted-foreground">{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
@@ -471,7 +471,7 @@ function StepAttributes() {
   return (
     <ChevronSection title="3. Բնութագրեր">
       <div className="space-y-4">
-        {filterDefs.filter((def) => def.slug !== 'brand').map((def) => (
+        {filterDefs.map((def) => (
           <div key={def._id}>
             <Label>{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
             {(def.type === 'select' || def.type === 'multiselect') && def.options ? (

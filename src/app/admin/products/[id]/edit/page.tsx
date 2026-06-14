@@ -256,7 +256,6 @@ export default function EditProductPage() {
               <div><Label>ԱՏԳԱ կոդ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, atgCode: e.target.value }))} placeholder="2601" className="h-11 font-mono" /></div>
             </div>
 
-            <div><Label>Բրենդ</Label><Input value={form.brand ?? ''} onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))} className="h-11" placeholder="Bosch, Mobil..." /></div>
 
             <OemNumbersInput value={form.oemNumbers ?? []} onChange={(v) => setForm((f) => ({ ...f, oemNumbers: v.length ? v : undefined }))} />
 
@@ -269,7 +268,7 @@ export default function EditProductPage() {
           <Card>
             <CardHeader><CardTitle>Ատրիբուտներ</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {filterDefs.filter((def) => def.slug !== 'brand').map((def) => (
+              {filterDefs.map((def) => (
                 <div key={def._id}>
                   <Label>{def.name}{def.unit ? ` (${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
