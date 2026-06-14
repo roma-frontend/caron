@@ -7,7 +7,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { toast } from 'sonner';
 
-const REMINDER_MS = 20 * 1000; // 30 minutes — change to e.g. 20 * 1000 for testing
+const REMINDER_MS = 20 * 1000; // 20 seconds for testing (change to 30 * 60 * 1000 for production)
 
 function playCartSound() {
   try {
@@ -32,21 +32,19 @@ export function CartSync() {
   const saveCart = useMutation(api.cart.save);
   const savedCartJson = useQuery(api.cart.get, sessionToken ? { sessionToken } : 'skip');
   const initialized = useRef(false);
+  const prevToken = useRef(sessionToken);
   const reminderTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const reminderShown = useRef(false);
 
   // Load cart from server on login
   useEffect(() => {
     if (!sessionToken || savedCartJson === undefined || initialized.current) return;
     try {
       const serverItems = savedCartJson ? JSON.parse(savedCartJson) : [];
-      if (serverItems.length > 0) {
-        useCartStore.getState().loadItems(serverItems);
-      }
+      if (serverItems.length > 0) useCartStore.getState().loadItems(serverItems);
     } catch {}
     initialized.current = true;
   }, [sessionToken, savedCartJson]);
-
-  const prevToken = useRef(sessionToken);
 
   // On logout: clear local cart (server already has latest from debounced save)
   useEffect(() => {
@@ -55,6 +53,7 @@ export function CartSync() {
     if (prev && !sessionToken && initialized.current) {
       useCartStore.getState().clearCart();
       initialized.current = false;
+      reminderShown.current = false;
     }
   }, [sessionToken]);
 
@@ -67,27 +66,25 @@ export function CartSync() {
     return () => clearTimeout(t);
   }, [sessionToken, items, saveCart]);
 
-  // Cart reminder for guests with items in localStorage
+  // Cart reminder — fires once per session after REMINDER_MS if cart has items
   useEffect(() => {
     clearTimeout(reminderTimer.current);
-    if (sessionToken || items.length === 0) return;
+    if (reminderShown.current || items.length === 0) return;
 
     reminderTimer.current = setTimeout(() => {
       const count = useCartStore.getState().items.length;
       if (count === 0) return;
+      reminderShown.current = true;
       playCartSound();
       toast('🛒 Ձեր զամբյուղն սպասում է', {
         description: `${count} ապրանք պահված է ձեր զամբյուղում: Մի մոռացեք ձևակերպել պատվեր:`,
         duration: 12000,
-        action: {
-          label: 'Տեսնել զամբյուղը',
-          onClick: () => { window.location.href = '/cart'; },
-        },
+        action: { label: 'Տեսնել զամբյուղը', onClick: () => { window.location.href = '/cart'; } },
       });
     }, REMINDER_MS);
 
     return () => clearTimeout(reminderTimer.current);
-  }, [sessionToken, items.length]);
+  }, [items.length]);
 
   return null;
 }
