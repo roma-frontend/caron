@@ -111,7 +111,7 @@ export default function HomePage() {
   const wholesaleDiscounted = useQuery(api.products.getWholesaleDiscounted, {});
   const user = useAuthStore((s) => s.user);
   const isWholesale = user?.customerType === 'wholesale' && user?.role !== 'admin';
-  const brands = allProds ? [...new Map(allProds.map((p) => ((p.attributes as Record<string, unknown> | undefined)?.brand as string | undefined) || p.brand || undefined).filter(Boolean).map((b) => [b!.toUpperCase(), b!])).values()].sort() : undefined;
+  const brands = allProds ? [...new Map(allProds.map((p) => ((p.attributes as Record<string, unknown> | undefined)?.brand as string | undefined)).filter(Boolean).map((b) => [b!.toUpperCase(), b!])).values()].sort() : undefined;
   const discountedSample = isWholesale ? wholesaleDiscounted?.slice(0, 4) : discounted?.slice(0, 4);
   const hasDiscounts = isWholesale ? (wholesaleDiscounted === undefined || wholesaleDiscounted.length > 0) : (discounted === undefined || discounted.length > 0);
   const settings = useSettings();

@@ -94,7 +94,7 @@ export const getByBrand = query({
       p.isActive &&
       p.stock > 0 &&
       !inactiveCatIds.has(p.categoryId) &&
-      p.brand?.toLowerCase() === args.brand.toLowerCase(),
+      ((p.attributes ?? {}) as Record<string, unknown>).brand?.toString().toLowerCase() === args.brand.toLowerCase(),
     ).slice(0, 200);
   },
 });
