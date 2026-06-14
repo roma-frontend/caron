@@ -139,7 +139,7 @@ export default function ProductsPage() {
           else setFilters(f);
         }} activeFilters={filters} />
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pb-24 lg:pb-0">
           <div className="mb-5 flex flex-col items-start sm:items-center justify-between gap-3">
             <SortBar activeFilters={filters} onFilterChange={setFilters} />
             <div className="flex items-center gap-1 shrink-0">
