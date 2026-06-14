@@ -6,9 +6,8 @@ import { useCartStore } from '@/store/cart';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
-const REMINDER_MS = 30 * 60 * 1000; // 30 minutes
+const REMINDER_MS = 20 * 1000; // 30 minutes — change to e.g. 20 * 1000 for testing
 
 function playCartSound() {
   try {
