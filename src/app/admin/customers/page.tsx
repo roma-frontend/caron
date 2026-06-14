@@ -217,7 +217,7 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
             {customer.name.charAt(0).toUpperCase()}
           </div>

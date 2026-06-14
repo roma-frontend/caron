@@ -214,6 +214,9 @@ export default function ProductDetailPage() {
         {/* Info */}
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
+          {product.brand && (
+            <span className="mt-1 inline-block text-sm font-semibold text-primary">{product.brand}</span>
+          )}
 
           {stats && stats.count > 0 && (
             <div className="mt-2 flex items-center gap-1.5">
@@ -303,11 +306,11 @@ export default function ProductDetailPage() {
           <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 
           {/* Attributes */}
-          {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').length > 0 && (
+          {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').length > 0 && (
             <div className="mt-6">
               <h3 className="mb-3 font-semibold">{'Ատրիբուտներ'}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').map(([key, val]) => (
+                {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').map(([key, val]) => (
                   <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">{resolveAttrLabel(key, val)}</span>
                     <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : Array.isArray(val) ? val.join(', ') : String(val)}</span>
