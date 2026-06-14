@@ -77,9 +77,16 @@ export function CartSync() {
       reminderShown.current = true;
       playCartSound();
       toast('🛒 Ձեր զամբյուղն սպասում է', {
-        description: `${count} ապրանք պահված է ձեր զամբյուղում: Մի մոռացեք ձևակերպել պատվեր:`,
+        description: (
+          <div className="flex flex-col gap-2 mt-1">
+            <span>{count} ապրանք պահված է ձեր զամբյուղում:</span>
+            <button onClick={() => { window.location.href = '/cart'; }}
+              className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              Տեսնել զամբյուղը
+            </button>
+          </div>
+        ),
         duration: 12000,
-        action: { label: 'Տեսնել զամբյուղը', onClick: () => { window.location.href = '/cart'; } },
       });
     }, REMINDER_MS);
 
