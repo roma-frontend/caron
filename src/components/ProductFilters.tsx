@@ -37,7 +37,7 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
       </aside>
 
       {/* Mobile trigger button */}
-      <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-40 lg:hidden">
+      <div className="fixed left-1/2 -translate-x-1/2 z-40 lg:hidden" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <Button onClick={() => setMobileOpen(true)} size="lg" className="rounded-full shadow-xl shadow-primary/25 gap-2 px-6">
           <SlidersHorizontal className="h-4 w-4" />
           {PRODUCT.filters}
