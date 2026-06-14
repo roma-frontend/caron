@@ -36,9 +36,18 @@ export default function ProductsPage() {
   const cats = useQuery(api.categories.list, {});
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const urlBrand = params.get('brand');
+  const allFilterDefs = useQuery(api.filters.listAll, {});
   const [filters, setFilters] = useState<{
     categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
   }>(() => urlBrand ? { brand: urlBrand } : {});
+  // Once filterDefs load, replace raw urlBrand with exact filterDef option (case-insensitive)
+  useEffect(() => {
+    if (!urlBrand || !allFilterDefs || filters.brand !== urlBrand) return;
+    const brandDef = allFilterDefs.find((d) => d.slug === 'brand');
+    const match = brandDef?.options?.find((o) => o.toLowerCase() === urlBrand.toLowerCase());
+    if (match && match !== urlBrand) setFilters((f) => ({ ...f, brand: match }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFilterDefs]);
   const filterDefs = useQuery(api.filters.getByCategory, filters.categoryId ? { categoryId: filters.categoryId as Id<'categories'> } : 'skip');
 
   /** Clear URL brand param without page reload */
