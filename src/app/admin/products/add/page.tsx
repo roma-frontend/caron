@@ -149,7 +149,10 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
           <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">3. Կատեգորիա</Label>
           <select
             value={categoryId ?? ''}
-            onChange={(e) => update('categoryId', e.target.value || null)}
+            onChange={(e) => {
+              update('categoryId', e.target.value || null);
+              update('attributes', {});
+            }}
             className="mt-1 flex h-11 w-full rounded-md border border-border/70 bg-background/90 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
           >
             <option value="">Կատեգորիա</option>

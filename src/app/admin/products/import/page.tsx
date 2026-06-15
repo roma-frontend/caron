@@ -355,7 +355,18 @@ export default function ImportProductsPage() {
   const updateManualRow = (index: number, key: keyof ManualRow, value: string) => {
     setManualRows((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], [key]: value };
+      if (key === 'category') {
+        next[index] = {
+          ...next[index],
+          category: value,
+          // Category-specific attributes must be reset when category changes.
+          brand: '',
+          type: '',
+          size: '',
+        };
+      } else {
+        next[index] = { ...next[index], [key]: value };
+      }
       return next;
     });
   };
