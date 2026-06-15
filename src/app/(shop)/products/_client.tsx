@@ -7,7 +7,7 @@ import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Car, X, LayoutGrid, List } from 'lucide-react';
+import { Search, Car, X, LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { LoaderInline } from '@/components/ui/loader';
 import { ProductGridSkeleton } from '@/components/ProductSkeleton';
@@ -161,26 +161,20 @@ export default function ProductsPage() {
                     (filters.attributes?.[def.slug] as string[]) ||
                     []);
                 return (
-                  <div key={def._id} className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-                    <span className="text-xs font-medium text-muted-foreground shrink-0">{def.name}:</span>
-                    {def.options?.map((opt) => {
-                      const isActive = active.includes(opt);
-                      return (
-                        <button key={opt} onClick={() => {
-                          const next = isActive ? active.filter((v) => v !== opt) : [...active, opt];
-                          const attrs = { ...(filters.attributes ?? {}) };
-                          // Store by filter _id (canonical key). Remove legacy slug key if present.
-                          if (next.length > 0) attrs[def._id] = next;
-                          else delete attrs[def._id];
-                          delete attrs[def.slug];
-                          setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
-                        }}
-                          className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
-                          {opt}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TypeFilterRow
+                    key={def._id}
+                    def={def}
+                    active={active}
+                    onToggle={(opt, isActive) => {
+                      const next = isActive ? active.filter((v) => v !== opt) : [...active, opt];
+                      const attrs = { ...(filters.attributes ?? {}) };
+                      // Store by filter _id (canonical key). Remove legacy slug key if present.
+                      if (next.length > 0) attrs[def._id] = next;
+                      else delete attrs[def._id];
+                      delete attrs[def.slug];
+                      setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
+                    }}
+                  />
                 );
               })}
             </div>
@@ -237,6 +231,113 @@ export default function ProductsPage() {
           {status === 'LoadingMore' && <LoaderInline />}
         </div>
       </div>
+    </div>
+  );
+}
+
+type TypeFilterDef = {
+  _id: string;
+  slug: string;
+  name: string;
+  options?: string[];
+};
+
+function TypeFilterRow({
+  def,
+  active,
+  onToggle,
+}: {
+  def: TypeFilterDef;
+  active: string[];
+  onToggle: (option: string, isActive: boolean) => void;
+}) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [isScrollable, setIsScrollable] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = () => {
+    const el = rowRef.current;
+    if (!el) return;
+    const scrollable = el.scrollWidth > el.clientWidth + 4;
+    setIsScrollable(scrollable);
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    updateScrollState();
+  }, [def.options, active]);
+
+  const scrollBy = (delta: number) => {
+    const el = rowRef.current;
+    if (!el) return;
+    el.scrollBy({ left: delta, behavior: 'smooth' });
+  };
+
+  const handleWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
+    const el = rowRef.current;
+    if (!el) return;
+    if (el.scrollWidth <= el.clientWidth) return;
+
+    // Allow natural horizontal wheel gestures; convert vertical wheel to horizontal for mouse users.
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 1) return;
+    e.preventDefault();
+    el.scrollBy({ left: delta, behavior: 'auto' });
+    updateScrollState();
+  };
+
+  return (
+    <div className="space-y-2">
+      <span className="block text-xs font-medium text-muted-foreground">{def.name}:</span>
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Նախորդ տարբերակներ"
+          disabled={!canScrollLeft}
+          onClick={() => scrollBy(-220)}
+          className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background/90 p-1.5 shadow-sm transition ${canScrollLeft ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+
+        <div
+          ref={rowRef}
+          onScroll={updateScrollState}
+          onWheel={handleWheel}
+          className="scrollbar-none flex items-center gap-1.5 overflow-x-auto px-8 py-0.5"
+        >
+          {def.options?.map((opt) => {
+            const isActive = active.includes(opt);
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => onToggle(opt, isActive)}
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          aria-label="Հաջորդ տարբերակներ"
+          disabled={!canScrollRight}
+          onClick={() => scrollBy(220)}
+          className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background/90 p-1.5 shadow-sm transition ${canScrollRight ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {isScrollable && (
+        <p className="text-[11px] text-muted-foreground">
+          Հուշում․ կարելի է մկնիկի անիվով սքրոլ անել նաև ձախ/աջ։
+        </p>
+      )}
     </div>
   );
 }
