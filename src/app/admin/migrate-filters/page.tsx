@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export default function MigrateFiltersPage() {
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<{ error?: string; message?: string; updated?: number } | null>(null);
 
   const handleMigrate = async () => {
     if (!confirm('Սա կգծանցի բոլոր ապրանքների ֆիլտր հատկանիշները նոր համակարգին:\n\nԱյս գործողությունը կարևոր է և կատարվում է միայն մեկ անգամ!')) {
@@ -26,9 +26,10 @@ export default function MigrateFiltersPage() {
 
       setResult(data);
       toast.success(`${data.message} ✅`);
-    } catch (error: any) {
-      toast.error(`Գծանցում ձախողվեց։ ${error.message}`);
-      setResult({ error: error.message });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Գծանցում ձախողվեց։ ${msg}`);
+      setResult({ error: msg });
     } finally {
       setRunning(false);
     }

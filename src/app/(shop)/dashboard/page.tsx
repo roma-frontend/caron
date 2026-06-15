@@ -8,7 +8,7 @@ import { Loader } from '@/components/ui/loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, LogOut, Heart, Truck, Clock } from 'lucide-react';
+import { Package, User, ShoppingBag, LogOut, Heart, Clock } from 'lucide-react';
 import { clearAuthCookie } from '@/actions/auth';
 import { formatDateHy, formatPrice } from '@/lib/formatters';
 import Link from 'next/link';

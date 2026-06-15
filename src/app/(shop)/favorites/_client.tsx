@@ -47,6 +47,8 @@ export default function FavoritesPage() {
               name={product.name}
               price={product.price}
               compareAtPrice={product.compareAtPrice}
+              retailDiscount={product.retailDiscount}
+              wholesaleDiscount={product.wholesaleDiscount}
               image={product.images?.[0]}
               inStock={product.stock > 0}
               sku={product.sku}

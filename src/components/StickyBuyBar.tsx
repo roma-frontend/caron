@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Heart, Zap } from 'lucide-react';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
@@ -20,7 +20,7 @@ interface StickyBuyBarProps {
   productStock?: number;
 }
 
-export function StickyBuyBar({ productId, productName, productPrice, productImage, productCompareAtPrice, inStock = true, slug, qty = 1, productStock }: StickyBuyBarProps) {
+export function StickyBuyBar({ productId, productName, productPrice, productImage, productCompareAtPrice, inStock = true, slug: _slug, qty = 1, productStock }: StickyBuyBarProps) {
   const [visible, setVisible] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const toggleFav = useFavoritesStore((s) => s.toggle);

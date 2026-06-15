@@ -14,12 +14,14 @@ import { Id } from '../../../../convex/_generated/dataModel';
 import { useSettings } from '@/hooks/useSettings';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/auth';
 
 export default function OrderSuccessContent() {
   const params = useSearchParams();
   const orderId = params.get('id') as Id<'orders'> | null;
-  const order = useQuery(api.orders.getById, orderId ? { id: orderId } : 'skip');
   const settings = useSettings();
+  const sessionToken = useAuthStore((s) => s.sessionToken);
+  const order = useQuery(api.orders.getById, orderId ? { id: orderId, sessionToken: sessionToken || undefined } : 'skip');
   const o = order as Record<string, unknown> | null | undefined;
 
   const bank = settings?.bankName || 'Ameriabank';
@@ -122,7 +124,7 @@ export default function OrderSuccessContent() {
               <Button variant="outline" className="min-w-38 gap-2 flex-1" onClick={() => window.print()}>
                 <Printer className="h-4 w-4" /> Տպել / Print
               </Button>
-              {String(o?.orderNumber ?? '') && (
+              {String(o?.orderNumber ?? '') && sessionToken && (
                 <SendTelegramReceipt orderId={orderId!} />
               )}
               <Link href="/products" className="flex-1"><Button variant="cta" className="w-full">Շարունակել գնումը</Button></Link>
@@ -139,6 +141,7 @@ function SendTelegramReceipt({ orderId }: { orderId: Id<'orders'> }) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [botUsername, setBotUsername] = useState<string | null>(null);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
   const sendReceipt = useAction(api.notifications.sendReceiptToCustomer);
 
   const handleSend = async () => {
@@ -146,7 +149,7 @@ function SendTelegramReceipt({ orderId }: { orderId: Id<'orders'> }) {
     if (!user) return;
     setSending(true);
     try {
-      const result = await sendReceipt({ orderId, telegramUser: user });
+      const result = await sendReceipt({ orderId, telegramUser: user, sessionToken: sessionToken || '' });
       const r = result as { ok: boolean; error?: string; botUsername?: string } | undefined;
       if (r?.ok) {
         setSent(true);

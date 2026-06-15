@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/ratelimit';
 
 interface DecodedValue {
   Variable: string;
@@ -14,8 +15,14 @@ interface VinResponse {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const vin = searchParams.get('vin');
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown';
+  const { allowed } = await checkRateLimit(`vin:${ip}`);
 
-  if (!vin || vin.length !== 17) {
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  if (!vin || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vin)) {
     return NextResponse.json({ error: 'Անվավեր VIN համար: Մուտքագրեք 17 նիշանոց VIN կոդ:' }, { status: 400 });
   }
 
@@ -65,7 +72,7 @@ export async function GET(request: Request) {
       manufacturer: manufacturer || null,
       searchQuery: [make, model, year].filter(Boolean).join(' '),
     });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { error: 'VIN ապակոդավորման սխալ: Փորձեք կրկին:' },
       { status: 500 }

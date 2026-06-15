@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { checkRateLimit } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +26,8 @@ function extractObjectKey(urlStr: string, bucketName: string): string | null {
       key = key.slice(bucketName.length).replace(/^\/+/, '');
     }
 
+    if (!key.startsWith('products/')) return null;
+
     return key || null;
   } catch {
     return null;
@@ -40,6 +43,12 @@ export async function GET(req: NextRequest) {
   const rawUrl = req.nextUrl.searchParams.get('url');
   if (!rawUrl) {
     return NextResponse.json({ error: 'Missing url param' }, { status: 400 });
+  }
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const { allowed } = await checkRateLimit(`r2-image:${ip}`);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   const key = extractObjectKey(rawUrl, bucket);

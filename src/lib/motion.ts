@@ -47,11 +47,13 @@ export function useMouseGlow() {
 }
 
 /** CSS transition style for reveal animations */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function revealStyle(_visible: boolean, _delay = 0) {
   return { opacity: 1, transform: 'translateY(0)' } as const;
 }
 
 /** CSS transition for card reveal with 3D tilt */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function cardRevealStyle(_visible: boolean, _delay = 0) {
   return { opacity: 1, transform: 'translateY(0) rotateX(0deg)' } as const;
 }

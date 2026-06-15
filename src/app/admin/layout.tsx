@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       logoutStore();
       router.push('/login');
     }
-  }, [me]);
+  }, [me, logoutStore, router]);
 
   // Redirect handled inline below
 

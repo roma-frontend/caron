@@ -25,7 +25,6 @@ import {
   Eye,
   EyeOff,
   ShoppingCart,
-  Building2,
   Smartphone,
   BarChart3,
 } from 'lucide-react';
@@ -35,10 +34,10 @@ import { useAuthStore } from '@/store/auth';
 
 export default function AdminSettingsPage() {
   const router = useRouter();
-  const settings = useQuery(api.settings.get, {});
+  const sessionToken = useAuthStore((s) => s.sessionToken);
+  const settings = useQuery(api.settings.get, sessionToken ? { sessionToken } : 'skip');
   const save = useMutation(api.settings.save);
   const sendTest = useAction(api.notifications.sendTest);
-  const sessionToken = useAuthStore((s) => s.sessionToken);
 
   const [form, setForm] = useState<Record<string, string | number>>({});
   const [loaded, setLoaded] = useState(false);
@@ -714,6 +713,7 @@ export default function AdminSettingsPage() {
 
           {/* Filter Migration */}
           <FilterMigrationCard sessionToken={sessionToken || ''} />
+          <NormalizeBrandsCard sessionToken={sessionToken || ''} />
         </TabsContent>
 
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full gap-2 mt-6">
@@ -776,6 +776,27 @@ function FilterMigrationCard({ sessionToken }: { sessionToken: string }) {
           <Power className="h-4 w-4" />
           {migrating ? 'Գծանցվում է...' : 'Գործարկել միգրացիա'}
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function NormalizeBrandsCard({ sessionToken }: { sessionToken: string }) {
+  const normalize = useMutation(api.migrations.normalizeBrand);
+  const [running, setRunning] = useState(false);
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Նորմալացնել բրենդերը</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">Համաժամացնի բոլոր ապրանքների brand արժեքը filterDef-ի options-ի հետ (case-insensitive)։ Օրինակ՝ HITO → Hito:</p>
+        <Button disabled={running} onClick={async () => {
+          setRunning(true);
+          try { const r = await normalize({ sessionToken }); toast.success(String(r)); }
+          catch (e) { toast.error(e instanceof Error ? e.message : 'Error'); }
+          finally { setRunning(false); }
+        }} className="w-full">{running ? 'Աշխատում է...' : 'Գործարկել'}</Button>
       </CardContent>
     </Card>
   );

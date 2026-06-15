@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Id } from '../../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Check, ChevronLeft, ChevronRight, ShoppingBag, User, MapPin, ClipboardList, CreditCard, Banknote, Smartphone, Building2 } from 'lucide-react';
+import { useAuthStore } from '@/store/auth';
 
 type ValidationDiffItem = {
   id: string;
@@ -58,6 +59,25 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     name: '', phone: '', email: '', address: '', notes: '',
   });
+
+  const currentUser = useAuthStore((s) => s.user);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
+  const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
+
+  useEffect(() => {
+    const u = me ?? currentUser;
+    if (u) {
+      // Prefill fields once user data arrives; keep user-entered values intact.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || u.name || '',
+        email: prev.email || u.email || '',
+        phone: prev.phone || ('phone' in u ? u.phone : undefined) || '',
+        address: prev.address || ('address' in u ? (u.address as string) : undefined) || '',
+      }));
+    }
+  }, [me, currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goToStep = (i: number) => {
     setTimeout(() => setStep(i), 150);

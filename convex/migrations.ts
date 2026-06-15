@@ -213,3 +213,31 @@ export const migrateFilterAttributeKeysToId = mutation({
     return { updated, message: `Migrated ${updated} products to use filter _id instead of slug` };
   },
 });
+
+import { v } from 'convex/values';
+
+export const normalizeBrand = mutation({
+  args: { sessionToken: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const allBrandDefs = await ctx.db.query('filterDefinitions').filter((q) => q.eq(q.field('slug'), 'brand')).collect();
+    const brandDefByCategory = new Map(allBrandDefs.map((d) => [d.categoryId, d]));
+    const products = await ctx.db.query('products').collect();
+    let updated = 0;
+    for (const p of products) {
+      const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+      const rawBrand = (attrs.brand as string | undefined) ?? p.brand;
+      if (!rawBrand) continue;
+      const brandDef = brandDefByCategory.get(p.categoryId);
+      const match = brandDef?.options?.find((o) => o.toLowerCase() === rawBrand.toLowerCase());
+      const normalized = match ?? rawBrand;
+      if (normalized !== rawBrand || p.brand !== normalized) {
+        await ctx.db.patch(p._id, {
+          brand: normalized,
+          attributes: { ...attrs, brand: normalized },
+        });
+        updated++;
+      }
+    }
+    return `Normalized brand for ${updated} products`;
+  },
+});

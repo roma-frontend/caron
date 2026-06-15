@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { PRODUCT } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
 
 type FilterValues = Record<string, unknown>;
-type Filters = { categoryId?: Id<'categories'>; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
+type Filters = { categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
 
 interface Props {
   categoryId?: Id<'categories'>;
@@ -37,7 +37,7 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
       </aside>
 
       {/* Mobile trigger button */}
-      <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-40 lg:hidden">
+      <div className="fixed left-1/2 -translate-x-1/2 z-40 lg:hidden" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <Button onClick={() => setMobileOpen(true)} size="lg" className="rounded-full shadow-xl shadow-primary/25 gap-2 px-6">
           <SlidersHorizontal className="h-4 w-4" />
           {PRODUCT.filters}
@@ -91,7 +91,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
   const filterDefs = useQuery(api.filters.getByCategory, selectedCat ? { categoryId: selectedCat } : 'skip');
   const categories = useQuery(api.categories.listWithCounts, {});
 
-  const toggle = (key: string) => setExpanded((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  const toggle = (key: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
 
   const updateAttr = (slug: string, value: unknown) => {
     const attrs = { ...(activeFilters.attributes || {}) } as FilterValues;
@@ -191,14 +191,25 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
             <div className="flex flex-wrap gap-2">
               {def.options.map((opt) => {
+                const isBrand = def.slug === 'brand';
                 const isMulti = def.type === 'multiselect';
-                const active = isMulti
-                  ? ((activeFilters.attributes?.[def._id] as string[]) || []).includes(opt)
-                  : activeFilters.attributes?.[def._id] === opt;
+                const active = isBrand
+                  ? activeFilters.brand?.toLowerCase() === opt.toLowerCase()
+                  : isMulti
+                    ? ((activeFilters.attributes?.[def._id] as string[]) || []).includes(opt)
+                    : activeFilters.attributes?.[def._id] === opt;
                 return (
                   <Badge key={opt} variant={active ? 'default' : 'outline'}
                     className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
-                    onClick={() => isMulti ? toggleMulti(def._id, opt) : updateAttr(def._id, active ? null : opt)}
+                    onClick={() => {
+                      if (isBrand) {
+                        onFilterChange({ ...activeFilters, brand: active ? undefined : opt });
+                      } else if (isMulti) {
+                        toggleMulti(def._id, opt);
+                      } else {
+                        updateAttr(def._id, active ? null : opt);
+                      }
+                    }}
                   >{opt}</Badge>
                 );
               })}

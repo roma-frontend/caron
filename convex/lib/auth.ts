@@ -30,10 +30,14 @@ async function getSessionUser(
     .unique();
   if (!user || !user.isActive || !user.sessionExpiry || user.sessionExpiry < Date.now()) return null;
   // Migrate to sessions table (only from mutation context)
-  if ('insert' in ctx.db) {
-    await (ctx.db as any).insert('sessions', { userId: user._id, token: sessionToken, expiresAt: user.sessionExpiry, createdAt: Date.now() });
+  if (isMutationCtx(ctx)) {
+    await ctx.db.insert('sessions', { userId: user._id, token: sessionToken, expiresAt: user.sessionExpiry, createdAt: Date.now() });
   }
   return { _id: user._id, role: user.role as 'admin' | 'customer', email: user.email, name: user.name };
+}
+
+function isMutationCtx(ctx: QueryCtx | MutationCtx): ctx is MutationCtx {
+  return 'insert' in ctx.db;
 }
 
 export async function getAdminCaller(

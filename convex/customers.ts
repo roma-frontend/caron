@@ -37,6 +37,7 @@ export const updateCustomer = mutation({
     isActive: v.optional(v.boolean()),
     name: v.optional(v.string()),
     phone: v.optional(v.string()),
+    address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
@@ -71,6 +72,14 @@ export const register = mutation({
   },
 });
 
+export const deleteCustomer = mutation({
+  args: { sessionToken: v.string(), userId: v.id('users') },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    await ctx.db.delete(args.userId);
+  },
+});
+
 export const getByBrand = query({
   args: { brand: v.string() },
   handler: async (ctx, args) => {
@@ -85,7 +94,7 @@ export const getByBrand = query({
       p.isActive &&
       p.stock > 0 &&
       !inactiveCatIds.has(p.categoryId) &&
-      p.brand?.toLowerCase() === args.brand.toLowerCase(),
+      ((p.attributes ?? {}) as Record<string, unknown>).brand?.toString().toLowerCase() === args.brand.toLowerCase(),
     ).slice(0, 200);
   },
 });

@@ -1,12 +1,10 @@
-"use client"
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface AuthState {
   sessionToken: string | null;
-  user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number } | null;
-  setSession: (token: string, user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number }) => void;
+  user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number; phone?: string } | null;
+  setSession: (token: string, user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number; phone?: string }) => void;
   logout: () => void;
   _hasHydrated: boolean;
   setHasHydrated: (v: boolean) => void;

@@ -29,7 +29,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const result = await login(form);
-      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent });
+      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
       toast.success(`Բարի գալուստ, ${result.name}!`);
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');

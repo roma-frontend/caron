@@ -35,6 +35,13 @@ export default defineSchema(
     .index('by_token', ['token'])
     .index('by_user', ['userId']),
 
+  authAttempts: defineTable({
+    key: v.string(),
+    failures: v.number(),
+    lockedUntil: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
+
   // ─── Categories ────────────────────────────────────────────────
   categories: defineTable({
     name: v.string(),
@@ -83,6 +90,8 @@ export default defineSchema(
     retailDiscount: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()),
     compareAtPrice: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()),
+    wholesaleDiscount: v.optional(v.number()),
     categoryId: v.id('categories'),
     images: v.array(v.string()),
     sku: v.optional(v.string()),

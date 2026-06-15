@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useSyncExternalStore, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -22,7 +22,6 @@ const getServerSnapshot = () => false;
 
 export default function ProductsPage() {
   const params = useSearchParams();
-  const router = useRouter();
   const settings = useSettings();
   const PAGE_SIZE = settings?.productsPerPage || 20;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings?.defaultViewMode || 'grid');
@@ -37,9 +36,20 @@ export default function ProductsPage() {
   const cats = useQuery(api.categories.list, {});
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const urlBrand = params.get('brand');
+  const allFilterDefs = useQuery(api.filters.listAll, {});
   const [filters, setFilters] = useState<{
     categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: Record<string, unknown>;
-  }>({});
+  }>(() => urlBrand ? { brand: urlBrand } : {});
+  // Once filterDefs load, replace raw urlBrand with exact filterDef option (case-insensitive)
+  useEffect(() => {
+    if (!urlBrand || !allFilterDefs) return;
+    const brandDef = allFilterDefs.find((d) => d.slug === 'brand');
+    const match = brandDef?.options?.find((o) => o.toLowerCase() === urlBrand.toLowerCase());
+    // Normalize the URL value after filter definitions load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (match && match !== urlBrand) setFilters((f) => ({ ...f, brand: match }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFilterDefs]);
   const filterDefs = useQuery(api.filters.getByCategory, filters.categoryId ? { categoryId: filters.categoryId as Id<'categories'> } : 'skip');
 
   /** Clear URL brand param without page reload */
@@ -100,7 +110,7 @@ export default function ProductsPage() {
   }
 
   const fchips: { key: string; label: string; clear: () => void }[] = [];
-  if (activeBrand) fchips.push({ key: 'brand', label: `${activeBrand}`, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });
+  if (activeBrand) fchips.push({ key: 'brand', label: activeBrand, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });
   if (filters.categoryId) fchips.push({ key: 'cat', label: cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա', clear: () => setFilters({ ...filters, categoryId: undefined, attributes: undefined }) });
   if (filters.onSale) fchips.push({ key: 'sale', label: 'Զեղչված', clear: () => setFilters({ ...filters, onSale: undefined }) });
   if (filters.minRating) fchips.push({ key: 'rating', label: `${filters.minRating}★+`, clear: () => setFilters({ ...filters, minRating: undefined }) });
@@ -108,6 +118,7 @@ export default function ProductsPage() {
   if (filters.maxPrice) fchips.push({ key: 'max', label: `Գին ≤ ${filters.maxPrice}`, clear: () => setFilters({ ...filters, maxPrice: undefined }) });
   if (filters.inStockOnly) fchips.push({ key: 'stock', label: 'Միայն առկա', clear: () => setFilters({ ...filters, inStockOnly: undefined }) });
   for (const [k, v] of Object.entries(filters.attributes ?? {})) {
+    if (k === 'brand') continue;
     const val = Array.isArray(v) ? v.join(', ') : String(v);
     fchips.push({ key: k, label: val, clear: () => { const a = { ...(filters.attributes ?? {}) }; delete a[k]; setFilters({ ...filters, attributes: Object.keys(a).length ? a : undefined }); } });
   }
@@ -123,9 +134,14 @@ export default function ProductsPage() {
       </div>
 
       <div className="lg:flex lg:gap-8">
-        <ProductFilters onFilterChange={setFilters} activeFilters={filters} />
+        <ProductFilters onFilterChange={(f) => {
+          // If brand attribute was just set via sidebar, clear the URL brand filter
+          const hasBrandAttr = f.attributes && Object.values(f.attributes).length > 0;
+          if (hasBrandAttr && filters.brand) { clearUrlBrand(); setFilters({ ...f, brand: undefined }); }
+          else setFilters(f);
+        }} activeFilters={filters} />
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pb-24 lg:pb-0">
           <div className="mb-5 flex flex-col items-start sm:items-center justify-between gap-3">
             <SortBar activeFilters={filters} onFilterChange={setFilters} />
             <div className="flex items-center gap-1 shrink-0">
@@ -138,15 +154,15 @@ export default function ProductsPage() {
             </div>
           </div>
           {filterDefs && filterDefs.length > 0 && (
-            <div className="mb-4 space-y-2 rounded-xl border border-primary/15 bg-linear-to-br from-card via-primary/5 to-muted/40 p-4 shadow-sm backdrop-blur-sm">
+            <div className="mb-4 rounded-xl border border-primary/15 bg-linear-to-br from-card via-primary/5 to-muted/40 px-3 py-3 shadow-sm backdrop-blur-sm">
               {filterDefs.filter((def) => def.slug === 'type' || def.name === 'Տեսակ').map((def) => {
                 const active =
                   ((filters.attributes?.[def._id] as string[]) ||
                     (filters.attributes?.[def.slug] as string[]) ||
                     []);
                 return (
-                  <div key={def._id} className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs font-medium text-muted-foreground mr-1">{def.name}:</span>
+                  <div key={def._id} className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0">{def.name}:</span>
                     {def.options?.map((opt) => {
                       const isActive = active.includes(opt);
                       return (
@@ -159,7 +175,7 @@ export default function ProductsPage() {
                           delete attrs[def.slug];
                           setFilters({ ...filters, attributes: Object.keys(attrs).length > 0 ? attrs : undefined });
                         }}
-                          className={`rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
+                          className={`shrink-0 rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:scale-105 ${isActive ? 'border-transparent bg-linear-to-r from-primary to-primary/80 text-primary-foreground shadow-sm' : 'bg-linear-to-r from-card to-muted/60 text-muted-foreground hover:border-primary/35 hover:text-primary hover:from-primary/10 hover:to-primary/5'}`}>
                           {opt}
                         </button>
                       );
@@ -177,7 +193,7 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {filters.categoryId || activeBrand || Object.keys(filters.attributes ?? {}).length > 0 || filters.onSale || filters.minRating || filters.minPrice || filters.maxPrice || filters.inStockOnly ? (
+          {filters.categoryId || Object.keys(filters.attributes ?? {}).length > 0 || filters.onSale || filters.minRating || filters.minPrice || filters.maxPrice || filters.inStockOnly ? (
             <div className="mb-5 space-y-3">
               {filters.categoryId && (
                 <div className="flex items-center gap-2">
@@ -201,7 +217,7 @@ export default function ProductsPage() {
           {!brandLoading && (
             <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
               {results.map((p, i) => (
-                <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
+                <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
               ))}
             </div>
           )}

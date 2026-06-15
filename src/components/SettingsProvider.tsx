@@ -20,6 +20,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setCached(JSON.parse(raw) as PublicSettings);
     } catch {
       /* ignore */

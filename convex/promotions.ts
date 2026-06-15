@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
-import { api } from './_generated/api';
+import { internal } from './_generated/api';
 import { normalizeImageUrl, normalizeImageUrls } from './lib/imageUrl';
 
 function normalizePromotionImages<T extends { imageUrl?: string | null; images?: string[] }>(promotion: T): T {
@@ -50,9 +50,10 @@ export const getPromoProducts = query({
         p.isActive &&
         p.stock > 0 &&
         !inactiveCatIds.has(p.categoryId) &&
-        p.showInPromotions &&
-        p.compareAtPrice &&
-        p.compareAtPrice > p.price,
+        (
+          (p.showInPromotions && p.compareAtPrice && p.compareAtPrice > p.price) ||
+          (p.retailDiscount != null && p.retailDiscount > 0)
+        ),
       )
       .slice(0, 50)
       .map(normalizeProductImages);
@@ -115,7 +116,7 @@ export const update = mutation({
 
     const added = newIds.filter((id) => !oldIds.includes(id));
     if (added.length > 0) {
-      await ctx.scheduler.runAfter(0, api.promotionSubscribers.notifySubscribers, {
+      await ctx.scheduler.runAfter(0, internal.promotionSubscribers.notifySubscribers, {
         promotionId: id,
         promotionTitle: old?.title ?? '',
         newProductIds: added,

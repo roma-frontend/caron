@@ -5,10 +5,28 @@ import { useAuth } from '@/store/auth';
 import { getRoleSuggestions, type UserRole } from '@/lib/aiAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Send, X, Bot, User, Loader2 } from 'lucide-react';
+import { Send, X, Bot, Loader2 } from 'lucide-react';
 import { SITE } from '@/lib/constants';
+import Link from 'next/link';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
+
+function MessageContent({ content }: { content: string }) {
+  const parts = content.split(/(\/[a-z][a-z0-9\-/]*)/g);
+  return (
+    <p className="whitespace-pre-wrap">
+      {parts.map((part, i) =>
+        /^\/[a-z][a-z0-9\-/]*$/.test(part) ? (
+          <Link key={i} href={part} className="font-medium underline underline-offset-2 text-primary hover:opacity-80">
+            {part}
+          </Link>
+        ) : (
+          part
+        )
+      )}
+    </p>
+  );
+}
 
 export function AIChatWidget() {
   const { user } = useAuth();
@@ -84,7 +102,7 @@ export function AIChatWidget() {
           <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'assistant' && <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10"><Bot className="h-3 w-3 text-primary" /></div>}
             <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              {msg.role === 'assistant' ? <MessageContent content={msg.content} /> : <p className="whitespace-pre-wrap">{msg.content}</p>}
             </div>
           </div>
         ))}

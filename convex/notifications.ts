@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { action, internalAction } from './_generated/server';
-import { api } from './_generated/api';
+import { api, internal } from './_generated/api';
 
 function fmt(n: number): string {
   return n.toLocaleString('hy-AM');
@@ -16,7 +16,7 @@ export const sendOrderNotification = internalAction({
   },
 
   handler: async (ctx, args) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) return;
@@ -51,7 +51,7 @@ export const sendTest = action({
     const caller = await ctx.runQuery(api.auth.me, { sessionToken: args.sessionToken });
     if (!caller || caller.role !== 'admin') throw new Error('Admin access required');
 
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) throw new Error('Telegram կարգավորումներ չկան');
@@ -79,7 +79,7 @@ export const sendTest = action({
 export const sendDailyReport = action({
   args: {},
   handler: async (ctx) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) return;
@@ -106,7 +106,7 @@ export const sendDailyReport = action({
 export const sendLowStockAlert = action({
   args: {},
   handler: async (ctx) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     const threshold = settings?.lowStockThreshold ?? 5;
@@ -131,9 +131,10 @@ export const sendReceiptToCustomer = action({
   args: {
     orderId: v.id('orders'),
     telegramUser: v.string(),
+    sessionToken: v.string(),
   },
   handler: async (ctx, args) => {
-    const s = await ctx.runQuery(api.settings.get as any, {});
+    const s = await ctx.runQuery(internal.settings.getSecret, {});
     const settings = s as Record<string, unknown> | null | undefined;
     const token = settings?.telegramBotToken as string | undefined;
     if (!token) return { ok: false, error: 'Telegram bot not configured' };
@@ -145,7 +146,7 @@ export const sendReceiptToCustomer = action({
       if (meData.ok && meData.result) botUsername = meData.result.username;
     } catch {}
 
-    const order = await ctx.runQuery(api.orders.getById as any, { id: args.orderId });
+    const order = await ctx.runQuery(api.orders.getById, { id: args.orderId, sessionToken: args.sessionToken });
     if (!order) return { ok: false, error: 'Order not found', botUsername };
 
     const o = order as unknown as Record<string, unknown>;
@@ -230,7 +231,7 @@ export const sendReceiptToCustomer = action({
 export const sendCartRecovery = action({
   args: { sessionToken: v.string(), cartItems: v.number(), cartTotal: v.number() },
   handler: async (ctx, args) => {
-    const settings = await ctx.runQuery(api.settings.get, {});
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
     const token = settings?.telegramBotToken;
     const chatId = settings?.telegramChatId;
     if (!token || !chatId) return;

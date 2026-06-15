@@ -64,7 +64,7 @@ export default function AdminFiltersPage() {
 
   const handleDelete = async () => {
     if (!deleteId || !sessionToken) return;
-    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch (e) { toast.error('Սխալ'); }
+    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվել է'); setDeleteId(null); } catch { toast.error('Սխալ'); }
   };
 
   const catMap: Record<string, string> = {};

@@ -56,8 +56,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'File type not allowed' }, { status: 400 });
   }
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
-  const key = `products/${Date.now()}-${safeName}`;
+  if (file.size > 10 * 1024 * 1024) {
+    return NextResponse.json({ error: 'File too large' }, { status: 400 });
+  }
+
+  const key = `products/${crypto.randomUUID()}`;
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());

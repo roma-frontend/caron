@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
-import { api } from './_generated/api';
+import { internal } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
 import type { Doc, Id } from './_generated/dataModel';
 
@@ -32,7 +32,7 @@ function filterValuesEqual(expected: unknown, actual: unknown): boolean {
     const a = normalizeFilterValue(expected);
     const b = normalizeFilterValue(actual);
     if (!a || !b) return false;
-    return a === b || a.includes(b) || b.includes(a);
+    return a === b;
   }
   return false;
 }
@@ -126,7 +126,10 @@ export const listPaginated = query({
     if (args.inStockOnly) filtered = filtered.filter((p) => p.stock > 0);
     if (args.onSale) filtered = filtered.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price);
     if (args.minRating) filtered = filtered.filter((p) => (p.rating ?? 0) >= args.minRating!);
-    if (args.brand) filtered = filtered.filter((p) => p.brand?.toLowerCase() === args.brand!.toLowerCase());
+    if (args.brand) filtered = filtered.filter((p) => {
+      const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand;
+      return typeof attrBrand === 'string' && attrBrand.toLowerCase() === args.brand!.toLowerCase();
+    });
 
     // Attribute filtering (arbitrary keys can't be indexed)
     if (args.attributes && typeof args.attributes === 'object') {
@@ -134,8 +137,6 @@ export const listPaginated = query({
       const filterDefs = await ctx.db.query('filterDefinitions').take(500);
       const idToSlug = new Map(filterDefs.map((f) => [f._id as string, f.slug]));
       const slugToId = new Map(filterDefs.map((f) => [f.slug, f._id as string]));
-      const idToDef = new Map(filterDefs.map((f) => [f._id as string, f]));
-      const slugToDef = new Map(filterDefs.map((f) => [f.slug, f]));
       filtered = filtered.filter((p) => {
         const pa = (p.attributes ?? {}) as Record<string, unknown>;
         for (const [key, val] of Object.entries(attrs)) {
@@ -165,13 +166,7 @@ export const listPaginated = query({
             if (typeof val === 'boolean') return check === val;
             return filterValuesEqual(val, check);
           };
-          let attrMatch = Array.from(aliasKeys).some((k) => checkVal(pa[k]));
-
-          // Fallback for legacy data where products may still store values under an old filter _id key.
-          // If the current filter key doesn't exist, try matching by value across attribute values.
-          if (!attrMatch && (idToDef.has(key) || slugToDef.has(key))) {
-            attrMatch = Object.values(pa).some((raw) => checkVal(raw));
-          }
+          const attrMatch = Array.from(aliasKeys).some((k) => checkVal(pa[k]));
 
           if (!checkVal(topLevel) && !attrMatch) return false;
         }
@@ -255,6 +250,19 @@ export const list = query({
       products = products.filter((p) => !inactiveIds.has(p.categoryId));
     }
     return products.map(normalizeProductImages);
+  },
+});
+
+export const getBrands = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).collect();
+    const brands = new Set<string>();
+    for (const p of products) {
+      const b = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined ?? p.brand;
+      if (b) brands.add(b);
+    }
+    return [...brands].sort();
   },
 });
 
@@ -369,12 +377,41 @@ export const getFeatured = query({
   },
 });
 
+export const getRetailDiscounted = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .order('desc')
+      .take(500);
+    return products
+      .filter((p) => p.stock > 0 && p.retailDiscount && p.retailDiscount > 0)
+      .map(normalizeProductImages);
+  },
+});
+
+export const getWholesaleDiscounted = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .order('desc')
+      .take(500);
+    return products
+      .filter((p) => p.stock > 0 && p.wholesaleDiscount && p.wholesaleDiscount > 0)
+      .map(normalizeProductImages);
+  },
+});
+
 export const create = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
-    retailDiscount: v.optional(v.number()),
-    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
+    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
+    categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
     sku: v.optional(v.string()),
@@ -409,6 +446,18 @@ export const create = mutation({
         data.attributes = { ...attrs, brand: data.brand };
       }
     }
+    // Sync brand from filterDef brand attribute (stored by filterId)
+    if (!data.brand) {
+      const attrs = (data.attributes ?? {}) as Record<string, unknown>;
+      const brandDef = data.categoryId
+        ? await ctx.db.query('filterDefinitions').withIndex('by_category', (q) => q.eq('categoryId', data.categoryId!)).filter((q) => q.eq(q.field('slug'), 'brand')).first()
+        : undefined;
+      if (brandDef) {
+        const val = attrs[brandDef._id as string];
+        const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
+        if (brandVal) { data.brand = brandVal; (data.attributes as Record<string, unknown>).brand = brandVal; }
+      }
+    }
     // Auto-generate SKU if not provided
     if (!data.sku) {
       const cat = await ctx.db.get(data.categoryId);
@@ -436,8 +485,9 @@ export const update = mutation({
     sessionToken: v.string(),
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
-    retailDiscount: v.optional(v.number()),
-    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
+    wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
+    categoryId: v.optional(v.id('categories')),
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
     qtyStep: v.optional(v.number()),
@@ -455,11 +505,23 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, stock, price, retailDiscount, wholesalePrice, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
+    const { id, sessionToken: _, stock, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, showInPromotions, clearBrand, ...rest } = args;
     if (clearBrand) { rest.brand = undefined; }
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
       if (!rest.brand && rAttrs.brand && typeof rAttrs.brand === 'string') rest.brand = rAttrs.brand as string;
+      // Sync brand from filterDef brand attribute only if it has a value for this product's category
+      {
+        const catId = args.categoryId ?? (await ctx.db.get(id))?.categoryId;
+        const brandDef = catId
+          ? await ctx.db.query('filterDefinitions').withIndex('by_category', (q) => q.eq('categoryId', catId)).filter((q) => q.eq(q.field('slug'), 'brand')).first()
+          : undefined;
+        if (brandDef) {
+          const val = rAttrs[brandDef._id as string];
+          const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
+          if (brandVal) { rest.brand = brandVal; rAttrs.brand = brandVal; }
+        }
+      }
       rest.attributes = Object.keys(rAttrs).length > 0 ? rAttrs : undefined;
     const old = await ctx.db.get(id);
     if (rest.sku !== undefined) {
@@ -473,10 +535,10 @@ export const update = mutation({
     }
     if (clearBrand) { rest.brand = undefined; }
     if (stock !== undefined && old && old.stock <= 0 && stock > 0) {
-      await ctx.scheduler.runAfter(0, api.backInStock.notifySubscribers, { productId: id, productName: old.name });
+      await ctx.scheduler.runAfter(0, internal.backInStock.notifySubscribers, { productId: id, productName: old.name });
     }
     if (price !== undefined && old && price < old.price) {
-      await ctx.scheduler.runAfter(0, api.priceAlerts.checkAndNotify, { productId: id, newPrice: price });
+      await ctx.scheduler.runAfter(0, internal.priceAlerts.checkAndNotify, { productId: id, newPrice: price });
     }
     const patch: Record<string, unknown> = { ...rest };
     if (compareAtPrice !== undefined) {
@@ -496,8 +558,9 @@ export const update = mutation({
     }
     if (stock !== undefined) patch.stock = stock;
     if (price !== undefined) patch.price = price;
-    if (retailDiscount !== undefined) patch.retailDiscount = retailDiscount;
     if (wholesalePrice !== undefined) patch.wholesalePrice = wholesalePrice;
+    if (retailDiscount !== undefined) patch.retailDiscount = retailDiscount > 0 ? retailDiscount : undefined;
+    if (wholesaleDiscount !== undefined) patch.wholesaleDiscount = wholesaleDiscount > 0 ? wholesaleDiscount : undefined;
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
   },

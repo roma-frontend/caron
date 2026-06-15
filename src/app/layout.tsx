@@ -164,9 +164,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <link rel="dns-prefetch" href="https://pub-*.r2.dev" />
         {process.env.NEXT_PUBLIC_CONVEX_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_CONVEX_URL} crossOrigin="anonymous" />
-        )}
-        {process.env.NEXT_PUBLIC_CONVEX_URL && (
           <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_URL} />
         )}
       </head>

@@ -36,6 +36,8 @@ export function RecentlyViewed() {
               name={item.name}
               price={item.price}
               wholesalePrice={p?.wholesalePrice}
+              retailDiscount={p?.retailDiscount}
+              wholesaleDiscount={p?.wholesaleDiscount}
               image={p?.images?.[0] ?? item.image}
               stock={p?.stock}
               inStock={(p?.stock ?? 0) > 0}

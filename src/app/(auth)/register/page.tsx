@@ -31,7 +31,7 @@ export default function RegisterPage() {
     setBusy(true);
     try {
       const result = await register({ name: form.name, email: form.email, phone: form.phone || undefined, password: form.password });
-      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role });
+      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
       toast.success('Գրանցումը հաջողվեց');
       router.push('/dashboard');

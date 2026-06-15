@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Car, Share2, Smartphone, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Share2, Smartphone, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
@@ -88,12 +88,24 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
   const step = product?.qtyStep || 1;
-  const isWholesale = currentUser?.customerType === 'wholesale';
-  const userDiscount = currentUser?.discountPercent ?? 0;
-  const fallbackWholesale = typeof product?.wholesalePrice === 'number' && product.wholesalePrice > 0
-    ? product.wholesalePrice
-    : Math.round((product?.price ?? 0) * (1 - userDiscount / 100));
-  const cartPrice = product ? (isWholesale ? fallbackWholesale : product.price) : 0;
+  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
+  const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
+  // If product explicitly sets wholesaleDiscount, it overrides customer's personal discount
+  const effectiveDiscount = isWholesale
+    ? (product?.wholesaleDiscount != null && product.wholesaleDiscount > 0
+        ? product.wholesaleDiscount
+        : (product?.wholesaleDiscount == null ? userDiscount : 0))
+    : 0;
+  const baseWholesale = isWholesale
+    ? (typeof product?.wholesalePrice === 'number' && product.wholesalePrice > 0
+        ? product.wholesalePrice
+        : Math.round((product?.price ?? 0) * (1 - effectiveDiscount / 100)))
+    : (product?.price ?? 0);
+  const fallbackWholesale = isWholesale ? baseWholesale : (product?.price ?? 0);
+  const retailDisplayPrice = !isWholesale && product?.retailDiscount && product.retailDiscount > 0
+    ? Math.round((product.price) * (1 - product.retailDiscount / 100))
+    : product?.price ?? 0;
+  const cartPrice = product ? (isWholesale ? fallbackWholesale : retailDisplayPrice) : 0;
   const cartQty = product ? items.find((i) => i.id === product._id)?.quantity ?? 0 : 0;
   const maxQty = product ? Math.max(0, product.stock - cartQty) : 0;
 
@@ -245,7 +257,10 @@ export default function ProductDetailPage() {
                 <Badge className="bg-destructive text-white">-{discountPercent(product.price, product.compareAtPrice)}%</Badge>
               </>
             ) : cartPrice !== product.price ? (
-              <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+              <>
+                <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+                {product.retailDiscount && product.retailDiscount > 0 && !isWholesale && <Badge className="bg-destructive text-white">-{product.retailDiscount}%</Badge>}
+              </>
             ) : null}
           </div>
 
@@ -288,11 +303,11 @@ export default function ProductDetailPage() {
           <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 
           {/* Attributes */}
-          {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').length > 0 && (
+          {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').length > 0 && (
             <div className="mt-6">
               <h3 className="mb-3 font-semibold">{'Ատրիբուտներ'}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand').map(([key, val]) => (
+                {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').map(([key, val]) => (
                   <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">{resolveAttrLabel(key, val)}</span>
                     <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : Array.isArray(val) ? val.join(', ') : String(val)}</span>
@@ -492,7 +507,7 @@ function RelatedProducts({ categoryId, currentId }: { categoryId: string; curren
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {filtered.map((p, i) => (
-        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
       ))}
     </div>
   );

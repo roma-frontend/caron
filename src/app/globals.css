@@ -264,6 +264,15 @@
 .pulse-dot {
   animation: pulseDot 2s ease-in-out infinite;
 }
+
+/* Hero video — Ken Burns slow zoom */
+@keyframes kenBurns {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.1) translate(-1%, 1%); }
+}
+.hero-video {
+  animation: kenBurns 20s ease-in-out infinite alternate;
+}
 @keyframes pulseDot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(1.5); }
@@ -296,6 +305,13 @@
 
 .scroll-indicator-none {
   scrollbar-width: none;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Smaller container padding on very small screens */

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bot, ArrowUp, Send, X, Loader2, Phone, MessageCircle, MessageSquare, Smartphone } from 'lucide-react';
+import { Bot, Send, X, Loader2, Phone, MessageCircle, MessageSquare, Smartphone } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/store/auth';
 import { getRoleSuggestions, type UserRole } from '@/lib/aiAssistant';
@@ -13,15 +13,33 @@ import { usePathname } from 'next/navigation';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
+// Render assistant message with clickable internal links (e.g. /products, /cart)
+function MessageContent({ content }: { content: string }) {
+  const parts = content.split(/(\/[a-z][a-z0-9\-/]*)/g);
+  return (
+    <p className="whitespace-pre-wrap">
+      {parts.map((part, i) =>
+        /^\/[a-z][a-z0-9\-/]*$/.test(part) ? (
+          <Link key={i} href={part} className="font-medium underline underline-offset-2 text-primary hover:opacity-80">
+            {part}
+          </Link>
+        ) : (
+          part
+        )
+      )}
+    </p>
+  );
+}
+
 export function FloatingActions() {
   const pathname = usePathname();
   const settings = useSettings();
   const { user } = useAuth();
-  const [showTop, setShowTop] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTop, setShowTop] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const role: UserRole = user?.role === 'admin' ? 'admin' : user ? 'customer' : 'guest';
   const suggestions = getRoleSuggestions(role);
@@ -101,7 +119,7 @@ export function FloatingActions() {
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                 {msg.role === 'assistant' && <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10"><Bot className="h-3 w-3 text-primary" /></div>}
                 <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === 'assistant' ? <MessageContent content={msg.content} /> : <p className="whitespace-pre-wrap">{msg.content}</p>}
                 </div>
               </div>
             ))}

@@ -29,6 +29,8 @@ interface ProductCardProps {
   sku?: string;
   wholesalePrice?: number;
   compareAtPrice?: number;
+  retailDiscount?: number;
+  wholesaleDiscount?: number;
   image?: string | null;
   category?: string;
   inStock?: boolean;
@@ -58,7 +60,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -73,10 +75,21 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const currentUser = useAuthStore((s) => s.user);
   const step = qtyStep || 1;
   const [qty, setQty] = useState(step);
-  const isWholesale = currentUser?.customerType === 'wholesale';
-  const discount = currentUser?.discountPercent ?? 0;
-  const fallbackWholesale = typeof wholesalePrice === 'number' && wholesalePrice > 0 ? wholesalePrice : Math.round(price * (1 - discount / 100));
-  const displayPrice = isWholesale ? fallbackWholesale : price;
+  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
+  const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
+  // Product-level wholesale discount only applies to wholesale customers
+  // If product explicitly sets wholesaleDiscount, it overrides customer's personal discount
+  const effectiveWholesaleDiscount = isWholesale
+    ? (wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : (wholesaleDiscount == null ? userDiscount : 0))
+    : 0;
+  const baseWholesale = isWholesale
+    ? (typeof wholesalePrice === 'number' && wholesalePrice > 0
+        ? Math.round(wholesalePrice * (1 - (wholesaleDiscount != null && wholesaleDiscount > 0 ? wholesaleDiscount : 0) / 100))
+        : Math.round(price * (1 - effectiveWholesaleDiscount / 100)))
+    : price;
+  const fallbackWholesale = isWholesale ? baseWholesale : price;
+  const retailDisplayPrice = !isWholesale && retailDiscount && retailDiscount > 0 ? Math.round(price * (1 - retailDiscount / 100)) : price;
+  const displayPrice = isWholesale ? fallbackWholesale : retailDisplayPrice;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
   const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
@@ -104,18 +117,19 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
             <Link href={detailHref} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-              {normalizedImage ? <Image src={normalizedImage} alt={name} width={64} height={64} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
+              {normalizedImage ? <Image src={normalizedImage} alt={name} width={64} height={64} className="h-full w-full object-fill" /> : <div className="flex h-full items-center justify-center text-lg">🔧</div>}
             </Link>
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
               {atgCode && <p className="text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                   <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
-                  {compareAtPrice && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(compareAtPrice)}</span>}
-                  {isWholesale && discount > 0 && <span className="text-[10px] font-bold text-primary">-{discount}%</span>}
+                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(price)}</span>}
+                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive shrink-0">-{retailDiscount}%</span>}
+                  {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary shrink-0">-{effectiveWholesaleDiscount}%</span>}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <button onClick={(e) => { e.preventDefault(); toggleFav({ id, name, price, image: image ?? null }); }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
@@ -156,27 +170,31 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               />
             )}
 
-            <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+            <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
               <Link href={detailHref} aria-label={name} className="absolute inset-0 z-[5]" />
               {normalizedImage && !imgError ? (
-                <Image src={normalizedImage} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" loading={index < 12 ? 'eager' : 'lazy'} priority={index < 12} className="h-full w-full object-fill" placeholder={index < 12 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
+                <Image src={normalizedImage} alt={name} fill sizes="(max-width: 640px) 50vw, 240px" loading={index < 4 ? 'eager' : 'lazy'} fetchPriority={index < 2 ? 'high' : 'auto'} className="object-fill" placeholder={index < 4 ? 'blur' : 'empty'} blurDataURL="data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAQCdASoQAAkABUB8JQBOgBQAv6W2S+dgAP7+0u3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3bt27du3fuwAA" onError={onImgError} />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/30"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                 </div>
               )}
 
-              {compareAtPrice && (
+              {(!isWholesale && retailDiscount != null && retailDiscount > 0) ? (
+                <Badge className="absolute left-3 top-3 bg-destructive text-white text-xs font-bold shadow-lg">
+                  -{retailDiscount}%
+                </Badge>
+              ) : (!isWholesale && compareAtPrice) ? (
                 <Badge className="absolute left-3 top-3 bg-destructive text-white text-xs font-bold shadow-lg">
                   -{discountPercent(price, compareAtPrice)}%
                 </Badge>
-              )}
+              ) : null}
 
-              {isNew && !compareAtPrice && (
+              {isNew && (isWholesale || !retailDiscount) && !compareAtPrice && (
                 <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">Նոր</Badge>
               )}
 
-              {isHit && !compareAtPrice && !isNew && (
+              {isHit && !retailDiscount && !compareAtPrice && !isNew && (
                 <Badge className="absolute left-3 top-3 badge-hit text-xs font-bold shadow-lg">Թոփ</Badge>
               )}
 
@@ -215,7 +233,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </div>
 
-            <div className="p-2">
+            <div className="p-3">
               {category && <p className="mb-1 text-xs font-medium text-primary/70">{category}</p>}
               <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
                 <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
@@ -233,7 +251,10 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
 
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span className="text-md font-bold text-primary">{formatPrice(displayPrice)}</span>
-                {compareAtPrice && <span className="text-xs text-muted-foreground line-through">{formatPrice(compareAtPrice)}</span>}
+                {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
+                {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive">-{retailDiscount}%</span>}
+                {isWholesale && effectiveWholesaleDiscount > 0 && displayPrice < price && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
+                {isWholesale && effectiveWholesaleDiscount > 0 && displayPrice < price && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
               </div>
 
               {fits && (
