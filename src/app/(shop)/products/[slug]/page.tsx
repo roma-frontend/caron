@@ -310,7 +310,7 @@ export default function ProductDetailPage() {
                 {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').map(([key, val]) => (
                   <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">{resolveAttrLabel(key, val)}</span>
-                    <span className="font-medium">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : Array.isArray(val) ? val.join(', ') : String(val)}</span>
+                    <span className="font-medium text-right">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : Array.isArray(val) ? val.join(', ') : String(val)}</span>
                   </div>
                 ))}
               </div>
