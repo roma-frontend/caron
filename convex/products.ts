@@ -373,6 +373,7 @@ export const create = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
+    retailDiscount: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.id('categories'),
     images: v.array(v.string()), brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
@@ -435,6 +436,7 @@ export const update = mutation({
     sessionToken: v.string(),
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
+    retailDiscount: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()), categoryId: v.optional(v.id('categories')),
     images: v.optional(v.array(v.string())), brand: v.optional(v.string()),
     clearBrand: v.optional(v.boolean()),
@@ -453,7 +455,7 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, stock, price, wholesalePrice, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
+    const { id, sessionToken: _, stock, price, retailDiscount, wholesalePrice, compareAtPrice, showInPromotions, clearBrand, ...rest } = args;
     if (clearBrand) { rest.brand = undefined; }
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
@@ -494,6 +496,7 @@ export const update = mutation({
     }
     if (stock !== undefined) patch.stock = stock;
     if (price !== undefined) patch.price = price;
+    if (retailDiscount !== undefined) patch.retailDiscount = retailDiscount;
     if (wholesalePrice !== undefined) patch.wholesalePrice = wholesalePrice;
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
@@ -594,6 +597,7 @@ export const bulkCreate = mutation({
         slug: v.optional(v.string()),
         description: v.optional(v.string()),
         price: v.optional(v.number()),
+        retailDiscount: v.optional(v.number()),
         wholesalePrice: v.optional(v.number()),
         compareAtPrice: v.optional(v.number()),
         category: v.optional(v.string()),
@@ -715,6 +719,7 @@ export const bulkCreate = mutation({
         if (p.slug !== undefined) updatePayload.slug = p.slug;
         if (p.description !== undefined) updatePayload.description = p.description;
         if (p.price !== undefined) updatePayload.price = p.price;
+        if (p.retailDiscount !== undefined) updatePayload.retailDiscount = p.retailDiscount;
         if (p.wholesalePrice !== undefined) updatePayload.wholesalePrice = p.wholesalePrice;
         if (p.compareAtPrice !== undefined) updatePayload.compareAtPrice = p.compareAtPrice;
         if (p.categoryId !== undefined) updatePayload.categoryId = p.categoryId;
@@ -759,6 +764,7 @@ export const bulkCreate = mutation({
         
         // Опциональные поля
         if (p.wholesalePrice !== undefined) createPayload.wholesalePrice = p.wholesalePrice;
+        if (p.retailDiscount !== undefined) createPayload.retailDiscount = p.retailDiscount;
         if (p.compareAtPrice !== undefined) createPayload.compareAtPrice = p.compareAtPrice;
         if (nextSku !== undefined) createPayload.sku = nextSku;
         if (p.atgCode !== undefined) createPayload.atgCode = p.atgCode;

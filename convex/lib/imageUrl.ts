@@ -1,4 +1,19 @@
 const LEGACY_R2_HOST_SUFFIX = '.r2.cloudflarestorage.com';
+const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i;
+
+function normalizeLocalImagePath(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+
+  if (value.startsWith('data:image/') || value.startsWith('blob:')) return value;
+  if (value.startsWith('/')) return value;
+
+  // Accept relative image-like filenames and API paths, otherwise ignore
+  // ambiguous strings such as "products" which can trigger 404 requests.
+  if (IMAGE_FILE_RE.test(value) || value.startsWith('api/')) return `/${value}`;
+
+  return null;
+}
 
 function extractGoogleDriveFileId(parsed: URL): string | null {
   const host = parsed.hostname.toLowerCase();
@@ -16,17 +31,20 @@ function extractGoogleDriveFileId(parsed: URL): string | null {
 export function normalizeImageUrl(imageUrl?: string | null): string | null | undefined {
   if (!imageUrl) return imageUrl;
 
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return null;
+
   try {
-    const parsed = new URL(imageUrl);
+    const parsed = new URL(trimmed);
     const driveId = extractGoogleDriveFileId(parsed);
     if (driveId) {
       return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(driveId)}`;
     }
 
-    if (!parsed.hostname.endsWith(LEGACY_R2_HOST_SUFFIX)) return imageUrl;
-    return `/api/r2-image?url=${encodeURIComponent(imageUrl)}`;
+    if (!parsed.hostname.endsWith(LEGACY_R2_HOST_SUFFIX)) return trimmed;
+    return `/api/r2-image?url=${encodeURIComponent(trimmed)}`;
   } catch {
-    return imageUrl;
+    return normalizeLocalImagePath(trimmed);
   }
 }
 
