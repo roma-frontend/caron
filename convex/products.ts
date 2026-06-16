@@ -409,6 +409,7 @@ export const create = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
+    costPrice: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
     categoryId: v.id('categories'),
@@ -485,6 +486,7 @@ export const update = mutation({
     sessionToken: v.string(),
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
+    costPrice: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
     categoryId: v.optional(v.id('categories')),
@@ -563,6 +565,19 @@ export const update = mutation({
     if (wholesaleDiscount !== undefined) patch.wholesaleDiscount = wholesaleDiscount > 0 ? wholesaleDiscount : undefined;
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
+
+    if (stock !== undefined && old && old.stock !== stock) {
+      const caller = await getAdminCaller(ctx, args.sessionToken);
+      await ctx.db.insert('stockMovements', {
+        productId: id,
+        type: 'manual',
+        qty: stock - old.stock,
+        stockBefore: old.stock,
+        stockAfter: stock,
+        adminName: caller?.name ?? caller?.email ?? undefined,
+        createdAt: Date.now(),
+      });
+    }
   },
 });
 
@@ -660,6 +675,7 @@ export const bulkCreate = mutation({
         slug: v.optional(v.string()),
         description: v.optional(v.string()),
         price: v.optional(v.number()),
+        costPrice: v.optional(v.number()),
         retailDiscount: v.optional(v.number()),
         wholesalePrice: v.optional(v.number()),
         compareAtPrice: v.optional(v.number()),
@@ -782,6 +798,7 @@ export const bulkCreate = mutation({
         if (p.slug !== undefined) updatePayload.slug = p.slug;
         if (p.description !== undefined) updatePayload.description = p.description;
         if (p.price !== undefined) updatePayload.price = p.price;
+        if (p.costPrice !== undefined) updatePayload.costPrice = p.costPrice;
         if (p.retailDiscount !== undefined) updatePayload.retailDiscount = p.retailDiscount;
         if (p.wholesalePrice !== undefined) updatePayload.wholesalePrice = p.wholesalePrice;
         if (p.compareAtPrice !== undefined) updatePayload.compareAtPrice = p.compareAtPrice;
@@ -826,6 +843,7 @@ export const bulkCreate = mutation({
         };
         
         // Опциональные поля
+        if (p.costPrice !== undefined) createPayload.costPrice = p.costPrice;
         if (p.wholesalePrice !== undefined) createPayload.wholesalePrice = p.wholesalePrice;
         if (p.retailDiscount !== undefined) createPayload.retailDiscount = p.retailDiscount;
         if (p.compareAtPrice !== undefined) createPayload.compareAtPrice = p.compareAtPrice;
@@ -864,5 +882,25 @@ export const migrateAttributeKeys = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.productId, { attributes: args.newAttributes, updatedAt: Date.now() });
+  },
+});
+
+export const listStockMovements = query({
+  args: {
+    sessionToken: v.string(),
+    productId: v.optional(v.id('products')),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    try { await getAdminCaller(ctx, args.sessionToken); } catch { return []; }
+    const take = args.limit ?? 200;
+    if (args.productId) {
+      return await ctx.db
+        .query('stockMovements')
+        .withIndex('by_product', (q) => q.eq('productId', args.productId!))
+        .order('desc')
+        .take(take);
+    }
+    return await ctx.db.query('stockMovements').withIndex('by_created').order('desc').take(take);
   },
 });

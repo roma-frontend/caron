@@ -311,13 +311,25 @@ export const updateStatus = mutation({
       // Cancelled -> restore stock back to catalog
       if (nextStatus === 'cancelled' && prevStatus !== 'cancelled') {
         if (!cancelReason?.trim()) {
-          throw new Error('Նշեք չեղարկման պատճառը');
+          throw new Error('\u0546\u0577\u0565\u0584 \u0579\u0565\u0572\u0561\u0580\u056F\u0574\u0561\u0576 \u057A\u0561\u057F\u0573\u0561\u057C\u0568');
         }
 
         for (const item of order.items) {
           const product = await ctx.db.get(item.productId);
           if (!product) continue;
-          await ctx.db.patch(item.productId, { stock: product.stock + item.quantity, updatedAt: Date.now() });
+          const stockBefore = product.stock;
+          const stockAfter = product.stock + item.quantity;
+          await ctx.db.patch(item.productId, { stock: stockAfter, updatedAt: Date.now() });
+          await ctx.db.insert('stockMovements', {
+            productId: item.productId,
+            type: 'cancel',
+            qty: item.quantity,
+            stockBefore,
+            stockAfter,
+            orderId: id,
+            adminName: admin?.name ?? admin?.email ?? undefined,
+            createdAt: Date.now(),
+          });
         }
       }
 
@@ -326,17 +338,29 @@ export const updateStatus = mutation({
         for (const item of order.items) {
           const product = await ctx.db.get(item.productId);
           if (!product || !product.isActive) {
-            throw new Error(`Ապրանքը հասանելի չէ: ${item.name}`);
+            throw new Error(`\u0531\u057A\u0580\u0561\u0576\u0584\u0568 \u0570\u0561\u057D\u0561\u0576\u0565\u056C\u056B \u0579\u0567: ${item.name}`);
           }
           if (product.stock < item.quantity) {
-            throw new Error(`Անբավարար պաշար: ${product.name}`);
+            throw new Error(`\u0531\u0576\u0562\u0561\u057E\u0561\u0580\u0561\u0580 \u057A\u0561\u0577\u0561\u0580: ${product.name}`);
           }
         }
 
         for (const item of order.items) {
           const product = await ctx.db.get(item.productId);
           if (!product) continue;
-          await ctx.db.patch(item.productId, { stock: product.stock - item.quantity, updatedAt: Date.now() });
+          const stockBefore = product.stock;
+          const stockAfter = product.stock - item.quantity;
+          await ctx.db.patch(item.productId, { stock: stockAfter, updatedAt: Date.now() });
+          await ctx.db.insert('stockMovements', {
+            productId: item.productId,
+            type: 'reopen',
+            qty: -item.quantity,
+            stockBefore,
+            stockAfter,
+            orderId: id,
+            adminName: admin?.name ?? admin?.email ?? undefined,
+            createdAt: Date.now(),
+          });
         }
       }
     }

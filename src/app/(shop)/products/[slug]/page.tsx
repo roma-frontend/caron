@@ -477,18 +477,18 @@ function ShareButton({ productName }: { productName: string }) {
           <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setOpen(false)} />
           <div className="absolute bottom-full sm:bottom-auto sm:top-full right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 mb-2 sm:mt-2 z-50 min-w-[200px] rounded-2xl border bg-popover p-2 shadow-xl animate-in zoom-in-95 duration-150 origin-bottom-right sm:origin-top">
             <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Կիսվել</p>
-            <a href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(productName)}`} target="_blank" rel="noopener noreferrer"
+            <Link href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(productName)}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-accent"
               onClick={() => setOpen(false)}>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-600"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5L2.5 10.5L8.5 13.5L11.5 20.5L15.5 14.5L21.5 2.5Z"/><path d="M11.5 20.5L15.5 14.5L8.5 13.5"/></svg></div>
               Telegram
-            </a>
-            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer"
+            </Link>
+            <Link href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-accent"
               onClick={() => setOpen(false)}>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></div>
               Facebook
-            </a>
+            </Link>
             <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Հղումը պատճենվեց'); setOpen(false); }}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-accent">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>

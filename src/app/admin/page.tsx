@@ -144,6 +144,52 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        {/* Problematic Orders */}
+        {orders && orders.length > 0 && (() => {
+          const now = Date.now();
+          const DAY = 86400000;
+          const problems: Array<{ order: typeof orders[number]; reason: string }> = [];
+          for (const o of orders) {
+            if (o.status === 'delivered' && o.paymentStatus !== 'paid') {
+              problems.push({ order: o, reason: '\u0531\u057C\u0561\u0584\u057E\u0561\u056E, \u0562\u0561\u0575\u0581 \u0579\u057E\u0573\u0561\u0580\u057E\u0561\u056E' });
+            } else if (o.status === 'cancelled' && o.paymentStatus === 'paid') {
+              problems.push({ order: o, reason: '\u054E\u0573\u0561\u0580\u057E\u0561\u056E, \u0562\u0561\u0575\u0581 \u0579\u0565\u0572\u0561\u0580\u056F\u057E\u0561\u056E' });
+            } else if (o.status === 'pending' && now - o.createdAt > 2 * DAY) {
+              problems.push({ order: o, reason: '\u054D\u057A\u0561\u057D\u0578\u0582\u0574 > 2 \u0585\u0580' });
+            } else if (o.paymentStatus === 'awaiting' && o.status !== 'cancelled' && now - o.createdAt > 3 * DAY) {
+              problems.push({ order: o, reason: '\u054E\u0573\u0561\u0580\u0574\u0561\u0576 \u057D\u057A\u0561\u057D\u0578\u0582\u0574 > 3 \u0585\u0580' });
+            } else if (!o.customerPhone && !o.customerEmail) {
+              problems.push({ order: o, reason: '\u0531\u057C\u0561\u0576\u0581 \u056F\u0561\u057A\u056B \u057F\u057E\u0575\u0561\u056C\u0576\u0565\u0580' });
+            } else if (o.total === 0) {
+              problems.push({ order: o, reason: '\u0533\u0578\u0582\u0574\u0561\u0580\u0568 0' });
+            }
+          }
+          if (problems.length === 0) return null;
+          return (
+            <Card className="border-red-200 dark:border-red-900 lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <AlertTriangle className="h-5 w-5" />
+                  {'\u054A\u0580\u0578\u0562\u056C\u0565\u0574\u0561\u0575\u056B\u0576 \u057A\u0561\u057F\u057E\u0565\u0580\u0576\u0565\u0580'} <Badge variant="destructive" className="ml-1">{problems.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {problems.slice(0, 20).map(({ order, reason }) => (
+                    <Link key={order._id} href="/admin/orders" className="flex items-center justify-between rounded-lg border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 p-3 hover:bg-red-100 dark:hover:bg-red-950/40 transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{order.orderNumber}</p>
+                        <p className="text-xs text-muted-foreground truncate">{order.customerName} &middot; {formatPrice(order.total)}</p>
+                      </div>
+                      <Badge variant="outline" className="shrink-0 ml-2 text-[10px] text-red-600 border-red-300">{reason}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* Low Stock Alert */}
         {(lowStock.length > 0 || outOfStock.length > 0) && (
           <Card className="border-orange-200 dark:border-orange-900">

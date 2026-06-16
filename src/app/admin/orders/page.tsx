@@ -18,6 +18,7 @@ import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { useSettings } from '@/hooks/useSettings';
+import Link from 'next/link';
 
 type PeriodKey = 'today' | 'yesterday' | '7d' | '30d' | 'thisMonth' | 'lastMonth' | 'custom';
 type CancelReasonKey = 'changed_mind' | 'no_answer' | 'out_of_stock' | 'expensive' | 'slow_delivery' | 'order_error' | 'duplicate' | 'other';
@@ -248,14 +249,14 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
               {order.paymentStatus === 'paid' ? '✓' : '○'} {order.paymentStatus === 'paid' ? 'Վճարված' : 'Նշել վճարած'}
             </button>
             <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
-            <a href={`tel:${String(order.customerPhone)}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title="Զանգել">
+            <Link href={`tel:${String(order.customerPhone)}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title="Զանգել">
               <Phone className="h-3.5 w-3.5" />
-            </a>
+            </Link>
             {settings?.whatsapp && (
-              <a href={`https://wa.me/${String(order.customerPhone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+              <Link href={`https://wa.me/${String(order.customerPhone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
                 className="flex h-8 w-8 items-center justify-center rounded-lg border text-green-600 hover:bg-green-50 transition-colors" title="WhatsApp">
                 <MessageSquare className="h-3.5 w-3.5" />
-              </a>
+              </Link>
             )}
             <button onClick={() => exportPDF(order)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors" title="PDF">
               <FileDown className="h-3.5 w-3.5" />
@@ -334,6 +335,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
 export default function AdminDashboardPage() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
+  const allProducts = useQuery(api.products.listAll);
   const settings = useSettings();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -360,6 +362,15 @@ export default function AdminDashboardPage() {
     amount: paidActiveOrders.filter((o) => o.paymentMethod === method.key).reduce((s, o) => s + o.total, 0),
   }));
 
+  // Profit metrics
+  const costMap = new Map<string, number | undefined>(allProducts?.map((p) => [p._id as string, (p as Record<string, unknown>).costPrice as number | undefined]) ?? []);
+  const totalCost = paidActiveOrders.reduce((sum, o) => {
+    const items = o.items as Array<{ productId: string; quantity: number }>;
+    return sum + items.reduce((s, item) => s + (costMap.get(item.productId) ?? 0) * item.quantity, 0);
+  }, 0);
+  const grossProfit = totalRevenue - totalCost;
+  const margin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+
   const filtered = orders?.filter((o) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
     if (search) {
@@ -385,6 +396,10 @@ export default function AdminDashboardPage() {
     { label: 'Վերադարձներ', value: formatPrice(refundedRevenue), note: `${refundedOrders.length} պատվեր`, color: 'text-orange-600' },
     { label: 'Մաքուր եկամուտ', value: formatPrice(netRevenue), note: 'վճարված - վերադարձներ', color: 'text-primary' },
     { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), note: 'վճարված պատվերներով', color: 'text-cyan-600' },
+    { label: '\u053D\u0561\u057C\u057D\u0561\u0580\u056A\u0565\u0584', value: formatPrice(totalCost), note: '\u057E\u0561\u0573\u0561\u057C\u057E\u0561\u056E \u0561\u057A\u0580\u0561\u0576\u0584\u056B', color: 'text-amber-600' },
+    { label: '\u0540\u0561\u0574\u0561\u056D\u0561\u057C\u0576 \u0577\u0561\u0570\u0578\u0582\u0575\u0569', value: formatPrice(grossProfit), note: '\u0565\u056F\u0561\u0574\u0578\u0582\u057F - \u056B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584', color: grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600' },
+    { label: '\u0544\u0561\u0580\u056A\u0561', value: `${margin.toFixed(1)}%`, note: '\u0577\u0561\u0570\u0578\u0582\u0575\u0569 / \u0565\u056F\u0561\u0574\u0578\u0582\u057F', color: margin >= 20 ? 'text-emerald-600' : 'text-orange-600' },
+
   ];
   const cancelReasonRows = [
     ...CANCEL_REASONS.map((reason) => {
@@ -408,9 +423,9 @@ export default function AdminDashboardPage() {
     <div>
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Պատվերների վահանակ</h1>
-        <a href="/api/export/orders" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
+        <Link href={`/api/export/orders?from=${periodRange.from}&to=${periodRange.to}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
           <FileSpreadsheet className="h-4 w-4" /> CSV
-        </a>
+        </Link>
       </div>
 
       {/* Period filter */}

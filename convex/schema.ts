@@ -87,6 +87,7 @@ export default defineSchema(
     slug: v.string(),
     description: v.string(),
     price: v.number(),
+    costPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()),
     compareAtPrice: v.optional(v.number()),

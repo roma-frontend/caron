@@ -27,6 +27,7 @@ type OemEntry = { manufacturer: string; code: string };
 type FormState = {
   name?: string;
   price?: number;
+  costPrice?: number;
   wholesalePrice?: number;
   retailDiscount?: number;
   wholesaleDiscount?: number;
@@ -62,6 +63,7 @@ export default function EditProductPage() {
       name: currentProduct.name,
       sku: currentProduct.sku,
       price: currentProduct.price,
+      costPrice: currentProduct.costPrice,
       wholesalePrice: currentProduct.wholesalePrice ?? currentProduct.price,
       retailDiscount: currentProduct.retailDiscount,
       wholesaleDiscount: currentProduct.wholesaleDiscount,
@@ -118,6 +120,7 @@ export default function EditProductPage() {
         id: productId,
         name: form.name,
         price: Number(form.price),
+        costPrice: form.costPrice ? Number(form.costPrice) : undefined,
         wholesalePrice: form.wholesalePrice ? Number(form.wholesalePrice) : undefined,
         retailDiscount: form.retailDiscount != null && form.retailDiscount > 0 ? Number(form.retailDiscount) : undefined,
         wholesaleDiscount: form.wholesaleDiscount != null && form.wholesaleDiscount > 0 ? Number(form.wholesaleDiscount) : undefined,
@@ -185,7 +188,7 @@ export default function EditProductPage() {
                 <div className="grid grid-cols-3 gap-3">
                   {activeImages.map((img, i) => (
                     <div key={`${img}-${i}`} className={`group relative aspect-square overflow-hidden rounded-lg border transition-all ${selectedImages.includes(i) ? 'border-primary ring-2 ring-primary/30' : 'border-border/70'}`}>
-                      <button type="button" onClick={() => setSelectedImages((p) => p.includes(i) ? p.filter((x) => x !== i) : [...p, i])} className={`absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border text-[12px] ${selectedImages.includes(i) ? 'border-primary bg-primary text-white' : 'border-white/80 bg-white/95 text-muted-foreground'}`}>
+                      <button type="button" onClick={() => setSelectedImages((p) => p.includes(i) ? p.filter((x) => x !== i) : [...p, i])} className={`absolute left-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 text-[12px] font-bold shadow-md ${selectedImages.includes(i) ? 'border-primary bg-primary text-white' : 'border-primary/60 bg-white text-primary'}`}>
                         {selectedImages.includes(i) ? '✓' : '+'}
                       </button>
                       <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" loading="eager" />
@@ -230,6 +233,10 @@ export default function EditProductPage() {
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Մանրածախ գին (֏)</Label><Input {...numericInputProps(true)} value={form.price ?? ''} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))} className="h-11" /></div>
               <div><Label>Մեծածախ գին (֏)</Label><Input {...numericInputProps(true)} value={form.wholesalePrice ?? ''} onChange={(e) => setForm((f) => ({ ...f, wholesalePrice: Number(e.target.value) }))} className="h-11" /></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>{'\u053B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584 (\u058F)'}</Label><Input {...numericInputProps(true)} value={form.costPrice ?? ''} onChange={(e) => setForm((f) => ({ ...f, costPrice: Number(e.target.value) }))} className="h-11" /></div>
             </div>
 
             {/* Discounts */}

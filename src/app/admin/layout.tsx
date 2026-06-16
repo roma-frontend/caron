@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: '/admin/filters', icon: SlidersHorizontal, label: 'Ֆիլտրեր' },
   { href: '/admin/orders', icon: BarChart3, label: 'Պատվերներ' },
   { href: '/admin/customers', icon: Users, label: 'Հաճախորդներ' },
+  { href: '/admin/stock', icon: Warehouse, label: 'Պահեստ' },
   { href: '/admin/promotions', icon: Tag, label: 'Ակցիաներ' },
   { href: '/admin/promotions/coupons', icon: Ticket, label: 'Կուպոններ' },
   { href: '/admin/reviews', icon: Star, label: 'Կարծիքներ' },

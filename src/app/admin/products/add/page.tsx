@@ -400,11 +400,14 @@ function StepPricing() {
     <ChevronSection title="2. Գնային տվյալներ">
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Մանրածախ գին (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
-          <div><Label>Մեծածախ գին (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
+          <div><Label>Մանրածdelays delays (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
+          <div><Label>Մdelays delays (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>{'\u053B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584 (\u058F)'}</Label><Input type="number" value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
+          <div><Label>Զdelays %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div><Label>ԱՏԳԱ կոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
@@ -540,6 +543,7 @@ export default function AddProductPage() {
       description: (data.description as string) || '',
       categoryId: data.categoryId as Id<'categories'>,
       price: Number(data.price),
+      costPrice: data.costPrice ? Number(data.costPrice) : undefined,
       wholesalePrice: data.wholesalePrice ? Number(data.wholesalePrice) : undefined,
       compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : undefined,
       sku: (data.sku as string) || undefined,
