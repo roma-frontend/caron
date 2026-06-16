@@ -134,11 +134,11 @@ export default function HomePage() {
   const hasDiscounts = isWholesale ? (wholesaleDiscounted === undefined || wholesaleDiscounted.length > 0) : (discounted === undefined || discounted.length > 0);
   const settings = useSettings();
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <Header />
       <div className="flex-1">
         {/* Hero — integrated section module */}
-          <section className="relative min-h-[87svh] overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
+          <section className="relative min-h-[calc(100svh-var(--header-height))] overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-6%] top-[-25%] h-[620px] w-[620px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(95px)' }} />
             <div className="absolute right-[-10%] top-[0%] h-[560px] w-[560px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(95px)' }} />
@@ -146,7 +146,7 @@ export default function HomePage() {
 
           <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden lg:rounded-[2rem] border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[87svh] lg:min-h-0 flex flex-col"
+              className="group relative overflow-hidden lg:rounded-[2rem] border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] lg:min-h-0 flex flex-col"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--sx', `${e.clientX - r.left}px`);
@@ -195,7 +195,7 @@ export default function HomePage() {
 
                 {(settings === undefined || settings?.enableCarSelector !== false) && (
                   <div
-                    className="hero-fade-4 w-full rounded-2xl border border-border/40 bg-card/70 p-5 shadow-xl backdrop-blur-md lg:w-[22rem]"
+                    className="hero-fade-4 hidden lg:block w-full rounded-2xl border border-border/40 bg-card/70 p-5 shadow-xl backdrop-blur-md lg:w-[22rem]"
                     style={{ visibility: settings === undefined ? 'hidden' : 'visible' }}
                   >
                     <p className="mb-3 text-sm font-semibold text-white/60 uppercase tracking-wider">Ընտրել մեքենա</p>
@@ -204,16 +204,16 @@ export default function HomePage() {
                 )}
               </div>
 
-              <div className="relative z-10 border-t border-white/20 px-6 py-4 sm:px-8">
-                <div className="hero-fade-4 flex flex-wrap items-center" style={{ gap: 'var(--space-3) var(--space-6)' }}>
+              <div className="relative z-10 border-t border-white/20 px-6 py-3 sm:px-8 sm:py-4">
+                <div className="hero-fade-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:items-center" style={{ gap: 'var(--space-2) var(--space-4)' }}>
                   {[
-                    { Icon: Truck, label: 'Արագ առաքում ողջ ՀՀ-ում' },
-                    { Icon: Shield, label: 'Երաշխիք ապրանքների վրա' },
+                    { Icon: Truck, label: 'Առաքում ողջ ՀՀ-ում' },
+                    { Icon: Shield, label: 'Երաշխիք' },
                     { Icon: Clock, label: '24/7 աջակցություն' },
                     { Icon: Star, label: 'Բնօրինակ որակ' },
                   ].map(({ Icon, label }) => (
-                    <span key={label} className="flex items-center gap-2 text-white/70" style={{ fontSize: 'var(--text-sm)' }}>
-                      <Icon className="h-4 w-4 text-white/80" /> {label}
+                    <span key={label} className="flex items-center gap-2 text-white/70 text-[13px] leading-tight sm:text-sm">
+                      <Icon className="h-3.5 w-3.5 text-white/80 sm:h-4 sm:w-4" /> {label}
                     </span>
                   ))}
                 </div>
@@ -221,8 +221,9 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        {/* Top Sales — separate section under hero */}
+      </div>
+      {/* Rest of page content — normal flow */}
+      <div>
         {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-md sm:p-8">

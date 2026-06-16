@@ -6,7 +6,9 @@ import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NAV } from '@/lib/constants';
-import { useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore, useEffect, useRef } from 'react';
+
+const BASE_HEADER_HEIGHT_PX = 64;
 
 const subscribe = () => () => {};
 const getSnapshot = () => true;
@@ -54,6 +56,20 @@ export function Header() {
   const storeName = useStoreName();
   const announcementBar = settings?.announcementBar;
   const showAnnouncement = settings?.announcementEnabled !== false && Boolean(announcementBar);
+  const announcementRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => {
+      const announcementHeight = announcementRef.current?.offsetHeight ?? 0;
+      root.style.setProperty('--header-height', `${BASE_HEADER_HEIGHT_PX + announcementHeight}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    const announcementEl = announcementRef.current;
+    if (announcementEl) ro.observe(announcementEl);
+    return () => ro.disconnect();
+  }, [showAnnouncement]);
   const navBadges = (() => {
     try {
       const raw = settings?.navBadges;
@@ -66,13 +82,13 @@ export function Header() {
   })();
 
   return (
-    <>
-      <div className="overflow-hidden" style={{ height: showAnnouncement ? undefined : '0' }}>
+    <div>
+      <div ref={announcementRef} className="overflow-hidden" style={{ height: showAnnouncement ? undefined : '0.375rem' }}>
         {showAnnouncement && (
           <AnnouncementBar raw={announcementBar} phone={settings?.phone} />
         )}
       </div>
-      <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-height)' }}>
+      <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-base-height)' }}>
         <div className="mx-auto flex h-full items-center justify-between gap-1 px-4" style={{ maxWidth: 'var(--container-max)' }}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -241,6 +257,6 @@ export function Header() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
