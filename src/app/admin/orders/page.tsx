@@ -14,6 +14,76 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { useSettings } from '@/hooks/useSettings';
 
+type PeriodKey = 'today' | 'yesterday' | '7d' | '30d' | 'thisMonth' | 'lastMonth' | 'custom';
+
+const PERIOD_LABELS: Record<PeriodKey, string> = {
+  today: 'Այսօր',
+  yesterday: 'Երեկ',
+  '7d': '7 օր',
+  '30d': '30 օր',
+  thisMonth: 'Այս ամիս',
+  lastMonth: 'Անցած ամիս',
+  custom: 'Ընտրել օրերը',
+};
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function endOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).getTime();
+}
+
+function formatDateInput(date: Date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function parseDateInput(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function getPeriodRange(period: PeriodKey, customFrom: string, customTo: string) {
+  const now = new Date();
+  const todayStart = startOfDay(now);
+
+  if (period === 'today') return { from: todayStart, to: endOfDay(now) };
+
+  if (period === 'yesterday') {
+    const yesterday = new Date(todayStart);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return { from: startOfDay(yesterday), to: endOfDay(yesterday) };
+  }
+
+  if (period === '7d' || period === '30d') {
+    const days = period === '7d' ? 7 : 30;
+    const from = new Date(todayStart);
+    from.setDate(from.getDate() - (days - 1));
+    return { from: startOfDay(from), to: endOfDay(now) };
+  }
+
+  if (period === 'thisMonth') {
+    return { from: new Date(now.getFullYear(), now.getMonth(), 1).getTime(), to: endOfDay(now) };
+  }
+
+  if (period === 'lastMonth') {
+    const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const to = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { from: startOfDay(from), to: endOfDay(to) };
+  }
+
+  const fromDate = parseDateInput(customFrom);
+  const toDate = parseDateInput(customTo);
+
+  return {
+    from: fromDate ? startOfDay(fromDate) : Number.NEGATIVE_INFINITY,
+    to: toDate ? endOfDay(toDate) : Number.POSITIVE_INFINITY,
+  };
+}
+
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending: { label: 'Սպասում', color: 'bg-yellow-100 text-yellow-800' },
   confirmed: { label: 'Հաստատվել է', color: 'bg-blue-100 text-blue-800' },
@@ -133,13 +203,19 @@ export default function AdminDashboardPage() {
   const settings = useSettings();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [period, setPeriod] = useState<PeriodKey>('30d');
+  const [customFrom, setCustomFrom] = useState(() => formatDateInput(new Date()));
+  const [customTo, setCustomTo] = useState(() => formatDateInput(new Date()));
 
-  const paidActiveOrders = orders?.filter((o) => o.paymentStatus === 'paid' && o.status !== 'cancelled') ?? [];
+  const periodRange = getPeriodRange(period, customFrom, customTo);
+  const periodOrders = orders?.filter((o) => o.createdAt >= periodRange.from && o.createdAt <= periodRange.to) ?? [];
+  const paidActiveOrders = periodOrders.filter((o) => o.paymentStatus === 'paid' && o.status !== 'cancelled');
   const totalRevenue = paidActiveOrders.reduce((s, o) => s + o.total, 0);
   const paidOrders = paidActiveOrders.length;
-  const pendingOrders = orders?.filter((o) => o.status === 'pending').length ?? 0;
-  const cancelledOrders = orders?.filter((o) => o.status === 'cancelled') ?? [];
+  const awaitingPaymentOrders = periodOrders.filter((o) => o.paymentStatus === 'awaiting' && o.status !== 'cancelled').length;
+  const cancelledOrders = periodOrders.filter((o) => o.status === 'cancelled');
   const cancelledRevenue = cancelledOrders.reduce((s, o) => s + o.total, 0);
+  const averageOrderValue = paidOrders > 0 ? totalRevenue / paidOrders : 0;
 
   const filtered = orders?.filter((o) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
@@ -151,11 +227,12 @@ export default function AdminDashboardPage() {
   });
 
   const statCards = [
-    { label: 'Ընդհանուր', value: orders?.length ?? 0, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'Ընդհանուր', value: periodOrders.length, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: 'Վճարված', value: paidOrders, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: 'Սպասող', value: pendingOrders, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-    { label: 'Եկամուտ', value: formatPrice(totalRevenue), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Վճարման սպասող', value: awaitingPaymentOrders, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
     { label: 'Չեղարկված', value: cancelledOrders.length, description: formatPrice(cancelledRevenue), icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
+    { label: 'Եկամուտ', value: formatPrice(totalRevenue), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), icon: DollarSign, color: 'text-cyan-600', bg: 'bg-cyan-100' },
   ];
 
   return (
@@ -167,8 +244,32 @@ export default function AdminDashboardPage() {
         </a>
       </div>
 
+      {/* Period filter */}
+      <div className="mb-4 rounded-xl border bg-card p-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-medium">Ֆինանսական ժամանակահատված</p>
+            <p className="text-xs text-muted-foreground">Քարտերը հաշվարկվում են ըստ ընտրված պատվերի ամսաթվի</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select value={period} onValueChange={(v) => { if (v) setPeriod(v as PeriodKey); }}>
+              <SelectTrigger className="h-9 w-full sm:w-44 text-xs"><span>{PERIOD_LABELS[period]}</span></SelectTrigger>
+              <SelectContent>
+                {Object.entries(PERIOD_LABELS).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {period === 'custom' && (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-9 text-xs" aria-label="Սկիզբ" />
+                <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-9 text-xs" aria-label="Ավարտ" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Stats */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {statCards.map((c) => {
           const Icon = c.icon;
           return (
