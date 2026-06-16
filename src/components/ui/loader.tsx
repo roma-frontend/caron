@@ -1,6 +1,5 @@
 'use client';
 
-import { PreloaderVideo } from '@/components/PreloaderVideo';
 import { ShoppingCart } from 'lucide-react';
 
 export function Loader({ text }: { text?: string }) {

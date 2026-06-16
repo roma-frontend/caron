@@ -78,11 +78,11 @@ export function CartSync() {
       if (count === 0) return;
       reminderShown.current = true;
       playCartSound();
-      toast('Ձեր զամբյուղն սպասում է', {
+      toast('Զամբյուղն սպասում է', {
         description: (
           <div className="flex flex-col gap-2 mt-1">
             <span>{count} ապրանք պահված է ձեր զամբյուղում:</span>
-            <button onClick={() => router.push('/cart')}
+            <button onClick={() => { toast.dismiss(); router.push('/cart'); }}
               className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
               Տեսնել զամբյուղը
             </button>

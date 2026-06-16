@@ -50,7 +50,7 @@ const BRAND_COLORS: Record<string, string> = {
   Metzger: '#003399', Topran: '#005BAA', Mapco: '#004080', Stark: '#003366',
   Maxgear: '#00529B', Patron: '#CC0000', Vaico: '#003399', JP: '#005BAA',
   'JP Group': '#005BAA', AJUSA: '#003366', Elring: '#CC0000', Victor: '#003399',
-  Reinz: '#004080', Goetze: '#003366', Payen: '#CC0000',
+  Reinz: '#004080', Goetze: '#003366', Payen: '#CC0000', Hito: "#F5A629"
 };
 
 function brandColor(name: string): string {
