@@ -47,8 +47,8 @@ export function PreloaderVideo({ text, fixed = false, className = '' }: Preloade
           aria-hidden="true"
           className="pointer-events-none relative w-[min(118vw,76rem)] max-h-[78svh] object-contain opacity-90 drop-shadow-[0_0_90px_rgba(0,102,174,0.5)]"
           style={{
-            WebkitMaskImage: 'radial-gradient(ellipse at center, black 24%, rgba(0,0,0,0.76) 42%, rgba(0,0,0,0.28) 60%, transparent 76%)',
-            maskImage: 'radial-gradient(ellipse at center, black 24%, rgba(0,0,0,0.76) 42%, rgba(0,0,0,0.28) 60%, transparent 76%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at center, black 18%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.15) 52%, transparent 68%)',
+            maskImage: 'radial-gradient(ellipse at center, black 18%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.15) 52%, transparent 68%)',
           }}
         />
       </div>

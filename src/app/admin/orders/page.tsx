@@ -302,7 +302,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
         )}
       </div>
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent>
+        <DialogContent className="overflow-visible">
           <DialogHeader>
             <DialogTitle>Չեղարկել պատվերը</DialogTitle>
             <DialogDescription>Ընտրեք պատճառը, որպեսզի հետագայում տեսանելի լինի՝ ինչու է վաճառքը կորել։</DialogDescription>
@@ -396,9 +396,9 @@ export default function AdminDashboardPage() {
     { label: 'Վերադարձներ', value: formatPrice(refundedRevenue), note: `${refundedOrders.length} պատվեր`, color: 'text-orange-600' },
     { label: 'Մաքուր եկամուտ', value: formatPrice(netRevenue), note: 'վճարված - վերադարձներ', color: 'text-primary' },
     { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), note: 'վճարված պատվերներով', color: 'text-cyan-600' },
-    { label: '\u053D\u0561\u057C\u057D\u0561\u0580\u056A\u0565\u0584', value: formatPrice(totalCost), note: '\u057E\u0561\u0573\u0561\u057C\u057E\u0561\u056E \u0561\u057A\u0580\u0561\u0576\u0584\u056B', color: 'text-amber-600' },
+    { label: '\u053B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584', value: formatPrice(totalCost), note: '\u057E\u0561\u0573\u0561\u057C\u057E\u0561\u056E \u0561\u057A\u0580\u0561\u0576\u0584\u056B', color: 'text-amber-600' },
     { label: '\u0540\u0561\u0574\u0561\u056D\u0561\u057C\u0576 \u0577\u0561\u0570\u0578\u0582\u0575\u0569', value: formatPrice(grossProfit), note: '\u0565\u056F\u0561\u0574\u0578\u0582\u057F - \u056B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584', color: grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600' },
-    { label: '\u0544\u0561\u0580\u056A\u0561', value: `${margin.toFixed(1)}%`, note: '\u0577\u0561\u0570\u0578\u0582\u0575\u0569 / \u0565\u056F\u0561\u0574\u0578\u0582\u057F', color: margin >= 20 ? 'text-emerald-600' : 'text-orange-600' },
+    { label: '\u0547\u0561\u0570\u0578\u0582\u0575\u0569 (\u0544\u0561\u0580\u056A\u0561)', value: `${margin.toFixed(1)}%`, note: '\u0577\u0561\u0570\u0578\u0582\u0575\u0569 / \u0565\u056F\u0561\u0574\u0578\u0582\u057F', color: margin >= 20 ? 'text-emerald-600' : 'text-orange-600' },
 
   ];
   const cancelReasonRows = [
