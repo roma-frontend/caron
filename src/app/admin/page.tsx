@@ -72,11 +72,11 @@ export default function AdminDashboard() {
 
     revenue:
       orders
-        ?.filter((o) => o.paymentStatus === 'paid')
+        ?.filter((o) => o.paymentStatus === 'paid' && o.status !== 'cancelled')
         .reduce((sum, o) => sum + o.total, 0) ?? 0,
 
     awaitingPayment:
-      orders?.filter((o) => o.paymentStatus === 'awaiting').length ?? 0,
+      orders?.filter((o) => o.paymentStatus === 'awaiting' && o.status !== 'cancelled').length ?? 0,
 
     totalProducts: products?.length ?? 0,
     totalCategories: categories?.length ?? 0,

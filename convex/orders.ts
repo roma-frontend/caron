@@ -278,7 +278,6 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const { id, status, paymentStatus } = args;
-    const patch = { status, paymentStatus };
 
     const order = await ctx.db.get(id);
     if (!order) throw new Error('Պատվերը չի գտնվել');
@@ -316,6 +315,16 @@ export const updateStatus = mutation({
       }
     }
 
-    await ctx.db.patch(id, { ...patch, updatedAt: Date.now() });
+    const patch: {
+      status?: NonNullable<typeof status>;
+      paymentStatus?: NonNullable<typeof paymentStatus>;
+      updatedAt: number;
+    } = { updatedAt: Date.now() };
+    const currentPaymentStatus = order.paymentStatus as NonNullable<typeof paymentStatus> | undefined;
+    if (status !== undefined) patch.status = status;
+    if (paymentStatus !== undefined) patch.paymentStatus = paymentStatus;
+    else if (currentPaymentStatus === undefined) patch.paymentStatus = 'awaiting';
+
+    await ctx.db.patch(id, patch);
   },
 });

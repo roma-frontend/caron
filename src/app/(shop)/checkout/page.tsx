@@ -104,6 +104,10 @@ export default function CheckoutPage() {
       toast.error('Զամբյուղը դատարկ է');
       return;
     }
+    if (!agreed) {
+      toast.error('Խնդրում ենք համաձայնել պայմաններին');
+      return;
+    }
     if (settings?.minOrderAmount && totalPrice < settings.minOrderAmount) {
       toast.error(`Նվազագույն պատվերի գումարը ${formatPrice(settings.minOrderAmount)} է`);
       return;
@@ -365,7 +369,7 @@ export default function CheckoutPage() {
                         const Icon = icons[m] || CreditCard;
                         const labels: Record<string, string> = { cash: 'Կանխիկ', card: 'Քարտով', idram: 'Idram', easypay: 'EasyPay', transfer: 'Բանկային փոխանցում' };
                         return (
-                          <button key={m} onClick={() => setPaymentMethod(m)}
+                          <button key={m} type="button" onClick={() => setPaymentMethod(m)}
                             className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-all ${paymentMethod === m ? 'border-primary bg-primary/10 text-primary' : 'hover:border-primary/40'}`}>
                             <Icon className="h-4 w-4" /> {labels[m] || m}
                           </button>

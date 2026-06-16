@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
-import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet } from 'lucide-react';
+import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet, XCircle } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
@@ -134,9 +134,12 @@ export default function AdminDashboardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const totalRevenue = orders?.reduce((s, o) => s + o.total, 0) ?? 0;
-  const paidOrders = orders?.filter((o) => o.paymentStatus === 'paid').length ?? 0;
+  const paidActiveOrders = orders?.filter((o) => o.paymentStatus === 'paid' && o.status !== 'cancelled') ?? [];
+  const totalRevenue = paidActiveOrders.reduce((s, o) => s + o.total, 0);
+  const paidOrders = paidActiveOrders.length;
   const pendingOrders = orders?.filter((o) => o.status === 'pending').length ?? 0;
+  const cancelledOrders = orders?.filter((o) => o.status === 'cancelled') ?? [];
+  const cancelledRevenue = cancelledOrders.reduce((s, o) => s + o.total, 0);
 
   const filtered = orders?.filter((o) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
@@ -152,6 +155,7 @@ export default function AdminDashboardPage() {
     { label: 'Վճարված', value: paidOrders, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
     { label: 'Սպասող', value: pendingOrders, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
     { label: 'Եկամուտ', value: formatPrice(totalRevenue), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Չեղարկված', value: cancelledOrders.length, description: formatPrice(cancelledRevenue), icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
   ];
 
   return (
@@ -164,7 +168,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {statCards.map((c) => {
           const Icon = c.icon;
           return (
@@ -176,6 +180,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <p className="text-xs text-muted-foreground">{c.label}</p>
                   <p className="text-xl font-bold">{c.value}</p>
+                  {'description' in c && <p className="text-xs text-muted-foreground">{c.description}</p>}
                 </div>
               </CardContent>
             </Card>
