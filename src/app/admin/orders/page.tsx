@@ -1,13 +1,18 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
-import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet, XCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet, XCircle, History } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
@@ -15,6 +20,7 @@ import { useAuth } from '@/store/auth';
 import { useSettings } from '@/hooks/useSettings';
 
 type PeriodKey = 'today' | 'yesterday' | '7d' | '30d' | 'thisMonth' | 'lastMonth' | 'custom';
+type CancelReasonKey = 'changed_mind' | 'no_answer' | 'out_of_stock' | 'expensive' | 'slow_delivery' | 'order_error' | 'duplicate' | 'other';
 
 const PERIOD_LABELS: Record<PeriodKey, string> = {
   today: 'Այսօր',
@@ -101,6 +107,27 @@ const PAYMENT_MAP: Record<string, { label: string; color: string }> = {
 
 const PAYMENT_LABELS: Record<string, string> = { cash: 'Կանխիկ', card: 'Քարտով', idram: 'Idram', easypay: 'EasyPay', transfer: 'Բանկային փոխանցում' };
 
+const PAYMENT_METHODS = [
+  { key: 'cash', label: 'Կանխիկ' },
+  { key: 'transfer', label: 'Բանկային փոխանցում' },
+  { key: 'idram', label: 'Idram' },
+  { key: 'easypay', label: 'EasyPay' },
+  { key: 'card', label: 'Քարտ' },
+] as const;
+
+const CANCEL_REASONS: Array<{ key: CancelReasonKey; label: string }> = [
+  { key: 'changed_mind', label: 'Հաճախորդը մտափոխվել է' },
+  { key: 'no_answer', label: 'Չհաջողվեց կապվել' },
+  { key: 'out_of_stock', label: 'Ապրանքը չկա' },
+  { key: 'expensive', label: 'Թանկ է' },
+  { key: 'slow_delivery', label: 'Երկար առաքում' },
+  { key: 'order_error', label: 'Սխալ պատվերում' },
+  { key: 'duplicate', label: 'Կրկնվող պատվեր' },
+  { key: 'other', label: 'Այլ' },
+];
+
+const CANCEL_REASON_LABELS = Object.fromEntries(CANCEL_REASONS.map((reason) => [reason.key, reason.label]));
+
 function escapeHtml(str: string): string {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
 }
@@ -140,6 +167,42 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
   const updateStatus = useMutation(api.orders.updateStatus);
   const s = STATUS_MAP[String(order.status)] ?? STATUS_MAP.pending;
   const p = PAYMENT_MAP[String(order.paymentStatus)] ?? PAYMENT_MAP.awaiting;
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<CancelReasonKey | ''>('');
+  const [cancelComment, setCancelComment] = useState('');
+  const [savingCancel, setSavingCancel] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const cancelReasonLabel: string | null = order.cancelReason ? (CANCEL_REASON_LABELS[String(order.cancelReason)] ?? String(order.cancelReason)) : null;
+  const events = useQuery(
+    api.orders.getOrderEvents,
+    historyOpen && sessionToken ? { sessionToken, orderId: order._id as Id<'orders'> } : 'skip',
+  );
+
+  async function submitCancellation() {
+    if (!cancelReason) {
+      toast.error('Ընտրեք չեղարկման պատճառը');
+      return;
+    }
+
+    setSavingCancel(true);
+    try {
+      await updateStatus({
+        sessionToken,
+        id: order._id as Id<'orders'>,
+        status: 'cancelled',
+        cancelReason,
+        cancelComment,
+      });
+      toast.success('Պատվերը չեղարկվեց');
+      setCancelOpen(false);
+      setCancelReason('');
+      setCancelComment('');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Չեղարկումը չհաջողվեց');
+    } finally {
+      setSavingCancel(false);
+    }
+  }
 
   return (
     <div ref={ref} style={revealStyle(visible, index * 0.03)}>
@@ -150,7 +213,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
             <span className="font-mono text-xs font-bold tracking-wider text-muted-foreground whitespace-nowrap">{String(order.orderNumber)}</span>
             <Badge className={`${s.color} border-0 text-[10px]`}>{s.label}</Badge>
             <Badge className={`${p.color} border-0 text-[10px]`}>{p.label}</Badge>
-            {order.paymentMethod ? <Badge variant="outline" className="text-[10px] text-muted-foreground">{PAYMENT_LABELS[String(order.paymentMethod)] || String(order.paymentMethod)}</Badge> : null}
+            {order.paymentMethod != null ? <Badge variant="outline" className="text-[10px] text-muted-foreground">{PAYMENT_LABELS[String(order.paymentMethod)] ?? String(order.paymentMethod)}</Badge> : null}
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <span className="text-lg font-bold text-primary">{formatPrice(Number(order.total))}</span>
@@ -169,7 +232,14 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
             </div>
           </div>
           <div className="flex items-center flex-wrap gap-2">
-            <Select value={String(order.status)} onValueChange={(v) => { if (v) updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' }); }}>
+            <Select value={String(order.status)} onValueChange={(v) => {
+              if (!v) return;
+              if (v === 'cancelled' && order.status !== 'cancelled') {
+                setCancelOpen(true);
+                return;
+              }
+              updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' });
+            }}>
               <SelectTrigger className="h-8 w-full sm:w-[110px] text-xs min-w-0"><span>{s.label}</span></SelectTrigger>
               <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
             </Select>
@@ -190,9 +260,73 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
             <button onClick={() => exportPDF(order)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors" title="PDF">
               <FileDown className="h-3.5 w-3.5" />
             </button>
+            <button onClick={() => setHistoryOpen((v) => !v)} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${historyOpen ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent'}`} title="История">
+              <History className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
+        {order.status === 'cancelled' && (cancelReasonLabel != null || order.cancelComment != null) && (
+          <div className="border-t bg-red-50/60 px-4 py-2 text-xs text-red-800">
+            {cancelReasonLabel && <p><span className="font-medium">Չեղարկման պատճառը:</span> {String(cancelReasonLabel)}</p>}
+            {order.cancelComment ? <p className="mt-1 text-red-700/80">{String(order.cancelComment)}</p> : null}
+          </div>
+        )}
+        {historyOpen && (
+          <div className="border-t bg-muted/20 px-4 py-3">
+            <p className="mb-2 text-xs font-medium text-muted-foreground flex items-center gap-1.5"><History className="h-3 w-3" /> Գործողությունների պատմություն</p>
+            {events === undefined && <p className="text-xs text-muted-foreground">Բեռնվում է...</p>}
+            {events?.length === 0 && <p className="text-xs text-muted-foreground">Գրառումներ չկան</p>}
+            {events && events.length > 0 && (
+              <div className="space-y-1.5">
+                {events.map((e) => {
+                  const label: string =
+                    e.type === 'created' ? 'Պատվերը ստեղծվեց' :
+                    e.type === 'status_changed' ? `Կարգավիճակ: ${e.prevValue ?? ""} → ${e.nextValue ?? ""}` :
+                    e.type === 'cancelled' ? `Չեղարկվեց: ${e.prevValue ?? ""} → cancelled` :
+                    e.type === 'reopened' ? `Վերաբացվեց: cancelled → ${e.nextValue ?? ""}` :
+                    e.type === 'payment_changed' ? `Վճարում: ${e.prevValue ?? ""} → ${e.nextValue ?? ""}` :
+                    e.comment ?? '';
+                  return (
+                    <div key={e._id} className="flex flex-wrap items-start gap-x-2 gap-y-0.5 text-xs">
+                      <span className="shrink-0 text-muted-foreground/70 whitespace-nowrap">{formatDateHy(e.createdAt)}</span>
+                      {e.adminName && <span className="shrink-0 font-medium">{e.adminName}</span>}
+                      <span className="text-foreground/80">{label}</span>
+                      {e.comment && e.type !== 'comment' && <span className="text-muted-foreground/60 italic">— {String(e.comment ?? "")}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Չեղարկել պատվերը</DialogTitle>
+            <DialogDescription>Ընտրեք պատճառը, որպեսզի հետագայում տեսանելի լինի՝ ինչու է վաճառքը կորել։</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Պատճառ</Label>
+              <Select value={cancelReason} onValueChange={(v) => setCancelReason(v as CancelReasonKey)}>
+                <SelectTrigger className="h-9 w-full text-sm"><span>{cancelReason ? CANCEL_REASON_LABELS[cancelReason] : 'Ընտրեք պատճառը'}</span></SelectTrigger>
+                <SelectContent>
+                  {CANCEL_REASONS.map((reason) => <SelectItem key={reason.key} value={reason.key}>{reason.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor={`cancel-comment-${String(order._id)}`}>Մեկնաբանություն</Label>
+              <Textarea id={`cancel-comment-${String(order._id)}`} value={cancelComment} onChange={(e) => setCancelComment(e.target.value)} placeholder="Լրացուցիչ մանրամասներ" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCancelOpen(false)} disabled={savingCancel}>Փակել</Button>
+            <Button type="button" variant="destructive" onClick={submitCancellation} disabled={!cancelReason || savingCancel}>{savingCancel ? 'Չեղարկվում է...' : 'Չեղարկել պատվերը'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -210,12 +344,21 @@ export default function AdminDashboardPage() {
   const periodRange = getPeriodRange(period, customFrom, customTo);
   const periodOrders = orders?.filter((o) => o.createdAt >= periodRange.from && o.createdAt <= periodRange.to) ?? [];
   const paidActiveOrders = periodOrders.filter((o) => o.paymentStatus === 'paid' && o.status !== 'cancelled');
+  const awaitingPaymentActiveOrders = periodOrders.filter((o) => o.paymentStatus === 'awaiting' && o.status !== 'cancelled');
+  const refundedOrders = periodOrders.filter((o) => o.paymentStatus === 'refunded');
   const totalRevenue = paidActiveOrders.reduce((s, o) => s + o.total, 0);
+  const awaitingPaymentRevenue = awaitingPaymentActiveOrders.reduce((s, o) => s + o.total, 0);
+  const refundedRevenue = refundedOrders.reduce((s, o) => s + o.total, 0);
   const paidOrders = paidActiveOrders.length;
-  const awaitingPaymentOrders = periodOrders.filter((o) => o.paymentStatus === 'awaiting' && o.status !== 'cancelled').length;
+  const awaitingPaymentOrders = awaitingPaymentActiveOrders.length;
   const cancelledOrders = periodOrders.filter((o) => o.status === 'cancelled');
   const cancelledRevenue = cancelledOrders.reduce((s, o) => s + o.total, 0);
+  const netRevenue = totalRevenue - refundedRevenue;
   const averageOrderValue = paidOrders > 0 ? totalRevenue / paidOrders : 0;
+  const paymentMethodTotals = PAYMENT_METHODS.map((method) => ({
+    ...method,
+    amount: paidActiveOrders.filter((o) => o.paymentMethod === method.key).reduce((s, o) => s + o.total, 0),
+  }));
 
   const filtered = orders?.filter((o) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
@@ -228,12 +371,38 @@ export default function AdminDashboardPage() {
 
   const statCards = [
     { label: 'Ընդհանուր', value: periodOrders.length, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Վճարված', value: paidOrders, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: 'Վճարման սպասող', value: awaitingPaymentOrders, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+    { label: 'Վճարված', value: paidOrders, description: formatPrice(totalRevenue), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'Վճարման սպասող', value: awaitingPaymentOrders, description: formatPrice(awaitingPaymentRevenue), icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
     { label: 'Չեղարկված', value: cancelledOrders.length, description: formatPrice(cancelledRevenue), icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
     { label: 'Եկամուտ', value: formatPrice(totalRevenue), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' },
     { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), icon: DollarSign, color: 'text-cyan-600', bg: 'bg-cyan-100' },
   ];
+
+  const financeRows = [
+    { label: 'Վճարված', value: formatPrice(totalRevenue), note: `${paidOrders} պատվեր`, color: 'text-green-600' },
+    { label: 'Վճարման սպասող', value: formatPrice(awaitingPaymentRevenue), note: `${awaitingPaymentOrders} պատվեր`, color: 'text-yellow-600' },
+    { label: 'Չեղարկված', value: formatPrice(cancelledRevenue), note: `${cancelledOrders.length} պատվեր`, color: 'text-red-600' },
+    { label: 'Վերադարձներ', value: formatPrice(refundedRevenue), note: `${refundedOrders.length} պատվեր`, color: 'text-orange-600' },
+    { label: 'Մաքուր եկամուտ', value: formatPrice(netRevenue), note: 'վճարված - վերադարձներ', color: 'text-primary' },
+    { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), note: 'վճարված պատվերներով', color: 'text-cyan-600' },
+  ];
+  const cancelReasonRows = [
+    ...CANCEL_REASONS.map((reason) => {
+      const matchingOrders = cancelledOrders.filter((o) => o.cancelReason === reason.key);
+      return {
+        key: reason.key,
+        label: reason.label,
+        count: matchingOrders.length,
+        amount: matchingOrders.reduce((s, o) => s + o.total, 0),
+      };
+    }),
+    {
+      key: 'unknown',
+      label: 'Պատճառը նշված չէ',
+      count: cancelledOrders.filter((o) => !o.cancelReason).length,
+      amount: cancelledOrders.filter((o) => !o.cancelReason).reduce((s, o) => s + o.total, 0),
+    },
+  ].filter((row) => row.count > 0);
 
   return (
     <div>
@@ -288,6 +457,69 @@ export default function AdminDashboardPage() {
           );
         })}
       </div>
+
+      {/* Finance breakdown */}
+      <div className="mb-6 grid gap-3 lg:grid-cols-[1.3fr_1fr]">
+        <Card>
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Ֆինանսական բաժանում</p>
+                <p className="text-xs text-muted-foreground">Ըստ ընտրված ժամանակահատվածի</p>
+              </div>
+              <Badge variant="outline" className="shrink-0 text-[10px]">{PERIOD_LABELS[period]}</Badge>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {financeRows.map((row) => (
+                <div key={row.label} className="rounded-lg border bg-background p-3">
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className={`text-lg font-bold ${row.color}`}>{row.value}</p>
+                  <p className="text-[11px] text-muted-foreground">{row.note}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="mb-3">
+              <p className="text-sm font-medium">Վճարման եղանակներ</p>
+              <p className="text-xs text-muted-foreground">Միայն վճարված և չեղարկված չհանդիսացող պատվերներ</p>
+            </div>
+            <div className="space-y-2">
+              {paymentMethodTotals.map((method) => (
+                <div key={method.key} className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2">
+                  <span className="text-sm text-muted-foreground">{method.label}</span>
+                  <span className="text-sm font-semibold">{formatPrice(method.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="mb-3">
+            <p className="text-sm font-medium">Չեղարկումների պատճառներ</p>
+            <p className="text-xs text-muted-foreground">Վերլուծություն ըստ ընտրված ժամանակահատվածի</p>
+          </div>
+          {cancelReasonRows.length > 0 ? (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {cancelReasonRows.map((row) => (
+                <div key={row.key} className="rounded-lg border bg-background p-3">
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="text-lg font-bold text-red-600">{row.count}</p>
+                  <p className="text-[11px] text-muted-foreground">{formatPrice(row.amount)}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">Այս ժամանակահատվածում չեղարկումներ չկան</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Search & filter */}
       <div className="mb-4 flex flex-col sm:flex-row gap-3">

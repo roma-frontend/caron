@@ -156,6 +156,8 @@ export default defineSchema(
       v.literal('refunded'),
     ),
     paymentMethod: v.optional(v.string()),
+    cancelReason: v.optional(v.string()),
+    cancelComment: v.optional(v.string()),
     notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -369,6 +371,45 @@ export default defineSchema(
     email: v.string(),
     createdAt: v.number(),
   }).index('by_email', ['email']),
+
+  // ─── Stock Movements (warehouse log) ──────────────────────────
+  stockMovements: defineTable({
+    productId: v.id('products'),
+    type: v.union(
+      v.literal('sale'),
+      v.literal('cancel'),
+      v.literal('manual'),
+      v.literal('reopen'),
+    ),
+    qty: v.number(),
+    stockBefore: v.number(),
+    stockAfter: v.number(),
+    orderId: v.optional(v.id('orders')),
+    adminName: v.optional(v.string()),
+    comment: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_order', ['orderId'])
+    .index('by_created', ['createdAt']),
+
+  // ─── Order Events (history log) ────────────────────────────────
+  orderEvents: defineTable({
+    orderId: v.id('orders'),
+    type: v.union(
+      v.literal('created'),
+      v.literal('status_changed'),
+      v.literal('payment_changed'),
+      v.literal('cancelled'),
+      v.literal('reopened'),
+      v.literal('comment'),
+    ),
+    prevValue: v.optional(v.string()),
+    nextValue: v.optional(v.string()),
+    comment: v.optional(v.string()),
+    adminName: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index('by_order', ['orderId']),
   },
   { schemaValidation: true },
 );

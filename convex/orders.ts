@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+﻿import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { internal } from './_generated/api';
 import { getAdminCaller, getAuthCaller } from './lib/auth';
@@ -70,7 +70,20 @@ export const create = mutation({
     // Deduct stock
     for (const item of args.items) {
       const product = await ctx.db.get(item.productId);
-      if (product) await ctx.db.patch(item.productId, { stock: product.stock - item.quantity });
+      if (product) {
+        const stockBefore = product.stock;
+        const stockAfter = product.stock - item.quantity;
+        await ctx.db.patch(item.productId, { stock: stockAfter });
+        await ctx.db.insert('stockMovements', {
+          productId: item.productId,
+          type: 'sale',
+          qty: -item.quantity,
+          stockBefore,
+          stockAfter,
+          orderId: undefined,
+          createdAt: now,
+        });
+      }
     }
 
     const orderId = await ctx.db.insert('orders', {
@@ -92,6 +105,13 @@ export const create = mutation({
       customerPhone: args.customerPhone,
       total: serverTotal,
       itemsCount: args.items.length,
+    });
+
+    await ctx.db.insert('orderEvents', {
+      orderId,
+      type: 'created',
+      nextValue: 'pending',
+      createdAt: now,
     });
 
     return orderId;
@@ -274,10 +294,12 @@ export const updateStatus = mutation({
     paymentStatus: v.optional(
       v.union(v.literal('awaiting'), v.literal('paid'), v.literal('refunded')),
     ),
+    cancelReason: v.optional(v.string()),
+    cancelComment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
-    const { id, status, paymentStatus } = args;
+    const admin = await getAdminCaller(ctx, args.sessionToken);
+    const { id, status, paymentStatus, cancelReason, cancelComment } = args;
 
     const order = await ctx.db.get(id);
     if (!order) throw new Error('Պատվերը չի գտնվել');
@@ -288,6 +310,10 @@ export const updateStatus = mutation({
     if (nextStatus !== prevStatus) {
       // Cancelled -> restore stock back to catalog
       if (nextStatus === 'cancelled' && prevStatus !== 'cancelled') {
+        if (!cancelReason?.trim()) {
+          throw new Error('Նշեք չեղարկման պատճառը');
+        }
+
         for (const item of order.items) {
           const product = await ctx.db.get(item.productId);
           if (!product) continue;
@@ -318,13 +344,60 @@ export const updateStatus = mutation({
     const patch: {
       status?: NonNullable<typeof status>;
       paymentStatus?: NonNullable<typeof paymentStatus>;
+      cancelReason?: string;
+      cancelComment?: string;
       updatedAt: number;
     } = { updatedAt: Date.now() };
     const currentPaymentStatus = order.paymentStatus as NonNullable<typeof paymentStatus> | undefined;
     if (status !== undefined) patch.status = status;
+    if (nextStatus === 'cancelled' && cancelReason !== undefined) patch.cancelReason = cancelReason.trim();
+    if (nextStatus === 'cancelled' && cancelComment !== undefined) patch.cancelComment = cancelComment.trim();
     if (paymentStatus !== undefined) patch.paymentStatus = paymentStatus;
     else if (currentPaymentStatus === undefined) patch.paymentStatus = 'awaiting';
 
     await ctx.db.patch(id, patch);
+
+    const now = Date.now();
+    const adminName = admin?.name ?? admin?.email;
+
+    if (status !== undefined && status !== prevStatus) {
+      const eventType = status === 'cancelled'
+        ? 'cancelled'
+        : prevStatus === 'cancelled'
+          ? 'reopened'
+          : 'status_changed';
+      await ctx.db.insert('orderEvents', {
+        orderId: id,
+        type: eventType,
+        prevValue: prevStatus,
+        nextValue: status,
+        comment: cancelComment?.trim() || undefined,
+        adminName: adminName ?? undefined,
+        createdAt: now,
+      });
+    }
+
+    if (paymentStatus !== undefined && paymentStatus !== order.paymentStatus) {
+      await ctx.db.insert('orderEvents', {
+        orderId: id,
+        type: 'payment_changed',
+        prevValue: order.paymentStatus,
+        nextValue: paymentStatus,
+        adminName: adminName ?? undefined,
+        createdAt: now,
+      });
+    }
+  },
+});
+
+export const getOrderEvents = query({
+  args: { sessionToken: v.string(), orderId: v.id('orders') },
+  handler: async (ctx, args) => {
+    try { await getAdminCaller(ctx, args.sessionToken); } catch { return []; }
+    return await ctx.db
+      .query('orderEvents')
+      .withIndex('by_order', (q) => q.eq('orderId', args.orderId))
+      .order('desc')
+      .take(100);
   },
 });
