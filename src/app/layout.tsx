@@ -33,7 +33,7 @@ const playfair = Playfair_Display({
   variable: '--font-playfair',
   subsets: ['latin'],
   display: 'swap',
-  preload: true,
+  preload: false,
   weight: ['400', '700', '900'],
 });
 
@@ -42,7 +42,7 @@ const notoSansArmenian = Noto_Sans_Armenian({
   variable: '--font-armenian',
   subsets: ['armenian'],
   display: 'swap',
-  preload: true,
+  preload: false,
   weight: ['400', '500', '600', '700'],
   fallback: ['sans-serif'],
 });

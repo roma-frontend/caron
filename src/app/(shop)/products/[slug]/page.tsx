@@ -33,6 +33,7 @@ const QuickBuyButton = dynamic(() => import('@/components/QuickBuy').then((m) =>
 import { useCompareStore } from '@/store/compare';
 import { GitCompareArrows } from 'lucide-react';
 import Image from 'next/image';
+import Script from 'next/script';
 
 function normalizeAttrText(value: string): string {
   return value
@@ -162,7 +163,7 @@ export default function ProductDetailPage() {
       {settings?.enableBreadcrumbs !== false && (
         <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
       )}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
+      <Script id="product-json-ld" type="application/ld+json" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
         {/* Gallery — Embla carousel */}

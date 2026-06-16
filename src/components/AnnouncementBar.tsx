@@ -1,8 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { X, ArrowRight, Sparkles, Zap, Truck, Clock, Gift, Percent, Bell, Star } from 'lucide-react';
 import Link from 'next/link';
+
+const ANNOUNCEMENT_DISMISS_EVENT = 'announcement-dismiss';
+
+function subscribe(callback: () => void) {
+  if (typeof window === 'undefined') return () => {};
+
+  const handleChange = () => callback();
+  window.addEventListener('storage', handleChange);
+  window.addEventListener(ANNOUNCEMENT_DISMISS_EVENT, handleChange);
+
+  return () => {
+    window.removeEventListener('storage', handleChange);
+    window.removeEventListener(ANNOUNCEMENT_DISMISS_EVENT, handleChange);
+  };
+}
 
 type AnnouncementStyle = 'info' | 'sale' | 'promo' | 'dark' | 'custom';
 
@@ -64,10 +79,12 @@ const ICONS = {
 };
 
 export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: string | null }) {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined' || !raw) return false;
-    return localStorage.getItem(`announcement_dismissed_${hashStr(raw)}`) === '1';
-  });
+  const dismissKey = raw ? `announcement_dismissed_${hashStr(raw)}` : null;
+  const dismissed = useSyncExternalStore(
+    subscribe,
+    () => (dismissKey ? localStorage.getItem(dismissKey) === '1' : false),
+    () => false,
+  );
 
   if (!raw || dismissed) return null;
 
@@ -80,7 +97,7 @@ export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: s
     for (let i = 0; i < raw.length; i++) hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
     const key = `announcement_dismissed_${Math.abs(hash).toString(36)}`;
     localStorage.setItem(key, '1');
-    setDismissed(true);
+    window.dispatchEvent(new Event(ANNOUNCEMENT_DISMISS_EVENT));
   };
 
   const content = (

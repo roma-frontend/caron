@@ -42,13 +42,15 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const cartCount = useCartStore((s) => s.totalItems());
-  const { user } = useAuth();
+  const { user, hydrated: authHydrated } = useAuth();
   const router = useRouter();
   const settings = useSettings();
   const [searchOpen, setSearchOpen] = useState(false);
   const favCount = useFavoritesStore((s) => s.count());
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const hasFavs = mounted && favCount > 0;
+  const displayCartCount = mounted ? cartCount : 0;
+  const accountHref = !authHydrated ? '/login' : !user ? '/login' : user.role === 'admin' ? '/admin' : '/dashboard';
   const storeName = useStoreName();
   const announcementBar = settings?.announcementBar;
   const showAnnouncement = settings?.announcementEnabled !== false && Boolean(announcementBar);
@@ -142,10 +144,10 @@ export function Header() {
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative overflow-visible" aria-label={NAV.cart}>
                 <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" data-cart-icon />
-                <Badge className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center p-0 text-[9px] sm:text-[10px]">{cartCount}</Badge>
+                <Badge className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center p-0 text-[9px] sm:text-[10px]">{displayCartCount}</Badge>
               </Button>
             </Link>
-            <Link href={!user ? "/login" : user.role === 'admin' ? "/admin" : "/dashboard"}>
+            <Link href={accountHref}>
               <Button variant="ghost" size="icon" aria-label={NAV.login}>
                 <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
@@ -230,9 +232,9 @@ export function Header() {
                   <Heart className={`h-4 w-4 transition-colors ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
                   {NAV.favorites}
                 </Link>
-                <Link href={!user ? "/login" : user.role === 'admin' ? "/admin" : "/dashboard"} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-green-500/40 hover:bg-green-500/5 hover:text-green-500">
+                <Link href={accountHref} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-green-500/40 hover:bg-green-500/5 hover:text-green-500">
                   <User className="h-4 w-4" />
-                  {user ? NAV.account : NAV.login}
+                  {authHydrated && user ? NAV.account : NAV.login}
                 </Link>
               </div>
             </div>
