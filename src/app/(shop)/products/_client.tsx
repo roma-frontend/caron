@@ -306,7 +306,7 @@ function TypeFilterRow({
           ref={rowRef}
           onScroll={updateScrollState}
           onWheel={handleWheel}
-          className="scrollbar-none flex items-center gap-1.5 overflow-x-auto px-8 py-0.5"
+          className="scrollbar-none flex items-center gap-1.5 overflow-x-auto py-0.5"
         >
           {def.options?.map((opt) => {
             const isActive = active.includes(opt);
