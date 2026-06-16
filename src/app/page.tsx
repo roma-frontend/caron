@@ -76,6 +76,10 @@ function brandTextColor(hexOrHsl: string): string {
 
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
 
+const HERO_VIDEO_SRC =
+  process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
+  'https://pub-21da6611c49e416480be7cc2d42af249.r2.dev/products/hero.mp4';
+
 
 
 function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; index: number }) {
@@ -149,7 +153,7 @@ export default function HomePage() {
                 e.currentTarget.style.setProperty('--sy', `${e.clientY - r.top}px`);
               }}
             >
-              <PingPongVideo src="/hero.mp4" className="absolute inset-0 h-full w-full object-cover hero-video" />
+              <PingPongVideo src={HERO_VIDEO_SRC} className="absolute inset-0 h-full w-full object-cover hero-video" />
               {/* Blue tint overlay */}
               <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply" />
               {/* Dark overlay for readability */}

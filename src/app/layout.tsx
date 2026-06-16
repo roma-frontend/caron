@@ -15,6 +15,7 @@ import { AdminOrderWatcher } from '@/components/AdminOrderWatcher';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
+import { InitialPreloader } from '@/components/PreloaderVideo';
 
 // Primary UI font
 const inter = Inter({
@@ -178,6 +179,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Անցնել հիմնական բովանդակությանը
         </a>
+        <InitialPreloader />
 
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <ConvexClientProvider>

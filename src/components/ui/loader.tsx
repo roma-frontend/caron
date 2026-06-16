@@ -1,19 +1,9 @@
 'use client';
 
-import { ShoppingCart } from 'lucide-react';
+import { PreloaderVideo } from '@/components/PreloaderVideo';
 
 export function Loader({ text }: { text?: string }) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 py-20">
-      <div className="relative">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-          <ShoppingCart className="h-7 w-7 text-primary animate-pulse" />
-        </div>
-        <div className="absolute inset-0 rounded-2xl border-2 border-primary/30 animate-ping" />
-      </div>
-      {text && <p className="text-sm text-muted-foreground animate-pulse">{text}</p>}
-    </div>
-  );
+  return <PreloaderVideo text={text} />;
 }
 
 export function LoaderInline() {
