@@ -110,7 +110,7 @@ export const create = mutation({
     await ctx.db.insert('orderEvents', {
       orderId,
       type: 'created',
-      nextValue: 'pending',
+      nextValue: 'սպասվում է',
       createdAt: now,
     });
 

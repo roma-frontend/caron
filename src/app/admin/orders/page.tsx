@@ -280,12 +280,13 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
             {events && events.length > 0 && (
               <div className="space-y-1.5">
                 {events.map((e) => {
+                  const st = (v: string | null | undefined) => ({ pending: "Սպասում", confirmed: "Հաստատվել է", processing: "Կատարվում է", shipped: "Ուղարկվել է", delivered: "Առաքված", cancelled: "Չեղյալ", awaiting: "Սպասում", paid: "Վճարվել է", refunded: "Վերադառնվել է" })[v as string] || v || "";
                   const label: string =
                     e.type === 'created' ? 'Պատվերը ստեղծվեց' :
-                    e.type === 'status_changed' ? `Կարգավիճակ: ${e.prevValue ?? ""} → ${e.nextValue ?? ""}` :
-                    e.type === 'cancelled' ? `Չեղարկվեց: ${e.prevValue ?? ""} → չեղարկված` :
-                    e.type === 'reopened' ? `Վերաբացվեց: չեղարկված → ${e.nextValue ?? ""}` :
-                    e.type === 'payment_changed' ? `Վճարում: ${e.prevValue ?? ""} → ${e.nextValue ?? ""}` :
+                    e.type === 'status_changed' ? `Կարգավիճակ: ${st(e.prevValue)} → ${st(e.nextValue)}` :
+                    e.type === 'cancelled' ? `Չեղարկվեց: ${st(e.prevValue)} → Չեղյալ` :
+                    e.type === 'reopened' ? `Վերաբացվեց: Չեղյալ → ${st(e.nextValue)}` :
+                    e.type === 'payment_changed' ? `Վճարում: ${st(e.prevValue)} → ${st(e.nextValue)}` :
                     e.comment ?? '';
                   return (
                     <div key={e._id} className="flex flex-wrap items-start gap-x-2 gap-y-0.5 text-xs">
