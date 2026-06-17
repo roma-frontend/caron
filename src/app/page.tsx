@@ -428,12 +428,13 @@ function HeroMiniCard({ product, index = 0 }: { product: NonNullable<ReturnType<
         <Image
           src={product.images[0]}
           alt={product.name}
-          fill
           priority={index < 1}
           loading={index < 2 ? 'eager' : 'lazy'}
           fetchPriority={index < 2 ? 'high' : 'auto'}
           sizes="(max-width: 640px) 50vw, 200px"
           className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110"
+          width={400}
+          height={400}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted/30 text-muted-foreground/30">
