@@ -56,14 +56,11 @@ function StatCard({
 export default function AdminDashboard() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
-  const products = useQuery(api.products.listAll, {});
+  const products = useQuery(api.products.listStockSummary);
   const categories = useQuery(api.categories.list, {});
 
-  const lowStock =
-    products?.filter((p) => p.isActive && p.stock > 0 && p.stock <= 5) ?? [];
-
-  const outOfStock =
-    products?.filter((p) => p.isActive && p.stock === 0) ?? [];
+  const lowStock = products?.low ?? [];
+  const outOfStock = products?.out ?? [];
 
   const stats = {
     totalOrders: orders?.length ?? 0,
@@ -78,7 +75,7 @@ export default function AdminDashboard() {
     awaitingPayment:
       orders?.filter((o) => o.paymentStatus === 'awaiting' && o.status !== 'cancelled').length ?? 0,
 
-    totalProducts: products?.length ?? 0,
+    totalProducts: products?.total ?? 0,
     totalCategories: categories?.length ?? 0,
   };
 

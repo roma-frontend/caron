@@ -41,7 +41,7 @@ function getPeriodTo(period: PeriodKey): number {
 export default function AnalyticsPage() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
-  const products = useQuery(api.products.listAll);
+  const products = useQuery(api.products.listAnalyticsMap);
   const categories = useQuery(api.categories.list, {});
 
   const [period, setPeriod] = useState<PeriodKey>('30d');
@@ -51,9 +51,7 @@ export default function AnalyticsPage() {
   const productMap = useMemo(() => {
     const m = new Map<string, { name: string; categoryId: string; brand?: string; costPrice?: number }>();
     products?.forEach((p) => {
-      const b = (p as Record<string, unknown>).brand as string | undefined ??
-        ((p.attributes as Record<string, unknown> | undefined)?.brand as string | undefined);
-      m.set(p._id as string, { name: p.name, categoryId: p.categoryId as string, brand: b, costPrice: (p as Record<string, unknown>).costPrice as number | undefined });
+      m.set(p._id as string, { name: p.name, categoryId: p.categoryId as string, brand: p.brand ?? undefined, costPrice: p.costPrice ?? undefined });
     });
     return m;
   }, [products]);

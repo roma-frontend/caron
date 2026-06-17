@@ -21,7 +21,7 @@ const TYPE_MAP: Record<string, { label: string; color: string; icon: typeof Arro
 export default function StockMovementsPage() {
   const { sessionToken } = useAuth();
   const movements = useQuery(api.products.listStockMovements, sessionToken ? { sessionToken, limit: 500 } : 'skip');
-  const products = useQuery(api.products.listAll);
+  const products = useQuery(api.products.listNameMap);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 

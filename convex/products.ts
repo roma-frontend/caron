@@ -883,6 +883,38 @@ export const listCostMap = query({
   },
 });
 
+export const listNameMap = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').order('asc').take(50000);
+    return products.map((p) => ({ _id: p._id, name: p.name }));
+  },
+});
+
+export const listStockSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(50000);
+    const low = products.filter((p) => p.stock > 0 && p.stock <= 5).map((p) => ({ _id: p._id, name: p.name, stock: p.stock }));
+    const out = products.filter((p) => p.stock === 0).map((p) => ({ _id: p._id, name: p.name }));
+    return { total: products.length, low, out };
+  },
+});
+
+export const listAnalyticsMap = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').order('asc').take(50000);
+    return products.map((p) => ({
+      _id: p._id,
+      name: p.name,
+      categoryId: p.categoryId,
+      brand: p.brand ?? ((p.attributes as Record<string, unknown> | undefined)?.brand as string | undefined),
+      costPrice: p.costPrice,
+    }));
+  },
+});
+
 export const migrateAttributeKeys = mutation({
   args: {
     productId: v.id('products'),
