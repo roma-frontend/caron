@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
     });
 
     return rows.sort((a, b) => b.revenue - a.revenue);
-  }, [orders, products, period, categoryId, brand, productMap, categoryMap]);
+  }, [orders, period, categoryId, brand, productMap, categoryMap]);
 
   const totals = useMemo(() => {
     const t = { qty: 0, revenue: 0, cost: 0, profit: 0 };
@@ -136,16 +136,16 @@ export default function AnalyticsPage() {
           </SelectContent>
         </Select>
         <Select value={categoryId} onValueChange={(v) => { if (v) setCategoryId(v); }}>
-          <SelectTrigger className="h-9 w-48 text-xs"><span>{categoryId === 'all' ? 'Բոլոր կատեգորիաներ' : categoryMap.get(categoryId) ?? categoryId}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-48 text-xs"><span>{categoryId === 'all' ? 'Բոլոր կատեգորիաները' : categoryMap.get(categoryId) ?? categoryId}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'Բոլոր կատեգորիաներ'}</SelectItem>
+            <SelectItem value="all">{'Բոլոր կատեգորիաները'}</SelectItem>
             {categories?.map((c) => <SelectItem key={c._id} value={c._id as string}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={brand} onValueChange={(v) => { if (v) setBrand(v); }}>
-          <SelectTrigger className="h-9 w-44 text-xs"><span>{brand === 'all' ? 'Բոլոր բրենդեր' : brand}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-44 text-xs"><span>{brand === 'all' ? 'Բոլոր բրենդները' : brand}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'Բոլոր բրենդեր'}</SelectItem>
+            <SelectItem value="all">{'Բոլոր բրենդները'}</SelectItem>
             {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
           </SelectContent>
         </Select>

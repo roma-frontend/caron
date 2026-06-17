@@ -136,9 +136,9 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-sm font-bold text-primary">{formatPrice(product.price)}</span>
-            {product.costPrice != null && <span className="text-xs text-muted-foreground">{formatPrice(product.costPrice)}</span>}
+            {product.costPrice != null && <span className="text-xs text-muted-foreground">Ինքնարժեք: {formatPrice(product.costPrice)}</span>}
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
-              {product.stock > 0 ? `Պահեստ: ${product.stock}` : 'Անհասանելի'}
+              {product.stock > 0 ? `Պահեստում: ${product.stock}` : 'Հասանելի չէ'}
             </Badge>
             {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
           </div>

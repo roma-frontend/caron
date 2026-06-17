@@ -292,7 +292,7 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <Label>Telegram</Label>
-                <Input value={form.telegram ?? ''} onChange={(e) => set('telegram', e.target.value)} placeholder="@acaron_am" className="h-10" />
+                <Input value={form.telegram ?? ''} onChange={(e) => set('telegram', e.target.value)} placeholder="@caron_am" className="h-10" />
               </div>
               <div>
                 <Label>Instagram</Label>
