@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Tag, Clock } from 'lucide-react';
 import { formatDateHy } from '@/lib/formatters';
 import { toast } from 'sonner';
+import { numericInputProps } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
 
 export default function AdminCouponsPage() {
@@ -64,9 +65,9 @@ export default function AdminCouponsPage() {
                   <button onClick={() => setType('fixed')} className={`flex-1 rounded-xl border py-2 text-sm transition-all ${type === 'fixed' ? 'border-primary bg-primary/10 text-primary' : 'hover:border-primary/40'}`}>֏</button>
                 </div>
               </div>
-              <div><Label>Արժեք</Label><Input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))} placeholder={type === 'percent' ? '10' : '5000'} className="h-10" /></div>
-              <div><Label>Մին. պատվեր</Label><Input type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} className="h-10" /></div>
-              <div><Label>Մաքս. օգտ.</Label><Input type="number" value={maxUses} onChange={(e) => setMaxUses(Number(e.target.value))} className="h-10" /></div>
+              <div><Label>Արժեք</Label><Input {...numericInputProps(false)} value={value} onChange={(e) => setValue(Number(e.target.value))} placeholder={type === 'percent' ? '10' : '5000'} className="h-10" /></div>
+              <div><Label>Մին. պատվեր</Label><Input {...numericInputProps(false)} value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} className="h-10" /></div>
+              <div><Label>Մաքս. օգտ.</Label><Input {...numericInputProps(false)} value={maxUses} onChange={(e) => setMaxUses(Number(e.target.value))} className="h-10" /></div>
               <div className="sm:col-span-3">
                 <Label>Վերջնաժամկետ</Label>
                 <div className="flex gap-2 mt-1">
