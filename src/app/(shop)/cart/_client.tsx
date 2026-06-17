@@ -38,7 +38,7 @@ export default function CartPage() {
   const selectAll = () => setSelected(new Set(items.map((i) => i.id)));
   const deselectAll = () => setSelected(new Set());
   const allSelected = items.length > 0 && selected.size === items.length;
-  const handleBulkRemove = () => { selected.forEach((id) => removeItem(id)); setSelected(new Set()); toast.success(`${selected.size} ապրանք ջնջվեց`); };
+  const handleBulkRemove = () => { selected.forEach((id) => removeItem(id)); setSelected(new Set());};
 
   const featured = useQuery(api.products.getFeatured, {});
 

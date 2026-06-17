@@ -38,6 +38,7 @@ type FormState = {
   sku?: string;
   oemNumbers?: OemEntry[];
   atgCode?: string;
+  variantGroup?: string;
   categoryId?: string;
   attributes?: Record<string, unknown>;
 };
@@ -73,6 +74,7 @@ export default function EditProductPage() {
       description: currentProduct.description,
       oemNumbers: currentProduct.oemNumbers,
       atgCode: currentProduct.atgCode,
+      variantGroup: (currentProduct as Record<string, unknown>).variantGroup as string | undefined,
       categoryId: currentProduct.categoryId,
       attributes: (currentProduct.attributes as Record<string, string>) ?? {},
     });
@@ -135,6 +137,7 @@ export default function EditProductPage() {
         images: images.filter(Boolean),
         attributes: form.attributes || undefined,
         atgCode: form.atgCode || undefined,
+        variantGroup: form.variantGroup || undefined,
       } as Parameters<typeof update>[0]);
       toast.success('Ապրանքը հաջողությամբ թարմացվել է');
       router.push('/admin/products');
@@ -260,6 +263,8 @@ export default function EditProductPage() {
             <div className="grid grid-cols-3 gap-4">
               <div><Label>Պահեստ</Label><Input {...numericInputProps(false)} value={form.stock ?? ''} onChange={(e) => setForm((f) => ({ ...f, stock: Number(e.target.value) }))} className="h-11" /></div>
               <div><Label>Քանակի քայլ</Label><Input {...numericInputProps(false)} value={form.qtyStep ?? ''} onChange={(e) => setForm((f) => ({ ...f, qtyStep: Number(e.target.value) || undefined }))} className="h-11" placeholder="1" /></div>
+              <div><Label>Variant Group</Label><Input value={form.variantGroup ?? ''} onChange={(e) => setForm((f) => ({ ...f, variantGroup: e.target.value }))} placeholder="dep-sun-wiper" className="h-11 font-mono" /></div>
+
               <div><Label>ԱՏԳԱ կոդ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, atgCode: e.target.value }))} placeholder="2601" className="h-11 font-mono" /></div>
             </div>
 

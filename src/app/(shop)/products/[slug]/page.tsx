@@ -46,7 +46,10 @@ function normalizeAttrText(value: string): string {
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
-  const product = useQuery(api.products.getBySlug, { slug: slug as string });
+  const _baseProduct = useQuery(api.products.getBySlug, { slug: slug as string });
+  const variants = useQuery(api.products.getVariantGroup, _baseProduct && (_baseProduct as any).variantGroup ? { variantGroup: (_baseProduct as any).variantGroup as string } : 'skip');
+  const [overrideProduct, setOverrideProduct] = useState<typeof _baseProduct>(undefined);
+  const product = overrideProduct ?? _baseProduct;
   const stats = useQuery(api.reviews.getStats, product?._id ? { productId: product._id } : 'skip');
   const vehicle = useVehicleStore((s) => s.vehicle);
   const settings = useSettings();
@@ -215,6 +218,24 @@ export default function ProductDetailPage() {
         {/* Info */}
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
+
+          {variants && variants.length > 1 && (
+            <div className="mt-3 flex items-center gap-1.5 overflow-hidden">
+              <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronLeft className="h-4 w-4" /></button>
+              <div id="variant-scroll" className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+                {variants.map((v: any) => (
+                  <button type="button" key={v._id} onClick={() => setOverrideProduct(v)} className={`shrink-0 rounded-xl border-2 p-1 transition-all ${v._id === product?._id ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}>
+                    {v.images?.[0] ? (
+                      <Image src={v.images[0]} alt={v.name} className="h-12 w-12 rounded-lg object-cover" width={48} height={48} />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+          )}
 
           {stats && stats.count > 0 && (
             <div className="mt-2 flex items-center gap-1.5">

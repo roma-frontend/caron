@@ -103,6 +103,7 @@ export default defineSchema(
     brand: v.optional(v.string()),
     qtyStep: v.optional(v.number()),
     atgCode: v.optional(v.string()),
+    variantGroup: v.optional(v.string()),
     isActive: v.boolean(),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
@@ -121,6 +122,7 @@ export default defineSchema(
     .index('by_featured', ['isFeatured'])
     .index('by_category_price', ['categoryId', 'price'])
     .index('by_active_price', ['isActive', 'price'])
+    .index('by_variant_group', ['variantGroup'])
     .searchIndex('search_products', { searchField: 'name', filterFields: ['categoryId', 'isActive'] }),
 
   // ─── Orders ────────────────────────────────────────────────────

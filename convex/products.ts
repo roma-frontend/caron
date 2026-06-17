@@ -420,7 +420,7 @@ export const create = mutation({
       manufacturer: v.string(),
       code: v.string(),
     }))),
-    atgCode: v.optional(v.string()), stock: v.number(),
+    atgCode: v.optional(v.string()), variantGroup: v.optional(v.string()), stock: v.number(),
     isActive: v.boolean(), isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
     attributes: v.optional(v.any()),
@@ -499,6 +499,7 @@ export const update = mutation({
       code: v.string(),
     }))),
     atgCode: v.optional(v.string()),
+    variantGroup: v.optional(v.string()),
     stock: v.optional(v.number()), isActive: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),
@@ -683,6 +684,8 @@ export const bulkCreate = mutation({
         categoryId: v.id('categories'),
         sku: v.optional(v.string()),
         atgCode: v.optional(v.string()),
+        variantGroup: v.optional(v.string()),
+
         oemNumbers: v.optional(v.array(v.object({
           manufacturer: v.string(),
           code: v.string(),
@@ -942,5 +945,17 @@ export const listStockMovements = query({
         .take(take);
     }
     return await ctx.db.query('stockMovements').withIndex('by_created').order('desc').take(take);
+  },
+});
+
+export const getVariantGroup = query({
+  args: { variantGroup: v.string() },
+  handler: async (ctx, args) => {
+    if (!args.variantGroup) return [];
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_variant_group', (q) => q.eq('variantGroup', args.variantGroup))
+      .take(50);
+    return products.filter((p) => p.isActive);
   },
 });
