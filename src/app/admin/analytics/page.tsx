@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
                 <tr>
                   <th className="px-3 py-2 text-left font-medium">{'Անուն'}</th>
                   <th className="px-3 py-2 text-left font-medium">{'Կատեգորիա'}</th>
-                  <th className="px-3 py-2 text-left font-medium">{'Կայանակ'}</th>
+                  <th className="px-3 py-2 text-left font-medium">{'Բրենդ'}</th>
                   <th className="px-3 py-2 text-right font-medium">{'Քանակ'}</th>
                   <th className="px-3 py-2 text-right font-medium">{'Եկամուտ'}</th>
                   <th className="px-3 py-2 text-right font-medium">{'Ինքնարժեք'}</th>
