@@ -14,8 +14,8 @@ import { useAuth } from '@/store/auth';
 const TYPE_MAP: Record<string, { label: string; color: string; icon: typeof ArrowDown }> = {
   sale: { label: 'Վաճառք', color: 'bg-red-100 text-red-800', icon: ArrowDown },
   cancel: { label: 'Չեղարկում', color: 'bg-green-100 text-green-800', icon: ArrowUp },
-  reopen: { label: 'Վերբարձնում', color: 'bg-orange-100 text-orange-800', icon: ArrowDown },
-  manual: { label: 'Ձեռնարկ', color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
+  reopen: { label: 'Վերբացում', color: 'bg-orange-100 text-orange-800', icon: ArrowDown },
+  manual: { label: 'Ձեռքով', color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
 };
 
 export default function StockMovementsPage() {
