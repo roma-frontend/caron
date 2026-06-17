@@ -666,8 +666,13 @@ export default function ImportProductsPage() {
         return p;
       };
       const products: BulkProductWithAtg[] = parsed.map(toBulkProduct);
-      const result = await bulkCreate({ sessionToken, products });
-      toast.success(`${result}. Ատրիբուտները և համատեղելիությունը պետք է ավելացվի խմբագրիչի միջոցով.`);
+      const CHUNK = 50;
+      let lastResult = "";
+      for (let i = 0; i < products.length; i += CHUNK) {
+        lastResult = await bulkCreate({ sessionToken, products: products.slice(i, i + CHUNK) });
+        setImportedRows(new Set(Array.from({ length: Math.min(i + CHUNK, products.length) }, (_, idx) => idx)));
+      }
+      toast.success(lastResult);
       setDone(true);
       setImportedRows(new Set(parsed.map((_, idx) => idx)));
     } catch (e) {
