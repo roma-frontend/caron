@@ -261,7 +261,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
             <button onClick={() => exportPDF(order)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors" title="PDF">
               <FileDown className="h-3.5 w-3.5" />
             </button>
-            <button onClick={() => setHistoryOpen((v) => !v)} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${historyOpen ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent'}`} title="История">
+            <button onClick={() => setHistoryOpen((v) => !v)} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${historyOpen ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent'}`} title="Պատմություն">
               <History className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -283,8 +283,8 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
                   const label: string =
                     e.type === 'created' ? 'Պատվերը ստեղծվեց' :
                     e.type === 'status_changed' ? `Կարգավիճակ: ${e.prevValue ?? ""} → ${e.nextValue ?? ""}` :
-                    e.type === 'cancelled' ? `Չեղարկվեց: ${e.prevValue ?? ""} → cancelled` :
-                    e.type === 'reopened' ? `Վերաբացվեց: cancelled → ${e.nextValue ?? ""}` :
+                    e.type === 'cancelled' ? `Չեղարկվեց: ${e.prevValue ?? ""} → չեղարկված` :
+                    e.type === 'reopened' ? `Վերաբացվեց: չեղարկված → ${e.nextValue ?? ""}` :
                     e.type === 'payment_changed' ? `Վճարում: ${e.prevValue ?? ""} → ${e.nextValue ?? ""}` :
                     e.comment ?? '';
                   return (
