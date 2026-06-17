@@ -42,7 +42,7 @@ const notoSansArmenian = Noto_Sans_Armenian({
   variable: '--font-armenian',
   subsets: ['armenian'],
   display: 'swap',
-  preload: false,
+  preload: true,
   weight: ['400', '500', '600', '700'],
   fallback: ['sans-serif'],
 });

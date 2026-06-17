@@ -20,16 +20,6 @@ export function PreloaderVideo({ text, fixed = false, className = '' }: Preloade
       className={`isolate flex flex-col items-center justify-center overflow-hidden bg-[#07111d] text-white ${fixed ? 'fixed inset-0 z-[9998]' : 'relative min-h-screen py-20'} ${className}`}
     >
       <div className="absolute inset-0 -z-40 bg-[radial-gradient(ellipse_at_50%_35%,rgba(0,102,174,0.32),transparent_45%),radial-gradient(ellipse_at_50%_110%,rgba(14,165,233,0.18),transparent_42%),#050b12]" />
-      <video
-        src={PRELOADER_SRC}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-[10%] -z-30 h-[120%] w-[120%] object-cover opacity-25 blur-3xl saturate-150"
-      />
       <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:72px_72px] opacity-30" />
       <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_34%,rgba(4,10,18,0.56)_78%),linear-gradient(180deg,rgba(4,10,18,0.06),rgba(4,10,18,0.5))]" />
       <div className="absolute inset-x-0 bottom-0 -z-10 h-1/3 bg-gradient-to-t from-[#07111d] to-transparent" />

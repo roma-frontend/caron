@@ -94,7 +94,7 @@ function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; ind
         </div>
         <div>
           <h3 className="font-semibold">{feature.title}</h3>
-          <p className="text-white/70" style={{ fontSize: 'var(--text-sm)' }}>{feature.desc}</p>
+          <p className="text-white/85" style={{ fontSize: 'var(--text-sm)' }}>{feature.desc}</p>
         </div>
       </div>
     </div>
@@ -212,7 +212,7 @@ export default function HomePage() {
                     { Icon: Clock, label: '24/7 աջակցություն' },
                     { Icon: Star, label: 'Բնօրինակ որակ' },
                   ].map(({ Icon, label }) => (
-                    <span key={label} className="flex items-center gap-2 text-white/70 text-[13px] leading-tight sm:text-sm">
+                    <span key={label} className="flex items-center gap-2 text-white/85 text-[13px] leading-tight sm:text-sm">
                       <Icon className="h-3.5 w-3.5 text-white/80 sm:h-4 sm:w-4" /> {label}
                     </span>
                   ))}
