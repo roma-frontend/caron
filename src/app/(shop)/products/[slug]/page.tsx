@@ -230,7 +230,7 @@ export default function ProductDetailPage() {
                       {v.images?.[0] ? (
                         <Image src={v.images[0]} alt={v.name} className="h-20 w-16 rounded-lg object-cover" width={48} height={48} />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
+                        <div className="flex h-20 w-16 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
                       )}
                     </button>
                   ))}
