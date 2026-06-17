@@ -152,9 +152,10 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
           <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
-            <InlineField value={product.price} className="text-sm font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch(() => toast.error("Error"))} />
+            <InlineField value={product.price} className="text-sm font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch(() => toast.error('Error'))} />
             {product.costPrice != null && <span className="text-xs text-muted-foreground">Ինքնարժեք: {formatPrice(product.costPrice)}</span>}
-            <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch(() => toast.error("Error"))} />
+            <InlineField value={product.costPrice ?? 0} className="text-xs text-muted-foreground" prefix="Ինքնարժեք: " onSave={(v) => update({ sessionToken, id: product._id, costPrice: v }).catch(() => toast.error('Error'))} />
+            <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch(() => toast.error('Error'))} />
             {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
           </div>
         </div>
