@@ -94,7 +94,7 @@ function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; ind
         </div>
         <div>
           <h3 className="font-semibold">{feature.title}</h3>
-          <p className="text-white/85" style={{ fontSize: 'var(--text-sm)' }}>{feature.desc}</p>
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{feature.desc}</p>
         </div>
       </div>
     </div>
