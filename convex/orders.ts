@@ -311,7 +311,7 @@ export const updateStatus = mutation({
       // Cancelled -> restore stock back to catalog
       if (nextStatus === 'cancelled' && prevStatus !== 'cancelled') {
         if (!cancelReason?.trim()) {
-          throw new Error('\u0546\u0577\u0565\u0584 \u0579\u0565\u0572\u0561\u0580\u056F\u0574\u0561\u0576 \u057A\u0561\u057F\u0573\u0561\u057C\u0568');
+          throw new Error('Խնդրում ենք նշել չեղարկման պատճառը');
         }
 
         for (const item of order.items) {
@@ -338,10 +338,10 @@ export const updateStatus = mutation({
         for (const item of order.items) {
           const product = await ctx.db.get(item.productId);
           if (!product || !product.isActive) {
-            throw new Error(`\u0531\u057A\u0580\u0561\u0576\u0584\u0568 \u0570\u0561\u057D\u0561\u0576\u0565\u056C\u056B \u0579\u0567: ${item.name}`);
+            throw new Error(`Ապրանքը չի գտնվել կամ ակտիվ չէ: ${item.name}`);
           }
           if (product.stock < item.quantity) {
-            throw new Error(`\u0531\u0576\u0562\u0561\u057E\u0561\u0580\u0561\u0580 \u057A\u0561\u0577\u0561\u0580: ${product.name}`);
+            throw new Error(`Ապրանքը պահեստում բավական չէ: ${product.name}`);
           }
         }
 

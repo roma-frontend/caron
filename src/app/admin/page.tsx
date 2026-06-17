@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,6 +80,29 @@ export default function AdminDashboard() {
     totalCategories: categories?.length ?? 0,
   };
 
+  const problems = useMemo(() => {
+    if (!orders || orders.length === 0) return [];
+    const now = Date.now();
+    const DAY = 86400000;
+    const result: Array<{ order: typeof orders[number]; reason: string }> = [];
+    for (const o of orders) {
+      if (o.status === 'delivered' && o.paymentStatus !== 'paid') {
+        result.push({ order: o, reason: 'Առաքված, բայց չվճարված' });
+      } else if (o.status === 'cancelled' && o.paymentStatus === 'paid') {
+        result.push({ order: o, reason: 'Չեղարկված, Վճարված' });
+      } else if (o.status === 'pending' && now - o.createdAt > 2 * DAY) {
+        result.push({ order: o, reason: 'Սպասում > 2 օր' });
+      } else if (o.paymentStatus === 'awaiting' && o.status !== 'cancelled' && now - o.createdAt > 3 * DAY) {
+        result.push({ order: o, reason: 'Վճարում սպասում > 3 օր' });
+      } else if (!o.customerPhone && !o.customerEmail) {
+        result.push({ order: o, reason: 'Չկա կոնտակտային տվյալներ' });
+      } else if (o.total === 0) {
+        result.push({ order: o, reason: 'Ընդհատված գին 0' });
+      }
+    }
+    return result;
+  }, [orders]);
+
   return (
     <div>
       <div className="mb-8">
@@ -142,32 +166,12 @@ export default function AdminDashboard() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* Problematic Orders */}
-        {orders && orders.length > 0 && (() => {
-          const now = Date.now();
-          const DAY = 86400000;
-          const problems: Array<{ order: typeof orders[number]; reason: string }> = [];
-          for (const o of orders) {
-            if (o.status === 'delivered' && o.paymentStatus !== 'paid') {
-              problems.push({ order: o, reason: '\u0531\u057C\u0561\u0584\u057E\u0561\u056E, \u0562\u0561\u0575\u0581 \u0579\u057E\u0573\u0561\u0580\u057E\u0561\u056E' });
-            } else if (o.status === 'cancelled' && o.paymentStatus === 'paid') {
-              problems.push({ order: o, reason: '\u054E\u0573\u0561\u0580\u057E\u0561\u056E, \u0562\u0561\u0575\u0581 \u0579\u0565\u0572\u0561\u0580\u056F\u057E\u0561\u056E' });
-            } else if (o.status === 'pending' && now - o.createdAt > 2 * DAY) {
-              problems.push({ order: o, reason: '\u054D\u057A\u0561\u057D\u0578\u0582\u0574 > 2 \u0585\u0580' });
-            } else if (o.paymentStatus === 'awaiting' && o.status !== 'cancelled' && now - o.createdAt > 3 * DAY) {
-              problems.push({ order: o, reason: '\u054E\u0573\u0561\u0580\u0574\u0561\u0576 \u057D\u057A\u0561\u057D\u0578\u0582\u0574 > 3 \u0585\u0580' });
-            } else if (!o.customerPhone && !o.customerEmail) {
-              problems.push({ order: o, reason: '\u0531\u057C\u0561\u0576\u0581 \u056F\u0561\u057A\u056B \u057F\u057E\u0575\u0561\u056C\u0576\u0565\u0580' });
-            } else if (o.total === 0) {
-              problems.push({ order: o, reason: '\u0533\u0578\u0582\u0574\u0561\u0580\u0568 0' });
-            }
-          }
-          if (problems.length === 0) return null;
-          return (
+        {problems.length > 0 && (
             <Card className="border-red-200 dark:border-red-900 lg:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-red-600">
                   <AlertTriangle className="h-5 w-5" />
-                  {'\u054A\u0580\u0578\u0562\u056C\u0565\u0574\u0561\u0575\u056B\u0576 \u057A\u0561\u057F\u057E\u0565\u0580\u0576\u0565\u0580'} <Badge variant="destructive" className="ml-1">{problems.length}</Badge>
+                  {'Պրոբլեմատիկ պատվերներ'} <Badge variant="destructive" className="ml-1">{problems.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -184,8 +188,7 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-          );
-        })()}
+        )}
 
         {/* Low Stock Alert */}
         {(lowStock.length > 0 || outOfStock.length > 0) && (
@@ -198,7 +201,7 @@ export default function AdminDashboard() {
             </CardHeader>
 
             <CardContent>
-              <div className="space-y-2 max-h-6ջ overflow-y-auto scroll-indicator-none">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
                 {outOfStock.map((p) => (
                   <Link
                     key={p._id}

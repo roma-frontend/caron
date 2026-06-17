@@ -36,8 +36,8 @@ function SortableFilterCard({ f, catName, onEdit, onDelete }: {
         <p className="text-sm font-medium">{f.name}</p>
         <div className="flex flex-wrap items-center gap-2 mt-0.5">
           <code className="text-[10px] text-muted-foreground">{f.slug}</code>
-          <Badge variant="secondary" className="text-[10px]">{'\u0562\u0561\u0566\u0574\u0561\u056F\u056B'}</Badge>
-          {f.options && f.options.length > 0 && <span className="text-[10px] text-muted-foreground">{f.options.length} {'\u057F\u0561\u0580\u0562\u0565\u0580\u0561\u056F'}</span>}
+          <Badge variant="secondary" className="text-[10px]">{f.type}</Badge>
+          {f.options && f.options.length > 0 && <span className="text-[10px] text-muted-foreground">{f.options.length} {'Ցանկ'}</span>}
         </div>
       </div>
       <div className="flex shrink-0 gap-1">
@@ -76,24 +76,24 @@ export default function AdminFiltersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.slug || !form.categoryId) { toast.error('\u053C\u0580\u0561\u0581\u0580\u0565\u0584 \u0561\u0576\u0578\u0582\u0576, slug \u0587 \u056F\u0561\u057F\u0565\u0563\u0578\u0580\u056B\u0561'); return; }
+    if (!form.name || !form.slug || !form.categoryId) { toast.error('Անվանում, slug և կատեգորիա պետք է լրացվեն'); return; }
     try {
       const options = form.options.split(',').map((s) => s.trim()).filter(Boolean);
       const base = { name: form.name, slug: form.slug, type: 'multiselect' as const, categoryId: form.categoryId as Id<'categories'>, options: options.length > 0 ? options : undefined, order: form.order };
       if (editingId) {
         await updateFilter({ sessionToken: sessionToken ?? '', ...base, id: editingId });
-        toast.success('\u0556\u056B\u056C\u057F\u0580\u0568 \u0569\u0561\u0580\u0574\u0561\u0581\u057E\u0565\u056C \u0567');
+        toast.success('Ֆիլտրը թարմացվեց');
       } else {
         await createFilter({ sessionToken: sessionToken ?? '', ...base });
-        toast.success('\u0556\u056B\u056C\u057F\u0580\u0568 \u057D\u057F\u0565\u0572\u056E\u057E\u0565\u056C \u0567');
+        toast.success('Ֆիլտրը ստեղծվեց');
       }
       setDialogOpen(false); resetForm();
-    } catch (e) { toast.error(e instanceof Error ? e.message : '\u054D\u056D\u0561\u056C'); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Ֆիլտրը չի ստեղծվել'); }
   };
 
   const handleDelete = async () => {
     if (!deleteId || !sessionToken) return;
-    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('\u0556\u056B\u056C\u057F\u0580\u0568 \u057B\u0576\u057B\u057E\u0565\u056C \u0567'); setDeleteId(null); } catch { toast.error('\u054D\u056D\u0561\u056C'); }
+    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվեց'); setDeleteId(null); } catch { toast.error('Ֆիլտրը չի ջնջվել'); }
   };
 
   const catMap: Record<string, string> = {};
@@ -101,7 +101,7 @@ export default function AdminFiltersPage() {
 
   const grouped: Record<string, NonNullable<typeof filters>> = {};
   if (filters) for (const f of [...filters].sort((a, b) => (optimisticOrder.get(a._id) ?? a.order) - (optimisticOrder.get(b._id) ?? b.order))) {
-    const cat = catMap[f.categoryId] || '\u0531\u057C\u0561\u0576\u0581 \u056F\u0561\u057F\u0565\u0563\u0578\u0580\u056B\u0561\u0575\u056B';
+    const cat = catMap[f.categoryId] || 'Կատեգորիան չհայտնաբերվեց';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat]!.push(f);
   }
@@ -126,24 +126,24 @@ export default function AdminFiltersPage() {
 
     try {
       await reorderFilters({ sessionToken, items });
-    } catch { toast.error('\u054D\u056D\u0561\u056C \u057F\u0565\u0572\u0561\u0583\u0578\u056D\u0565\u056C\u056B\u057D'); }
+    } catch { toast.error('Ֆիլտրերը չի ստեղծվել'); }
   };
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{'\u0556\u056B\u056C\u057F\u0580\u0565\u0580'}</h1>
-          <p className="text-sm text-muted-foreground">{filters?.length ?? 0} {'\u0556\u056B\u056C\u057F\u0580'}</p>
+          <h1 className="text-2xl font-bold">{'Ֆիլտրեր'}</h1>
+          <p className="text-sm text-muted-foreground">{filters?.length ?? 0} {'Ֆիլտրերի քանակ'}</p>
         </div>
-        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> {'\u054D\u057F\u0565\u0572\u056E\u0565\u056C \u0586\u056B\u056C\u057F\u0580'}</Button>
+        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> {'Ավելացնել ֆիլտր'}</Button>
       </div>
 
-      {!filters || !categories ? <p className="text-muted-foreground">{'\u0532\u0565\u057C\u0576\u057E\u0578\u0582\u0574...'}</p> : Object.entries(grouped).length === 0 ? (
+      {!filters || !categories ? <p className="text-muted-foreground">{'Ֆիլտրեր չեն ստեղծվել...'}</p> : Object.entries(grouped).length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <SlidersHorizontal className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{'\u0556\u056B\u056C\u057F\u0580\u0565\u0580 \u0579\u0565\u0576 \u0563\u057F\u0576\u057E\u0565\u056C'}</p>
-          <Button onClick={openCreate} variant="outline" className="gap-2"><Plus className="h-4 w-4" /> {'\u054D\u057F\u0565\u0572\u056E\u0565\u056C \u0561\u057C\u0561\u057B\u056B\u0576 \u0586\u056B\u056C\u057F\u0580\u0568'}</Button>
+          <p className="text-muted-foreground">{'Ֆիլտրեր չեն ստեղծվել'}</p>
+          <Button onClick={openCreate} variant="outline" className="gap-2"><Plus className="h-4 w-4" /> {'Ավելացնել ֆիլտր'}</Button>
         </div>
       ) : Object.entries(grouped).map(([cat, items]) => items && (
         <div key={cat} className="mb-8">
@@ -162,12 +162,12 @@ export default function AdminFiltersPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); resetForm(); } }}>
         <DialogContent className="sm:max-w-lg overflow-visible" showCloseButton={false}>
-          <DialogHeader><DialogTitle>{editingId ? '\u053D\u0574\u0562\u0561\u0563\u0580\u0565\u056C \u0586\u056B\u056C\u057F\u0580\u0568' : '\u054D\u057F\u0565\u0572\u056E\u0565\u056C \u0576\u0578\u0580 \u0586\u056B\u056C\u057F\u0580'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? 'Խմբագրել ֆիլտր' : 'Ավելացնել ֆիլտր'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{'\u0531\u0576\u057E\u0561\u0576\u0578\u0582\u0574'} *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="\u0555\u0580.\u055D \u0531\u057A\u0580\u0561\u0576\u0584\u0561\u0576\u056B\u0577" className="h-11" />
+                <Label>{'Անուն'} *</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Անվանում" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>Slug *</Label>
@@ -175,20 +175,20 @@ export default function AdminFiltersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{'\u053F\u0561\u057F\u0565\u0563\u0578\u0580\u056B\u0561'} *</Label>
+              <Label>{'Կատեգորիա'} *</Label>
               <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50">
-                <option value="">{'\u0538\u0576\u057F\u0580\u0565\u056C...'}</option>
+                <option value="">{'Ընտրել կատեգորիա'}</option>
                 {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>{'\u054F\u0565\u057D\u0561\u056F\u0576\u0565\u0580'}</Label>
+              <Label>{'Տարրեր'}</Label>
               <Textarea value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })} placeholder="Bosch, Mobil, Castrol, Shell" className="min-h-24 resize-y break-words [overflow-wrap:anywhere]" />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => { setDialogOpen(false); resetForm(); }}>{'\u0549\u0565\u0572\u0561\u0580\u056F\u0565\u056C'}</Button>
-            <Button className="flex-1" onClick={handleSave}>{editingId ? '\u0539\u0561\u0580\u0574\u0561\u0581\u0576\u0565\u056C' : '\u054D\u057F\u0565\u0572\u056E\u0565\u056C'}</Button>
+            <Button variant="outline" className="flex-1" onClick={() => { setDialogOpen(false); resetForm(); }}>{'Չեղարկել'}</Button>
+            <Button className="flex-1" onClick={handleSave}>{editingId ? 'Խմբագրել' : 'Ավելացնել'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -197,11 +197,11 @@ export default function AdminFiltersPage() {
         <DialogContent className="sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10"><AlertTriangle className="h-6 w-6 text-destructive" /></div>
-            <DialogTitle className="text-center">{'\u054B\u0576\u057B\u0565\u055E\u056C \u0586\u056B\u056C\u057F\u0580\u0568'}</DialogTitle>
+            <DialogTitle className="text-center">{'Ջնջել ֆիլտրը'}</DialogTitle>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setDeleteId(null)}>{'\u0549\u0565\u0572\u0561\u0580\u056F\u0565\u056C'}</Button>
-            <Button variant="destructive" className="flex-1" onClick={handleDelete}>{'\u054B\u0576\u057B\u0565\u056C'}</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setDeleteId(null)}>{'Չեղարկել'}</Button>
+            <Button variant="destructive" className="flex-1" onClick={handleDelete}>{'Ջնջել'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

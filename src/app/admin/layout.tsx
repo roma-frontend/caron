@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { href: '/admin/orders', icon: BarChart3, label: 'Պատվերներ' },
   { href: '/admin/customers', icon: Users, label: 'Հաճախորդներ' },
   { href: '/admin/stock', icon: Warehouse, label: 'Պահեստ' },
-  { href: '/admin/analytics', icon: TrendingUp, label: '\u054E\u0565\u0580\u056C\u0578\u0582\u056E\u0578\u0582\u0569\u0575\u0578\u0582\u0576' },
+  { href: '/admin/analytics', icon: TrendingUp, label: 'Վերլուծություն' },
 
   { href: '/admin/promotions', icon: Tag, label: 'Ակցիաներ' },
   { href: '/admin/promotions/coupons', icon: Ticket, label: 'Կուպոններ' },
