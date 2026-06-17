@@ -49,6 +49,7 @@ export default function ProductDetailPage() {
   const _baseProduct = useQuery(api.products.getBySlug, { slug: slug as string });
   const variants = useQuery(api.products.getVariantGroup, _baseProduct && (_baseProduct as any).variantGroup ? { variantGroup: (_baseProduct as any).variantGroup as string } : 'skip');
   const [overrideProduct, setOverrideProduct] = useState<typeof _baseProduct>(undefined);
+  const [hoveredVariant, setHoveredVariant] = useState<any>(null);
   const product = overrideProduct ?? _baseProduct;
   const stats = useQuery(api.reviews.getStats, product?._id ? { productId: product._id } : 'skip');
   const vehicle = useVehicleStore((s) => s.vehicle);
@@ -220,20 +221,28 @@ export default function ProductDetailPage() {
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
 
           {variants && variants.length > 1 && (
-            <div className="mt-3 flex items-center gap-1.5 overflow-hidden">
-              <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronLeft className="h-4 w-4" /></button>
-              <div id="variant-scroll" className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-                {variants.map((v: any) => (
-                  <button type="button" key={v._id} onClick={() => setOverrideProduct(v)} className={`shrink-0 rounded-xl border-2 p-1 transition-all ${v._id === product?._id ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}>
-                    {v.images?.[0] ? (
-                      <Image src={v.images[0]} alt={v.name} className="h-12 w-12 rounded-lg object-cover" width={48} height={48} />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
-                    )}
-                  </button>
-                ))}
+            <div className="mt-3 relative">
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronLeft className="h-4 w-4" /></button>
+                <div id="variant-scroll" className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+                  {variants.map((v: any) => (
+                    <button type="button" key={v._id} onClick={() => setOverrideProduct(v)} onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)} className={`shrink-0 rounded-xl border-2 p-1 transition-all ${v._id === product?._id ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}>
+                      {v.images?.[0] ? (
+                        <Image src={v.images[0]} alt={v.name} className="h-12 w-12 rounded-lg object-cover" width={48} height={48} />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronRight className="h-4 w-4" /></button>
               </div>
-              <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronRight className="h-4 w-4" /></button>
+              {hoveredVariant?.images?.[0] && (
+                <div className="absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                  <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={176} className="h-44 w-44 rounded-lg object-contain" />
+                  <p className="mt-1 text-center text-[10px] text-muted-foreground truncate max-w-[176px]">{hoveredVariant.name}</p>
+                </div>
+              )}
             </div>
           )}
 
