@@ -267,6 +267,7 @@ export default function CheckoutPage() {
       </div>
 
       <form
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           if (step === STEPS.length - 1) {
@@ -285,10 +286,10 @@ export default function CheckoutPage() {
               <CardHeader><CardTitle>{CHECKOUT.contactInfo}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><Label>{CHECKOUT.fullName} *</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={CHECKOUT.fullName} className="h-11" /></div>
-                  <div><Label>{CHECKOUT.phone} *</Label><Input required type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={settings?.phone || "+374 XX XXX XXX"} className="h-11" /></div>
+                  <div><Label>{CHECKOUT.fullName} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={CHECKOUT.fullName} className="h-11" /></div>
+                  <div><Label>{CHECKOUT.phone} *</Label><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={settings?.phone || "+374 XX XXX XXX"} className="h-11" /></div>
                 </div>
-                <div><Label>{CHECKOUT.email} *</Label><Input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11" /></div>
+                <div><Label>{CHECKOUT.email} *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11" /></div>
               </CardContent>
             </Card>
           )}
@@ -304,7 +305,7 @@ export default function CheckoutPage() {
                     {settings.pickupAddress && <span className="text-xs text-muted-foreground">{settings.pickupAddress}</span>}
                   </label>
                 )}
-                {!pickup && <div><Label>{CHECKOUT.address} *</Label><Input required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Երևան" className="h-11" /></div>}
+                {!pickup && <div><Label>{CHECKOUT.address} *</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Երևան" className="h-11" /></div>}
                 <div><Label>{CHECKOUT.notes}</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={CHECKOUT.notesPlaceholder} rows={3} /></div>
               </CardContent>
             </Card>
