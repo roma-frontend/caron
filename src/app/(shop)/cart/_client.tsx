@@ -44,10 +44,10 @@ export default function CartPage() {
 
   const handleRemove = (id: string, name: string) => {
     removeItem(id);
-    toast.success(`${name} Ջնջվեց`, {
-      action: { label: 'Չեղարկել', onClick: () => undoRemove() },
-      duration: 5000,
-    });
+    // toast.success(`${name} Ջնջվեց`, {
+    //   action: { label: 'Չեղարկել', onClick: () => undoRemove() },
+    //   duration: 5000,
+    // });
   };
 
   if (items.length === 0) {
