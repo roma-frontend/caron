@@ -142,7 +142,7 @@ export function Header() {
             <button onClick={() => setSearchOpen(true)} className="group/search relative flex h-9 w-full items-center rounded-full border bg-background pl-9 pr-8 text-left text-sm text-muted-foreground transition-all duration-300 hover:border-primary/40 hover:bg-accent focus-within:w-full focus-within:border-primary/50 focus-within:shadow-[0_0_0_3px_var(--primary)/0.1]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors group-hover/search:text-primary" />
               <span className="truncate">{NAV.search}</span>
-              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground sm:inline-block">⌘K</kbd>
+              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden rounded border bg-muted p-1 font-mono text-[10px] text-muted-foreground sm:inline-block">⌘K</kbd>
             </button>
           </div>
 
