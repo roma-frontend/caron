@@ -429,6 +429,7 @@ function HeroMiniCard({ product, index = 0 }: { product: NonNullable<ReturnType<
           src={product.images[0]}
           alt={product.name}
           fill
+          priority={index < 1}
           loading={index < 2 ? 'eager' : 'lazy'}
           fetchPriority={index < 2 ? 'high' : 'auto'}
           sizes="(max-width: 640px) 50vw, 200px"
