@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -23,9 +23,10 @@ export default function CartPage() {
   const undoRemove = useCartStore((s) => s.undoRemove);
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(items.map((i) => i.id)));
 
   const toggleSelect = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  useEffect(() => { setSelected((prev) => { const n = new Set(prev); items.forEach((i) => { if (!prev.has(i.id)) n.add(i.id); }); return n.size !== prev.size ? n : prev; }); }, [items]);
   const selectAll = () => setSelected(new Set(items.map((i) => i.id)));
   const deselectAll = () => setSelected(new Set());
   const allSelected = items.length > 0 && selected.size === items.length;
@@ -144,10 +145,15 @@ export default function CartPage() {
               <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{CART.subtotal}</span><span>{formatPrice(totalPrice)}</span></div>
               <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{CART.shipping}</span><span className="text-muted-foreground">Հաշվարկվում է պատվիրելիս</span></div>
               <Separator />
-              <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(totalPrice)}</span></div>
-              <Link href="/checkout" className="block">
-                <Button variant="cta" size="xl" className="w-full">{CART.checkout}</Button>
-              </Link>
+              <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice)}</span></div>
+              {selected.size > 0 && selected.size < items.length && <p className="text-xs text-muted-foreground text-center">{selected.size} / {items.length} ընտրված</p>}
+              {selected.size === 0 ? (
+                <Button variant="cta" size="xl" className="w-full" disabled> Պատվիրել </Button>
+              ) : (
+                <Link href="/checkout" className="block">
+                  <Button variant="cta" size="xl" className="w-full">{CART.checkout} ({selected.size})</Button>
+                </Link>
+              )}
               <Link href="/products" className="block">
                 <Button variant="outline" size="lg" className="w-full">{CART.continueShopping}</Button>
               </Link>
