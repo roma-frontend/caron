@@ -16,6 +16,7 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { flushSync } from 'react-dom';
 
 function SortableFilterCard({ f, catName, onEdit, onDelete }: {
   f: { _id: Id<'filterDefinitions'>; name: string; slug: string; order: number; options?: string[] };
@@ -60,6 +61,7 @@ export default function AdminFiltersPage() {
   const [editingId, setEditingId] = useState<Id<'filterDefinitions'> | null>(null);
   const [deleteId, setDeleteId] = useState<Id<'filterDefinitions'> | null>(null);
   const [form, setForm] = useState({ name: '', slug: '', categoryId: '' as string, options: '', order: 0 });
+  const [optimisticOrder, setOptimisticOrder] = useState<Map<string, number>>(new Map());
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -98,7 +100,7 @@ export default function AdminFiltersPage() {
   if (categories) for (const c of categories) catMap[c._id] = c.name;
 
   const grouped: Record<string, NonNullable<typeof filters>> = {};
-  if (filters) for (const f of [...filters].sort((a, b) => a.order - b.order)) {
+  if (filters) for (const f of [...filters].sort((a, b) => (optimisticOrder.get(a._id) ?? a.order) - (optimisticOrder.get(b._id) ?? b.order))) {
     const cat = catMap[f.categoryId] || '\u0531\u057C\u0561\u0576\u0581 \u056F\u0561\u057F\u0565\u0563\u0578\u0580\u056B\u0561\u0575\u056B';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat]!.push(f);
@@ -112,6 +114,16 @@ export default function AdminFiltersPage() {
     if (oldIndex === -1 || newIndex === -1) return;
     const reordered = arrayMove(catItems, oldIndex, newIndex);
     const items = reordered.map((f, i) => ({ id: f._id, order: i }));
+
+    // Instant optimistic update before server call
+    flushSync(() => {
+      setOptimisticOrder((prev) => {
+        const next = new Map(prev);
+        for (const item of items) next.set(item.id, item.order);
+        return next;
+      });
+    });
+
     try {
       await reorderFilters({ sessionToken, items });
     } catch { toast.error('\u054D\u056D\u0561\u056C \u057F\u0565\u0572\u0561\u0583\u0578\u056D\u0565\u056C\u056B\u057D'); }
