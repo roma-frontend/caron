@@ -335,7 +335,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
 export default function AdminDashboardPage() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
-  const allProducts = useQuery(api.products.listAll);
+  const allProducts = useQuery(api.products.listCostMap);
   const settings = useSettings();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -363,7 +363,7 @@ export default function AdminDashboardPage() {
   }));
 
   // Profit metrics
-  const costMap = new Map<string, number | undefined>(allProducts?.map((p) => [p._id as string, (p as Record<string, unknown>).costPrice as number | undefined]) ?? []);
+  const costMap = new Map<string, number | undefined>(allProducts?.map((p) => [p._id as string, p.costPrice as number | undefined]) ?? []);
   const totalCost = paidActiveOrders.reduce((sum, o) => {
     const items = o.items as Array<{ productId: string; quantity: number }>;
     return sum + items.reduce((s, item) => s + (costMap.get(item.productId) ?? 0) * item.quantity, 0);

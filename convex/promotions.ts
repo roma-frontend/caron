@@ -44,7 +44,7 @@ export const getPromoProducts = query({
       .take(200);
     const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
 
-    const all = await ctx.db.query('products').collect();
+    const all = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
     return all
       .filter((p) =>
         p.isActive &&

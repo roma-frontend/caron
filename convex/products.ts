@@ -256,7 +256,7 @@ export const list = query({
 export const getBrands = query({
   args: {},
   handler: async (ctx) => {
-    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).collect();
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
     const brands = new Set<string>();
     for (const p of products) {
       const b = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined ?? p.brand;
@@ -872,6 +872,14 @@ export const listAll = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query('products').order('asc').take(50000);
+  },
+});
+
+export const listCostMap = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').order('asc').take(50000);
+    return products.map((p) => ({ _id: p._id, costPrice: p.costPrice }));
   },
 });
 

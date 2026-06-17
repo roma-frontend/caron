@@ -12,7 +12,7 @@ export const list = query({
   },
   handler: async (ctx, args) => {
     const caller = await getAdminCaller(ctx, args.sessionToken);
-    let users = await ctx.db.query('users').collect();
+    let users = await ctx.db.query('users').withIndex('by_role', (q) => q.eq('role', 'customer')).order('desc').take(2000);
     if (args.search) {
       const q = args.search.toLowerCase();
       users = users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)));
@@ -20,7 +20,7 @@ export const list = query({
     if (args.customerType) {
       users = users.filter((u) => u.customerType === args.customerType);
     }
-    users = users.filter((u) => u._id !== caller._id && u.role === 'customer').sort((a, b) => b.createdAt - a.createdAt);
+    users = users.filter((u) => u._id !== caller._id);
     const total = users.length;
     const { numItems } = args.paginationOpts;
     const page = users.slice(0, numItems ?? 20);
@@ -89,7 +89,7 @@ export const getByBrand = query({
       .take(200);
     const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
 
-    const products = await ctx.db.query('products').collect();
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
     return products.filter((p) =>
       p.isActive &&
       p.stock > 0 &&
