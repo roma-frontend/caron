@@ -88,7 +88,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
             </div>
             <span className="shrink-0 text-md font-bold text-primary">{formatPrice(product.price)}</span>
-            {product.costPrice != null && <span className="text-xs text-muted-foreground">{'\u053B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584'}: {formatPrice(product.costPrice)}</span>}
+            {product.costPrice != null && <span className="text-xs text-muted-foreground">{'Կուրս գինը'}: {formatPrice(product.costPrice)}</span>}
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
             <span className="text-xs text-muted-foreground">Պահեստ: {product.stock}</span>

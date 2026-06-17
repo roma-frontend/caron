@@ -12,10 +12,10 @@ import { formatDateHy } from '@/lib/formatters';
 import { useAuth } from '@/store/auth';
 
 const TYPE_MAP: Record<string, { label: string; color: string; icon: typeof ArrowDown }> = {
-  sale: { label: '\u054E\u0561\u0573\u0561\u057C\u0584', color: 'bg-red-100 text-red-800', icon: ArrowDown },
-  cancel: { label: '\u0549\u0565\u0572\u0561\u0580\u056F\u0578\u0582\u0574', color: 'bg-green-100 text-green-800', icon: ArrowUp },
-  reopen: { label: '\u054E\u0565\u0580\u0561\u0562\u0561\u0581\u0578\u0582\u0574', color: 'bg-orange-100 text-orange-800', icon: ArrowDown },
-  manual: { label: '\u0541\u0565\u057C\u0584\u0578\u057E', color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
+  sale: { label: 'Վաճառք', color: 'bg-red-100 text-red-800', icon: ArrowDown },
+  cancel: { label: 'Չեղարկում', color: 'bg-green-100 text-green-800', icon: ArrowUp },
+  reopen: { label: 'Վերբարձնում', color: 'bg-orange-100 text-orange-800', icon: ArrowDown },
+  manual: { label: 'Ձեռնարկ', color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
 };
 
 export default function StockMovementsPage() {
@@ -40,30 +40,30 @@ export default function StockMovementsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">{'\u054A\u0561\u0570\u0565\u057D\u057F\u056B \u0577\u0561\u0580\u056A\u0578\u0582\u0574\u0576\u0565\u0580'}</h1>
-        <p className="text-sm text-muted-foreground">{'\u054F\u0565\u057D\u0565\u0584, \u0569\u0565 \u056B\u0576\u0579\u0578\u0582 \u0587 \u0565\u0580\u0562 \u0567 \u0583\u0578\u056D\u057E\u0565\u056C \u0561\u057A\u0580\u0561\u0576\u0584\u056B \u0574\u0576\u0561\u0581\u0578\u0580\u0564\u0568'}</p>
+        <h1 className="text-2xl font-bold">{'Պահեստի շարժումներ'}</h1>
+        <p className="text-sm text-muted-foreground">{'Պահեստի շարժումների ցուցակ'}</p>
       </div>
 
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={'\u0548\u0580\u0578\u0576\u0565\u056C \u0561\u057A\u0580\u0561\u0576\u0584...'} className="h-9 pl-9 text-sm" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={'Որոնել...'} className="h-9 pl-9 text-sm" />
         </div>
         <Select value={typeFilter} onValueChange={(v) => { if (v) setTypeFilter(v); }}>
-          <SelectTrigger className="h-9 w-full sm:w-40 text-xs"><span>{typeFilter === 'all' ? '\u0532\u0578\u056C\u0578\u0580\u0568' : TYPE_MAP[typeFilter]?.label ?? typeFilter}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-40 text-xs"><span>{typeFilter === 'all' ? 'Բոլորը' : TYPE_MAP[typeFilter]?.label ?? typeFilter}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'\u0532\u0578\u056C\u0578\u0580\u0568'}</SelectItem>
+            <SelectItem value="all">{'Բոլորը'}</SelectItem>
             {Object.entries(TYPE_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      {filtered === undefined && <p className="text-muted-foreground">{'\u0532\u0565\u057C\u0576\u057E\u0578\u0582\u0574 \u0567...'}</p>}
+      {filtered === undefined && <p className="text-muted-foreground">{'Բացակայում է'}</p>}
 
       {filtered?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <Warehouse className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{'\u0533\u0580\u0561\u057C\u0578\u0582\u0574\u0576\u0565\u0580 \u0579\u056F\u0561\u0576'}</p>
+          <p className="text-muted-foreground">{'Շարժումներ չեն գտնվել'}</p>
         </div>
       )}
 
@@ -71,7 +71,7 @@ export default function StockMovementsPage() {
         {filtered?.map((m) => {
           const t = TYPE_MAP[m.type] ?? TYPE_MAP.manual;
           const Icon = t.icon;
-          const productName = productMap.get(m.productId) ?? '\u0531\u0576\u0570\u0561\u0575\u057F';
+          const productName = productMap.get(m.productId) ?? '—';
           return (
             <Card key={m._id}>
               <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">

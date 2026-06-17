@@ -236,7 +236,7 @@ export default function EditProductPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>{'\u053B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584 (\u058F)'}</Label><Input {...numericInputProps(true)} value={form.costPrice ?? ''} onChange={(e) => setForm((f) => ({ ...f, costPrice: Number(e.target.value) }))} className="h-11" /></div>
+              <div><Label>{'Արտադրանքի գին (֏)'}</Label><Input {...numericInputProps(true)} value={form.costPrice ?? ''} onChange={(e) => setForm((f) => ({ ...f, costPrice: Number(e.target.value) }))} className="h-11" /></div>
             </div>
 
             {/* Discounts */}

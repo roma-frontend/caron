@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,10 +80,9 @@ export default function AdminDashboard() {
     totalCategories: categories?.length ?? 0,
   };
 
-  const nowRef = useRef(Date.now());
+  const [now] = useState(() => Date.now());
   const problems = useMemo(() => {
     if (!orders || orders.length === 0) return [];
-    const now = nowRef.current;
     const DAY = 86400000;
     const result: Array<{ order: typeof orders[number]; reason: string }> = [];
     for (const o of orders) {

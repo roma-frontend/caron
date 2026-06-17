@@ -19,7 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { flushSync } from 'react-dom';
 
 function SortableFilterCard({ f, catName, onEdit, onDelete }: {
-  f: { _id: Id<'filterDefinitions'>; name: string; slug: string; order: number; options?: string[] };
+  f: { _id: Id<'filterDefinitions'>; name: string; slug: string; type: string; order: number; options?: string[] };
   catName: string;
   onEdit: () => void;
   onDelete: () => void;
