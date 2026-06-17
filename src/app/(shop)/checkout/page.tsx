@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   const [checkoutIds, setCheckoutIds] = useState<string[]>([]);
   useEffect(() => { try { const ids = JSON.parse(sessionStorage.getItem('checkout-ids') || '[]'); if (ids.length) setCheckoutIds(ids); } catch {} }, []);
   const items = checkoutIds.length > 0 ? allItems.filter((i) => checkoutIds.includes(i.id)) : allItems;
-  const totalPrice = useCartStore((s) => s.totalPrice());
+  const totalPrice = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const clearCart = useCartStore((s) => s.clearCart);
   const loadItems = useCartStore((s) => s.loadItems);
   const createOrder = useMutation(api.orders.create);
