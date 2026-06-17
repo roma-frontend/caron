@@ -62,45 +62,64 @@ export default function CartPage() {
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{CART.title}</h1>
       <div className="grid gap-8 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <div className="flex items-center justify-between rounded-xl border bg-muted/30 px-4 py-2">
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input type="checkbox" checked={allSelected} onChange={allSelected ? deselectAll : selectAll} className="h-4 w-4 rounded border-primary accent-primary" />
-              {allSelected ? 'Հանել նշումը' : 'Ընտրել բոլորը'}
+        <div className="space-y-3 lg:col-span-2">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3 shadow-sm">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input type="checkbox" checked={allSelected} onChange={allSelected ? deselectAll : selectAll}
+                className="h-[18px] w-[18px] rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
+              <span className="text-sm font-medium">{allSelected ? 'Հանել նշումը' : 'Ընտրել բոլորը'}</span>
+              <span className="text-xs text-muted-foreground">({items.length})</span>
             </label>
             {selected.size > 0 && (
-              <Button variant="destructive" size="sm" className="gap-1.5 text-xs" onClick={handleBulkRemove}>
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleBulkRemove}>
                 <Trash2 className="h-3.5 w-3.5" /> Ջնջել ({selected.size})
               </Button>
             )}
           </div>
+
+          {/* Items */}
           {items.map((item) => (
-            <div key={item.id} className={`flex gap-4 rounded-xl border p-3 sm:p-4 animate-in slide-in-from-right-4 duration-200 transition-colors ${selected.has(item.id) ? "border-primary/50 bg-primary/5" : ""}`} style={{ boxShadow: 'var(--shadow-xs)' }}>
-              <div className="flex flex-col gap-2"><input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)} className="h-4 w-4 rounded border-primary accent-primary cursor-pointer" /><div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">{item.image ? <Image src={item.image} alt={item.name} width={80} height={80} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-2xl">🔧</div>}</div></div>
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-medium line-clamp-2"><Link href={`/products/${item.id}`} className="transition-colors hover:text-primary">{item.name}</Link></h3>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10" onClick={() => handleRemove(item.id, item.name)} aria-label="Ջնջել">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+            <div key={item.id} className={`group relative flex items-center gap-3 sm:gap-4 rounded-2xl border bg-card p-3 sm:p-4 shadow-sm transition-all duration-200 hover:shadow-md ${selected.has(item.id) ? "ring-2 ring-primary/30 bg-primary/5" : ""}`}>
+              {/* Checkbox */}
+              <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)}
+                className="h-[18px] w-[18px] shrink-0 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
+
+              {/* Image */}
+              <Link href={`/products/${item.id}`} className="shrink-0">
+                <div className="h-[72px] w-[72px] sm:h-20 sm:w-20 overflow-hidden rounded-xl bg-muted/50 ring-1 ring-border/50">
+                  {item.image ? <Image src={item.image} alt={item.name} width={80} height={80} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /> : <div className="flex h-full w-full items-center justify-center text-xl text-muted-foreground/40">🔧</div>}
                 </div>
-                  {item.sku && <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>Արտիկուլ: {item.sku}</p>}
-                <p className="font-bold text-primary" style={{ fontSize: 'var(--text-sm)' }}>{formatPrice(item.price)}</p>
-                <div className="mt-auto flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-accent"
-                      onClick={() => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { handleRemove(item.id, item.name); } else { updateQuantity(item.id, item.quantity - step); } }}
-                      disabled={item.quantity <= (item.qtyStep || 1)} aria-label="Նվազեցնել քանակը">
+              </Link>
+
+              {/* Content */}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <Link href={`/products/${item.id}`} className="text-sm font-medium leading-snug line-clamp-2 transition-colors hover:text-primary">{item.name}</Link>
+                  <button onClick={() => handleRemove(item.id, item.name)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10" aria-label="Ջնջել">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                {item.sku && <p className="text-xs text-muted-foreground">Արտիկուլ: {item.sku}</p>}
+
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center gap-0.5 rounded-full border bg-muted/30 p-0.5">
+                    <button onClick={() => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { handleRemove(item.id, item.name); } else { updateQuantity(item.id, item.quantity - step); } }}
+                      disabled={item.quantity <= (item.qtyStep || 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
                       <Minus className="h-3 w-3" />
-                    </Button>
-                    <input type="number" value={item.quantity} onChange={(e) => { const v = parseInt(e.target.value); if (v > 0) updateQuantity(item.id, v); }} className="w-10 text-center text-sm font-medium bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" min={1} aria-label="Քանակ" />
-                    <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-accent"
-                      onClick={() => { const step = item.qtyStep || 1; updateQuantity(item.id, item.quantity + step); }}
-                      disabled={item.maxStock != null && item.quantity >= item.maxStock} aria-label="Ավելացնել քանակը">
+                    </button>
+                    <span className="min-w-[28px] text-center text-sm font-semibold">{item.quantity}</span>
+                    <button onClick={() => { const step = item.qtyStep || 1; updateQuantity(item.id, item.quantity + step); }}
+                      disabled={item.maxStock != null && item.quantity >= item.maxStock}
+                      className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
                       <Plus className="h-3 w-3" />
-                    </Button>
+                    </button>
                   </div>
-                  <span className="font-bold">{formatPrice(item.price * item.quantity)}</span>
+                  <div className="text-right">
+                    <p className="text-base font-bold">{formatPrice(item.price * item.quantity)}</p>
+                    {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">{formatPrice(item.price)} / հատ</p>}
+                  </div>
                 </div>
               </div>
             </div>
