@@ -17,6 +17,7 @@ interface ParsedRow {
   slug?: string;
   description?: string;
   price?: number;
+  costPrice?: number;
   wholesalePrice?: number;
   compareAtPrice?: number;
   images?: string[];
@@ -109,7 +110,19 @@ function splitLine(line: string, sep: string): string[] {
 
 function parseCsv(text: string): { headers: string[]; rows: string[][] } {
   const clean = text.replace(/^\uFEFF/, '');
-  const lines = clean.split('\n').filter((l) => l.trim());
+  const lines: string[] = [];
+  let cur = '';
+  let inQ = false;
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i];
+    if (ch === '"') inQ = !inQ;
+    if ((ch === '\n' || ch === '\r') && !inQ) {
+      if (ch === '\r' && clean[i + 1] === '\n') i++;
+      if (cur.trim()) lines.push(cur);
+      cur = '';
+    } else { cur += ch; }
+  }
+  if (cur.trim()) lines.push(cur);
   if (lines.length < 2) throw new Error('CSV ֆայլը պետք է ունենա վերնագրի տող և առնվազն մեկ տվյալների տող։');
   const sep = lines[0].includes(';') ? ';' : ',';
   const headers = splitLine(lines[0], sep).map((h) => h.trim().toLowerCase());
@@ -197,6 +210,9 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
 
   const priceVal = num('price') || num('cost');
   if (priceVal) result.price = priceVal;
+
+  const costPriceVal = num('costPrice') || num('costprice');
+  if (costPriceVal) result.costPrice = costPriceVal;
 
   const wpVal = num('wholesalePrice') || num('wholesale');
   if (wpVal) result.wholesalePrice = wpVal;
@@ -631,6 +647,7 @@ export default function ImportProductsPage() {
         if (r.slug !== undefined) p.slug = r.slug;
         if (r.description !== undefined) p.description = r.description;
         if (r.price !== undefined) p.price = r.price;
+        if (r.costPrice !== undefined) p.costPrice = r.costPrice;
         if (r.wholesalePrice !== undefined) p.wholesalePrice = r.wholesalePrice;
         if (r.compareAtPrice !== undefined) p.compareAtPrice = r.compareAtPrice;
         if (r.sku !== undefined) p.sku = r.sku;
@@ -673,6 +690,7 @@ export default function ImportProductsPage() {
       if (r.slug !== undefined) p.slug = r.slug;
       if (r.description !== undefined) p.description = r.description;
       if (r.price !== undefined) p.price = r.price;
+      if (r.costPrice !== undefined) p.costPrice = r.costPrice;
       if (r.wholesalePrice !== undefined) p.wholesalePrice = r.wholesalePrice;
       if (r.compareAtPrice !== undefined) p.compareAtPrice = r.compareAtPrice;
       if (r.sku !== undefined) p.sku = r.sku;

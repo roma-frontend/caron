@@ -21,7 +21,7 @@ const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
-function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
+function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; costPrice?: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -88,6 +88,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
             </div>
             <span className="shrink-0 text-md font-bold text-primary">{formatPrice(product.price)}</span>
+            {product.costPrice != null && <span className="text-xs text-muted-foreground">{'\u053B\u0576\u0584\u0576\u0561\u0580\u056A\u0565\u0584'}: {formatPrice(product.costPrice)}</span>}
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
             <span className="text-xs text-muted-foreground">Պահեստ: {product.stock}</span>
@@ -101,7 +102,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
   );
 }
 
-function AdminProductListRow({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
+function AdminProductListRow({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; costPrice?: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -135,6 +136,7 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-sm font-bold text-primary">{formatPrice(product.price)}</span>
+            {product.costPrice != null && <span className="text-xs text-muted-foreground">{formatPrice(product.costPrice)}</span>}
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
               {product.stock > 0 ? `Պահեստ: ${product.stock}` : 'Անհասանելի'}
             </Badge>

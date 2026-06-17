@@ -10,6 +10,96 @@ const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+async function getAdminContext(client: ConvexHttpClient, token: string): Promise<string> {
+  try {
+    const [orders, products] = await Promise.all([
+      client.query(api.orders.listAdmin, { sessionToken: token }),
+      client.query(api.products.listAll),
+    ]);
+
+    const now = Date.now();
+    const DAY = 86400000;
+    const todayStart = new Date().setHours(0, 0, 0, 0);
+    const today = orders.filter((o: Record<string, unknown>) => (o.createdAt as number) >= todayStart);
+    const week = orders.filter((o: Record<string, unknown>) => (o.createdAt as number) >= now - 7 * DAY);
+    const month = orders.filter((o: Record<string, unknown>) => (o.createdAt as number) >= now - 30 * DAY);
+
+    const paidMonth = month.filter((o: Record<string, unknown>) => o.paymentStatus === 'paid' && o.status !== 'cancelled');
+    const revenueMonth = paidMonth.reduce((s: number, o: Record<string, unknown>) => s + (o.total as number), 0);
+    const paidToday = today.filter((o: Record<string, unknown>) => o.paymentStatus === 'paid' && o.status !== 'cancelled');
+    const revenueToday = paidToday.reduce((s: number, o: Record<string, unknown>) => s + (o.total as number), 0);
+
+    const pending = orders.filter((o: Record<string, unknown>) => o.status === 'pending');
+    const cancelled = month.filter((o: Record<string, unknown>) => o.status === 'cancelled');
+
+    const lowStock = products.filter((p: Record<string, unknown>) => (p.isActive as boolean) && (p.stock as number) > 0 && (p.stock as number) <= 5);
+    const outOfStock = products.filter((p: Record<string, unknown>) => (p.isActive as boolean) && (p.stock as number) === 0);
+
+    // Top sold products this month
+    const salesMap = new Map<string, { name: string; qty: number; revenue: number }>();
+    for (const o of paidMonth) {
+      for (const item of (o as Record<string, unknown>).items as Array<{ productId: string; name: string; quantity: number; price: number }>) {
+        const prev = salesMap.get(item.productId) ?? { name: item.name, qty: 0, revenue: 0 };
+        prev.qty += item.quantity;
+        prev.revenue += item.price * item.quantity;
+        salesMap.set(item.productId, prev);
+      }
+    }
+    const topSold = [...salesMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+    // Cost & profit
+    const productMap = new Map(products.map((p: Record<string, unknown>) => [p._id as string, p]));
+    let totalCost = 0;
+    for (const o of paidMonth) {
+      for (const item of (o as Record<string, unknown>).items as Array<{ productId: string; quantity: number }>) {
+        const prod = productMap.get(item.productId) as Record<string, unknown> | undefined;
+        totalCost += ((prod?.costPrice as number) ?? 0) * item.quantity;
+      }
+    }
+    const profit = revenueMonth - totalCost;
+    const margin = revenueMonth > 0 ? ((profit / revenueMonth) * 100).toFixed(1) : '0';
+
+    return `
+─── REAL-TIME ADMIN DATA (use this to answer questions) ───
+
+TODAY:
+- Orders today: ${today.length}
+- Revenue today: ${revenueToday.toLocaleString()} AMD
+- Paid orders today: ${paidToday.length}
+
+THIS MONTH (30 days):
+- Total orders: ${month.length}
+- Paid orders: ${paidMonth.length}
+- Revenue: ${revenueMonth.toLocaleString()} AMD
+- Cost of goods sold: ${totalCost.toLocaleString()} AMD
+- Gross profit: ${profit.toLocaleString()} AMD
+- Margin: ${margin}%
+- Cancelled: ${cancelled.length}
+
+PENDING NOW:
+- Orders waiting: ${pending.length}
+
+STOCK ALERTS:
+- Low stock (1-5): ${lowStock.length} products${lowStock.length > 0 ? '\n  ' + lowStock.slice(0, 8).map((p: Record<string, unknown>) => `${p.name} (${p.stock})`).join(', ') : ''}
+- Out of stock: ${outOfStock.length} products${outOfStock.length > 0 ? '\n  ' + outOfStock.slice(0, 8).map((p: Record<string, unknown>) => `${String(p.name)}`).join(', ') : ''}
+
+TOP SELLING (30 days):
+${topSold.map((p, i) => `${i + 1}. ${p.name} — ${p.qty} pcs, ${p.revenue.toLocaleString()} AMD`).join('\n')}
+
+TOTAL PRODUCTS: ${products.length}
+
+LINKS FOR DETAILED VIEW:
+- Orders dashboard: /admin/orders
+- Stock movements: /admin/stock
+- Analytics (filter by category/brand): /admin/analytics
+- Products list: /admin/products
+- Settings: /admin/settings
+`;
+  } catch {
+    return '';
+  }
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
   const { allowed, reset } = await checkRateLimit(`ai-chat:${ip}`);
@@ -33,6 +123,8 @@ export async function POST(req: NextRequest) {
 
     const token = req.cookies.get('auth-token')?.value;
     let user: UserContext = { name: 'Guest', email: '', role: 'guest' };
+    let adminData = '';
+
     if (token && process.env.NEXT_PUBLIC_CONVEX_URL) {
       const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
       const me = await client.query(api.auth.me, { sessionToken: token }).catch(() => null);
@@ -42,10 +134,13 @@ export async function POST(req: NextRequest) {
           email: me.email,
           role: me.role === 'admin' ? 'admin' : 'customer',
         };
+        if (me.role === 'admin') {
+          adminData = await getAdminContext(client, token);
+        }
       }
     }
 
-    const systemPrompt = buildSystemPrompt(user);
+    const systemPrompt = buildSystemPrompt(user) + adminData;
 
     const messages = [
       ...(history || []).slice(-10).filter((m) => typeof m.content === 'string' && (m.role === 'user' || m.role === 'assistant')).map((m) => ({
