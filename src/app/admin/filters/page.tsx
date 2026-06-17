@@ -81,7 +81,8 @@ export default function AdminFiltersPage() {
       const options = form.options.split(',').map((s) => s.trim()).filter(Boolean);
       const base = { name: form.name, slug: form.slug, type: 'multiselect' as const, categoryId: form.categoryId as Id<'categories'>, options: options.length > 0 ? options : undefined, order: form.order };
       if (editingId) {
-        await updateFilter({ sessionToken: sessionToken ?? '', ...base, id: editingId });
+        const { slug: _, ...updateData } = base;
+        await updateFilter({ sessionToken: sessionToken ?? '', ...updateData, id: editingId });
         toast.success('Ֆիլտրը թարմացվեց');
       } else {
         await createFilter({ sessionToken: sessionToken ?? '', ...base });
