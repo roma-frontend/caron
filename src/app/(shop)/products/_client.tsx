@@ -290,17 +290,21 @@ function TypeFilterRow({
 
   return (
     <div className="space-y-2">
-      <span className="block text-xs font-medium text-muted-foreground">{def.name}:</span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">{def.name}:</span>
+        <div className="flex items-center gap-1">
+          <button type="button" disabled={!canScrollLeft} onClick={() => scrollBy(-220)}
+            className={`rounded-full border p-1 transition ${canScrollLeft ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}>
+            <ChevronLeft className="h-3 w-3" />
+          </button>
+          <button type="button" disabled={!canScrollRight} onClick={() => scrollBy(220)}
+            className={`rounded-full border p-1 transition ${canScrollRight ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}>
+            <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
       <div className="relative">
-        <button
-          type="button"
-          aria-label="Նախորդ տարբերակներ"
-          disabled={!canScrollLeft}
-          onClick={() => scrollBy(-220)}
-          className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background/90 p-1.5 shadow-sm transition ${canScrollLeft ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-        </button>
+        
 
         <div
           ref={rowRef}
@@ -322,15 +326,7 @@ function TypeFilterRow({
           })}
         </div>
 
-        <button
-          type="button"
-          aria-label="Հաջորդ տարբերակներ"
-          disabled={!canScrollRight}
-          onClick={() => scrollBy(220)}
-          className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background/90 p-1.5 shadow-sm transition ${canScrollRight ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}
-        >
-          <ChevronRight className="h-3.5 w-3.5" />
-        </button>
+        
       </div>
       {isScrollable && (
         <p className="text-[11px] text-muted-foreground">
