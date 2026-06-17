@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -23,10 +23,17 @@ export default function CartPage() {
   const undoRemove = useCartStore((s) => s.undoRemove);
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(items.map((i) => i.id)));
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const toggleSelect = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  useEffect(() => { setSelected((prev) => { const n = new Set(prev); items.forEach((i) => { if (!prev.has(i.id)) n.add(i.id); }); return n.size !== prev.size ? n : prev; }); }, [items]);
+  const knownIds = useRef(new Set(items.map((i) => i.id)));
+  useEffect(() => {
+    const newIds = items.filter((i) => !knownIds.current.has(i.id)).map((i) => i.id);
+    if (newIds.length > 0) {
+      setSelected((prev) => { const n = new Set(newIds); return n; });
+    }
+    knownIds.current = new Set(items.map((i) => i.id));
+  }, [items]);
   const selectAll = () => setSelected(new Set(items.map((i) => i.id)));
   const deselectAll = () => setSelected(new Set());
   const allSelected = items.length > 0 && selected.size === items.length;
