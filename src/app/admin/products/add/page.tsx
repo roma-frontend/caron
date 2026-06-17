@@ -404,7 +404,7 @@ function StepPricing() {
           <div><Label>Մեծածախ (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>{'Արտադրանքի գին (֏)'}</Label><Input type="number" value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
+          <div><Label>{'Ինքնարժեք (֏)'}</Label><Input type="number" value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
