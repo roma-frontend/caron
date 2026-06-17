@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +23,13 @@ export default function CartPage() {
   const undoRemove = useCartStore((s) => s.undoRemove);
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const selectAll = () => setSelected(new Set(items.map((i) => i.id)));
+  const deselectAll = () => setSelected(new Set());
+  const allSelected = items.length > 0 && selected.size === items.length;
+  const handleBulkRemove = () => { selected.forEach((id) => removeItem(id)); setSelected(new Set()); toast.success(`${selected.size} ապրանք ջնջվեց`); };
 
   const featured = useQuery(api.products.getFeatured, {});
 
@@ -55,9 +63,20 @@ export default function CartPage() {
       <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{CART.title}</h1>
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between rounded-xl border bg-muted/30 px-4 py-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" checked={allSelected} onChange={allSelected ? deselectAll : selectAll} className="h-4 w-4 rounded border-primary accent-primary" />
+              {allSelected ? 'Հանել նշումը' : 'Ընտրել բոլորը'}
+            </label>
+            {selected.size > 0 && (
+              <Button variant="destructive" size="sm" className="gap-1.5 text-xs" onClick={handleBulkRemove}>
+                <Trash2 className="h-3.5 w-3.5" /> Ջնջել ({selected.size})
+              </Button>
+            )}
+          </div>
           {items.map((item) => (
-            <div key={item.id} className="flex gap-4 rounded-xl border p-3 sm:p-4 animate-in slide-in-from-right-4 duration-200" style={{ boxShadow: 'var(--shadow-xs)' }}>
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">{item.image ? <Image src={item.image} alt={item.name} width={80} height={80} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-2xl">🔧</div>}</div>
+            <div key={item.id} className={`flex gap-4 rounded-xl border p-3 sm:p-4 animate-in slide-in-from-right-4 duration-200 transition-colors ${selected.has(item.id) ? "border-primary/50 bg-primary/5" : ""}`} style={{ boxShadow: 'var(--shadow-xs)' }}>
+              <div className="flex flex-col gap-2"><input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)} className="h-4 w-4 rounded border-primary accent-primary cursor-pointer" /><div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">{item.image ? <Image src={item.image} alt={item.name} width={80} height={80} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-2xl">🔧</div>}</div></div>
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-medium line-clamp-2"><Link href={`/products/${item.id}`} className="transition-colors hover:text-primary">{item.name}</Link></h3>
