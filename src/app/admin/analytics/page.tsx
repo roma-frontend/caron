@@ -143,9 +143,9 @@ export default function AnalyticsPage() {
           </SelectContent>
         </Select>
         <Select value={brand} onValueChange={(v) => { if (v) setBrand(v); }}>
-          <SelectTrigger className="h-9 w-44 text-xs"><span>{brand === 'all' ? 'Բոլոր կայանակներ' : brand}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-44 text-xs"><span>{brand === 'all' ? 'Բոլոր բրենդեր' : brand}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'Բոլոր կայանակներ'}</SelectItem>
+            <SelectItem value="all">{'Բոլոր բրենդեր'}</SelectItem>
             {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -153,11 +153,11 @@ export default function AnalyticsPage() {
 
       {/* Totals */}
       <div className="mb-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Քանակ'}</p><p className="text-lg font-bold">{totals.qty}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհատված եկամուտ'}</p><p className="text-lg font-bold text-primary">{formatPrice(totals.revenue)}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհատված ծախս'}</p><p className="text-lg font-bold text-amber-600">{formatPrice(totals.cost)}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհատված շրջանակ'}</p><p className={`text-lg font-bold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatPrice(totals.profit)}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Միջին շրջանակ'}</p><p className={`text-lg font-bold ${totals.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{totals.margin.toFixed(1)}%</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր քանակ'}</p><p className="text-lg font-bold">{totals.qty}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր եկամուտ'}</p><p className="text-lg font-bold text-primary">{formatPrice(totals.revenue)}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր ինքնարժեք'}</p><p className="text-lg font-bold text-amber-600">{formatPrice(totals.cost)}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր շրջանակ'}</p><p className={`text-lg font-bold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatPrice(totals.profit)}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր մարժան'}</p><p className={`text-lg font-bold ${totals.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{totals.margin.toFixed(1)}%</p></CardContent></Card>
       </div>
 
       {/* Table */}
@@ -173,8 +173,8 @@ export default function AnalyticsPage() {
                   <th className="px-3 py-2 text-left font-medium">{'Կայանակ'}</th>
                   <th className="px-3 py-2 text-right font-medium">{'Քանակ'}</th>
                   <th className="px-3 py-2 text-right font-medium">{'Եկամուտ'}</th>
-                  <th className="px-3 py-2 text-right font-medium">{'Ծախս'}</th>
-                  <th className="px-3 py-2 text-right font-medium">{'Միջին շրջանակ'}</th>
+                  <th className="px-3 py-2 text-right font-medium">{'Ինքնարժեք'}</th>
+                  <th className="px-3 py-2 text-right font-medium">{'Միջին մարժան'}</th>
                   <th className="px-3 py-2 text-right font-medium">{'%'}</th>
                 </tr>
               </thead>
@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                   <span className="text-muted-foreground">{'Քանակ'}:</span><span className="text-right font-medium">{row.qty}</span>
                   <span className="text-muted-foreground">{'Եկամուտ'}:</span><span className="text-right font-medium text-primary">{formatPrice(row.revenue)}</span>
-                  <span className="text-muted-foreground">{'Ծախս'}:</span><span className="text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'Արժեք չկա'}</span>
+                  <span className="text-muted-foreground">{'Ինքնարժեք'}:</span><span className="text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'Արժեք չկա'}</span>
                   <span className="text-muted-foreground">{'Միջին շրջանակ'}:</span><span className={`text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : 'Եկամուտ չկա'}</span>
                 </div>
                 {row.cost > 0 && <Badge variant="outline" className={`mt-2 text-[10px] ${row.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{row.margin.toFixed(0)}%</Badge>}

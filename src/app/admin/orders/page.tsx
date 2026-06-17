@@ -396,7 +396,7 @@ export default function AdminDashboardPage() {
     { label: 'Վերադարձներ', value: formatPrice(refundedRevenue), note: `${refundedOrders.length} պատվեր`, color: 'text-orange-600' },
     { label: 'Մաքուր եկամուտ', value: formatPrice(netRevenue), note: 'վճարված - վերադարձներ', color: 'text-primary' },
     { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), note: 'վճարված պատվերներով', color: 'text-cyan-600' },
-    { label: 'Ծախս', value: formatPrice(totalCost), note: 'պատվերների ծախսեր', color: 'text-amber-600' },
+    { label: 'Ինքնարժեք', value: formatPrice(totalCost), note: 'պատվերների ինքնարժեք', color: 'text-amber-600' },
     { label: 'Ընդհանուր շահույթ', value: formatPrice(grossProfit), note: 'վճարված - վերադարձներ', color: grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600' },
     { label: 'Մարժան', value: `${margin.toFixed(1)}%`, note: 'մարժան / վճարված', color: margin >= 20 ? 'text-emerald-600' : 'text-orange-600' },
 
