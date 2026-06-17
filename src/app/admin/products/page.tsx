@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,21 @@ const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
+function InlineField({ value, onSave, prefix, className }: { value: number; onSave: (v: number) => void; prefix?: string; className?: string }) {
+  const [editing, setEditing] = useState(false);
+  if (editing) {
+    return <input autoFocus type="number" defaultValue={value} className={`w-full rounded border bg-background px-2 py-0.5 text-sm outline-none focus:ring-1 focus:ring-primary ${className ?? ''}`}
+      onBlur={(e) => { onSave(Number(e.target.value)); setEditing(false); }}
+      onKeyDown={(e) => { if (e.key === 'Enter') { onSave(Number(e.currentTarget.value)); setEditing(false); } if (e.key === 'Escape') setEditing(false); }} />;
+  }
+  return <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>{prefix}{typeof value === 'number' ? formatPrice(value) : value}</span>;
+}
+
+
 function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; costPrice?: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
+  const update = useMutation(api.products.update);
+  const imgRef = useRef<HTMLInputElement>(null);
   const remove = useMutation(api.products.remove);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -42,7 +55,8 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
     <div ref={ref} style={revealStyle(visible, index * 0.05)}>
       <div className="group relative overflow-hidden rounded-2xl border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         {/* Image */}
-        <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30">
+        <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const fd = new FormData(); fd.append("file", file); const r = await fetch("/api/upload", { method: "POST", body: fd }); const { url } = await r.json(); await update({ sessionToken, id: product._id, images: [...(product.images||[]), url] }); toast.success("Նկարը ավելացվեց"); } catch { toast.error("Սխալ"); } e.target.value=""; }} />
+        <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110" />
           ) : (
@@ -87,11 +101,11 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
               <h3 className="truncate text-sm font-semibold text-wrap">{product.name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
             </div>
-            <span className="shrink-0 text-md font-bold text-primary">{formatPrice(product.price)}</span>
+            <InlineField value={product.price} className="text-md font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch(() => toast.error('Սխալ'))} />
             {product.costPrice != null && <span className="text-xs text-muted-foreground">{'Ինքնարժեք'}: {formatPrice(product.costPrice)}</span>}
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
-            <span className="text-xs text-muted-foreground">Պահեստ: {product.stock}</span>
+            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='number'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch(()=>toast.error('Սխալ')); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter')input.blur(); if(ev.key==='Escape'){el.style.display='';input.remove();}}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
               {product.stock > 0 ? 'Պահեստում է' : 'Անհասանելի'}
             </Badge>
