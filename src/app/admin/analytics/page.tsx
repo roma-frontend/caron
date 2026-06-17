@@ -183,13 +183,13 @@ export default function AnalyticsPage() {
                   <tr key={row.productId} className="border-t hover:bg-muted/30">
                     <td className="px-3 py-2 max-w-[200px] truncate">{row.name}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{row.category}</td>
-                    <td className="px-3 py-2 text-xs">{row.brand || 'Բ'}</td>
+                    <td className="px-3 py-2 text-xs">{row.brand || 'Բրենդ չկա'}</td>
                     <td className="px-3 py-2 text-right">{row.qty}</td>
                     <td className="px-3 py-2 text-right font-medium">{formatPrice(row.revenue)}</td>
-                    <td className="px-3 py-2 text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'արժեք'}</td>
-                    <td className={`px-3 py-2 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : ''}</td>
+                    <td className="px-3 py-2 text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'Արժեք չկա'}</td>
+                    <td className={`px-3 py-2 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : 'Եկամուտ չկա'}</td>
                     <td className="px-3 py-2 text-right">
-                      {row.cost > 0 ? <Badge variant="outline" className={`text-[10px] ${row.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{row.margin.toFixed(0)}%</Badge> : '\u2014'}
+                      {row.cost > 0 ? <Badge variant="outline" className={`text-[10px] ${row.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{row.margin.toFixed(0)}%</Badge> : ''}
                     </td>
                   </tr>
                 ))}
@@ -205,8 +205,8 @@ export default function AnalyticsPage() {
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                   <span className="text-muted-foreground">{'Քանակ'}:</span><span className="text-right font-medium">{row.qty}</span>
                   <span className="text-muted-foreground">{'Եկամուտ'}:</span><span className="text-right font-medium text-primary">{formatPrice(row.revenue)}</span>
-                  <span className="text-muted-foreground">{'Ծախս'}:</span><span className="text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : '\u2014'}</span>
-                  <span className="text-muted-foreground">{'Միջին շրջանակ'}:</span><span className={`text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : '\u2014'}</span>
+                  <span className="text-muted-foreground">{'Ծախս'}:</span><span className="text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'Արժեք չկա'}</span>
+                  <span className="text-muted-foreground">{'Միջին շրջանակ'}:</span><span className={`text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : 'Եկամուտ չկա'}</span>
                 </div>
                 {row.cost > 0 && <Badge variant="outline" className={`mt-2 text-[10px] ${row.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{row.margin.toFixed(0)}%</Badge>}
               </div>
@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
       ) : (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <TrendingUp className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{'\u054F\u057E\u0575\u0561\u056C\u0576\u0565\u0580 \u0579\u056F\u0561\u0576'}</p>
+          <p className="text-muted-foreground">{'Չկա տվյալներ ցուցադրելու համար'}</p>
         </div>
       )}
     </div>
