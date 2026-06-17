@@ -36,20 +36,20 @@ export async function GET(req: NextRequest) {
     if (status) filtered = filtered.filter((o) => o.status === status);
 
     const header = [
-      '\u0540\u0561\u0574\u0561\u0580',
-      '\u0531\u0574\u057D\u0561\u0569\u056B\u057E',
-      '\u0531\u0576\u0578\u0582\u0576',
-      '\u0540\u0565\u057C\u0561\u056D\u0578\u057D',
+      'Համար',
+      'Ամսաթիվ',
+      'Անուն',
+      'Հեռախոս',
       'Email',
-      '\u0540\u0561\u057D\u0581\u0565',
-      '\u054D\u057F\u0561\u057F\u0578\u0582\u057D',
-      '\u054E\u0573\u0561\u0580\u0578\u0582\u0574',
-      '\u054E\u0573\u0561\u0580\u0574\u0561\u0576 \u0565\u0572\u0561\u0576\u0561\u056F',
-      '\u0531\u057A\u0580\u0561\u0576\u0584\u0576\u0565\u0580',
-      '\u0531\u057C\u0561\u0584\u0578\u0582\u0574',
-      '\u0538\u0576\u0564\u0561\u0574\u0565\u0576\u0568',
-      '\u0549\u0565\u0572\u0561\u0580\u056F\u0574\u0561\u0576 \u057A\u0561\u057F\u0573\u0561\u057C',
-      '\u0544\u0565\u056F\u0576\u0561\u0562\u0561\u0576\u0578\u0582\u0569\u0575\u0578\u0582\u0576',
+      'Հասցե',
+      'Ստատուս',
+      'Վճարում',
+      'Վճարման եղանակ',
+      'Ապրանքներ',
+      'Առաքում',
+      'Ընդամենը',
+      'Չեղարկման պատճառ',
+      'Մեկնաբանություն',
     ].map(escapeCsv).join(',') + '\n';
 
     const rows = filtered.map((o) =>
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
       ].map(escapeCsv).join(',')
     ).join('\n');
 
-    return new NextResponse('\uFEFF' + header + rows, {
+    return new NextResponse('﻿' + header + rows, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename=orders-${new Date().toISOString().slice(0, 10)}.csv`,

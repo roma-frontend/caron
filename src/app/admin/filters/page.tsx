@@ -134,7 +134,7 @@ export default function AdminFiltersPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{'Ֆիլտրեր'}</h1>
-          <p className="text-sm text-muted-foreground">{filters?.length ?? 0} {'Ֆիլտրերի քանակ'}</p>
+          <p className="text-sm text-muted-foreground">{filters?.length ?? 0} {'Ֆիլտրեր'}</p>
         </div>
         <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> {'Ավելացնել ֆիլտր'}</Button>
       </div>
@@ -162,11 +162,11 @@ export default function AdminFiltersPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); resetForm(); } }}>
         <DialogContent className="sm:max-w-lg overflow-visible" showCloseButton={false}>
-          <DialogHeader><DialogTitle>{editingId ? 'Խմբագրել ֆիլտր' : 'Ավելացնել ֆիլտր'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? 'Խմբագրել ֆիլտրը' : 'Ավելացնել ֆիլտր'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{'Անուն'} *</Label>
+                <Label>{'Անվանում'} *</Label>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Անվանում" className="h-11" />
               </div>
               <div className="space-y-2">

@@ -40,7 +40,7 @@ export default function StockMovementsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">{'Պահեստի շարժումներ'}</h1>
+        <h1 className="text-2xl font-bold">{'Պահեստ'}</h1>
         <p className="text-sm text-muted-foreground">{'Պահեստի շարժումների ցուցակ'}</p>
       </div>
 
