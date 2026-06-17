@@ -194,3 +194,16 @@ export const listAll = query({
     return await ctx.db.query('filterDefinitions').order('asc').take(200);
   },
 });
+
+export const reorder = mutation({
+  args: {
+    sessionToken: v.string(),
+    items: v.array(v.object({ id: v.id('filterDefinitions'), order: v.number() })),
+  },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    for (const item of args.items) {
+      await ctx.db.patch(item.id, { order: item.order });
+    }
+  },
+});
