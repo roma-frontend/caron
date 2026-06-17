@@ -400,8 +400,8 @@ function StepPricing() {
     <ChevronSection title="2. Գնային տվյալներ">
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Մանրածdelays delays (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
-          <div><Label>Մdelays delays (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
+          <div><Label>Մանրածախ (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
+          <div><Label>Մեծածախ (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>{'Արտադրանքի գին (֏)'}</Label><Input type="number" value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>

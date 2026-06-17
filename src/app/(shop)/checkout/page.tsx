@@ -459,6 +459,12 @@ export default function CheckoutPage() {
                 <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Կուպոնի կոդ" className="h-9 text-xs flex-1" />
                 <Button type="button" size="sm" variant="outline" disabled={!couponCode.trim()} className="h-9 text-xs">OK</Button>
               </div>
+              {couponCode.trim() && coupon === null && (
+                <p className="text-xs text-red-500 text-center">Կուպոնը գոյություն չի ունի</p>
+              )}
+              {coupon && (
+                <p className="text-xs text-green-500 text-center">-{formatPrice(coupon.discount)} Կուպոն</p>
+              )}
               {settings?.deliveryEstimateYerevan && form.address && (
                 <p className="text-xs text-muted-foreground text-center">Առաքում Երևան՝ ~{settings.deliveryEstimateYerevan}</p>
               )}
