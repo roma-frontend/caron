@@ -21,14 +21,14 @@ const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
-function InlineField({ value, onSave, prefix, className }: { value: number; onSave: (v: number) => void; prefix?: string; className?: string }) {
+function InlineField({ value, onSave, prefix, className, plain }: { value: number; onSave: (v: number) => void; prefix?: string; className?: string; plain?: boolean }) {
   const [editing, setEditing] = useState(false);
   if (editing) {
-    return <input autoFocus type="number" defaultValue={value} className={`w-full rounded border bg-background px-2 py-0.5 text-sm outline-none focus:ring-1 focus:ring-primary ${className ?? ''}`}
+    return <input autoFocus type="number" defaultValue={value} className={`w-20 rounded border bg-background px-2 py-0.5 text-sm outline-none focus:ring-1 focus:ring-primary ${className ?? ''}`}
       onBlur={(e) => { onSave(Number(e.target.value)); setEditing(false); }}
       onKeyDown={(e) => { if (e.key === 'Enter') { onSave(Number(e.currentTarget.value)); setEditing(false); } if (e.key === 'Escape') setEditing(false); }} />;
   }
-  return <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>{prefix}{typeof value === 'number' ? formatPrice(value) : value}</span>;
+  return <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>{prefix}{plain ? value : formatPrice(value)}</span>;
 }
 
 
@@ -119,6 +119,8 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
 function AdminProductListRow({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; costPrice?: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
+  const update = useMutation(api.products.update);
+  const imgRef = useRef<HTMLInputElement>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -135,8 +137,9 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
 
   return (
     <div ref={ref} style={revealStyle(visible, index * 0.03)} className="rounded-2xl border bg-card p-3 shadow-card">
+      <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const fd = new FormData(); fd.append('file', file); const r = await fetch('/api/upload', { method: 'POST', body: fd }); const { url } = await r.json(); await update({ sessionToken, id: product._id, images: [...(product.images||[]), url] }); toast.success('Նdelays delays delays delays'); } catch { toast.error('Սdelays'); } e.target.value=''; }} />
       <div className="flex items-center gap-3">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-cover" />
           ) : (
@@ -149,11 +152,9 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
           <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-sm font-bold text-primary">{formatPrice(product.price)}</span>
+            <InlineField value={product.price} className="text-sm font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch(() => toast.error("Error"))} />
             {product.costPrice != null && <span className="text-xs text-muted-foreground">Ինքնարժեք: {formatPrice(product.costPrice)}</span>}
-            <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
-              {product.stock > 0 ? `Պահեստում: ${product.stock}` : 'Հասանելի չէ'}
-            </Badge>
+            <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch(() => toast.error("Error"))} />
             {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
           </div>
         </div>
