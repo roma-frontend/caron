@@ -15,12 +15,14 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   lastRemoved: CartItem | null;
+  selectedIds: string[];
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
   undoRemove: () => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   loadItems: (items: CartItem[]) => void;
+  setSelectedIds: (ids: string[]) => void;
   totalItems: () => number;
   totalPrice: () => number;
   totalItemCount: () => number;
@@ -32,7 +34,9 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       lastRemoved: null,
+      selectedIds: [],
       loadItems: (items) => set({ items, lastRemoved: null }),
+      setSelectedIds: (ids) => set({ selectedIds: ids }),
       addItem: (item) => set((state) => {
         const existing = state.items.find((i) => i.id === item.id);
         const step = item.qtyStep || 1;

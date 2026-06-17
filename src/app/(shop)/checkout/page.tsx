@@ -38,7 +38,8 @@ const STEPS = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const items = useCartStore((s) => s.items);
+  const allItems = useCartStore((s) => s.items);
+  const items = (() => { if (typeof window === 'undefined') return allItems; try { const ids = JSON.parse(sessionStorage.getItem('checkout-ids') || '[]'); return ids.length > 0 ? allItems.filter((i: {id:string}) => ids.includes(i.id)) : allItems; } catch { return allItems; } })();
   const totalPrice = useCartStore((s) => s.totalPrice());
   const clearCart = useCartStore((s) => s.clearCart);
   const loadItems = useCartStore((s) => s.loadItems);

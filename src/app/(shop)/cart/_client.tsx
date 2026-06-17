@@ -20,6 +20,7 @@ export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const setSelectedIds = useCartStore((s) => s.setSelectedIds);
   const undoRemove = useCartStore((s) => s.undoRemove);
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
@@ -157,7 +158,7 @@ export default function CartPage() {
               {selected.size === 0 ? (
                 <Button variant="cta" size="xl" className="w-full" disabled> Պատվիրել </Button>
               ) : (
-                <Link href="/checkout" className="block">
+                <Link href="/checkout" onClick={() => { if (typeof window !== "undefined") sessionStorage.setItem("checkout-ids", JSON.stringify([...selected])); }} className="block">
                   <Button variant="cta" size="xl" className="w-full">{CART.checkout} ({selected.size})</Button>
                 </Link>
               )}
