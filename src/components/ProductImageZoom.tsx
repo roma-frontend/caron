@@ -130,7 +130,7 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       <Image
         src={src} alt={alt} width={width} height={height}
         priority={priority} sizes={sizes}
-        className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} select-none pointer-events-none`}
+        className={`h-full w-full ${fit === 'contain' ? 'object-fill' : 'object-cover'} select-none pointer-events-none`}
         draggable={false}
       />
       <div ref={dimRef} className="pointer-events-none absolute inset-0 bg-black/20" style={{ display: 'none' }} />
