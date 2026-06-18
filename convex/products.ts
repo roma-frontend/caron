@@ -524,22 +524,23 @@ export const update = mutation({
     const { id, sessionToken, stock, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, showInPromotions, clearBrand, ...rest } = args;
     void sessionToken;
     if (clearBrand) { rest.brand = undefined; }
-    const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
+    const hasAttributesUpdate = args.attributes !== undefined;
+    if (hasAttributesUpdate) {
+      const rAttrs = (args.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
       if (!rest.brand && rAttrs.brand && typeof rAttrs.brand === 'string') rest.brand = rAttrs.brand as string;
       // Sync brand from filterDef brand attribute only if it has a value for this product's category
-      {
-        const catId = args.categoryId ?? (await ctx.db.get(id))?.categoryId;
-        const brandDef = catId
-          ? await ctx.db.query('filterDefinitions').withIndex('by_category', (q) => q.eq('categoryId', catId)).filter((q) => q.eq(q.field('slug'), 'brand')).first()
-          : undefined;
-        if (brandDef) {
-          const val = rAttrs[brandDef._id as string];
-          const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
-          if (brandVal) { rest.brand = brandVal; rAttrs.brand = brandVal; }
-        }
+      const catId = args.categoryId ?? (await ctx.db.get(id))?.categoryId;
+      const brandDef = catId
+        ? await ctx.db.query('filterDefinitions').withIndex('by_category', (q) => q.eq('categoryId', catId)).filter((q) => q.eq(q.field('slug'), 'brand')).first()
+        : undefined;
+      if (brandDef) {
+        const val = rAttrs[brandDef._id as string];
+        const brandVal = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : undefined);
+        if (brandVal) { rest.brand = brandVal; rAttrs.brand = brandVal; }
       }
       rest.attributes = Object.keys(rAttrs).length > 0 ? rAttrs : undefined;
+    }
     const old = await ctx.db.get(id);
     if (rest.sku !== undefined) {
       const nextSku = rest.sku.trim();
