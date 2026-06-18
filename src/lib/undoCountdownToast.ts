@@ -1,12 +1,12 @@
 import { toast } from 'sonner';
+import { createElement } from 'react';
 
 interface UndoCountdownOptions {
   message: string;
   onUndo: () => void;
   durationMs?: number;
   undoLabel?: string;
-  description?: string | ((remainingSeconds: number) => string);
-  countdownHint?: string | ((remainingSeconds: number) => string);
+  description?: string;
 }
 
 export function showUndoCountdownToast(options: UndoCountdownOptions) {
@@ -16,11 +16,8 @@ export function showUndoCountdownToast(options: UndoCountdownOptions) {
     durationMs = 4000,
     undoLabel = 'Չեղարկել',
     description,
-    countdownHint = (remainingSeconds: number) => `Չեղարկելու համար՝ ${remainingSeconds}վ`,
   } = options;
 
-  const totalSeconds = Math.max(1, Math.ceil(durationMs / 1000));
-  let remaining = totalSeconds;
   let undone = false;
   const toastId = `undo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -31,32 +28,45 @@ export function showUndoCountdownToast(options: UndoCountdownOptions) {
     toast.dismiss(toastId);
   };
 
-  const render = () => {
-    const descriptionText = typeof description === 'function' ? description(remaining) : description;
-    const hintText = typeof countdownHint === 'function' ? countdownHint(remaining) : countdownHint;
-
-    toast(message, {
+  toast.custom(
+    () =>
+      createElement(
+        'div',
+        {
+          className: 'relative w-full overflow-hidden rounded-xl border bg-card p-4 shadow-xl',
+        },
+        // Progress bar (animated)
+        createElement('div', {
+          className: 'absolute bottom-0 left-0 h-[3px] bg-primary/80 rounded-full',
+          style: {
+            animation: `undo-shrink ${durationMs}ms linear forwards`,
+          },
+        }),
+        // Content
+        createElement(
+          'div',
+          { className: 'flex flex-col gap-2' },
+          createElement('p', { className: 'text-sm font-semibold' }, message),
+          description &&
+            createElement(
+              'p',
+              { className: 'text-xs text-muted-foreground' },
+              description
+            ),
+          createElement(
+            'button',
+            {
+              onClick: undo,
+              className:
+                'self-start rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-transform hover:scale-105 active:scale-95',
+            },
+            undoLabel
+          )
+        )
+      ),
+    {
       id: toastId,
-      duration: 1200,
-      className: 'flex flex-col items-start gap-2 [&_button]:mt-1 [&_button]:self-start',
-      description: descriptionText ? `${descriptionText} · ${hintText}` : hintText,
-      action: { label: undoLabel, onClick: undo },
-    });
-  };
-
-  render();
-
-  const interval = window.setInterval(() => {
-    if (undone) {
-      window.clearInterval(interval);
-      return;
+      duration: durationMs,
     }
-    remaining -= 1;
-    if (remaining <= 0) {
-      window.clearInterval(interval);
-      toast.dismiss(toastId);
-      return;
-    }
-    render();
-  }, 1000);
+  );
 }

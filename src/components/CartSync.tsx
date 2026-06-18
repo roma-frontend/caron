@@ -8,7 +8,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 
-const REMINDER_MS = 20 * 1000; // 30 minutes for testing (change to 20 * 1000 for production)
+const REMINDER_MS = 30 * 60 * 1000; // 30 minutes for testing (change to 20 * 1000 for production)
 
 function playCartSound() {
   try {
