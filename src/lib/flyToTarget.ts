@@ -88,46 +88,86 @@ function resolveSourceRect(triggerEl: HTMLElement): DOMRect {
 
 export function flyProductAway(options: {
   triggerEl: HTMLElement | null;
+  kind?: FlyTargetKind;
   imageSrc?: string | null;
-}) {
+}): Promise<void> {
   const { triggerEl } = options;
-  if (!triggerEl || typeof window === 'undefined') return;
+  if (!triggerEl || typeof window === 'undefined') return Promise.resolve();
 
-  const sourceEl = resolveSourceElement(triggerEl);
-  const rect = sourceEl.getBoundingClientRect();
-  if (rect.width < 2 || rect.height < 2) return;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fromRect = resolveSourceRect(triggerEl);
+  if (fromRect.width < 2 || fromRect.height < 2) return Promise.resolve();
 
-  const ghost = sourceEl.cloneNode(true) as HTMLElement;
+  const kind = options.kind;
+  const targetEl = kind ? (getFirstVisibleTarget(kind) ?? getAnyTarget(kind)) : null;
+  const targetRect = targetEl?.getBoundingClientRect();
+
+  const sourceAspect = Math.max(0.65, Math.min(1.55, fromRect.width / Math.max(1, fromRect.height)));
+  const startWidth = Math.max(78, Math.min(220, fromRect.width * 0.58));
+  const startHeight = Math.max(84, Math.min(260, startWidth / sourceAspect));
+  const startX = fromRect.left + fromRect.width / 2 - startWidth / 2;
+  const startY = fromRect.top + fromRect.height / 2 - startHeight / 2;
+
+  const fallbackDx = Math.max(44, Math.min(140, startWidth * 0.52));
+  const fallbackDy = -Math.max(30, Math.min(110, startHeight * 0.34));
+  const endCenterX = targetRect ? targetRect.left + targetRect.width / 2 : startX + startWidth / 2 + fallbackDx;
+  const endCenterY = targetRect ? targetRect.top + targetRect.height / 2 : startY + startHeight / 2 + fallbackDy;
+  const endSize = targetRect ? Math.max(16, Math.min(30, Math.min(targetRect.width, targetRect.height) * 0.86)) : Math.max(18, Math.min(34, startWidth * 0.24));
+  const endX = endCenterX - endSize / 2;
+  const endY = endCenterY - endSize / 2;
+
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const distance = Math.hypot(dx, dy);
+  const arcLift = Math.max(18, Math.min(88, distance * 0.14));
+  const durationMs = Math.max(520, Math.min(980, 420 + distance * 0.42));
+
+  const ghost = document.createElement('div');
   ghost.style.position = 'fixed';
-  ghost.style.left = `${rect.left}px`;
-  ghost.style.top = `${rect.top}px`;
-  ghost.style.width = `${rect.width}px`;
-  ghost.style.height = `${rect.height}px`;
+  ghost.style.left = `${startX}px`;
+  ghost.style.top = `${startY}px`;
+  ghost.style.width = `${startWidth}px`;
+  ghost.style.height = `${startHeight}px`;
   ghost.style.margin = '0';
   ghost.style.transformOrigin = 'center center';
   ghost.style.pointerEvents = 'none';
   ghost.style.zIndex = '9999';
   ghost.style.overflow = 'hidden';
-  ghost.style.boxShadow = '0 24px 60px -24px rgba(0, 0, 0, 0.34)';
+  ghost.style.willChange = 'transform, opacity';
+  ghost.style.backfaceVisibility = 'hidden';
+  ghost.style.boxShadow = '0 22px 52px -22px rgba(0, 0, 0, 0.36)';
   ghost.style.background = 'var(--card)';
-  ghost.style.borderRadius = getComputedStyle(sourceEl).borderRadius || '18px';
+  ghost.style.borderRadius = '16px';
+
+  const resolvedSrc = resolveImageSource(triggerEl, options.imageSrc);
+  if (resolvedSrc) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.src = resolvedSrc;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.pointerEvents = 'none';
+    ghost.appendChild(img);
+  }
 
   document.body.appendChild(ghost);
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (prefersReducedMotion) {
     ghost.remove();
-    return;
+    return Promise.resolve();
   }
 
-  const dx = Math.max(36, Math.min(96, rect.width * 0.16));
-  const dy = -Math.max(22, Math.min(64, rect.height * 0.12));
-  const durationMs = 520;
+  const scaleX = Math.max(0.18, endSize / startWidth);
+  const scaleY = Math.max(0.18, endSize / startHeight);
 
   const animation = ghost.animate(
     [
-      { transform: 'translate(0, 0) scale(1)', opacity: 1, filter: 'blur(0px)' },
-      { transform: `translate(${dx * 0.55}px, ${dy * 0.55}px) scale(0.96)`, opacity: 0.82, filter: 'blur(0.4px)' },
-      { transform: `translate(${dx}px, ${dy}px) scale(0.88)`, opacity: 0, filter: 'blur(1.5px)' },
+      { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
+      { transform: `translate3d(${dx * 0.54}px, ${dy * 0.54 - arcLift}px, 0) scale(${Math.max(0.64, scaleX * 1.7)}, ${Math.max(0.64, scaleY * 1.7)})`, opacity: 0.9 },
+      { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scaleX}, ${scaleY})`, opacity: 0 },
     ],
     {
       duration: durationMs,
@@ -136,9 +176,14 @@ export function flyProductAway(options: {
     },
   );
 
-  const cleanup = () => ghost.remove();
-  animation.addEventListener('finish', cleanup, { once: true });
-  animation.addEventListener('cancel', cleanup, { once: true });
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      ghost.remove();
+      resolve();
+    };
+    animation.addEventListener('finish', cleanup, { once: true });
+    animation.addEventListener('cancel', cleanup, { once: true });
+  });
 }
 
 export function flyProductToTarget(options: {

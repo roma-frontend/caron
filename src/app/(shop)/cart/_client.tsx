@@ -26,6 +26,8 @@ export default function CartPage() {
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const toggleSelect = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const knownIds = useRef(new Set(items.map((i) => i.id)));
@@ -55,27 +57,60 @@ export default function CartPage() {
     }
   };
 
-  const handleBulkRemove = () => {
+  const handleBulkRemove = async () => {
     const removedItems = items.filter((i) => selected.has(i.id));
+    if (removedItems.length === 0) return;
+
+    const removedIds = removedItems.map((i) => i.id);
+    setRemovingIds((prev) => new Set([...prev, ...removedIds]));
+
+    removedItems.forEach((item) => {
+      void flyProductAway({
+        triggerEl: rowRefs.current[item.id] ?? null,
+        kind: 'cart',
+        imageSrc: item.image ?? null,
+      });
+    });
+
+    await new Promise((resolve) => window.setTimeout(resolve, 240));
+
     removedItems.forEach((i) => removeItem(i.id));
     setSelected(new Set());
+    setRemovingIds((prev) => {
+      const next = new Set(prev);
+      removedIds.forEach((id) => next.delete(id));
+      return next;
+    });
 
-    if (removedItems.length > 0) {
-      showUndoCountdownToast({
-        message: `${removedItems.length} ապրանք հեռացվեց`,
-        onUndo: () => {
-          removedItems.forEach(restoreCartItem);
-        },
-      });
-    }
+    showUndoCountdownToast({
+      message: `Զամբյուղից ${removedItems.length} ապրանք հեռացվեց`,
+      onUndo: () => {
+        removedItems.forEach(restoreCartItem);
+      },
+    });
   };
 
   const featured = useQuery(api.products.getFeatured, {});
 
-  const handleRemove = (id: string, name: string, triggerEl?: HTMLElement | null) => {
+  const handleRemove = async (id: string, name: string, triggerEl?: HTMLElement | null) => {
+    if (removingIds.has(id)) return;
     const removedItem = items.find((i) => i.id === id);
-    if (triggerEl) flyProductAway({ triggerEl });
+
+    setRemovingIds((prev) => new Set([...prev, id]));
+    void flyProductAway({
+      triggerEl: rowRefs.current[id] ?? triggerEl ?? null,
+      kind: 'cart',
+      imageSrc: removedItem?.image ?? null,
+    });
+
+    await new Promise((resolve) => window.setTimeout(resolve, 220));
     removeItem(id);
+    setRemovingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
     if (removedItem) {
       showUndoCountdownToast({
         message: `${name} հեռացվեց`,
@@ -123,9 +158,18 @@ export default function CartPage() {
 
           {/* Items */}
           {items.map((item) => (
-            <div key={item.id} data-cart-row className={`group relative flex items-center gap-3 sm:gap-4 rounded-2xl border bg-card p-3 sm:p-4 shadow-sm transition-all duration-200 hover:shadow-md ${selected.has(item.id) ? "ring-2 ring-primary/30 bg-primary/5" : ""}`}>
+            <div
+              key={item.id}
+              ref={(el) => {
+                rowRefs.current[item.id] = el;
+              }}
+              data-cart-row
+              data-cart-row-id={item.id}
+              className={`group relative flex items-center gap-3 sm:gap-4 rounded-2xl border bg-card p-3 sm:p-4 shadow-sm transition-all duration-300 hover:shadow-md ${selected.has(item.id) ? "ring-2 ring-primary/30 bg-primary/5" : ""} ${removingIds.has(item.id) ? "pointer-events-none opacity-0 translate-x-3 scale-[0.98]" : "opacity-100 translate-x-0 scale-100"}`}
+            >
               {/* Checkbox */}
               <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)}
+                disabled={removingIds.has(item.id)}
                 className="h-[18px] w-[18px] shrink-0 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
 
               {/* Image */}
@@ -139,7 +183,7 @@ export default function CartPage() {
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <Link href={`/products/${item.id}`} className="text-sm font-medium leading-snug line-clamp-2 transition-colors hover:text-primary">{item.name}</Link>
-                  <button onClick={(e) => handleRemove(item.id, item.name, e.currentTarget)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10" aria-label="Ջնջել">
+                  <button onClick={(e) => void handleRemove(item.id, item.name, e.currentTarget)} disabled={removingIds.has(item.id)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10 disabled:opacity-40" aria-label="Ջնջել">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -147,7 +191,7 @@ export default function CartPage() {
 
                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-0.5 rounded-full border bg-muted/30 p-0.5">
-                    <button onClick={(e) => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { handleRemove(item.id, item.name, e.currentTarget); } else { updateQuantity(item.id, item.quantity - step); } }}
+                    <button onClick={(e) => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { void handleRemove(item.id, item.name, e.currentTarget); } else { updateQuantity(item.id, item.quantity - step); } }}
                       disabled={item.quantity <= (item.qtyStep || 1)}
                       className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
                       <Minus className="h-3 w-3" />

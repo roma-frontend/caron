@@ -16,7 +16,7 @@ export function RecentlyViewed() {
   const visible = items.filter((item) => {
     const p = productMap.get(item.id);
     return p && p.isActive && p.stock > 0;
-  }).slice(0, 6);
+  }).slice(0, 4);
 
   if (visible.length === 0) return null;
 
