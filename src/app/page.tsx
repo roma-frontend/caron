@@ -50,7 +50,7 @@ const BRAND_COLORS: Record<string, string> = {
   Metzger: '#003399', Topran: '#005BAA', Mapco: '#004080', Stark: '#003366',
   Maxgear: '#00529B', Patron: '#CC0000', Vaico: '#003399', JP: '#005BAA',
   'JP Group': '#005BAA', AJUSA: '#003366', Elring: '#CC0000', Victor: '#003399',
-  Reinz: '#004080', Goetze: '#003366', Payen: '#CC0000', Hito: "#F5A629"
+  Reinz: '#004080', Goetze: '#003366', Payen: '#CC0000', Hito: "#F5A629", Depsun: "#00A3E0"
 };
 
 function brandColor(name: string): string {
@@ -263,7 +263,7 @@ export default function HomePage() {
         {settings?.showBrands !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center text-balance font-bold tracking-tight" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>
-            <span className="text-gradient">Բրենդեր</span>
+            <span className="text-gradient">Բրենդներ</span>
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
             {brands === undefined && Array.from({ length: 8 }).map((_, i) => (
@@ -300,7 +300,7 @@ export default function HomePage() {
               <Link href="/products?brand=all"
                 className="group flex h-20 w-[190px] items-center justify-center gap-2.5 rounded-2xl border border-dashed border-muted-foreground/20 bg-card/50 text-muted-foreground transition-all duration-500 hover:scale-[1.03] hover:border-primary/30 hover:text-primary hover:shadow-lg">
                 <span className="text-2xl font-light leading-none transition-transform duration-500 group-hover:rotate-90">+</span>
-                <span className="text-sm font-medium">Բոլոր բրենդերը</span>
+                <span className="text-sm font-medium">Բոլոր բրենդները</span>
               </Link>
             )}
           </div>

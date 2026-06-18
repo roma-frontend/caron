@@ -69,7 +69,7 @@ export default function AdminSettingsPage() {
     const json = JSON.stringify(entries);
     try {
       await save({ sessionToken: sessionToken!, navBadges: json } as Parameters<typeof save>[0]);
-      toast.success('Բեյջի պահպանվեց');
+      toast.success('Բեյջերը պահպանվեցին');
     } catch { toast.error('Սխալ'); }
   };
 
@@ -186,7 +186,7 @@ export default function AdminSettingsPage() {
       toast.success('Կարգավորումները պահպանվել են');
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      if (msg.includes('Not authenticated') || msg.includes('Session expired')) {
+      if (msg.includes('Not authenticated') || msg.includes('Սեսիան ավարտվել է')) {
         toast.error('Սեսիան ավարտվել է, մուտք գործեք կրկին');
         router.push('/login');
       } else {
@@ -787,7 +787,7 @@ function NormalizeBrandsCard({ sessionToken }: { sessionToken: string }) {
   return (
     <Card className="border-primary/30 bg-primary/5">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Նորմալացնել բրենդերը</CardTitle>
+        <CardTitle className="text-base">Նորմալացնել բրենդները</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">Համաժամացնի բոլոր ապրանքների brand արժեքը filterDef-ի options-ի հետ (case-insensitive)։ Օրինակ՝ HITO → Hito:</p>
