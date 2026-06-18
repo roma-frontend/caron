@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toR2MediaProxyUrl } from '@/lib/r2Media';
 
 const PRELOADER_SRC =
-  process.env.NEXT_PUBLIC_PRELOADER_VIDEO_URL ||
-  'https://pub-21da6611c49e416480be7cc2d42af249.r2.dev/products/preloader.mp4';
+  toR2MediaProxyUrl(
+    process.env.NEXT_PUBLIC_PRELOADER_VIDEO_URL ||
+    'products/preloader.mp4',
+  );
 
 type PreloaderVideoProps = {
   text?: string;

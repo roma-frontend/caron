@@ -16,6 +16,7 @@ import { formatPrice } from '@/lib/formatters';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuthStore } from '@/store/auth';
 import Image from 'next/image';
+import { toR2MediaProxyUrl } from '@/lib/r2Media';
 
 const BRAND_COLORS: Record<string, string> = {
   Mobil: '#0072C6', Castrol: '#005EB8', 'Liqui Moly': '#003D7A', Motul: '#005EB8',
@@ -77,8 +78,10 @@ function brandTextColor(hexOrHsl: string): string {
 const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quality: Star };
 
 const HERO_VIDEO_SRC =
-  process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
-  'https://pub-21da6611c49e416480be7cc2d42af249.r2.dev/products/hero.mp4';
+  toR2MediaProxyUrl(
+    process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
+    'products/hero.mp4',
+  );
 
 
 
