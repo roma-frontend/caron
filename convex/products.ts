@@ -63,9 +63,10 @@ export const listPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const hasFilters = !!(args.minPrice || args.maxPrice || args.inStockOnly || args.onSale || args.minRating || args.attributes);
+    const hasFilters = !!(args.minPrice || args.maxPrice || args.inStockOnly || args.onSale || args.minRating || args.brand || args.attributes);
     // When attribute filters are active we must over-fetch because filtering happens in-memory
     // after the DB query. Fetch up to 2000 so we don't miss products beyond position 200.
+    // Also over-fetch for brand filter to capture all matching products across the full set.
     const paginationOpts = hasFilters
       ? { ...args.paginationOpts, numItems: Math.max(args.paginationOpts.numItems ?? 20, args.attributes ? 2000 : 200) }
       : args.paginationOpts;
