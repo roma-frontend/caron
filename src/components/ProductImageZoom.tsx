@@ -47,8 +47,10 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
   const mounted = useSyncExternalStore(noop, () => true, () => false);
 
   const checkMobile = () => {
-    // Enable zoom only on devices that actually have mouse-like hover precision.
-    isMobile.current = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    // Enable zoom only on devices that actually have mouse-like hover precision AND a wide enough viewport.
+    isMobile.current =
+      !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+      window.innerWidth < 1024;
   };
 
   useEffect(() => {
