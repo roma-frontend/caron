@@ -6,9 +6,9 @@ import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { toast } from 'sonner';
+import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 
-const REMINDER_MS = 30 * 60 * 1000; // 30 minutes for testing (change to 20 * 1000 for production)
+const REMINDER_MS = 20 * 1000; // 30 minutes for testing (change to 20 * 1000 for production)
 
 function playCartSound() {
   try {
@@ -78,17 +78,12 @@ export function CartSync() {
       if (count === 0) return;
       reminderShown.current = true;
       playCartSound();
-      toast('Զամբյուղն սպասում է', {
-        description: (
-          <div className="flex flex-col gap-2 mt-1">
-            <span>{count} ապրանք պահված է ձեր զամբյուղում:</span>
-            <button onClick={() => { toast.dismiss(); router.push('/cart'); }}
-              className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              Տեսնել զամբյուղը
-            </button>
-          </div>
-        ),
-        duration: 12000,
+      showUndoCountdownToast({
+        message: 'Հիշեցում',
+        description: `${count} ապրանք(ներ) ձեր զամբյուղում`,
+        onUndo: () => router.push('/cart'),
+        undoLabel: 'Տեսնել զամբյուղը',
+        durationMs: 4000,
       });
     }, REMINDER_MS);
 

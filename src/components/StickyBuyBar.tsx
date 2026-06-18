@@ -69,7 +69,7 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
             size="lg"
             className="gap-2 rounded-xl h-10"
             disabled={!inStock}
-            onClick={(e) => { const prevQty = cartItems.find((i) => i.id === productId)?.quantity ?? 0; for (let i = 0; i < qty; i++) addItem({ id: productId, name: productName, price: productPrice, image: productImage ?? null, maxStock: productStock, qtyStep: 1 }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: productImage ?? null }); showUndoCountdownToast({ message: 'Ապրանքը տեղափոխվեց զամբյուղ', description: `${productName} · քանակ ${qty}`, undoLabel: 'Վերադարձնել', onUndo: () => { if (prevQty <= 0) removeItem(productId); else updateQuantity(productId, prevQty); } }); }}
+            onClick={(e) => { const prevQty = cartItems.find((i) => i.id === productId)?.quantity ?? 0; for (let i = 0; i < qty; i++) addItem({ id: productId, name: productName, price: productPrice, image: productImage ?? null, maxStock: productStock, qtyStep: 1 }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: productImage ?? null }); }}
           >
             <ShoppingCart className="h-4 w-4" /> Զամբյուղ
           </Button>
