@@ -115,7 +115,7 @@ export default function CartPage() {
 
     if (removedItem) {
       showUndoCountdownToast({
-        message: '🗑️ Ապրանքը հեռացվեց զամբյուղից',
+        message: 'Ապրանքը հեռացվեց զամբյուղից',
         description: name,
         undoLabel: 'Վերադարձնել',
         onUndo: () => restoreCartItem(removedItem),
@@ -149,7 +149,7 @@ export default function CartPage() {
           <div className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3 shadow-sm">
             <label className="flex items-center gap-3 cursor-pointer select-none">
               <input type="checkbox" checked={allSelected} onChange={allSelected ? deselectAll : selectAll}
-                className="h-[18px] w-[18px] rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
+                className="h-4.5 w-4.5 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
               <span className="text-sm font-medium">{allSelected ? 'Հանել նշումը' : 'Ընտրել բոլորը'}</span>
               <span className="text-xs text-muted-foreground">({items.length})</span>
             </label>
@@ -174,11 +174,11 @@ export default function CartPage() {
               {/* Checkbox */}
               <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)}
                 disabled={removingIds.has(item.id)}
-                className="h-[18px] w-[18px] shrink-0 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
+                className="h-4.5 w-4.5 shrink-0 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
 
               {/* Image */}
               <Link href={`/products/${item.id}`} className="shrink-0">
-                <div className="h-[72px] w-[72px] sm:h-20 sm:w-20 overflow-hidden rounded-xl bg-muted/50 ring-1 ring-border/50">
+                <div className="h-18 w-18 sm:h-20 sm:w-20 overflow-hidden rounded-xl bg-muted/50 ring-1 ring-border/50">
                   {item.image ? <Image src={item.image} alt={item.name} width={80} height={80} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /> : <div className="flex h-full w-full items-center justify-center text-xl text-muted-foreground/40">🔧</div>}
                 </div>
               </Link>
@@ -200,7 +200,7 @@ export default function CartPage() {
                       className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="min-w-[28px] text-center text-sm font-semibold">{item.quantity}</span>
+                    <span className="min-w-7 text-center text-sm font-semibold">{item.quantity}</span>
                     <button onClick={() => { const step = item.qtyStep || 1; updateQuantity(item.id, item.quantity + step); }}
                       disabled={item.maxStock != null && item.quantity >= item.maxStock}
                       className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
