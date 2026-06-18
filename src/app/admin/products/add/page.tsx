@@ -59,7 +59,6 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
   const filterDefs = useQuery(api.filters.getByCategory, categoryId ? { categoryId: categoryId as Id<'categories'> } : 'skip');
   const [descOpen, setDescOpen] = useState(false);
   const [imagesOpen, setImagesOpen] = useState(false);
-  const [oemOpen, setOemOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState<number[]>([]);
 
   const sku = (data.sku as string) ?? '';
@@ -247,12 +246,6 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
           <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={async (e) => { if (!e.target.files?.length) return; await appendFiles(e.target.files); e.target.value = ''; }} />
         </SmoothCollapseSection>
 
-        <SmoothCollapseSection title="OEM համարներ" open={oemOpen} onToggle={() => setOemOpen((v) => !v)}>
-          <div className="mt-2">
-            <OemNumbersInput value={((data.oemNumbers as OemEntry[] | undefined) ?? [])} onChange={(v) => update('oemNumbers', v)} />
-          </div>
-        </SmoothCollapseSection>
-
         <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-3 text-xs">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">7. Գնային Տվյալներ</div>
           <div className="grid grid-cols-2 gap-2">
@@ -303,6 +296,7 @@ function StepBasicInfo() {
   const { data, update } = useWizardData();
   const attrs = ((data.attributes as Record<string, unknown>) ?? {});
   const compat = (attrs.vehicleCompat as VehicleCompatEntry[]) ?? [];
+  const oemNumbers = (data.oemNumbers as OemEntry[] | undefined) ?? [];
   const [priceExtraOpen, setPriceExtraOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [seoOpen, setSeoOpen] = useState(false);
@@ -335,8 +329,14 @@ function StepBasicInfo() {
       </SmoothCollapseSection>
 
       <SmoothCollapseSection title="Համապատասխանություն" open={vehicleOpen} onToggle={() => setVehicleOpen((v) => !v)}>
-        <div className="mt-2">
+        <div className="mt-2 space-y-4">
           <VehicleCompatSelector value={compat} onChange={handleCompatChange} />
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+            <OemNumbersInput
+              value={oemNumbers}
+              onChange={(v) => update('oemNumbers', v.length ? v : undefined)}
+            />
+          </div>
         </div>
       </SmoothCollapseSection>
 

@@ -268,9 +268,6 @@ export default function EditProductPage() {
               <div><Label>ԱՏԳԱ կոդ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, atgCode: e.target.value }))} placeholder="2601" className="h-11 font-mono" /></div>
             </div>
 
-
-            <OemNumbersInput value={form.oemNumbers ?? []} onChange={(v) => setForm((f) => ({ ...f, oemNumbers: v.length ? v : undefined }))} />
-
             <div><Label>Նկարագրություն</Label><Textarea value={form.description ?? ''} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} /></div>
           </CardContent>
         </Card>
@@ -306,15 +303,23 @@ export default function EditProductPage() {
         <Card>
           <CardHeader><CardTitle>Համապատասխանություն ավտոմեքենայի հետ</CardTitle></CardHeader>
           <CardContent>
-            <VehicleCompatSelector
-              value={((form.attributes ?? {}).vehicleCompat as VehicleCompatEntry[]) ?? []}
-              onChange={(newCompat) => {
-                const base = { ...(form.attributes ?? {}) };
-                if (newCompat.length) base.vehicleCompat = newCompat;
-                else delete base.vehicleCompat;
-                setForm((f) => ({ ...f, attributes: Object.keys(base).length ? base : undefined }));
-              }}
-            />
+            <div className="space-y-4">
+              <VehicleCompatSelector
+                value={((form.attributes ?? {}).vehicleCompat as VehicleCompatEntry[]) ?? []}
+                onChange={(newCompat) => {
+                  const base = { ...(form.attributes ?? {}) };
+                  if (newCompat.length) base.vehicleCompat = newCompat;
+                  else delete base.vehicleCompat;
+                  setForm((f) => ({ ...f, attributes: Object.keys(base).length ? base : undefined }));
+                }}
+              />
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                <OemNumbersInput
+                  value={form.oemNumbers ?? []}
+                  onChange={(v) => setForm((f) => ({ ...f, oemNumbers: v.length ? v : undefined }))}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
