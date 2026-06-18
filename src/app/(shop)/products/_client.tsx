@@ -220,7 +220,7 @@ export default function ProductsPage() {
 
           {status === 'CanLoadMore' && results.length >= PAGE_SIZE && (
             <div className="mt-8 flex justify-center">
-              <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Բեռնել ավելի շատ ապրանքներ'}</Button>
+              <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Տեսնել ավելի'}</Button>
             </div>
           )}
 

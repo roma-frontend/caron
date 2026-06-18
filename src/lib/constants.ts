@@ -2,7 +2,7 @@
 export const SITE = {
   name: process.env.NEXT_PUBLIC_STORE_NAME || 'Caron',
   fullName: process.env.NEXT_PUBLIC_STORE_FULL_NAME || 'Caron',
-  tagline: 'Ձեր ավտոպահեստամասերի հառթակը Հայաստանում',
+  tagline: 'Ձեր ավտոպահեստամասերի հարթակը Հայաստանում',
   get heroDesc() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
   get description() { return this.name + '-ը Հայաստանի առաջատար ավտոպահեստամասերի առցանց խանութն է։'; },
 };
