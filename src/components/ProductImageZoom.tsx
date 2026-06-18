@@ -19,8 +19,20 @@ const LENS_WIDTH = 110;
 const LENS_HEIGHT = 132;
 
 function toZoomImageSrc(src: string): string {
-  // Reuse Next optimizer to keep zoom source reliable for remote images.
-  if (src.startsWith('data:') || src.startsWith('/_next/image?')) return src;
+  // Keep zoom source same-origin whenever possible, so lens image remains reliable.
+  if (src.startsWith('data:') || src.startsWith('/_next/image?') || src.startsWith('/api/r2-image')) return src;
+  if (src.startsWith('/')) return src;
+
+  try {
+    const parsed = new URL(src);
+    if (parsed.hostname.endsWith('.r2.dev') || parsed.hostname.endsWith('.r2.cloudflarestorage.com')) {
+      return `/api/r2-image?url=${encodeURIComponent(src)}`;
+    }
+  } catch {
+    // Keep fallback below for malformed URLs.
+  }
+
+  // For other remote images, use Next optimizer as a fallback.
   return `/_next/image?url=${encodeURIComponent(src)}&w=1200&q=75`;
 }
 
@@ -130,7 +142,7 @@ export function ProductImageZoom({ src, alt, width, height, priority, sizes, cla
       <Image
         src={src} alt={alt} width={width} height={height}
         priority={priority} sizes={sizes}
-        className={`h-full w-full ${fit === 'contain' ? 'object-fill' : 'object-cover'} select-none pointer-events-none`}
+        className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} select-none pointer-events-none`}
         draggable={false}
       />
       <div ref={dimRef} className="pointer-events-none absolute inset-0 bg-black/20" style={{ display: 'none' }} />

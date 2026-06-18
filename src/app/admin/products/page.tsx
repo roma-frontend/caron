@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, Trash2, Edit, Package, Search, Upload, AlertTriangle, LayoutGrid, List } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { toast } from 'sonner';
@@ -57,8 +58,56 @@ function InlineField({ value, onSave, prefix, className, plain }: { value: numbe
   return <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>{prefix}{plain ? value : formatPrice(value)}</span>;
 }
 
+type AdminProductItem = {
+  _id: Id<'products'>;
+  name: string;
+  price: number;
+  wholesalePrice?: number;
+  categoryId: Id<'categories'>;
+  stock: number;
+  sku?: string;
+  images?: string[];
+  isActive: boolean;
+  isFeatured?: boolean;
+  attributes?: Record<string, unknown>;
+};
 
-function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; costPrice?: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
+function formatAttributeValue(value: unknown): string {
+  if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
+  if (value && typeof value === 'object') return JSON.stringify(value);
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
+
+function parseAttributeValue(raw: string, prev: unknown): unknown | undefined {
+  const nextRaw = raw.trim();
+  if (!nextRaw) return undefined;
+
+  if (typeof prev === 'number') {
+    const n = Number(nextRaw);
+    return Number.isFinite(n) ? n : prev;
+  }
+  if (typeof prev === 'boolean') {
+    const v = nextRaw.toLowerCase();
+    if (v === 'true' || v === '1' || v === 'yes') return true;
+    if (v === 'false' || v === '0' || v === 'no') return false;
+    return prev;
+  }
+  if (Array.isArray(prev)) {
+    return nextRaw.split(',').map((v) => v.trim()).filter(Boolean);
+  }
+  if (prev && typeof prev === 'object') {
+    try {
+      return JSON.parse(nextRaw);
+    } catch {
+      return prev;
+    }
+  }
+  return nextRaw;
+}
+
+
+function AdminProductCard({ product, sessionToken, index }: { product: AdminProductItem; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const update = useMutation(api.products.update);
   const imgRef = useRef<HTMLInputElement>(null);
@@ -150,8 +199,8 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
               <h3 className="truncate text-sm font-semibold text-wrap">{product.name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
             </div>
-            <InlineField value={product.price} className="text-md font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
-            {product.costPrice != null && <span className="text-xs text-muted-foreground">{'Ինքնարժեք'}: {formatPrice(product.costPrice)}</span>}
+            <InlineField value={product.price} className="text-md font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
+            <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
             <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='number'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch((error)=>toast.error(toArmenianUpdateError(error))); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter')input.blur(); if(ev.key==='Escape'){el.style.display='';input.remove();}}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
@@ -165,13 +214,104 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
   );
 }
 
-function AdminProductListRow({ product, sessionToken, index }: { product: { _id: Id<'products'>; name: string; price: number; costPrice?: number; stock: number; sku?: string; images?: string[]; isActive: boolean; isFeatured?: boolean }; sessionToken: string; index: number }) {
+type AttrDefMeta = {
+  canonicalKey: string;
+  idKey: string;
+  slugKey: string;
+  name: string;
+  type: 'select' | 'multiselect' | 'range' | 'boolean';
+  options?: string[];
+};
+
+function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDefsByCategoryMap }: { product: AdminProductItem; sessionToken: string; index: number; attrMetaMap: Map<string, AttrDefMeta>; attrDefsByCategoryMap: Map<string, AttrDefMeta[]> }) {
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
   const update = useMutation(api.products.update);
   const imgRef = useRef<HTMLInputElement>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const attrs = (product.attributes ?? {}) as Record<string, unknown>;
+  const getAttrMeta = (key: string) => attrMetaMap.get(`${product.categoryId}:${key}`);
+  const categoryDefs = attrDefsByCategoryMap.get(product.categoryId) ?? [];
+  const attrEntries = useMemo(() => {
+    // Render all definitions for this category, even when value is currently empty.
+    const entries: Array<{ key: string; val: unknown }> = [];
+    const includedCanonicals = new Set<string>();
+
+    for (const def of categoryDefs) {
+      const hasId = Object.prototype.hasOwnProperty.call(attrs, def.idKey);
+      const hasSlug = Object.prototype.hasOwnProperty.call(attrs, def.slugKey);
+      const key = hasId ? def.idKey : (hasSlug ? def.slugKey : def.idKey);
+      const val = attrs[key];
+      entries.push({ key, val });
+      includedCanonicals.add(def.canonicalKey);
+    }
+
+    // Also keep unknown/custom attributes that are not in filter definitions.
+    const extraByCanonical = new Map<string, { key: string; val: unknown }>();
+    for (const [key, val] of Object.entries(attrs)) {
+      const meta = getAttrMeta(key);
+      const canonical = meta?.canonicalKey ?? `raw:${key}`;
+      if (includedCanonicals.has(canonical)) continue;
+
+      const existing = extraByCanonical.get(canonical);
+      const isIdLike = /^j[0-9a-z]{12,}$/i.test(key);
+      if (!existing) {
+        extraByCanonical.set(canonical, { key, val });
+        continue;
+      }
+      const existingIsIdLike = /^j[0-9a-z]{12,}$/i.test(existing.key);
+      // Prefer filter-id key over slug key when both represent the same attribute.
+      if (isIdLike && !existingIsIdLike) {
+        extraByCanonical.set(canonical, { key, val });
+      }
+    }
+
+    return [...entries, ...Array.from(extraByCanonical.values())];
+  }, [attrs, attrMetaMap, attrDefsByCategoryMap, categoryDefs, product.categoryId]);
+  const getAttrLabel = (key: string) => {
+    const mapped = getAttrMeta(key)?.name;
+    if (mapped) return mapped;
+    if (/^j[0-9a-z]{12,}$/i.test(key)) return 'Ատրիբուտ';
+    return key;
+  };
+
+  const saveAttributeValue = async (key: string, nextValue: unknown | undefined) => {
+    const canonical = getAttrMeta(key)?.canonicalKey;
+    const nextAttrs = { ...attrs };
+
+    if (canonical) {
+      // Remove duplicate aliases (slug/id) for the same attribute before saving.
+      for (const existingKey of Object.keys(nextAttrs)) {
+        if (existingKey === key) continue;
+        const existingCanonical = getAttrMeta(existingKey)?.canonicalKey;
+        if (existingCanonical && existingCanonical === canonical) delete nextAttrs[existingKey];
+      }
+    }
+
+    if (nextValue === undefined) delete nextAttrs[key];
+    else nextAttrs[key] = nextValue;
+
+    try {
+      await update({
+        sessionToken,
+        id: product._id,
+        attributes: Object.keys(nextAttrs).length ? nextAttrs : undefined,
+      });
+      toast.success('Ատրիբուտը թարմացվեց');
+    } catch (error) {
+      toast.error(toArmenianUpdateError(error));
+    }
+  };
+
+  const editAttribute = async (key: string, prev: unknown) => {
+    const current = formatAttributeValue(prev);
+    const nextRaw = window.prompt(`Թարմացնել ատրիբուտը՝ ${key}`, current);
+    if (nextRaw === null) return;
+
+    const nextValue = parseAttributeValue(nextRaw, prev);
+    await saveAttributeValue(key, nextValue);
+  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -224,11 +364,117 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
           <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
-            <InlineField value={product.price} className="text-sm font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
-            {product.costPrice != null && <span className="text-xs text-muted-foreground">Ինքնարժեք: {formatPrice(product.costPrice)}</span>}
-            <InlineField value={product.costPrice ?? 0} className="text-xs text-muted-foreground" prefix="Ինքնարժեք: " onSave={(v) => update({ sessionToken, id: product._id, costPrice: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
+            <InlineField value={product.price} className="text-sm font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
+            <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {attrEntries.length > 0 ? attrEntries.map(({ key, val }) => {
+              const meta = getAttrMeta(key);
+              const hasOptions = !!meta?.options && meta.options.length > 0;
+              const isBoolean = meta?.type === 'boolean';
+
+              if (meta?.type === 'multiselect' && hasOptions) {
+                const selected = Array.isArray(val)
+                  ? val.map((v) => String(v))
+                  : val === null || val === undefined || val === ''
+                    ? []
+                    : [String(val)];
+                const summary = selected.length === 0
+                  ? 'Ընտրել'
+                  : selected.length <= 2
+                    ? selected.join(', ')
+                    : `${selected.length} ընտրված`;
+
+                return (
+                  <div key={key} className="flex items-center gap-1 rounded-md border bg-muted/30 px-2 py-1">
+                    <span className="text-[10px] text-muted-foreground">{getAttrLabel(key)}:</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="h-6 min-w-28 rounded border bg-background px-2 text-[10px] text-left hover:border-primary">
+                        {summary}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56">
+                        {(meta?.options ?? []).map((opt) => {
+                          const checked = selected.includes(opt);
+                          return (
+                            <DropdownMenuCheckboxItem
+                              key={opt}
+                              checked={checked}
+                              onCheckedChange={(nextChecked) => {
+                                const next = nextChecked
+                                  ? Array.from(new Set([...selected, opt]))
+                                  : selected.filter((v) => v !== opt);
+                                saveAttributeValue(key, next.length > 0 ? next : undefined);
+                              }}
+                            >
+                              {opt}
+                            </DropdownMenuCheckboxItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                );
+              }
+
+              if (hasOptions || isBoolean) {
+                const options = hasOptions ? (meta?.options ?? []) : ['true', 'false'];
+                const current = Array.isArray(val)
+                  ? String(val[0] ?? '')
+                  : typeof val === 'boolean'
+                    ? String(val)
+                    : String(val ?? '');
+
+                return (
+                  <div key={key} className="flex items-center gap-1 rounded-md border bg-muted/30 px-2 py-1">
+                    <span className="text-[10px] text-muted-foreground">{getAttrLabel(key)}:</span>
+                    <Select
+                      value={current || '__empty__'}
+                      onValueChange={(next) => {
+                        if (next === '__empty__') {
+                          saveAttributeValue(key, undefined);
+                          return;
+                        }
+                        if (Array.isArray(val)) {
+                          saveAttributeValue(key, [next]);
+                          return;
+                        }
+                        if (typeof val === 'boolean' || isBoolean) {
+                          saveAttributeValue(key, next === 'true');
+                          return;
+                        }
+                        saveAttributeValue(key, next);
+                      }}
+                    >
+                      <SelectTrigger className="h-6 min-w-28 border-0 bg-transparent px-1 text-[10px] focus:ring-0">
+                        <SelectValue placeholder="Ընտրել" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__empty__">Չընտրված</SelectItem>
+                        {options.map((opt) => (
+                          <SelectItem key={opt} value={String(opt)}>{String(opt)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => editAttribute(key, val)}
+                  className="rounded-md border bg-muted/40 px-2 py-1 text-[10px] text-left hover:border-primary hover:text-primary"
+                  title="Սեղմեք՝ խմբագրելու համար"
+                >
+                  {getAttrLabel(key)}: {formatAttributeValue(val)}
+                </button>
+              );
+            }) : (
+              <span className="text-[10px] text-muted-foreground">Ատրիբուտներ չկան</span>
+            )}
           </div>
         </div>
 
@@ -277,7 +523,41 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const categories = useQuery(api.categories.list, {});
+  const allFilterDefs = useQuery(api.filters.listAll, {});
   const searchTerm = search.trim().toLowerCase();
+  const attrMetaMap = useMemo(() => {
+    const map = new Map<string, AttrDefMeta>();
+    for (const def of allFilterDefs ?? []) {
+      const meta: AttrDefMeta = {
+        canonicalKey: `${def.categoryId}:${def._id}`,
+        idKey: def._id,
+        slugKey: def.slug,
+        name: def.name,
+        type: def.type,
+        options: def.options,
+      };
+      map.set(`${def.categoryId}:${def._id}`, meta);
+      map.set(`${def.categoryId}:${def.slug}`, meta);
+    }
+    return map;
+  }, [allFilterDefs]);
+  const attrDefsByCategoryMap = useMemo(() => {
+    const map = new Map<string, AttrDefMeta[]>();
+    for (const def of allFilterDefs ?? []) {
+      const meta: AttrDefMeta = {
+        canonicalKey: `${def.categoryId}:${def._id}`,
+        idKey: def._id,
+        slugKey: def.slug,
+        name: def.name,
+        type: def.type,
+        options: def.options,
+      };
+      const list = map.get(def.categoryId) ?? [];
+      list.push(meta);
+      map.set(def.categoryId, list);
+    }
+    return map;
+  }, [allFilterDefs]);
 
   let filtered = products?.filter((p) => {
     if (searchTerm) {
@@ -396,7 +676,7 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {visibleProducts?.map((p, i) => <AdminProductListRow key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
+          {visibleProducts?.map((p, i) => <AdminProductListRow key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} attrMetaMap={attrMetaMap} attrDefsByCategoryMap={attrDefsByCategoryMap} />)}
         </div>
       )}
 
