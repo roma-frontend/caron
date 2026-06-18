@@ -214,7 +214,7 @@ export default function ProductDetailPage() {
               {imgs.map((img, i) => (
                 <button key={i} onClick={() => emblaApi?.scrollTo(i)}
                   className={`h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-200 ${i === emblaIndex ? 'border-primary ring-1 ring-primary/30' : 'border-transparent opacity-70 hover:opacity-100 hover:border-muted-foreground/30'}`}>
-                  <Image src={img} alt="" width={150} height={150} sizes="64px" className="h-full w-full bg-muted/20 object-contain" />
+                  <Image src={img} alt="" width={150} height={150} sizes="64px" className="h-full w-full bg-muted/20 object-fill" />
                 </button>
               ))}
             </div>
