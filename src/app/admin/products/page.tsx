@@ -58,11 +58,45 @@ function InlineField({ value, onSave, prefix, className, plain }: { value: numbe
   return <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>{prefix}{plain ? value : formatPrice(value)}</span>;
 }
 
+function InlineTextField({ value, onSave, prefix, className, placeholder }: { value?: string; onSave: (v?: string) => void; prefix?: string; className?: string; placeholder?: string }) {
+  const [editing, setEditing] = useState(false);
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="text"
+        defaultValue={value ?? ''}
+        placeholder={placeholder}
+        className={`w-40 rounded border bg-background px-2 py-0.5 text-xs outline-none focus:ring-1 focus:ring-primary ${className ?? ''}`}
+        onBlur={(e) => {
+          const next = e.target.value.trim();
+          onSave(next || undefined);
+          setEditing(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            const next = e.currentTarget.value.trim();
+            onSave(next || undefined);
+            setEditing(false);
+          }
+          if (e.key === 'Escape') setEditing(false);
+        }}
+      />
+    );
+  }
+  return (
+    <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>
+      {prefix}{value || placeholder || '—'}
+    </span>
+  );
+}
+
 type AdminProductItem = {
   _id: Id<'products'>;
   name: string;
   price: number;
   wholesalePrice?: number;
+  variantGroup?: string;
   categoryId: Id<'categories'>;
   stock: number;
   sku?: string;
@@ -198,6 +232,15 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-sm font-semibold text-wrap">{product.name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
+              <InlineTextField
+                value={product.variantGroup}
+                prefix="Variant group: "
+                placeholder="-"
+                className="text-xs text-muted-foreground"
+                onSave={(v) =>
+                  update({ sessionToken, id: product._id, variantGroup: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))
+                }
+              />
             </div>
             <InlineField value={product.price} className="text-md font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
@@ -233,42 +276,40 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
   const attrs = (product.attributes ?? {}) as Record<string, unknown>;
   const getAttrMeta = (key: string) => attrMetaMap.get(`${product.categoryId}:${key}`);
   const categoryDefs = attrDefsByCategoryMap.get(product.categoryId) ?? [];
-  const attrEntries = useMemo(() => {
-    // Render all definitions for this category, even when value is currently empty.
-    const entries: Array<{ key: string; val: unknown }> = [];
-    const includedCanonicals = new Set<string>();
+  // Render all definitions for this category, even when value is currently empty.
+  const entries: Array<{ key: string; val: unknown }> = [];
+  const includedCanonicals = new Set<string>();
 
-    for (const def of categoryDefs) {
-      const hasId = Object.prototype.hasOwnProperty.call(attrs, def.idKey);
-      const hasSlug = Object.prototype.hasOwnProperty.call(attrs, def.slugKey);
-      const key = hasId ? def.idKey : (hasSlug ? def.slugKey : def.idKey);
-      const val = attrs[key];
-      entries.push({ key, val });
-      includedCanonicals.add(def.canonicalKey);
+  for (const def of categoryDefs) {
+    const hasId = Object.prototype.hasOwnProperty.call(attrs, def.idKey);
+    const hasSlug = Object.prototype.hasOwnProperty.call(attrs, def.slugKey);
+    const key = hasId ? def.idKey : (hasSlug ? def.slugKey : def.idKey);
+    const val = attrs[key];
+    entries.push({ key, val });
+    includedCanonicals.add(def.canonicalKey);
+  }
+
+  // Also keep unknown/custom attributes that are not in filter definitions.
+  const extraByCanonical = new Map<string, { key: string; val: unknown }>();
+  for (const [key, val] of Object.entries(attrs)) {
+    const meta = getAttrMeta(key);
+    const canonical = meta?.canonicalKey ?? `raw:${key}`;
+    if (includedCanonicals.has(canonical)) continue;
+
+    const existing = extraByCanonical.get(canonical);
+    const isIdLike = /^j[0-9a-z]{12,}$/i.test(key);
+    if (!existing) {
+      extraByCanonical.set(canonical, { key, val });
+      continue;
     }
-
-    // Also keep unknown/custom attributes that are not in filter definitions.
-    const extraByCanonical = new Map<string, { key: string; val: unknown }>();
-    for (const [key, val] of Object.entries(attrs)) {
-      const meta = getAttrMeta(key);
-      const canonical = meta?.canonicalKey ?? `raw:${key}`;
-      if (includedCanonicals.has(canonical)) continue;
-
-      const existing = extraByCanonical.get(canonical);
-      const isIdLike = /^j[0-9a-z]{12,}$/i.test(key);
-      if (!existing) {
-        extraByCanonical.set(canonical, { key, val });
-        continue;
-      }
-      const existingIsIdLike = /^j[0-9a-z]{12,}$/i.test(existing.key);
-      // Prefer filter-id key over slug key when both represent the same attribute.
-      if (isIdLike && !existingIsIdLike) {
-        extraByCanonical.set(canonical, { key, val });
-      }
+    const existingIsIdLike = /^j[0-9a-z]{12,}$/i.test(existing.key);
+    // Prefer filter-id key over slug key when both represent the same attribute.
+    if (isIdLike && !existingIsIdLike) {
+      extraByCanonical.set(canonical, { key, val });
     }
+  }
 
-    return [...entries, ...Array.from(extraByCanonical.values())];
-  }, [attrs, attrMetaMap, attrDefsByCategoryMap, categoryDefs, product.categoryId]);
+  const attrEntries = [...entries, ...Array.from(extraByCanonical.values())];
   const getAttrLabel = (key: string) => {
     const mapped = getAttrMeta(key)?.name;
     if (mapped) return mapped;
@@ -363,6 +404,13 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
+          <InlineTextField
+            value={product.variantGroup}
+            prefix="Variant group: "
+            placeholder="-"
+            className="text-[11px] text-muted-foreground"
+            onSave={(v) => update({ sessionToken, id: product._id, variantGroup: v }).catch((error) => toast.error(toArmenianUpdateError(error)))}
+          />
           <div className="mt-1 flex items-center gap-2">
             <InlineField value={product.price} className="text-sm font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
