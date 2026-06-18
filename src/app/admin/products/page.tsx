@@ -413,7 +413,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
       <div className="flex items-center gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
-            <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-cover" />
+            <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-fill" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">■</div>
           )}
