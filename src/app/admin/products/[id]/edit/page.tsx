@@ -174,7 +174,7 @@ export default function EditProductPage() {
               {activeImages.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => setSelectedImages(selectedImages.length === activeImages.length ? [] : activeImages.map((_, i) => i))} className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium hover:border-primary hover:text-primary">
-                    {selectedImages.length === activeImages.length ? 'Սեղմել ընտրությունը' : 'Ընտրել բոլորը'}
+                    {selectedImages.length === activeImages.length ? 'Մաքրել ընտրությունը' : 'Ընտրել բոլորը'}
                   </button>
                   {selectedImages.length > 0 && (
                     <button type="button" onClick={() => { setImages((p) => p.filter((_, i) => !selectedImages.includes(i))); setSelectedImages([]); }} className="rounded-full border border-destructive/70 bg-destructive/10 px-3 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20">

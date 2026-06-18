@@ -135,10 +135,11 @@ export default function ProductsPage() {
 
       <div className="lg:flex lg:gap-8">
         <ProductFilters onFilterChange={(f) => {
-          // If brand attribute was just set via sidebar, clear the URL brand filter
-          const hasBrandAttr = f.attributes && Object.values(f.attributes).length > 0;
-          if (hasBrandAttr && filters.brand) { clearUrlBrand(); setFilters({ ...f, brand: undefined }); }
-          else setFilters(f);
+          // Keep URL in sync with filter state: once brand is cleared in filters, remove query brand too.
+          const hadBrand = Boolean(filters.brand || urlBrand);
+          const hasNextBrand = Boolean(f.brand);
+          if (hadBrand && !hasNextBrand) clearUrlBrand();
+          setFilters(f);
         }} activeFilters={filters} />
 
         <div className="flex-1 min-w-0 pb-24 lg:pb-0">

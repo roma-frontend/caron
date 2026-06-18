@@ -186,7 +186,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
                   }}
                   className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-primary hover:text-primary"
                 >
-                  {selectedImages.length === images.length ? 'Սեղմել ընտրությունը' : 'Ընտրել բոլորը'}
+                  {selectedImages.length === images.length ? 'Մաքրել ընտրությունը' : 'Ընտրել բոլորը'}
                 </button>
                 {selectedImages.length > 0 && (
                   <button
