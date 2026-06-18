@@ -95,17 +95,12 @@ export default function ProductsPage() {
     { initialNumItems: PAGE_SIZE },
   );
 
-  // Auto-select category when brand is set from URL
+  // Auto-select category when brand is set from URL — but don't limit results to that category alone
+  // We'll show all products with the brand filter applied across all categories
   const [autoCatted, setAutoCatted] = useState(false);
-  if (!autoCatted && urlBrand && !filters.categoryId && brandProducts && cats) {
-    const catCount: Record<string, number> = {};
-    for (const p of brandProducts) {
-      if (p.categoryId) catCount[p.categoryId] = (catCount[p.categoryId] || 0) + 1;
-    }
-    const best = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0];
-    if (best) {
-      setFilters((f) => ({ ...f, categoryId: best as Id<'categories'> }));
-    }
+  if (!autoCatted && urlBrand && brandProducts && cats) {
+    // Just mark as processed, don't auto-select category
+    // This allows the brand filter to work across all categories
     setAutoCatted(true);
   }
 
@@ -329,11 +324,6 @@ function TypeFilterRow({
 
         
       </div>
-      {isScrollable && (
-        <p className="text-[11px] text-muted-foreground">
-          Հուշում․ կարելի է մկնիկի անիվով սքրոլ անել նաև ձախ/աջ։
-        </p>
-      )}
     </div>
   );
 }

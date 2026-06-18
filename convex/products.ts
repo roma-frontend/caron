@@ -127,8 +127,10 @@ export const listPaginated = query({
     if (args.onSale) filtered = filtered.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price);
     if (args.minRating) filtered = filtered.filter((p) => (p.rating ?? 0) >= args.minRating!);
     if (args.brand) filtered = filtered.filter((p) => {
-      const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand;
-      return typeof attrBrand === 'string' && attrBrand.toLowerCase() === args.brand!.toLowerCase();
+      const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined;
+      const topBrand = p.brand as string | undefined;
+      const brand = attrBrand ?? topBrand;
+      return typeof brand === 'string' && brand.toLowerCase() === args.brand!.toLowerCase();
     });
 
     // Attribute filtering (arbitrary keys can't be indexed)

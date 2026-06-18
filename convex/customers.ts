@@ -90,11 +90,17 @@ export const getByBrand = query({
     const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
 
     const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
-    return products.filter((p) =>
-      p.isActive &&
-      p.stock > 0 &&
-      !inactiveCatIds.has(p.categoryId) &&
-      ((p.attributes ?? {}) as Record<string, unknown>).brand?.toString().toLowerCase() === args.brand.toLowerCase(),
-    ).slice(0, 200);
+    return products.filter((p) => {
+      const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined;
+      const topBrand = p.brand as string | undefined;
+      const brand = attrBrand ?? topBrand;
+      return (
+        p.isActive &&
+        p.stock > 0 &&
+        !inactiveCatIds.has(p.categoryId) &&
+        typeof brand === 'string' &&
+        brand.toLowerCase() === args.brand.toLowerCase()
+      );
+    }).slice(0, 200);
   },
 });
