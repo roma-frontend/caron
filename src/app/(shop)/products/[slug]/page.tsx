@@ -36,6 +36,55 @@ import { useCompareStore } from '@/store/compare';
 import { GitCompareArrows } from 'lucide-react';
 import Image from 'next/image';
 import Script from 'next/script';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortableVariantThumb({
+  id,
+  active,
+  name,
+  image,
+  onClick,
+  onHover,
+  onLeave,
+}: {
+  id: Id<'products'>;
+  active: boolean;
+  name: string;
+  image?: string;
+  onClick: () => void;
+  onHover: () => void;
+  onLeave: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      type="button"
+      onClick={onClick}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      className={`shrink-0 rounded-xl border-2 p-1 transition-all touch-none ${active ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+      {...attributes}
+      {...listeners}
+    >
+      {image ? (
+        <Image src={image} alt={name} className="h-20 w-16 rounded-lg object-cover" width={48} height={48} />
+      ) : (
+        <div className="flex h-20 w-16 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{name.slice(-12)}</div>
+      )}
+    </button>
+  );
+}
 
 function normalizeAttrText(value: string): string {
   return value
@@ -50,8 +99,10 @@ export default function ProductDetailPage() {
   const { slug } = useParams();
   const _baseProduct = useQuery(api.products.getBySlug, { slug: slug as string });
   const variants = useQuery(api.products.getVariantGroup, _baseProduct && (_baseProduct as Record<string, unknown>).variantGroup ? { variantGroup: (_baseProduct as Record<string, unknown>).variantGroup as string } : 'skip');
+  const reorderVariantGroup = useMutation(api.products.reorderVariantGroup);
   const [overrideProduct, setOverrideProduct] = useState<typeof _baseProduct | null>(null);
   const [hoveredVariant, setHoveredVariant] = useState<NonNullable<typeof variants>[number] | null>(null);
+  const [orderedVariantIds, setOrderedVariantIds] = useState<string[]>([]);
   const product = overrideProduct ?? _baseProduct;
   const stats = useQuery(api.reviews.getStats, product?._id ? { productId: product._id } : 'skip');
   const vehicle = useVehicleStore((s) => s.vehicle);
@@ -91,6 +142,7 @@ export default function ProductDetailPage() {
     return key;
   };
   const currentUser = useAuthStore((s) => s.user);
+  const sessionToken = useAuthStore((s) => s.sessionToken);
   const items = useCartStore((s) => s.items);
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
@@ -137,6 +189,8 @@ export default function ProductDetailPage() {
     emblaApi.on('select', onEmblaSelect);
   }, [emblaApi, onEmblaSelect]);
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
   if (product === undefined) return <Loader />;
   if (product === null) return (
     <div className="py-20 text-center">
@@ -167,6 +221,41 @@ export default function ProductDetailPage() {
     ...(product.reviewCount ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: product.rating, reviewCount: product.reviewCount } } : {}),
   };
 
+  const orderedVariants = variants
+    ? (() => {
+      if (orderedVariantIds.length === 0) return variants;
+      const byId = new Map(variants.map((v) => [String(v._id), v] as const));
+      const ordered = orderedVariantIds.map((id) => byId.get(id)).filter(Boolean) as NonNullable<typeof variants>;
+      const rest = variants.filter((v) => !orderedVariantIds.includes(String(v._id)));
+      if (ordered.length === 0) return variants;
+      return [...ordered, ...rest];
+    })()
+    : variants;
+
+  const handleVariantDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!orderedVariants || !over || active.id === over.id) return;
+    if (!product || !sessionToken || currentUser?.role !== 'admin') return;
+
+    const oldIndex = orderedVariants.findIndex((v) => String(v._id) === String(active.id));
+    const newIndex = orderedVariants.findIndex((v) => String(v._id) === String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const next = arrayMove(orderedVariants, oldIndex, newIndex);
+    setOrderedVariantIds(next.map((v) => v._id));
+
+    try {
+      await reorderVariantGroup({
+        sessionToken,
+        variantGroup: (product as Record<string, unknown>).variantGroup as string,
+        items: next.map((v, i) => ({ id: v._id as Id<'products'>, order: i })),
+      });
+    } catch {
+      toast.error('Չհաջողվեց պահպանել տարբերակների հերթականությունը');
+      setOrderedVariantIds(orderedVariants.map((v) => v._id));
+    }
+  };
+
   return (
     <div data-product-content className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       {settings?.enableBreadcrumbs !== false && (
@@ -176,7 +265,7 @@ export default function ProductDetailPage() {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
         {/* Gallery — Embla carousel */}
-        <div className="lg:max-w-[560px]">
+        <div className="lg:max-w-140">
           <div className="relative overflow-hidden rounded-2xl border bg-muted/30 group/carousel">
             <div ref={emblaRef} className="overflow-hidden">
               <div className="flex">
@@ -225,27 +314,50 @@ export default function ProductDetailPage() {
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
 
-          {variants && variants.length > 1 && (
+          {orderedVariants && orderedVariants.length > 1 && (
             <div className="mt-3 relative">
               <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronLeft className="h-4 w-4" /></button>
-                <div id="variant-scroll" className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-                  {variants.map((v) => (
-                    <button type="button" key={v._id} onClick={() => setOverrideProduct(v)} onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)} className={`shrink-0 rounded-xl border-2 p-1 transition-all ${v._id === product?._id ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}>
-                      {v.images?.[0] ? (
-                        <Image src={v.images[0]} alt={v.name} className="h-20 w-16 rounded-lg object-cover" width={48} height={48} />
-                      ) : (
-                        <div className="flex h-20 w-16 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
-                      )}
-                    </button>
-                  ))}
+                <div id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
+                  {currentUser?.role === 'admin' ? (
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleVariantDragEnd}>
+                      <SortableContext items={orderedVariants.map((v) => v._id)} strategy={horizontalListSortingStrategy}>
+                        <div className="flex items-center gap-1.5">
+                          {orderedVariants.map((v) => (
+                            <SortableVariantThumb
+                              key={v._id}
+                              id={v._id}
+                              active={v._id === product?._id}
+                              name={v.name}
+                              image={v.images?.[0]}
+                              onClick={() => setOverrideProduct(v)}
+                              onHover={() => setHoveredVariant(v)}
+                              onLeave={() => setHoveredVariant(null)}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      {orderedVariants.map((v) => (
+                        <button type="button" key={v._id} onClick={() => setOverrideProduct(v)} onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)} className={`shrink-0 rounded-xl border-2 p-1 transition-all ${v._id === product?._id ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}>
+                          {v.images?.[0] ? (
+                            <Image src={v.images[0]} alt={v.name} className="h-20 w-16 rounded-lg object-cover" width={48} height={48} />
+                          ) : (
+                            <div className="flex h-20 w-16 items-center justify-center rounded-lg bg-muted text-[8px] text-muted-foreground leading-tight text-center p-0.5">{v.name.slice(-12)}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronRight className="h-4 w-4" /></button>
               </div>
               {hoveredVariant?.images?.[0] && (
                 <div className="hidden sm:block absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                   <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-fill" />
-                  <p className="mt-1 text-center text-[10px] text-muted-foreground truncate max-w-[176px]">{hoveredVariant.name}</p>
+                  <p className="mt-1 text-center text-[10px] text-muted-foreground truncate max-w-44">{hoveredVariant.name}</p>
                 </div>
               )}
             </div>
@@ -264,7 +376,7 @@ export default function ProductDetailPage() {
             <div className="mt-1 flex flex-wrap gap-1.5">
               {product.sku && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">{product.sku}</span>
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-primary">Արտիկուլ։ {product.sku}</span>
                 </div>
               )}
               {product.atgCode && (
@@ -370,7 +482,7 @@ export default function ProductDetailPage() {
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0 || maxQty <= 0}
-              onClick={(e) => { const prevQty = cartQty; const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.images?.[0] ?? null }); showUndoCountdownToast({ message: `${product.name} ավելացվել է`, onUndo: () => { if (prevQty <= 0) removeItem(product._id); else updateQuantity(product._id, prevQty); } }); }}>
+              onClick={(e) => { const prevQty = cartQty; const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.images?.[0] ?? null }); showUndoCountdownToast({ message: '🛒 Ապրանքը տեղափոխվեց զամբյուղ', description: `${product.name} · քանակ ${qty}`, undoLabel: 'Վերադարձնել', onUndo: () => { if (prevQty <= 0) removeItem(product._id); else updateQuantity(product._id, prevQty); } }); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">

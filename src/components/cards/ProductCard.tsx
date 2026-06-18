@@ -108,7 +108,9 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
     for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku });
     flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: normalizedImage ?? image ?? null });
     showUndoCountdownToast({
-      message: `${name} ավելացվել է`,
+      message: 'Ապրանքը տեղափոխվեց զամբյուղ',
+      description: `${name} · քանակ ${qty}`,
+      undoLabel: 'Վերադարձնել',
       onUndo: () => {
         if (cartQty <= 0) removeItem(id);
         else updateQuantity(id, cartQty);

@@ -124,7 +124,9 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                   addItem({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null });
                   flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.image ?? null });
                   showUndoCountdownToast({
-                    message: `${product.name} ավելացվել է զամբյուղում`,
+                    message: 'Ապրանքը տեղափոխվեց զամբյուղ',
+                    description: `${product.name} · 1 հատ`,
+                    undoLabel: 'Վերադարձնել',
                     onUndo: () => {
                       if (prevQty <= 0) removeItem(product.id);
                       else updateQuantity(product.id, prevQty);

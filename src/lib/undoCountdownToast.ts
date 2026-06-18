@@ -5,6 +5,8 @@ interface UndoCountdownOptions {
   onUndo: () => void;
   durationMs?: number;
   undoLabel?: string;
+  description?: string | ((remainingSeconds: number) => string);
+  countdownHint?: string | ((remainingSeconds: number) => string);
 }
 
 export function showUndoCountdownToast(options: UndoCountdownOptions) {
@@ -13,6 +15,8 @@ export function showUndoCountdownToast(options: UndoCountdownOptions) {
     onUndo,
     durationMs = 4000,
     undoLabel = 'Չեղարկել',
+    description,
+    countdownHint = (remainingSeconds: number) => `Չեղարկելու համար՝ ${remainingSeconds}վ`,
   } = options;
 
   const totalSeconds = Math.max(1, Math.ceil(durationMs / 1000));
@@ -28,10 +32,14 @@ export function showUndoCountdownToast(options: UndoCountdownOptions) {
   };
 
   const render = () => {
-    toast(`${message} (${remaining})`, {
+    const descriptionText = typeof description === 'function' ? description(remaining) : description;
+    const hintText = typeof countdownHint === 'function' ? countdownHint(remaining) : countdownHint;
+
+    toast(message, {
       id: toastId,
       duration: 1200,
       className: 'flex flex-col items-start gap-2 [&_button]:mt-1 [&_button]:self-start',
+      description: descriptionText ? `${descriptionText} · ${hintText}` : hintText,
       action: { label: undoLabel, onClick: undo },
     });
   };

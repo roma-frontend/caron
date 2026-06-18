@@ -104,6 +104,7 @@ export default defineSchema(
     qtyStep: v.optional(v.number()),
     atgCode: v.optional(v.string()),
     variantGroup: v.optional(v.string()),
+    variantOrder: v.optional(v.number()),
     isActive: v.boolean(),
     isFeatured: v.optional(v.boolean()),
     showInPromotions: v.optional(v.boolean()),

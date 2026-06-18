@@ -411,7 +411,7 @@ export const getWholesaleDiscounted = query({
 export const create = mutation({
   args: {
     sessionToken: v.string(),
-    name: v.string(), slug: v.string(), description: v.string(), price: v.number(),
+    name: v.string(), slug: v.string(), description: v.string(), price: v.optional(v.number()),
     costPrice: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
@@ -431,7 +431,10 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { sessionToken: _, ...data } = args;
+    const { sessionToken, ...data } = args;
+    void sessionToken;
+    const finalPrice = data.price ?? 0;
+    data.price = finalPrice;
     const now = Date.now();
     if (data.sku) {
       data.sku = data.sku.trim();
@@ -440,7 +443,7 @@ export const create = mutation({
         throw new Error(`Արտիկուլ "${data.sku}" արդեն գոյություն ունի`);
       }
     }
-    if (data.wholesalePrice === undefined) data.wholesalePrice = data.price;
+    if (data.wholesalePrice === undefined) data.wholesalePrice = finalPrice;
     if (data.showInPromotions === undefined && data.compareAtPrice && data.compareAtPrice > data.price) {
       data.showInPromotions = true;
     }
@@ -480,7 +483,14 @@ export const create = mutation({
       if (!generatedSku) throw new Error('Չհաջողվեց ստեղծել եզակի արտիկուլ');
       data.sku = generatedSku;
     }
-    return await ctx.db.insert('products', { ...data, createdAt: now, updatedAt: now });
+    const createPayload: ProductInsert = {
+      ...data,
+      price: finalPrice,
+      wholesalePrice: data.wholesalePrice ?? finalPrice,
+      createdAt: now,
+      updatedAt: now,
+    };
+    return await ctx.db.insert('products', createPayload);
   },
 });
 
@@ -511,7 +521,8 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
-    const { id, sessionToken: _, stock, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, showInPromotions, clearBrand, ...rest } = args;
+    const { id, sessionToken, stock, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, showInPromotions, clearBrand, ...rest } = args;
+    void sessionToken;
     if (clearBrand) { rest.brand = undefined; }
     const rAttrs = (rest.attributes ?? {}) as Record<string, unknown>;
       if (rest.brand && rAttrs.brand !== rest.brand) rAttrs.brand = rest.brand;
@@ -959,6 +970,62 @@ export const getVariantGroup = query({
       .query('products')
       .withIndex('by_variant_group', (q) => q.eq('variantGroup', args.variantGroup))
       .take(50);
-    return products.filter((p) => p.isActive);
+    return products
+      .filter((p) => p.isActive)
+      .sort((a, b) => {
+        const ao = a.variantOrder ?? Number.MAX_SAFE_INTEGER;
+        const bo = b.variantOrder ?? Number.MAX_SAFE_INTEGER;
+        if (ao !== bo) return ao - bo;
+        return a.name.localeCompare(b.name);
+      });
+  },
+});
+
+export const reorderVariantGroup = mutation({
+  args: {
+    sessionToken: v.string(),
+    variantGroup: v.string(),
+    items: v.array(v.object({ id: v.id('products'), order: v.number() })),
+  },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    if (!args.variantGroup || args.items.length === 0) return;
+
+    const ids = new Set(args.items.map((i) => i.id));
+    const products = await Promise.all(args.items.map((i) => ctx.db.get(i.id)));
+    for (const p of products) {
+      if (!p) throw new Error('Variant not found');
+      if (p.variantGroup !== args.variantGroup) {
+        throw new Error('All items must belong to the same variant group');
+      }
+    }
+
+    const now = Date.now();
+    await Promise.all(
+      args.items.map((item) =>
+        ctx.db.patch(item.id, {
+          variantOrder: item.order,
+          updatedAt: now,
+        }),
+      ),
+    );
+
+    // Keep non-mentioned items after mentioned ones preserving their current order.
+    const rest = await ctx.db
+      .query('products')
+      .withIndex('by_variant_group', (q) => q.eq('variantGroup', args.variantGroup))
+      .take(100);
+    const trailing = rest
+      .filter((p) => !ids.has(p._id))
+      .sort((a, b) => (a.variantOrder ?? Number.MAX_SAFE_INTEGER) - (b.variantOrder ?? Number.MAX_SAFE_INTEGER));
+
+    await Promise.all(
+      trailing.map((p, idx) =>
+        ctx.db.patch(p._id, {
+          variantOrder: args.items.length + idx,
+          updatedAt: now,
+        }),
+      ),
+    );
   },
 });

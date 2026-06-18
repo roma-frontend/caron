@@ -17,6 +17,9 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
@@ -105,6 +108,22 @@ type AdminProductItem = {
   isFeatured?: boolean;
   attributes?: Record<string, unknown>;
 };
+
+function SortableProductShell({ id, disabled, children }: { id: string; disabled: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.65 : 1,
+    zIndex: isDragging ? 30 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={disabled ? '' : 'touch-none'}>
+      {children}
+    </div>
+  );
+}
 
 function formatAttributeValue(value: unknown): string {
   if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
@@ -557,8 +576,10 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
 
 export default function AdminProductsPage() {
   const { sessionToken } = useAuth();
+  const reorderVariantGroup = useMutation(api.products.reorderVariantGroup);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ADMIN_PRODUCTS_PAGE_SIZE);
+  const [groupOrders, setGroupOrders] = useState<Record<string, string[]>>({});
   const products = useQuery(api.products.list, { limit: ADMIN_PRODUCTS_FETCH_LIMIT });
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
@@ -635,7 +656,76 @@ export default function AdminProductsPage() {
     window.localStorage.setItem(ADMIN_PRODUCTS_VIEW_KEY, viewMode);
   }, [viewMode]);
 
-  const visibleProducts = filtered?.slice(0, visibleCount);
+  const orderedFiltered = useMemo(() => {
+    if (!filtered) return filtered;
+    const originalIndex = new Map(filtered.map((p, idx) => [String(p._id), idx]));
+
+    return [...filtered].sort((a, b) => {
+      if (!a.variantGroup || a.variantGroup !== b.variantGroup) {
+        return (originalIndex.get(String(a._id)) ?? 0) - (originalIndex.get(String(b._id)) ?? 0);
+      }
+
+      const order = groupOrders[a.variantGroup];
+      if (!order || order.length === 0) {
+        return (originalIndex.get(String(a._id)) ?? 0) - (originalIndex.get(String(b._id)) ?? 0);
+      }
+
+      const ai = order.indexOf(String(a._id));
+      const bi = order.indexOf(String(b._id));
+      const an = ai >= 0 ? ai : Number.MAX_SAFE_INTEGER;
+      const bn = bi >= 0 ? bi : Number.MAX_SAFE_INTEGER;
+      if (an !== bn) return an - bn;
+      return (originalIndex.get(String(a._id)) ?? 0) - (originalIndex.get(String(b._id)) ?? 0);
+    });
+  }, [filtered, groupOrders]);
+
+  const visibleProducts = orderedFiltered?.slice(0, visibleCount);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !visibleProducts) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const activeProduct = visibleProducts.find((p) => String(p._id) === activeId);
+    const overProduct = visibleProducts.find((p) => String(p._id) === overId);
+    if (!activeProduct || !overProduct) return;
+
+    const group = activeProduct.variantGroup;
+    if (!group || group !== overProduct.variantGroup) {
+      toast.error('Կարելի է տեղափոխել միայն նույն variant group-ի ներսում');
+      return;
+    }
+
+    const currentGroupIds = visibleProducts
+      .filter((p) => p.variantGroup === group)
+      .map((p) => String(p._id));
+    const oldIndex = currentGroupIds.indexOf(activeId);
+    const newIndex = currentGroupIds.indexOf(overId);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const nextGroupIds = arrayMove(currentGroupIds, oldIndex, newIndex);
+    const prevOrder = groupOrders[group];
+    setGroupOrders((prev) => ({ ...prev, [group]: nextGroupIds }));
+
+    if (!sessionToken) {
+      toast.error('Սեսիան բացակայում է');
+      return;
+    }
+
+    try {
+      await reorderVariantGroup({
+        sessionToken,
+        variantGroup: group,
+        items: nextGroupIds.map((id, order) => ({ id: id as Id<'products'>, order })),
+      });
+      toast.success('Հերթականությունը պահպանվեց');
+    } catch (error) {
+      setGroupOrders((prev) => ({ ...prev, [group]: prevOrder ?? currentGroupIds }));
+      toast.error(toArmenianUpdateError(error));
+    }
+  };
 
   return (
     <div>
@@ -719,13 +809,29 @@ export default function AdminProductsPage() {
       <p className="mb-4 text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
 
       {viewMode === 'grid' ? (
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
-          {visibleProducts?.map((p, i) => <AdminProductCard key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} />)}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={visibleProducts?.map((p) => String(p._id)) ?? []} strategy={rectSortingStrategy}>
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
+              {visibleProducts?.map((p, i) => (
+                <SortableProductShell key={p._id} id={String(p._id)} disabled={!p.variantGroup}>
+                  <AdminProductCard product={p} sessionToken={sessionToken ?? ''} index={i} />
+                </SortableProductShell>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       ) : (
-        <div className="flex flex-col gap-3">
-          {visibleProducts?.map((p, i) => <AdminProductListRow key={p._id} product={p} sessionToken={sessionToken ?? ''} index={i} attrMetaMap={attrMetaMap} attrDefsByCategoryMap={attrDefsByCategoryMap} />)}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={visibleProducts?.map((p) => String(p._id)) ?? []} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-3">
+              {visibleProducts?.map((p, i) => (
+                <SortableProductShell key={p._id} id={String(p._id)} disabled={!p.variantGroup}>
+                  <AdminProductListRow product={p} sessionToken={sessionToken ?? ''} index={i} attrMetaMap={attrMetaMap} attrDefsByCategoryMap={attrDefsByCategoryMap} />
+                </SortableProductShell>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {filtered?.length === 0 && (

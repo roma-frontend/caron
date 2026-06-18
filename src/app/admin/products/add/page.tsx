@@ -400,7 +400,7 @@ function StepPricing() {
     <ChevronSection title="2. Գնային տվյալներ">
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Մանրածախ (֏) *</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
+          <div><Label>Մանրածախ (֏)</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
           <div><Label>Մեծածախ (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -513,8 +513,6 @@ export default function AddProductPage() {
     if (!(d.name as string | undefined)?.trim()) missing.push('Ապրանքի անուն');
     if (!(d.slug as string | undefined)?.trim()) missing.push('Slug');
     if (!(d.categoryId as string | undefined)) missing.push('Կատեգորիա');
-    if (!(d.price as string | undefined)) missing.push('Մանրածախ գին');
-    if (!(d.wholesalePrice as string | undefined)) missing.push('Մեծածախ գին');
     if (!(d.stock as string | undefined)) missing.push('Քանակ');
     if (Object.keys(attrs).length === 0) missing.push('Բնութագրեր');
 
@@ -542,9 +540,9 @@ export default function AddProductPage() {
       slug: data.slug as string,
       description: (data.description as string) || '',
       categoryId: data.categoryId as Id<'categories'>,
-      price: Number(data.price),
+      price: data.price && String(data.price).trim() !== '' ? Number(data.price) : undefined,
       costPrice: data.costPrice ? Number(data.costPrice) : undefined,
-      wholesalePrice: data.wholesalePrice ? Number(data.wholesalePrice) : undefined,
+      wholesalePrice: data.wholesalePrice && String(data.wholesalePrice).trim() !== '' ? Number(data.wholesalePrice) : undefined,
       compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : undefined,
       sku: (data.sku as string) || undefined,
       oemNumbers: ((data.oemNumbers as OemEntry[] | undefined) ?? []).length > 0 ? (data.oemNumbers as OemEntry[]) : undefined,

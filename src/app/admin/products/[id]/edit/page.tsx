@@ -65,7 +65,7 @@ export default function EditProductPage() {
       sku: currentProduct.sku,
       price: currentProduct.price,
       costPrice: currentProduct.costPrice,
-      wholesalePrice: currentProduct.wholesalePrice ?? currentProduct.price,
+      wholesalePrice: currentProduct.wholesalePrice,
       retailDiscount: currentProduct.retailDiscount,
       wholesaleDiscount: currentProduct.wholesaleDiscount,
       brand: currentProduct.brand,
@@ -117,13 +117,15 @@ export default function EditProductPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const retailPrice = form.price != null && String(form.price).trim() !== '' ? Number(form.price) : undefined;
+      const wholesalePrice = form.wholesalePrice != null && String(form.wholesalePrice).trim() !== '' ? Number(form.wholesalePrice) : undefined;
       await update({
         sessionToken: sessionToken ?? '',
         id: productId,
         name: form.name,
-        price: Number(form.price),
+        price: retailPrice,
         costPrice: form.costPrice ? Number(form.costPrice) : undefined,
-        wholesalePrice: form.wholesalePrice ? Number(form.wholesalePrice) : undefined,
+        wholesalePrice,
         retailDiscount: form.retailDiscount != null && form.retailDiscount > 0 ? Number(form.retailDiscount) : undefined,
         wholesaleDiscount: form.wholesaleDiscount != null && form.wholesaleDiscount > 0 ? Number(form.wholesaleDiscount) : undefined,
         clearBrand: !form.brand,
@@ -234,8 +236,8 @@ export default function EditProductPage() {
 
             {/* Prices */}
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Մանրածախ գին (֏)</Label><Input {...numericInputProps(true)} value={form.price ?? ''} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))} className="h-11" /></div>
-              <div><Label>Մեծածախ գին (֏)</Label><Input {...numericInputProps(true)} value={form.wholesalePrice ?? ''} onChange={(e) => setForm((f) => ({ ...f, wholesalePrice: Number(e.target.value) }))} className="h-11" /></div>
+              <div><Label>Մանրածախ գին (֏)</Label><Input {...numericInputProps(true)} value={form.price ?? ''} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value ? Number(e.target.value) : undefined }))} className="h-11" /></div>
+              <div><Label>Մեծածախ գին (֏)</Label><Input {...numericInputProps(true)} value={form.wholesalePrice ?? ''} onChange={(e) => setForm((f) => ({ ...f, wholesalePrice: e.target.value ? Number(e.target.value) : undefined }))} className="h-11" /></div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

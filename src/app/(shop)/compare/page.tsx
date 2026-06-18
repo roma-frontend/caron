@@ -112,7 +112,7 @@ export default function ComparePage() {
               <td className="p-3"></td>
               {items.map((item) => (
                 <td key={item.id} className="p-3 text-center">
-                  <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { const prevQty = cartItems.find((i) => i.id === item.id)?.quantity ?? 0; addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); showUndoCountdownToast({ message: 'Ավելացվել է զամբյուղում', onUndo: () => { if (prevQty <= 0) removeItem(item.id); else updateQuantity(item.id, prevQty); } }); }}>
+                  <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { const prevQty = cartItems.find((i) => i.id === item.id)?.quantity ?? 0; addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); showUndoCountdownToast({ message: '🛒 Ապրանքը տեղափոխվեց զամբյուղ', description: `${item.name} · 1 հատ`, undoLabel: 'Վերադարձնել', onUndo: () => { if (prevQty <= 0) removeItem(item.id); else updateQuantity(item.id, prevQty); } }); }}>
                     <ShoppingCart className="h-3.5 w-3.5" /> {'Ավելացնել'}
                   </Button>
                 </td>

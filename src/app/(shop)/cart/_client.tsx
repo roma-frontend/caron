@@ -83,7 +83,9 @@ export default function CartPage() {
     });
 
     showUndoCountdownToast({
-      message: `Զամբյուղից ${removedItems.length} ապրանք հեռացվեց`,
+      message: `Զամբյուղը մաքրվեց՝ ${removedItems.length} ապրանք`,
+      description: 'Ցանկանո՞ւմ եք վերականգնել ջնջված ապրանքները',
+      undoLabel: 'Վերականգնել բոլորը',
       onUndo: () => {
         removedItems.forEach(restoreCartItem);
       },
@@ -113,7 +115,9 @@ export default function CartPage() {
 
     if (removedItem) {
       showUndoCountdownToast({
-        message: `${name} հեռացվեց`,
+        message: '🗑️ Ապրանքը հեռացվեց զամբյուղից',
+        description: name,
+        undoLabel: 'Վերադարձնել',
         onUndo: () => restoreCartItem(removedItem),
       });
     }
