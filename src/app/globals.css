@@ -486,13 +486,13 @@
 /* Glassmorphism Header */
 .glass-header {
   background: oklch(1 0 0 / 1);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-bottom: 1px solid oklch(0 0 0 / 0.06);
   box-shadow: 0 1px 3px oklch(0 0 0 / 0.04);
 }
 .dark .glass-header {
-  background: oklch(0.22 0.006 250 / 0.9);
+  background: oklch(0.22 0.006 250 / 1);
   border-bottom: 1px solid oklch(1 0 0 / 0.06);
   box-shadow: 0 1px 3px oklch(0 0 0 / 0.2);
 }

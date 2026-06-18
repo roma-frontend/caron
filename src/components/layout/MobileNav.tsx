@@ -31,9 +31,14 @@ export function MobileNav() {
         const href = item.auth ? (mounted && user ? '/admin' : '/login') : item.href;
         const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
         const count = mounted ? (item.badge === 'cart' ? cartCount : item.badge === 'fav' ? favCount : 0) : 0;
+        const iconDataAttrs = item.badge === 'cart'
+          ? { 'data-mobile-cart-icon': '' }
+          : item.badge === 'fav'
+            ? { 'data-mobile-fav-icon': '' }
+            : {};
         return (
           <Link key={item.label} href={href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
-            <item.icon className="h-5 w-5" />
+            <item.icon className="h-5 w-5" {...iconDataAttrs} />
             {item.label}
             {count > 0 && <span className="absolute left-1/2 -translate-x-1/2 top-1 ml-3 rounded-full bg-primary px-1 min-w-[14px] text-[8px] font-bold text-primary-foreground leading-[14px] text-center">{count}</span>}
           </Link>

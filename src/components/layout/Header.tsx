@@ -82,13 +82,14 @@ export function Header() {
   })();
 
   return (
-    <div>
-      <div ref={announcementRef} className="overflow-hidden" style={{ height: showAnnouncement ? undefined : '0.375rem' }}>
-        {showAnnouncement && (
-          <AnnouncementBar raw={announcementBar} phone={settings?.phone} />
-        )}
-      </div>
-      <header className="glass-header sticky top-0 w-full" style={{ zIndex: 'var(--z-sticky)', height: 'var(--header-base-height)' }}>
+    <>
+      <div className="fixed inset-x-0 top-0" style={{ zIndex: 'var(--z-sticky)' }}>
+        <div ref={announcementRef} className="overflow-hidden" style={{ height: showAnnouncement ? undefined : '0' }}>
+          {showAnnouncement && (
+            <AnnouncementBar raw={announcementBar} phone={settings?.phone} />
+          )}
+        </div>
+        <header className="glass-header w-full" style={{ height: 'var(--header-base-height)' }}>
         <div className="mx-auto flex h-full items-center justify-between gap-1 px-4" style={{ maxWidth: 'var(--container-max)' }}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -154,7 +155,7 @@ export function Header() {
             <ThemeToggle />
             <Link href="/favorites">
               <Button variant="ghost" size="icon" className="hidden sm:inline-flex group/fav" aria-label={NAV.favorites} suppressHydrationWarning>
-                <Heart className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors group-hover/fav:fill-red-500 group-hover/fav:text-red-500 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
+                <Heart data-fav-icon className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors group-hover/fav:fill-red-500 group-hover/fav:text-red-500 ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
               </Button>
             </Link>
             <Link href="/cart">
@@ -173,7 +174,11 @@ export function Header() {
             </button>
           </div>
         </div>
-      </header>
+        </header>
+      </div>
+
+      {/* Keeps content below a fixed header + optional announcement bar */}
+      <div aria-hidden="true" style={{ height: 'var(--header-height)' }} />
 
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
@@ -257,6 +262,6 @@ export function Header() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

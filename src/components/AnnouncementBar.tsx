@@ -51,19 +51,19 @@ function parseAnnouncement(raw: string): AnnouncementConfig {
 
 const STYLES: Record<AnnouncementStyle, { className: string }> = {
   info: {
-    className: 'bg-muted/70 text-foreground border-b border-border/40',
+    className: 'bg-muted text-foreground border-b border-border',
   },
   sale: {
-    className: 'bg-destructive/10 text-foreground border-b-2 border-destructive/40',
+    className: 'bg-destructive text-destructive-foreground border-b border-destructive',
   },
   promo: {
-    className: 'bg-primary/10 text-foreground border-b-2 border-primary/40',
+    className: 'bg-primary text-primary-foreground border-b border-primary',
   },
   dark: {
     className: 'bg-foreground text-background border-b border-foreground',
   },
   custom: {
-    className: 'bg-muted/70 text-foreground border-b border-border/40',
+    className: 'bg-muted text-foreground border-b border-border',
   },
 };
 

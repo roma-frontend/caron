@@ -8,6 +8,8 @@ import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useAuthStore } from '@/store/auth';
+import { flyProductToTarget } from '@/lib/flyToTarget';
+import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -33,7 +35,11 @@ interface QuickViewProps {
 
 export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const cartItems = useCartStore((s) => s.items);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const toggleFav = useFavoritesStore((s) => s.toggle);
+  const favoriteItems = useFavoritesStore((s) => s.items);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product.id));
   const currentUser = useAuthStore((s) => s.user);
   const fallbackWholesale = typeof product.wholesalePrice === 'number' && product.wholesalePrice > 0
@@ -113,17 +119,23 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                 size="lg"
                 className="w-full gap-2 rounded-xl"
                 disabled={!product.inStock}
-                onClick={() => {
+                onClick={(e) => {
+                  const prevQty = cartItems.find((i) => i.id === product.id)?.quantity ?? 0;
                   addItem({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null });
-                  toast.success(`${product.name} ավելացվել է զամբյուղում`, {
-                    action: { label: 'Չեղարկել', onClick: () => useCartStore.getState().removeItem(product.id) },
+                  flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.image ?? null });
+                  showUndoCountdownToast({
+                    message: `${product.name} ավելացվել է զամբյուղում`,
+                    onUndo: () => {
+                      if (prevQty <= 0) removeItem(product.id);
+                      else updateQuantity(product.id, prevQty);
+                    },
                   });
                 }}
               >
                 <ShoppingCart className="h-4 w-4" /> {product.inStock ? 'Ավելացնել' : 'Չկա պահանջվող քանակով'}
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); toast.success(adding ? 'Ավելացվել է' : 'Հեռացվել'); if (adding) setTimeout(() => onOpenChange(false), 350); }}>
+                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product.id); toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.image ?? null }); toast.success('Ավելացվել է'); if (adding) setTimeout(() => onOpenChange(false), 350); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացվել է', onUndo: () => toggleFav(existing) }); } }}>
                   <Heart className={`h-4 w-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
                   {isFav ? 'Ընտրված' : 'Ընտրել'}
                 </Button>

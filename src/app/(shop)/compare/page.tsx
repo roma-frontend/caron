@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X, GitCompareArrows, ShoppingCart, TrendingDown, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
-import { toast } from 'sonner';
+import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from '@/lib/motion';
@@ -13,6 +13,9 @@ import { motion } from '@/lib/motion';
 export default function ComparePage() {
   const { items, remove, clear } = useCompareStore();
   const addToCart = useCartStore((s) => s.addItem);
+  const cartItems = useCartStore((s) => s.items);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const bestPrice = items.length > 0 ? Math.min(...items.map((i) => i.price)) : 0;
 
   if (items.length === 0) {
@@ -109,7 +112,7 @@ export default function ComparePage() {
               <td className="p-3"></td>
               {items.map((item) => (
                 <td key={item.id} className="p-3 text-center">
-                  <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); toast.success('Ավելացվել է զամբյուղում'); }}>
+                  <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { const prevQty = cartItems.find((i) => i.id === item.id)?.quantity ?? 0; addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); showUndoCountdownToast({ message: 'Ավելացվել է զամբյուղում', onUndo: () => { if (prevQty <= 0) removeItem(item.id); else updateQuantity(item.id, prevQty); } }); }}>
                     <ShoppingCart className="h-3.5 w-3.5" /> {'Ավելացնել'}
                   </Button>
                 </td>

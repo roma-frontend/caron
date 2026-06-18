@@ -28,6 +28,8 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ProductImageZoom } from '@/components/ProductImageZoom';
+import { flyProductToTarget } from '@/lib/flyToTarget';
+import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 const StickyBuyBar = dynamic(() => import('@/components/StickyBuyBar').then((m) => ({ default: m.StickyBuyBar })));
 const QuickBuyButton = dynamic(() => import('@/components/QuickBuy').then((m) => ({ default: m.QuickBuyButton })));
 import { useCompareStore } from '@/store/compare';
@@ -92,6 +94,8 @@ export default function ProductDetailPage() {
   const items = useCartStore((s) => s.items);
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const step = product?.qtyStep || 1;
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
   const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
@@ -118,6 +122,7 @@ export default function ProductDetailPage() {
   const { add: addCompare, isInCompare } = useCompareStore();
   const inCompare = isInCompare(product?._id ?? '');
   const toggleFav = useFavoritesStore((s) => s.toggle);
+  const favoriteItems = useFavoritesStore((s) => s.items);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product?._id));
   const imgs = product?.images ?? [];
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
@@ -365,13 +370,13 @@ export default function ProductDetailPage() {
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0 || maxQty <= 0}
-              onClick={() => { const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); toast.success(`${product.name} ավելացվել է զամբյուղում`); }}>
+              onClick={(e) => { const prevQty = cartQty; const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.images?.[0] ?? null }); showUndoCountdownToast({ message: `${product.name} ավելացվել է`, onUndo: () => { if (prevQty <= 0) removeItem(product._id); else updateQuantity(product._id, prevQty); } }); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
             </Button>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Button size="icon" variant="outline" title={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
               className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11 hover:text-red-500 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20'}
-              onClick={() => toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null })}>
+              onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product._id); toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.images?.[0] ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${product.name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}>
               <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
             </Button>
             <Button variant="outline" size="icon" title={inCompare ? 'Համեմատման մեջ' : 'Համեմատել'}

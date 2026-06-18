@@ -10,7 +10,7 @@ import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/lib/formatters';
 import { CART } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
-import { toast } from 'sonner';
+import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -18,10 +18,10 @@ import { ProductCard } from '@/components/cards/ProductCard';
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);
+  const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const setSelectedIds = useCartStore((s) => s.setSelectedIds);
-  const undoRemove = useCartStore((s) => s.undoRemove);
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -38,16 +38,48 @@ export default function CartPage() {
   const selectAll = () => setSelected(new Set(items.map((i) => i.id)));
   const deselectAll = () => setSelected(new Set());
   const allSelected = items.length > 0 && selected.size === items.length;
-  const handleBulkRemove = () => { selected.forEach((id) => removeItem(id)); setSelected(new Set());};
+
+  const restoreCartItem = (item: typeof items[number]) => {
+    const step = item.qtyStep || 1;
+    for (let i = 0; i < item.quantity; i += step) {
+      addItem({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        maxStock: item.maxStock,
+        qtyStep: item.qtyStep,
+        sku: item.sku,
+      });
+    }
+  };
+
+  const handleBulkRemove = () => {
+    const removedItems = items.filter((i) => selected.has(i.id));
+    removedItems.forEach((i) => removeItem(i.id));
+    setSelected(new Set());
+
+    if (removedItems.length > 0) {
+      showUndoCountdownToast({
+        message: `${removedItems.length} ապրանք հեռացվեց`,
+        onUndo: () => {
+          removedItems.forEach(restoreCartItem);
+        },
+      });
+    }
+  };
 
   const featured = useQuery(api.products.getFeatured, {});
 
   const handleRemove = (id: string, name: string) => {
+    const removedItem = items.find((i) => i.id === id);
     removeItem(id);
-    // toast.success(`${name} Ջնջվեց`, {
-    //   action: { label: 'Չեղարկել', onClick: () => undoRemove() },
-    //   duration: 5000,
-    // });
+    if (removedItem) {
+      showUndoCountdownToast({
+        message: `${name} հեռացվեց`,
+        onUndo: () => restoreCartItem(removedItem),
+      });
+    }
   };
 
   if (items.length === 0) {
