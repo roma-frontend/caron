@@ -21,6 +21,32 @@ const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
+function toArmenianUploadError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error ?? '');
+  const msg = raw.toLowerCase();
+
+  if (msg.includes('unauthorized')) return 'Չկա մուտքի իրավունք։ Մուտք գործեք ադմինի հաշվով։';
+  if (msg.includes('too many requests')) return 'Չափազանց շատ հարցումներ են եղել։ Փորձեք մի փոքր ուշ։';
+  if (msg.includes('r2 not configured')) return 'Սերվերում նկարի պահեստավորումը կարգավորված չէ։';
+  if (msg.includes('file type not allowed')) return 'Ֆայլի այս տեսակը չի թույլատրվում։';
+  if (msg.includes('file too large')) return 'Ֆայլը չափազանց մեծ է (առավելագույնը 10MB)։';
+  if (msg.includes('no file provided')) return 'Ֆայլ չի ընտրվել։';
+  if (msg.includes('upload url missing')) return 'Վերբեռնման հղումը չի գտնվել։';
+
+  return 'Պատկերի վերբեռնումը ձախողվեց։';
+}
+
+function toArmenianUpdateError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error ?? '');
+  const msg = raw.toLowerCase();
+
+  if (msg.includes('not authenticated') || msg.includes('session expired') || msg.includes('unauthorized')) {
+    return 'Մուտքի սեսիան ավարտվել է։ Կրկին մուտք գործեք։';
+  }
+
+  return 'Թարմացումը ձախողվեց։';
+}
+
 function InlineField({ value, onSave, prefix, className, plain }: { value: number; onSave: (v: number) => void; prefix?: string; className?: string; plain?: boolean }) {
   const [editing, setEditing] = useState(false);
   if (editing) {
@@ -55,7 +81,30 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
     <div ref={ref} style={revealStyle(visible, index * 0.05)}>
       <div className="group relative overflow-hidden rounded-2xl border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         {/* Image */}
-        <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const fd = new FormData(); fd.append("file", file); const r = await fetch("/api/upload", { method: "POST", body: fd }); const { url } = await r.json(); await update({ sessionToken, id: product._id, images: [...(product.images||[]), url] }); toast.success("Նկարը ավելացվեց"); } catch { toast.error("Սխալ"); } e.target.value=""; }} />
+        <input
+          ref={imgRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+              const fd = new FormData();
+              fd.append('file', file);
+              const r = await fetch('/api/upload', { method: 'POST', body: fd });
+              const data = await r.json().catch(() => ({} as { error?: string; publicUrl?: string; url?: string }));
+              if (!r.ok) throw new Error(data.error || 'Upload failed');
+              const uploadedUrl = data.publicUrl ?? data.url;
+              if (!uploadedUrl) throw new Error('Upload URL missing');
+              await update({ sessionToken, id: product._id, images: [...(product.images ?? []), uploadedUrl] });
+              toast.success('Նկարը ավելացվեց');
+            } catch (error) {
+              toast.error(toArmenianUploadError(error));
+            }
+            e.target.value = '';
+          }}
+        />
         <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-fill transition-transform duration-500 group-hover:scale-110" />
@@ -101,11 +150,11 @@ function AdminProductCard({ product, sessionToken, index }: { product: { _id: Id
               <h3 className="truncate text-sm font-semibold text-wrap">{product.name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
             </div>
-            <InlineField value={product.price} className="text-md font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch(() => toast.error('Սխալ'))} />
+            <InlineField value={product.price} className="text-md font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             {product.costPrice != null && <span className="text-xs text-muted-foreground">{'Ինքնարժեք'}: {formatPrice(product.costPrice)}</span>}
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
-            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='number'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch(()=>toast.error('Սխալ')); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter')input.blur(); if(ev.key==='Escape'){el.style.display='';input.remove();}}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
+            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='number'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch((error)=>toast.error(toArmenianUpdateError(error))); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter')input.blur(); if(ev.key==='Escape'){el.style.display='';input.remove();}}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
               {product.stock > 0 ? 'Պահեստում է' : 'Անհասանելի'}
             </Badge>
@@ -137,7 +186,30 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
 
   return (
     <div ref={ref} style={revealStyle(visible, index * 0.03)} className="rounded-2xl border bg-card p-3 shadow-card">
-      <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const fd = new FormData(); fd.append('file', file); const r = await fetch('/api/upload', { method: 'POST', body: fd }); const { url } = await r.json(); await update({ sessionToken, id: product._id, images: [...(product.images||[]), url] }); toast.success('Պատկերը վերբեռնվել է'); } catch { toast.error('Սխալ պատկեր վերբեռնելու ժամանակ'); } e.target.value=''; }} />
+      <input
+        ref={imgRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const r = await fetch('/api/upload', { method: 'POST', body: fd });
+            const data = await r.json().catch(() => ({} as { error?: string; publicUrl?: string; url?: string }));
+            if (!r.ok) throw new Error(data.error || 'Upload failed');
+            const uploadedUrl = data.publicUrl ?? data.url;
+            if (!uploadedUrl) throw new Error('Upload URL missing');
+            await update({ sessionToken, id: product._id, images: [...(product.images ?? []), uploadedUrl] });
+            toast.success('Պատկերը վերբեռնվել է');
+          } catch (error) {
+            toast.error(toArmenianUploadError(error));
+          }
+          e.target.value = '';
+        }}
+      />
       <div className="flex items-center gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
@@ -152,10 +224,10 @@ function AdminProductListRow({ product, sessionToken, index }: { product: { _id:
           <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <div className="mt-1 flex items-center gap-2">
-            <InlineField value={product.price} className="text-sm font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch(() => toast.error('Error'))} />
+            <InlineField value={product.price} className="text-sm font-bold text-primary" onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             {product.costPrice != null && <span className="text-xs text-muted-foreground">Ինքնարժեք: {formatPrice(product.costPrice)}</span>}
-            <InlineField value={product.costPrice ?? 0} className="text-xs text-muted-foreground" prefix="Ինքնարժեք: " onSave={(v) => update({ sessionToken, id: product._id, costPrice: v }).catch(() => toast.error('Error'))} />
-            <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch(() => toast.error('Error'))} />
+            <InlineField value={product.costPrice ?? 0} className="text-xs text-muted-foreground" prefix="Ինքնարժեք: " onSave={(v) => update({ sessionToken, id: product._id, costPrice: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
+            <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
           </div>
         </div>
