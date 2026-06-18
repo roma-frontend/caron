@@ -1,7 +1,43 @@
 ﻿import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import type { MutationCtx } from './_generated/server';
+import type { Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
 import { getAdminCaller, getAuthCaller } from './lib/auth';
+
+/**
+ * Add (or subtract, when negative) loyalty points for a customer.
+ * Resolves the loyalty record by userId first, then by email; creates one
+ * if none exists. `points` is clamped so the balance never goes negative and
+ * `totalEarned` only ever grows.
+ */
+async function adjustLoyalty(
+  ctx: MutationCtx,
+  opts: { userId?: Id<'users'>; email: string; points: number },
+): Promise<void> {
+  if (opts.points === 0) return;
+  let rec = null;
+  if (opts.userId) {
+    rec = await ctx.db.query('loyaltyPoints').withIndex('by_user', (q) => q.eq('userId', opts.userId)).first();
+  }
+  if (!rec && opts.email) {
+    rec = await ctx.db.query('loyaltyPoints').withIndex('by_email', (q) => q.eq('email', opts.email)).first();
+  }
+  if (rec) {
+    await ctx.db.patch(rec._id, {
+      points: Math.max(0, rec.points + opts.points),
+      totalEarned: rec.totalEarned + Math.max(0, opts.points),
+    });
+  } else {
+    await ctx.db.insert('loyaltyPoints', {
+      userId: opts.userId,
+      email: opts.email,
+      points: Math.max(0, opts.points),
+      totalEarned: Math.max(0, opts.points),
+      createdAt: Date.now(),
+    });
+  }
+}
 
 export const create = mutation({
   args: {
@@ -307,6 +343,29 @@ export const updateStatus = mutation({
     const prevStatus = order.status;
     const nextStatus = args.status ?? prevStatus;
 
+    // Loyalty accrual: award when an order is delivered, reverse if it is later
+    // cancelled. Gated by store settings; tracked on the order to prevent
+    // double-awarding.
+    const loyaltyPatch: { loyaltyAwarded?: boolean; loyaltyPointsAwarded?: number } = {};
+    if (nextStatus !== prevStatus) {
+      const storeSettings = await ctx.db.query('settings').first();
+      const loyaltyEnabled = !!storeSettings?.enableLoyalty;
+      const loyaltyPercent = storeSettings?.loyaltyPercent ?? 0;
+
+      if (nextStatus === 'delivered' && !order.loyaltyAwarded && loyaltyEnabled && loyaltyPercent > 0) {
+        const pts = Math.round(order.total * loyaltyPercent / 100);
+        if (pts > 0) {
+          await adjustLoyalty(ctx, { userId: order.userId, email: order.customerEmail, points: pts });
+          loyaltyPatch.loyaltyAwarded = true;
+          loyaltyPatch.loyaltyPointsAwarded = pts;
+        }
+      } else if (nextStatus === 'cancelled' && order.loyaltyAwarded && (order.loyaltyPointsAwarded ?? 0) > 0) {
+        await adjustLoyalty(ctx, { userId: order.userId, email: order.customerEmail, points: -(order.loyaltyPointsAwarded ?? 0) });
+        loyaltyPatch.loyaltyAwarded = false;
+        loyaltyPatch.loyaltyPointsAwarded = 0;
+      }
+    }
+
     if (nextStatus !== prevStatus) {
       // Cancelled -> restore stock back to catalog
       if (nextStatus === 'cancelled' && prevStatus !== 'cancelled') {
@@ -370,8 +429,10 @@ export const updateStatus = mutation({
       paymentStatus?: NonNullable<typeof paymentStatus>;
       cancelReason?: string;
       cancelComment?: string;
+      loyaltyAwarded?: boolean;
+      loyaltyPointsAwarded?: number;
       updatedAt: number;
-    } = { updatedAt: Date.now() };
+    } = { updatedAt: Date.now(), ...loyaltyPatch };
     const currentPaymentStatus = order.paymentStatus as NonNullable<typeof paymentStatus> | undefined;
     if (status !== undefined) patch.status = status;
     if (nextStatus === 'cancelled' && cancelReason !== undefined) patch.cancelReason = cancelReason.trim();

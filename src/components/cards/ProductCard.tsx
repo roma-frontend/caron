@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useReveal, useMouseGlow, cardRevealStyle } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Heart, Star, Check, Eye } from 'lucide-react';
+import { ShoppingCart, Heart, Star, Check, Eye, Truck } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
@@ -69,7 +69,6 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const normalizedImage = useMemo(() => normalizeImageUrl(image), [image]);
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
   const cartItems = useCartStore((s) => s.items);
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const favoriteItems = useFavoritesStore((s) => s.items);
@@ -78,7 +77,6 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const settings = useSettings();
   const currentUser = useAuthStore((s) => s.user);
   const step = qtyStep || 1;
-  const [qty, setQty] = useState(step);
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
   const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
   // Product-level wholesale discount only applies to wholesale customers
@@ -97,16 +95,41 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
   const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
-  const maxQty = stock != null ? Math.max(0, stock - cartQty) : Infinity;
   const atLimit = stock != null && cartQty >= stock;
   const detailHref = `/products/${encodeURIComponent(slug ?? id)}`;
+
+  // WB-style: discount percentage shown in a filled badge
+  const discountPct = !isWholesale
+    ? (retailDiscount != null && retailDiscount > 0
+        ? retailDiscount
+        : (compareAtPrice ? discountPercent(price, compareAtPrice) : 0))
+    : (effectiveWholesaleDiscount > 0 && displayPrice < price ? effectiveWholesaleDiscount : 0);
+  const hasDiscount = discountPct > 0;
+
+  // WB-style: delivery signal line (data-driven from store settings)
+  const deliveryText = inStock
+    ? (settings?.deliveryEstimateYerevan?.trim() || 'Առաքում 1-2 օր')
+    : null;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (atLimit) return;
-    for (let i = 0; i < qty; i += step) addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku });
+    addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku });
     flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: normalizedImage ?? image ?? null });
+  };
+
+  const incCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (atLimit) return;
+    addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku });
+  };
+
+  const decCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    updateQuantity(id, cartQty - step);
   };
 
   return (
@@ -123,23 +146,25 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               {atgCode && <p className="text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
               <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2">
                 <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                  <span className="text-sm font-bold text-primary shrink-0">{formatPrice(displayPrice)}</span>
-                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(price)}</span>}
-                  {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive shrink-0">-{retailDiscount}%</span>}
-                  {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary shrink-0">-{effectiveWholesaleDiscount}%</span>}
+                  <span className="text-base font-extrabold tracking-tight text-primary shrink-0">{formatPrice(displayPrice)}</span>
+                  {hasDiscount && <span className="text-xs text-muted-foreground line-through shrink-0">{formatPrice(price)}</span>}
+                  {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white shrink-0">-{discountPct}%</span>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
-                  <div className="flex items-center rounded-lg border h-7">
-                    <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-l-lg disabled:opacity-30">−</button>
-                    <span className="flex h-full w-6 items-center justify-center text-[10px] font-semibold border-x">{qty}</span>
-                    <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-full w-6 items-center justify-center text-xs hover:bg-muted rounded-r-lg disabled:opacity-30">+</button>
-                  </div>
-                  <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock || atLimit} onClick={handleAddToCart}>
-                    <ShoppingCart className="h-3 w-3" />
-                  </Button>
+                  {cartQty > 0 ? (
+                    <div className="flex items-center rounded-lg border border-primary/40 bg-primary/5 h-7">
+                      <button onClick={decCart} aria-label="Պակասեցնել" className="flex h-full w-6 items-center justify-center text-xs text-primary hover:bg-primary/10 rounded-l-lg">−</button>
+                      <span className="flex h-full min-w-6 items-center justify-center px-1 text-[10px] font-bold text-primary">{cartQty}</span>
+                      <button onClick={incCart} disabled={atLimit} aria-label="Ավելացնել" className="flex h-full w-6 items-center justify-center text-xs text-primary hover:bg-primary/10 rounded-r-lg disabled:opacity-30">+</button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={handleAddToCart} aria-label={`Ավելացնել ${name} զամբյուղ`}>
+                      <ShoppingCart className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -241,20 +266,24 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
 
               {reviewCount && reviewCount > 0 ? (
                 <div className="mt-1.5 flex items-center gap-1" aria-label={`Գնահատական: ${rating} աստղ ${reviewCount} կարծիքից`}>
-                  <div className="flex" role="img" aria-label={`${Math.round(rating ?? 0)} 5 աստղից`}>
-                    {[1, 2, 3, 4, 5].map((i) => <Star key={i} className={`h-3 w-3 ${i <= Math.round(rating ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} aria-hidden="true" />)}
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">({reviewCount})</span>
+                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
+                  <span className="text-[11px] font-bold text-foreground">{(rating ?? 0).toFixed(1)}</span>
+                  <span className="text-[11px] text-muted-foreground">· {reviewCount} գնահ.</span>
                 </div>
               ) : null}
 
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span className="text-md font-bold text-primary">{formatPrice(displayPrice)}</span>
-                {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
-                {!isWholesale && retailDiscount != null && retailDiscount > 0 && <span className="text-[10px] font-bold text-destructive">-{retailDiscount}%</span>}
-                {isWholesale && effectiveWholesaleDiscount > 0 && displayPrice < price && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
-                {isWholesale && effectiveWholesaleDiscount > 0 && displayPrice < price && <span className="text-[10px] font-bold text-primary">-{effectiveWholesaleDiscount}%</span>}
+              <div className="mt-2 flex items-end gap-2 flex-wrap">
+                <span className="text-xl font-extrabold tracking-tight text-primary leading-none">{formatPrice(displayPrice)}</span>
+                {hasDiscount && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
+                {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">-{discountPct}%</span>}
               </div>
+
+              {deliveryText && (
+                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Truck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>{deliveryText}</span>
+                </div>
+              )}
 
               {fits && (
                 <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 shadow-xs dark:text-emerald-400">
@@ -270,17 +299,21 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
             </div>
 
               <div className="px-2 pb-2 sm:pb-4">
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center rounded-lg border">
-                  <button onClick={(e) => { e.preventDefault(); setQty(Math.max(step, qty - step)); }} disabled={qty <= step} className="flex h-8 w-7 items-center justify-center text-sm hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
-                  <span className="flex h-8 w-7 items-center justify-center text-xs font-semibold border-x">{qty}</span>
-                  <button onClick={(e) => { e.preventDefault(); setQty(Math.min(maxQty, qty + step)); }} disabled={atLimit || qty >= maxQty} className="flex h-8 w-7 items-center justify-center text-sm hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
+              {cartQty > 0 ? (
+                <div className="flex h-9 items-center justify-between rounded-xl border border-primary/40 bg-primary/5">
+                  <button onClick={decCart} aria-label="Պակասեցնել քանակը" className="flex h-full w-10 items-center justify-center rounded-l-xl text-lg font-medium text-primary transition-colors hover:bg-primary/10">−</button>
+                  <span className="flex items-center gap-1 text-xs font-bold text-primary">
+                    <ShoppingCart className="h-3.5 w-3.5" />{cartQty}
+                  </span>
+                  <button onClick={incCart} disabled={atLimit} aria-label="Ավելացնել քանակը" className="flex h-full w-10 items-center justify-center rounded-r-xl text-lg font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-30">+</button>
                 </div>
-                <Button size="sm" className="flex-1 gap-2 rounded-xl" disabled={!inStock || atLimit} onClick={handleAddToCart}
-                  aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : 'Ապահովված չէ'}>
+              ) : (
+                <Button size="sm" className="w-full gap-2 rounded-xl" disabled={!inStock} onClick={handleAddToCart}
+                  aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : PRODUCT.outOfStock}>
                   <ShoppingCart className="h-4 w-4" />
+                  {PRODUCT.addToCart}
                 </Button>
-              </div>
+              )}
             </div>
             </div>
           </div>

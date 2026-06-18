@@ -54,6 +54,7 @@ export const create = mutation({
     authorName: v.string(),
     rating: v.number(),
     text: v.optional(v.string()),
+    photos: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     if (args.text && args.text.length > 1000) throw new Error('Text too long');
@@ -63,16 +64,41 @@ export const create = mutation({
     if (!args.authorName.trim() || args.authorName.length > 100) {
       throw new Error('Invalid author name');
     }
+    if (args.photos && args.photos.length > 5) throw new Error('Too many photos');
+
+    // "Verified purchase": the logged-in author has an order containing this product.
+    let verified = false;
+    const caller = await getAuthCaller(ctx, args.sessionToken);
+    if (caller) {
+      const orders = await ctx.db
+        .query('orders')
+        .withIndex('by_user', (q) => q.eq('userId', caller._id))
+        .collect();
+      verified = orders.some((o) => o.items.some((it) => it.productId === args.productId));
+    }
+
     const id = await ctx.db.insert('reviews', {
       productId: args.productId,
       authorName: args.authorName,
       rating: args.rating,
       text: args.text,
+      photos: args.photos && args.photos.length > 0 ? args.photos : undefined,
+      verified,
+      helpfulCount: 0,
       isApproved: false,
       createdAt: Date.now(),
     });
     await recomputeRating(ctx, args.productId);
     return id;
+  },
+});
+
+export const markHelpful = mutation({
+  args: { id: v.id('reviews') },
+  handler: async (ctx, args) => {
+    const review = await ctx.db.get(args.id);
+    if (!review) return;
+    await ctx.db.patch(args.id, { helpfulCount: (review.helpfulCount ?? 0) + 1 });
   },
 });
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Minus, Plus, Trash2 } from 'lucide-react';
+import { ShoppingBag, Minus, Plus, Trash2, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/lib/formatters';
@@ -236,6 +236,15 @@ export default function CartPage() {
               <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{CART.shipping}</span><span className="text-muted-foreground">Հաշվարկվում է պատվիրելիս</span></div>
               <Separator />
               <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice)}</span></div>
+              {settings?.enableLoyalty && (settings.loyaltyPercent ?? 0) > 0 && (() => {
+                const orderAmount = selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice;
+                const pts = Math.round(orderAmount * (settings.loyaltyPercent ?? 0) / 100);
+                return pts > 0 ? (
+                  <div className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                    <Gift className="h-4 w-4" /> Կստանաք +{pts} բալ այս պատվերից
+                  </div>
+                ) : null;
+              })()}
               {selected.size > 0 && selected.size < items.length && <p className="text-xs text-muted-foreground text-center">{selected.size} / {items.length} ընտրված</p>}
               {selected.size === 0 ? (
                 <Button variant="cta" size="xl" className="w-full" disabled> Պատվիրել </Button>

@@ -95,6 +95,20 @@ export default function ProductsPage() {
     { initialNumItems: PAGE_SIZE },
   );
 
+  // WB-style auto infinite scroll: load next page when sentinel enters viewport
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || status !== 'CanLoadMore') return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) loadMore(PAGE_SIZE); },
+      { rootMargin: '600px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, PAGE_SIZE]);
+
   // Auto-select category when brand is set from URL — but don't limit results to that category alone
   // We'll show all products with the brand filter applied across all categories
   const [autoCatted, setAutoCatted] = useState(false);
@@ -138,8 +152,21 @@ export default function ProductsPage() {
         }} activeFilters={filters} />
 
         <div className="flex-1 min-w-0 pb-24 lg:pb-0">
-          <div className="mb-5 flex flex-col items-start sm:items-center justify-between gap-3">
-            <SortBar activeFilters={filters} onFilterChange={setFilters} />
+          <div className="mb-5 flex flex-col items-start sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <SortBar activeFilters={filters} onFilterChange={setFilters} />
+              <span className="mx-0.5 hidden h-4 w-px bg-border sm:inline-block" />
+              {[
+                { key: 'stock', label: 'Առկա', active: !!filters.inStockOnly, toggle: () => setFilters({ ...filters, inStockOnly: filters.inStockOnly ? undefined : true }) },
+                { key: 'sale', label: 'Զեղչ', active: !!filters.onSale, toggle: () => setFilters({ ...filters, onSale: filters.onSale ? undefined : true }) },
+                { key: 'rating', label: '4★+', active: filters.minRating === 4, toggle: () => setFilters({ ...filters, minRating: filters.minRating === 4 ? undefined : 4 }) },
+              ].map((chip) => (
+                <button key={chip.key} onClick={chip.toggle}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 ${chip.active ? 'border-transparent bg-primary text-primary-foreground shadow-sm' : 'bg-card text-muted-foreground hover:border-primary/35 hover:text-primary'}`}>
+                  {chip.label}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-1 shrink-0">
               <button onClick={() => setViewMode('grid')} className={`rounded-lg p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`} aria-label="Grid">
                 <LayoutGrid className="h-4 w-4" />
@@ -219,9 +246,12 @@ export default function ProductsPage() {
           {(status === 'LoadingFirstPage' || brandLoading) && <ProductGridSkeleton count={PAGE_SIZE} />}
 
           {status === 'CanLoadMore' && results.length >= PAGE_SIZE && (
-            <div className="mt-8 flex justify-center">
-              <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Տեսնել ավելի'}</Button>
-            </div>
+            <>
+              <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
+              <div className="mt-8 flex justify-center">
+                <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Տեսնել ավելի'}</Button>
+              </div>
+            </>
           )}
 
           {status === 'LoadingMore' && <LoaderInline />}

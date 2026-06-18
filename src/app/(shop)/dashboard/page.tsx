@@ -8,9 +8,11 @@ import { Loader } from '@/components/ui/loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, LogOut, Heart, Clock } from 'lucide-react';
+import { Package, User, ShoppingBag, LogOut, Heart, Clock, Gift } from 'lucide-react';
 import { clearAuthCookie } from '@/actions/auth';
 import { formatDateHy, formatPrice } from '@/lib/formatters';
+import { ReorderButton } from '@/components/ReorderButton';
+import { useSettings } from '@/hooks/useSettings';
 import Link from 'next/link';
 import { api } from '../../../../convex/_generated/api';
 
@@ -20,6 +22,8 @@ export default function DashboardPage() {
   const logoutStore = useAuthStore((s) => s.logout);
   const logoutMutation = useMutation(api.auth.logout);
   const orders = useQuery(api.orders.listByUser, sessionToken ? { sessionToken } : 'skip');
+  const settings = useSettings();
+  const loyalty = useQuery(api.loyalty.getBalance, sessionToken ? { sessionToken } : 'skip');
 
   useEffect(() => {
     if (hydrated && !user) {
@@ -124,6 +128,24 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Loyalty balance */}
+        {settings?.enableLoyalty && (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Gift className="h-5 w-5 text-amber-500" /> Բոնուսային բալեր
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400">{loyalty?.points ?? 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Ընդհանուր վաստակած՝ {loyalty?.totalEarned ?? 0} բալ</p>
+              {(settings.loyaltyPercent ?? 0) > 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">Ստացե՛ք {settings.loyaltyPercent}% բալ յուրաքանչյուր առաքված պատվերից</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Recent Orders */}
@@ -142,9 +164,12 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium">#{o.orderNumber}</p>
                     <p className="text-xs text-muted-foreground">{formatDateHy(o.createdAt)}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold">{formatPrice(o.total)}</p>
-                    <Badge variant={o.status === 'delivered' ? 'default' : 'secondary'} className="text-[10px]">{o.status === 'delivered' ? 'Առաքվել է' : o.status === 'shipped' ? 'Ուղարկվել է' : o.status === 'processing' ? 'Մշակվում է' : o.status === 'cancelled' ? 'Չեղարկվել է' : 'Սպասվում է'}</Badge>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-sm font-bold">{formatPrice(o.total)}</p>
+                      <Badge variant={o.status === 'delivered' ? 'default' : 'secondary'} className="text-[10px]">{o.status === 'delivered' ? 'Առաքվել է' : o.status === 'shipped' ? 'Ուղարկվել է' : o.status === 'processing' ? 'Մշակվում է' : o.status === 'cancelled' ? 'Չեղարկվել է' : 'Սպասվում է'}</Badge>
+                    </div>
+                    <ReorderButton items={o.items.map((it) => ({ productId: it.productId, name: it.name, quantity: it.quantity }))} variant="ghost" label="" className="shrink-0" />
                   </div>
                 </div>
               ))}

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, ArrowLeft } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
+import { ReorderButton } from '@/components/ReorderButton';
 import Link from 'next/link';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -50,6 +51,7 @@ export default function OrdersHistoryPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-primary">{formatPrice(o.total)}</span>
+                <ReorderButton items={o.items.map((it) => ({ productId: it.productId, name: it.name, quantity: it.quantity }))} />
               </div>
             </CardContent>
           </Card>

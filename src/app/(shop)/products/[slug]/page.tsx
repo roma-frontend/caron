@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Share2, Smartphone, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, Check, Truck, Shield, Star, Share2, Smartphone, Bell, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
@@ -22,6 +22,7 @@ import { useRecentlyViewedStore } from '@/store/recentlyViewed';
 import { useAuthStore } from '@/store/auth';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { ProductReviews } from '@/components/ProductReviews';
+import { FrequentlyBoughtTogether } from '@/components/FrequentlyBoughtTogether';
 import dynamic from 'next/dynamic';
 import { PRODUCT } from '@/lib/constants';
 import Link from 'next/link';
@@ -412,6 +413,12 @@ export default function ProductDetailPage() {
             ) : null}
           </div>
 
+          {settings?.enableLoyalty && (settings.loyaltyPercent ?? 0) > 0 && cartPrice > 0 && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+              <Gift className="h-3.5 w-3.5" /> +{Math.round(cartPrice * (settings.loyaltyPercent ?? 0) / 100)} բալ այս գնումից
+            </div>
+          )}
+
           <div className="mt-3">
             {product.stock > 0 && product.stock <= 10 ? (
               <span className="inline-flex items-center gap-1 text-sm font-medium text-orange-600"><Check className="h-4 w-4" /> Միայն {product.stock} հատ պահեստում</span>
@@ -515,6 +522,10 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {settings?.enableCrossSell !== false && (
+        <FrequentlyBoughtTogether base={{ id: product._id, name: product.name, price: product.price, retailDiscount: product.retailDiscount, image: product.images?.[0] ?? null, categoryId: product.categoryId, qtyStep: product.qtyStep, stock: product.stock }} />
+      )}
 
       {settings !== undefined && settings?.enableReviews !== false && <ProductReviews productId={product._id} />}
 

@@ -18,6 +18,7 @@ import type * as customers from "../customers.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_imageUrl from "../lib/imageUrl.js";
+import type * as loyalty from "../loyalty.js";
 import type * as migrations from "../migrations.js";
 import type * as newsletter from "../newsletter.js";
 import type * as notifications from "../notifications.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   filters: typeof filters;
   "lib/auth": typeof lib_auth;
   "lib/imageUrl": typeof lib_imageUrl;
+  loyalty: typeof loyalty;
   migrations: typeof migrations;
   newsletter: typeof newsletter;
   notifications: typeof notifications;

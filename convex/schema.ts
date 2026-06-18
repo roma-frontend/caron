@@ -163,6 +163,8 @@ export default defineSchema(
     cancelReason: v.optional(v.string()),
     cancelComment: v.optional(v.string()),
     notes: v.optional(v.string()),
+    loyaltyAwarded: v.optional(v.boolean()),
+    loyaltyPointsAwarded: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -193,6 +195,9 @@ export default defineSchema(
     authorName: v.string(),
     rating: v.number(),
     text: v.optional(v.string()),
+    photos: v.optional(v.array(v.string())),
+    verified: v.optional(v.boolean()),
+    helpfulCount: v.optional(v.number()),
     isApproved: v.boolean(),
     createdAt: v.number(),
   })

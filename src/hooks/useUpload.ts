@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export function useUpload() {
+export function useUpload(endpoint: string = '/api/upload') {
   const [uploading, setUploading] = useState(false);
 
   const upload = async (file: File): Promise<string | null> => {
@@ -10,7 +10,7 @@ export function useUpload() {
       const fd = new FormData();
       fd.append('file', file);
 
-      const res = await fetch('/api/upload', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         body: fd,
       });
