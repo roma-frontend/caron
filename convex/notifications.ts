@@ -22,7 +22,7 @@ export const sendOrderNotification = internalAction({
     if (!token || !chatId) return;
 
     const text = [
-      `<b>🛒 Նոր պատվեր</b>`,
+      `<b>Նոր պատվեր</b>`,
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `<b>📝 Պատվերի համար՝</b> <code>${args.orderNumber}</code>`,
