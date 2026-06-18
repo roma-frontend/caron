@@ -28,7 +28,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ProductImageZoom } from '@/components/ProductImageZoom';
-import { flyProductToTarget } from '@/lib/flyToTarget';
+import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 const StickyBuyBar = dynamic(() => import('@/components/StickyBuyBar').then((m) => ({ default: m.StickyBuyBar })));
 const QuickBuyButton = dynamic(() => import('@/components/QuickBuy').then((m) => ({ default: m.QuickBuyButton })));
@@ -376,7 +376,7 @@ export default function ProductDetailPage() {
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Button size="icon" variant="outline" title={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
               className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11 hover:text-red-500 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20'}
-              onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product._id); toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.images?.[0] ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${product.name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}>
+              onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product._id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.images?.[0] ?? null }); toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.images?.[0] ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${product.name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}>
               <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
             </Button>
             <Button variant="outline" size="icon" title={inCompare ? 'Համեմատման մեջ' : 'Համեմատել'}

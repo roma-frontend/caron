@@ -5,6 +5,8 @@ const TARGET_SELECTORS: Record<FlyTargetKind, string[]> = {
   favorites: ['[data-fav-icon]', '[data-mobile-fav-icon]'],
 };
 
+const SOURCE_SELECTORS = '[data-product-fly-source], [data-product-card], [data-cart-row], [data-favorite-card], article, .group';
+
 function isRectInViewport(rect: DOMRect): boolean {
   return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth;
 }
@@ -20,8 +22,12 @@ function isRenderableImageSrc(src: string | null | undefined): boolean {
     || value.startsWith('blob:');
 }
 
+function resolveSourceElement(triggerEl: HTMLElement): HTMLElement {
+  return (triggerEl.closest(SOURCE_SELECTORS) as HTMLElement | null) ?? triggerEl;
+}
+
 function getBestImageElement(triggerEl: HTMLElement): HTMLImageElement | null {
-  const sourceRoot = (triggerEl.closest('[data-product-fly-source], [data-product-card], article, .group, [data-product-content]') as HTMLElement | null) ?? triggerEl;
+  const sourceRoot = resolveSourceElement(triggerEl);
   const candidates = Array.from(sourceRoot.querySelectorAll('img')) as HTMLImageElement[];
   if (candidates.length === 0) return null;
 
@@ -74,12 +80,65 @@ function resolveImageSource(triggerEl: HTMLElement, explicitSrc?: string | null)
 }
 
 function resolveSourceRect(triggerEl: HTMLElement): DOMRect {
-  const sourceEl = triggerEl.closest('[data-product-fly-source], [data-product-card], article, .group') as HTMLElement | null;
-  if (sourceEl) {
-    const rect = sourceEl.getBoundingClientRect();
-    if (rect.width >= 120 && rect.height >= 120) return rect;
-  }
+  const sourceEl = resolveSourceElement(triggerEl);
+  const rect = sourceEl.getBoundingClientRect();
+  if (rect.width >= 120 && rect.height >= 120) return rect;
   return triggerEl.getBoundingClientRect();
+}
+
+export function flyProductAway(options: {
+  triggerEl: HTMLElement | null;
+  imageSrc?: string | null;
+}) {
+  const { triggerEl } = options;
+  if (!triggerEl || typeof window === 'undefined') return;
+
+  const sourceEl = resolveSourceElement(triggerEl);
+  const rect = sourceEl.getBoundingClientRect();
+  if (rect.width < 2 || rect.height < 2) return;
+
+  const ghost = sourceEl.cloneNode(true) as HTMLElement;
+  ghost.style.position = 'fixed';
+  ghost.style.left = `${rect.left}px`;
+  ghost.style.top = `${rect.top}px`;
+  ghost.style.width = `${rect.width}px`;
+  ghost.style.height = `${rect.height}px`;
+  ghost.style.margin = '0';
+  ghost.style.transformOrigin = 'center center';
+  ghost.style.pointerEvents = 'none';
+  ghost.style.zIndex = '9999';
+  ghost.style.overflow = 'hidden';
+  ghost.style.boxShadow = '0 24px 60px -24px rgba(0, 0, 0, 0.34)';
+  ghost.style.background = 'var(--card)';
+  ghost.style.borderRadius = getComputedStyle(sourceEl).borderRadius || '18px';
+
+  document.body.appendChild(ghost);
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    ghost.remove();
+    return;
+  }
+
+  const dx = Math.max(36, Math.min(96, rect.width * 0.16));
+  const dy = -Math.max(22, Math.min(64, rect.height * 0.12));
+  const durationMs = 520;
+
+  const animation = ghost.animate(
+    [
+      { transform: 'translate(0, 0) scale(1)', opacity: 1, filter: 'blur(0px)' },
+      { transform: `translate(${dx * 0.55}px, ${dy * 0.55}px) scale(0.96)`, opacity: 0.82, filter: 'blur(0.4px)' },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.88)`, opacity: 0, filter: 'blur(1.5px)' },
+    ],
+    {
+      duration: durationMs,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      fill: 'forwards',
+    },
+  );
+
+  const cleanup = () => ghost.remove();
+  animation.addEventListener('finish', cleanup, { once: true });
+  animation.addEventListener('cancel', cleanup, { once: true });
 }
 
 export function flyProductToTarget(options: {

@@ -11,6 +11,7 @@ import { formatPrice } from '@/lib/formatters';
 import { CART } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
+import { flyProductAway } from '@/lib/flyToTarget';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -71,8 +72,9 @@ export default function CartPage() {
 
   const featured = useQuery(api.products.getFeatured, {});
 
-  const handleRemove = (id: string, name: string) => {
+  const handleRemove = (id: string, name: string, triggerEl?: HTMLElement | null) => {
     const removedItem = items.find((i) => i.id === id);
+    if (triggerEl) flyProductAway({ triggerEl });
     removeItem(id);
     if (removedItem) {
       showUndoCountdownToast({
@@ -121,7 +123,7 @@ export default function CartPage() {
 
           {/* Items */}
           {items.map((item) => (
-            <div key={item.id} className={`group relative flex items-center gap-3 sm:gap-4 rounded-2xl border bg-card p-3 sm:p-4 shadow-sm transition-all duration-200 hover:shadow-md ${selected.has(item.id) ? "ring-2 ring-primary/30 bg-primary/5" : ""}`}>
+            <div key={item.id} data-cart-row className={`group relative flex items-center gap-3 sm:gap-4 rounded-2xl border bg-card p-3 sm:p-4 shadow-sm transition-all duration-200 hover:shadow-md ${selected.has(item.id) ? "ring-2 ring-primary/30 bg-primary/5" : ""}`}>
               {/* Checkbox */}
               <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)}
                 className="h-[18px] w-[18px] shrink-0 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
@@ -137,7 +139,7 @@ export default function CartPage() {
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <Link href={`/products/${item.id}`} className="text-sm font-medium leading-snug line-clamp-2 transition-colors hover:text-primary">{item.name}</Link>
-                  <button onClick={() => handleRemove(item.id, item.name)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10" aria-label="Ջնջել">
+                  <button onClick={(e) => handleRemove(item.id, item.name, e.currentTarget)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10" aria-label="Ջնջել">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -145,7 +147,7 @@ export default function CartPage() {
 
                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-0.5 rounded-full border bg-muted/30 p-0.5">
-                    <button onClick={() => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { handleRemove(item.id, item.name); } else { updateQuantity(item.id, item.quantity - step); } }}
+                    <button onClick={(e) => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { handleRemove(item.id, item.name, e.currentTarget); } else { updateQuantity(item.id, item.quantity - step); } }}
                       disabled={item.quantity <= (item.qtyStep || 1)}
                       className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
                       <Minus className="h-3 w-3" />

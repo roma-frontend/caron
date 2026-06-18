@@ -8,7 +8,7 @@ import { formatPrice, discountPercent } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useAuthStore } from '@/store/auth';
-import { flyProductToTarget } from '@/lib/flyToTarget';
+import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
 import Image from 'next/image';
@@ -135,7 +135,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                 <ShoppingCart className="h-4 w-4" /> {product.inStock ? 'Ավելացնել' : 'Չկա պահանջվող քանակով'}
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product.id); toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.image ?? null }); toast.success('Ավելացվել է'); if (adding) setTimeout(() => onOpenChange(false), 350); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացվել է', onUndo: () => toggleFav(existing) }); } }}>
+                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product.id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.image ?? null }); toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.image ?? null }); toast.success('Ավելացվել է'); if (adding) setTimeout(() => onOpenChange(false), 350); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացվել է', onUndo: () => toggleFav(existing) }); } }}>
                   <Heart className={`h-4 w-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
                   {isFav ? 'Ընտրված' : 'Ընտրել'}
                 </Button>

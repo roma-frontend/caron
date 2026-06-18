@@ -10,7 +10,7 @@ import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useVehicleStore } from '@/store/vehicle';
 import { useSettings } from '@/hooks/useSettings';
-import { flyProductToTarget } from '@/lib/flyToTarget';
+import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { normalizeImageUrl } from '../../../convex/lib/imageUrl';
 import dynamic from 'next/dynamic';
@@ -118,7 +118,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
 
   return (
     <>
-      <div ref={ref} style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: '0 320px' }} {...handlers}>
+      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: '0 320px' }} {...handlers}>
         {compact ? (
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
@@ -136,7 +136,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                   {isWholesale && effectiveWholesaleDiscount > 0 && <span className="text-[10px] font-bold text-primary shrink-0">-{effectiveWholesaleDiscount}%</span>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 ml-auto">
-                  <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
+                  <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                   <div className="flex items-center rounded-lg border h-7">
@@ -207,7 +207,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               <button
                 aria-label="Նախընտրած"
                 aria-pressed={isFav}
-                onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; toggleFav(payload); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}
+                onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}
                 className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-lg backdrop-blur-sm transition-all duration-300 ${isFav ? 'border-red-500 bg-red-500 text-white scale-110' : 'border-border bg-card/80 text-muted-foreground hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-500 hover:scale-110'}`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />

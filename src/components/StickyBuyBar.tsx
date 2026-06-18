@@ -6,7 +6,7 @@ import { ShoppingCart, Heart } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
-import { flyProductToTarget } from '@/lib/flyToTarget';
+import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
 
@@ -60,7 +60,7 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
         <div className="flex items-center gap-2 shrink-0">
           <button
             aria-label={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
-            onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === productId); toggleFav({ id: productId, name: productName, price: productPrice, image: productImage ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: productImage ?? null }); toast.success('Ավելացված է'); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացված է', onUndo: () => toggleFav(existing) }); } }}
+            onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === productId); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: productImage ?? null }); toggleFav({ id: productId, name: productName, price: productPrice, image: productImage ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: productImage ?? null }); toast.success('Ավելացված է'); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացված է', onUndo: () => toggleFav(existing) }); } }}
             className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all ${isFav ? 'border-red-500 bg-red-500 text-white' : 'border-border text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}
           >
             <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />
