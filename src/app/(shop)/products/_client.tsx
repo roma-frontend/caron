@@ -139,35 +139,42 @@ export default function ProductsPage() {
   // only windows the *rendering* so memory/DOM size stays flat at any scroll
   // depth. Uses the window scroll (the page scrolls as a whole).
   const isList = viewMode === 'list';
+  const [contentEl, setContentEl] = useState<HTMLDivElement | null>(null);
   const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
-  const [columnCount, setColumnCount] = useState(1);
+  // Seed with a window-based estimate so the very first paint already uses a
+  // realistic column count (avoids a one-frame "giant single column" flash).
+  const [columnCount, setColumnCount] = useState(() => {
+    if (typeof window === 'undefined') return 4;
+    const w = window.innerWidth;
+    const contentW = w >= 1024 ? w - 256 - 64 : Math.max(0, w - 32); // minus sidebar + paddings
+    return Math.max(1, Math.floor((contentW + 20) / (170 + 20)));
+  });
   const [scrollMargin, setScrollMargin] = useState(0);
 
+  // Measure columns from the always-present content column (not the grid, which
+  // mounts late) so the correct count is known before any product renders.
   useEffect(() => {
-    if (!gridEl) return;
+    if (!contentEl) return;
     const GAP = 20; // ≈ var(--space-5)
     const MIN_COL = 170; // matches minmax(170px, 1fr)
     const recompute = () => {
-      const width = gridEl.clientWidth;
+      const width = contentEl.clientWidth;
       if (width > 0) setColumnCount(Math.max(1, Math.floor((width + GAP) / (MIN_COL + GAP))));
-      setScrollMargin(gridEl.getBoundingClientRect().top + window.scrollY);
     };
     recompute();
     const ro = new ResizeObserver(recompute);
-    ro.observe(gridEl);
-    window.addEventListener('resize', recompute);
-    return () => { ro.disconnect(); window.removeEventListener('resize', recompute); };
-  }, [gridEl]);
+    ro.observe(contentEl);
+    return () => ro.disconnect();
+  }, [contentEl]);
 
   // Recompute the grid's document offset when content above it changes height
-  // (filter chips, vehicle banner, type-filter row, view mode). Guarded with a
-  // functional update so an unchanged offset never triggers a re-render.
+  // (filter chips, vehicle banner, type-filter row, view mode, column count).
   useEffect(() => {
     if (!gridEl) return;
     const next = gridEl.getBoundingClientRect().top + window.scrollY;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setScrollMargin((prev) => (Math.abs(prev - next) > 1 ? next : prev));
-  }, [gridEl, fchips.length, viewMode, filterDefs, vehicle, mounted, brandLoading]);
+  }, [gridEl, fchips.length, viewMode, filterDefs, vehicle, mounted, brandLoading, columnCount]);
 
   const cols = isList ? 1 : columnCount;
   const rowCount = Math.ceil(results.length / cols);
@@ -198,7 +205,7 @@ export default function ProductsPage() {
           setFilters(f);
         }} activeFilters={filters} />
 
-        <div className="flex-1 min-w-0 pb-24 lg:pb-0">
+        <div ref={setContentEl} className="flex-1 min-w-0 pb-24 lg:pb-0">
           <div className="mb-5 flex flex-col items-start sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-1.5">
               <SortBar activeFilters={filters} onFilterChange={setFilters} />
