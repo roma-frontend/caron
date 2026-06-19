@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AiGenerateButton } from '@/components/admin/AiGenerateButton';import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImagePlus, X, Save, ArrowLeft } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
@@ -35,6 +35,8 @@ type FormState = {
   qtyStep?: number;
   stock?: number;
   description?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   sku?: string;
   oemNumbers?: OemEntry[];
   atgCode?: string;
@@ -72,6 +74,8 @@ export default function EditProductPage() {
       qtyStep: currentProduct.qtyStep,
       stock: currentProduct.stock,
       description: currentProduct.description,
+      seoTitle: (currentProduct as Record<string, unknown>).seoTitle as string | undefined,
+      seoDescription: (currentProduct as Record<string, unknown>).seoDescription as string | undefined,
       oemNumbers: currentProduct.oemNumbers,
       atgCode: currentProduct.atgCode,
       variantGroup: (currentProduct as Record<string, unknown>).variantGroup as string | undefined,
@@ -133,6 +137,8 @@ export default function EditProductPage() {
         qtyStep: form.qtyStep || undefined,
         stock: Number(form.stock),
         description: form.description,
+        seoTitle: form.seoTitle || undefined,
+        seoDescription: form.seoDescription || undefined,
         sku: form.sku,
         categoryId: form.categoryId ? (form.categoryId as Id<'categories'>) : undefined,
         oemNumbers: form.oemNumbers?.length ? form.oemNumbers : undefined,
@@ -270,7 +276,18 @@ export default function EditProductPage() {
               <div><Label>ԱՏԳԱ կոդ</Label><Input value={form.atgCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, atgCode: e.target.value }))} placeholder="2601" className="h-11 font-mono" /></div>
             </div>
 
-            <div><Label>Նկարագրություն</Label><Textarea value={form.description ?? ''} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} /></div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <Label>Նկարագրություն</Label>
+                <AiGenerateButton
+                  getInput={() => ({ name: form.name ?? '', brand: form.brand, attributes: form.attributes })}
+                  onResult={(r) => setForm((f) => ({ ...f, description: r.description, seoTitle: r.seoTitle, seoDescription: r.seoDescription }))}
+                />
+              </div>
+              <Textarea value={form.description ?? ''} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
+            </div>
+            <div><Label>SEO վերնագիր</Label><Input value={form.seoTitle ?? ''} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))} placeholder="SEO title (≤60)" /></div>
+            <div><Label>SEO նկարագրություն</Label><Textarea value={form.seoDescription ?? ''} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))} rows={2} placeholder="SEO description (≤160)" /></div>
           </CardContent>
         </Card>
 
