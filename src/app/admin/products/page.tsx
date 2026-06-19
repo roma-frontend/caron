@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Trash2, Edit, Package, Search, Upload, AlertTriangle, LayoutGrid, List } from 'lucide-react';
+import { Plus, Trash2, Edit, Package, Search, Upload, Download, AlertTriangle, LayoutGrid, List } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -749,6 +749,11 @@ export default function AdminProductsPage() {
                   <Upload className="h-3.5 w-3.5" /> Ավելացնել շատ
                 </Button>
               </Link>
+              <a href="/api/export/products" download onClick={() => setAddMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Download className="h-3.5 w-3.5" /> Ներբեռնել CSV
+                </Button>
+              </a>
             </div>
           )}
         </div>
