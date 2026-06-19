@@ -694,6 +694,18 @@ export const update = mutation({
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
 
+    // Delete from R2 any images that were removed during this edit.
+    if (args.images !== undefined && old?.images?.length) {
+      const next = new Set(args.images);
+      const removedKeys = old.images
+        .filter((url) => !next.has(url))
+        .map(r2KeyFromUrl)
+        .filter((k): k is string => !!k);
+      if (removedKeys.length) {
+        await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys: removedKeys });
+      }
+    }
+
     // Keep the OEM search index in sync only when the field was provided.
     if (args.oemNumbers !== undefined) {
       await syncOemIndex(ctx, id, args.oemNumbers);
@@ -714,77 +726,47 @@ export const update = mutation({
   },
 });
 
-async function deleteR2Image(imageUrl: string): Promise<void> {
+/**
+ * Extract the R2 object key (e.g. "products/<uuid>") from a stored image URL so
+ * it can be deleted. Returns null for anything that isn't an R2 object we own
+ * (external hosts, unknown prefixes) so we never delete unintended objects.
+ */
+function r2KeyFromUrl(imageUrl: string): string | null {
+  let s = (imageUrl ?? '').trim();
+  if (!s) return null;
+
+  // Proxied forms carry the key/url in a query param.
+  const keyParam = s.match(/[?&]key=([^&]+)/);
+  if (keyParam) {
+    s = decodeURIComponent(keyParam[1]);
+  } else {
+    const urlParam = s.match(/[?&]url=([^&]+)/);
+    if (urlParam) s = decodeURIComponent(urlParam[1]);
+  }
+
+  let key: string;
   try {
-    const accountId = process.env.R2_ACCOUNT_ID;
-    const accessKey = process.env.R2_ACCESS_KEY_ID;
-    const secretKey = process.env.R2_SECRET_ACCESS_KEY;
-    const bucket = process.env.R2_BUCKET_NAME;
-    if (!accountId || !accessKey || !secretKey || !bucket) return;
+    const u = new URL(s);
+    const host = u.hostname.toLowerCase();
+    // Only touch objects on our R2 buckets — never external images.
+    if (!host.endsWith('.r2.dev') && !host.endsWith('.r2.cloudflarestorage.com')) {
+      return null;
+    }
+    key = decodeURIComponent(u.pathname).replace(/^\/+/, '');
+  } catch {
+    // Not an absolute URL — treat as a bare key (e.g. "products/<uuid>").
+    key = s.replace(/^\/+/, '');
+  }
 
-    const key = imageUrl.split('/').pop();
-    if (!key) return;
+  // Strip a leading bucket segment for path-style URLs.
+  const bucket = process.env.R2_BUCKET_NAME;
+  if (bucket && (key === bucket || key.startsWith(`${bucket}/`))) {
+    key = key.slice(bucket.length).replace(/^\/+/, '');
+  }
 
-    const host = `${accountId}.r2.cloudflarestorage.com`;
-    const endpoint = `https://${host}/${bucket}/${encodeURIComponent(key)}`;
-    const date = new Date().toISOString().replace(/[:\-]|\.\d{3}/g, '');
-    const dateShort = date.slice(0, 8);
-    const service = 's3';
-    const region = 'auto';
-
-    // AWS V4 signing helpers using Web Crypto API
-    const hmac = async (keyBytes: ArrayBuffer, data: string): Promise<ArrayBuffer> => {
-      const algo = { name: 'HMAC', hash: 'SHA-256' };
-      const k = await crypto.subtle.importKey('raw', keyBytes, algo, false, ['sign']);
-      return crypto.subtle.sign(algo, k, new TextEncoder().encode(data));
-    };
-    const sha256 = async (data: string): Promise<string> => {
-      const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
-      return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
-    };
-
-    const credentialScope = `${dateShort}/${region}/${service}/aws4_request`;
-    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
-    const payloadHash = await sha256('');
-
-    const canonicalRequest = [
-      'DELETE',
-      `/${bucket}/${encodeURIComponent(key)}`,
-      '',
-      `host:${host}`,
-      `x-amz-content-sha256:${payloadHash}`,
-      `x-amz-date:${date}`,
-      '',
-      signedHeaders,
-      payloadHash,
-    ].join('\n');
-
-    const stringToSign = [
-      'AWS4-HMAC-SHA256',
-      date,
-      credentialScope,
-      await sha256(canonicalRequest),
-    ].join('\n');
-
-    const dateKey = await hmac(new TextEncoder().encode(`AWS4${secretKey}`).buffer, dateShort);
-    const regionKey = await hmac(dateKey, region);
-    const serviceKey = await hmac(regionKey, service);
-    const signingKey = await hmac(serviceKey, 'aws4_request');
-    const sigBytes = await hmac(signingKey, stringToSign);
-    const signature = Array.from(new Uint8Array(sigBytes)).map((b) => b.toString(16).padStart(2, '0')).join('');
-
-    const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope},SignedHeaders=${signedHeaders},Signature=${signature}`;
-
-    await fetch(endpoint, {
-      method: 'DELETE',
-      headers: {
-        Host: host,
-        'x-amz-content-sha256': payloadHash,
-        'x-amz-date': date,
-        Authorization: authHeader,
-      },
-    });
-  } catch {}
+  // Restrict deletions to the prefixes this app manages.
+  if (!key.startsWith('products/') && !key.startsWith('reviews/')) return null;
+  return key;
 }
 
 export const remove = mutation({
@@ -793,7 +775,8 @@ export const remove = mutation({
     await getAdminCaller(ctx, args.sessionToken);
     const product = await ctx.db.get(args.id);
     if (product?.images?.length) {
-      await Promise.all(product.images.map(deleteR2Image));
+      const keys = product.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
+      if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
     }
     await syncOemIndex(ctx, args.id, undefined); // remove OEM index rows
     await ctx.db.delete(args.id);
