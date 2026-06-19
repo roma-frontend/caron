@@ -716,6 +716,7 @@ export default function AdminSettingsPage() {
           <FilterMigrationCard sessionToken={sessionToken || ''} />
           <NormalizeBrandsCard sessionToken={sessionToken || ''} />
           <ImageCleanupCard sessionToken={sessionToken || ''} />
+          <ImageReoptimizeCard />
         </TabsContent>
 
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full gap-2 mt-6">
@@ -853,3 +854,56 @@ function ImageCleanupCard({ sessionToken }: { sessionToken: string }) {
     </Card>
   );
 }
+
+function ImageReoptimizeCard() {
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState('');
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Վերաօպտիմիզացնել հին նկարները</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Հին (ոչ-WebP) ապրանքների նկարները կվերածվեն WebP-ի և կթարմացվեն (նոր բեռնվածներն արդեն օպտիմիզացված են)։ Կարող է տևել մի քանի րոպե։
+        </p>
+        {progress && <p className="text-xs text-muted-foreground">{progress}</p>}
+        <Button
+          disabled={running}
+          onClick={async () => {
+            setRunning(true);
+            setProgress('');
+            let cursor = 0;
+            let total = 0;
+            let converted = 0;
+            try {
+              for (;;) {
+                const res = await fetch('/api/admin/reoptimize', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ cursor }),
+                });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.error || 'Error');
+                cursor = d.processed;
+                total = d.total;
+                converted += d.converted;
+                setProgress(`${cursor}/${total} ստուգված · ${converted} օպտիմիզացված`);
+                if (d.done) break;
+              }
+              toast.success(`Ավարտված։ ${converted} նկար օպտիմիզացվեց`);
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : 'Սխալ');
+            } finally {
+              setRunning(false);
+            }
+          }}
+          className="w-full"
+        >
+          {running ? 'Աշխատում է...' : 'Վերաօպտիմիզացնել'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
