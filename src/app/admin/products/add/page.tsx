@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Wizard, WizardStep, useWizardData } from '@/components/ui/wizard';
+import { AiGenerateButton } from '@/components/admin/AiGenerateButton';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -427,6 +428,12 @@ function StepSEO() {
   return (
     <ChevronSection title="5. SEO">
       <div className="space-y-5">
+        <div className="flex justify-end">
+          <AiGenerateButton
+            getInput={() => ({ name: (data.name as string) ?? '', brand: data.brand as string | undefined, attributes: data.attributes as Record<string, unknown> | undefined })}
+            onResult={(r) => { update('description', r.description); update('seoTitle', r.seoTitle); update('seoDescription', r.seoDescription); }}
+          />
+        </div>
         <div><Label>SEO վերնագիր</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11" /></div>
         <div><Label>SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} /></div>
       </div>

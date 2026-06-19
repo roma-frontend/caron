@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Trash2, Edit, Package, Search, Upload, Download, AlertTriangle, LayoutGrid, List } from 'lucide-react';
+import { Plus, Trash2, Edit, Package, Search, Upload, Download, AlertTriangle, LayoutGrid, List, Check, CheckSquare } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -604,6 +604,10 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState('newest');
   const categories = useQuery(api.categories.list, {});
   const allFilterDefs = useQuery(api.filters.listAll, {});
+  const bulkAction = useMutation(api.products.bulkAction);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const searchTerm = search.trim().toLowerCase();
   const searchParams = useSearchParams();
   const healthFilter = searchParams.get('health');
@@ -711,6 +715,36 @@ export default function AdminProductsPage() {
 
   const visibleProducts = orderedFiltered?.slice(0, visibleCount);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const toggleSelect = (id: string) => setSelectedIds((s) => {
+    const n = new Set(s);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  });
+  const exitSelect = () => { setSelectMode(false); setSelectedIds(new Set()); };
+  const runBulk = async (
+    op: 'activate' | 'deactivate' | 'delete' | 'setDiscount' | 'setCategory',
+    extra?: { discount?: number; categoryId?: string },
+  ) => {
+    const ids = [...selectedIds];
+    if (!ids.length || !sessionToken) return;
+    setBulkBusy(true);
+    try {
+      const r = await bulkAction({
+        sessionToken,
+        ids: ids as Id<'products'>[],
+        op,
+        discount: extra?.discount,
+        categoryId: extra?.categoryId as Id<'categories'> | undefined,
+      });
+      toast.success(`${r.affected} ապրանք թարմացվեց`);
+      setSelectedIds(new Set());
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Սխալ');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -832,6 +866,9 @@ export default function AdminProductsPage() {
           </SelectContent>
         </Select>
         <div className="ml-auto flex items-center gap-1 rounded-lg border bg-background p-1">
+          <button onClick={() => setSelectMode((v) => !v)} className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${selectMode ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`} aria-label="Select mode">
+            <CheckSquare className="h-4 w-4" /> Ընտրել
+          </button>
           <button onClick={() => setViewMode('grid')} className={`rounded-md p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`} aria-label="Grid view">
             <LayoutGrid className="h-4 w-4" />
           </button>
@@ -851,7 +888,59 @@ export default function AdminProductsPage() {
         )}
       </div>
 
-      {viewMode === 'grid' ? (
+      {selectMode && (
+        <div className="sticky top-2 z-30 mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-3 shadow-md backdrop-blur">
+          <span className="text-sm font-medium">{selectedIds.size} ընտրված</span>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set(visibleProducts?.map((p) => String(p._id)) ?? []))}>Բոլորը</Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Մաքրել</Button>
+          <span className="mx-1 h-5 w-px bg-border" />
+          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('activate')}>Ակտիվացնել</Button>
+          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('deactivate')}>Ապաակտիվ</Button>
+          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => {
+            const v = window.prompt('Զեղչ % (0 = հեռացնել զեղչը)');
+            if (v === null) return;
+            const d = Number(v);
+            if (!Number.isFinite(d) || d < 0 || d > 99) { toast.error('Սխալ արժեք'); return; }
+            runBulk('setDiscount', { discount: d });
+          }}>Զեղչ %</Button>
+          <Select value="" onValueChange={(v) => { if (v) runBulk('setCategory', { categoryId: v }); }}>
+            <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder="Կատեգորիա →" /></SelectTrigger>
+            <SelectContent>{categories?.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button size="sm" variant="destructive" disabled={!selectedIds.size || bulkBusy} onClick={() => {
+            if (window.confirm(`Ջնջե՞լ ${selectedIds.size} ապրանք։ Գործողությունն անվերադարձ է։`)) runBulk('delete');
+          }}>Ջնջել</Button>
+          <Button size="sm" variant="ghost" className="ml-auto" onClick={exitSelect}>Փակել</Button>
+        </div>
+      )}
+
+      {selectMode ? (
+        <div
+          className={viewMode === 'grid' ? 'grid gap-4' : 'flex flex-col gap-3'}
+          style={viewMode === 'grid' ? { gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' } : undefined}
+        >
+          {visibleProducts?.map((p, i) => {
+            const id = String(p._id);
+            const sel = selectedIds.has(id);
+            return (
+              <div
+                key={id}
+                onClick={() => toggleSelect(id)}
+                className={`relative cursor-pointer rounded-2xl ring-2 transition ${sel ? 'ring-primary' : 'ring-transparent hover:ring-primary/30'}`}
+              >
+                <div className={`absolute left-2 top-2 z-20 flex h-6 w-6 items-center justify-center rounded-md border-2 ${sel ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40 bg-background/80'}`}>
+                  {sel && <Check className="h-4 w-4" />}
+                </div>
+                <div className="pointer-events-none">
+                  {viewMode === 'grid'
+                    ? <AdminProductCard product={p} sessionToken={sessionToken ?? ''} index={i} />
+                    : <AdminProductListRow product={p} sessionToken={sessionToken ?? ''} index={i} attrMetaMap={attrMetaMap} attrDefsByCategoryMap={attrDefsByCategoryMap} />}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : viewMode === 'grid' ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={visibleProducts?.map((p) => String(p._id)) ?? []} strategy={rectSortingStrategy}>
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
