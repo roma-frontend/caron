@@ -81,15 +81,14 @@ const FEATURE_ICONS = { delivery: Truck, warranty: Shield, support: Clock, quali
 const HERO_VIDEO_SRC =
   toR2MediaProxyUrl(
     process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
-    'products/hero.mp4',
+    'products/hero-opt.mp4',
   );
 
 // Lightweight poster shown instantly as the hero background. It becomes the LCP
 // element (small, discoverable in HTML), so LCP no longer waits on the video.
-// Set NEXT_PUBLIC_HERO_POSTER_URL (e.g. products/hero-poster.jpg) to enable.
-const HERO_POSTER_SRC = process.env.NEXT_PUBLIC_HERO_POSTER_URL
-  ? toR2MediaProxyUrl(process.env.NEXT_PUBLIC_HERO_POSTER_URL)
-  : '';
+const HERO_POSTER_SRC = toR2MediaProxyUrl(
+  process.env.NEXT_PUBLIC_HERO_POSTER_URL || 'products/hero-poster.jpg',
+);
 
 
 
