@@ -14,4 +14,29 @@ crons.daily(
   {},
 );
 
+// Weekly cleanup of orphaned R2 images (not referenced by any document).
+// Reuses the same safe audit (whitelists hero/poster, skips files < 7 days old).
+crons.weekly(
+  'cleanup-r2-orphans',
+  { dayOfWeek: 'sunday', hourUTC: 3, minuteUTC: 0 },
+  internal.r2Actions.auditOrphans,
+  { apply: true, minAgeDays: 7 },
+);
+
+// Daily: deactivate promotions whose end date has passed.
+crons.daily(
+  'deactivate-expired-promotions',
+  { hourUTC: 1, minuteUTC: 0 },
+  internal.maintenance.deactivateExpiredPromotions,
+  {},
+);
+
+// Daily: purge expired sessions and stale auth-attempt records.
+crons.daily(
+  'purge-stale-auth',
+  { hourUTC: 1, minuteUTC: 30 },
+  internal.maintenance.purgeStaleAuth,
+  {},
+);
+
 export default crons;
