@@ -1,13 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { toR2MediaProxyUrl } from '@/lib/r2Media';
-
-const PRELOADER_SRC =
-  toR2MediaProxyUrl(
-    process.env.NEXT_PUBLIC_PRELOADER_VIDEO_URL ||
-    'products/preloader.mp4',
-  );
 
 type PreloaderVideoProps = {
   text?: string;
@@ -30,20 +23,95 @@ export function PreloaderVideo({ text, fixed = false, className = '' }: Preloade
       <div className="relative flex w-full flex-col items-center justify-center px-4">
         <div className="absolute h-[min(48vw,30rem)] w-[min(86vw,54rem)] rounded-full bg-primary/20 blur-[90px] animate-[preloaderHalo_2.8s_ease-in-out_infinite]" />
         <div className="absolute h-px w-[min(82vw,58rem)] bg-gradient-to-r from-transparent via-sky-300/70 to-transparent shadow-[0_0_28px_rgba(56,189,248,0.75)] animate-[preloaderBeam_2.2s_ease-in-out_infinite]" />
-        <video
-          src={PRELOADER_SRC}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-          className="pointer-events-none relative w-[min(118vw,76rem)] max-h-[78svh] object-contain opacity-90 drop-shadow-[0_0_90px_rgba(0,102,174,0.5)]"
-          style={{
-            WebkitMaskImage: 'radial-gradient(ellipse at center, black 18%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.15) 52%, transparent 68%)',
-            maskImage: 'radial-gradient(ellipse at center, black 18%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.15) 52%, transparent 68%)',
-          }}
-        />
+
+        {/* Auto-parts themed SVG loader: rotating gear + counter-rotating vented
+            brake disc + pulsing lug hub, in the brand gradient. CSS-only. */}
+        <div className="caron-stage">
+          <svg className="caron-svg" viewBox="0 0 220 220" fill="none" role="img" aria-label="CARON — բեռնվում է">
+            <defs>
+              <linearGradient id="caronGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#bae6fd" />
+                <stop offset="50%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#0066ae" />
+              </linearGradient>
+              <filter id="caronGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="2.2" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Indeterminate progress sweep */}
+            <circle
+              className="caron-sweep"
+              cx="110" cy="110" r="104"
+              stroke="url(#caronGrad)" strokeWidth="3" strokeLinecap="round"
+              strokeDasharray="150 520" opacity="0.9"
+            />
+
+            {/* Main gear (clockwise) */}
+            <g className="caron-spin" filter="url(#caronGlow)">
+              {Array.from({ length: 12 }, (_, i) => (
+                <rect
+                  key={`t${i}`}
+                  x="104" y="10" width="12" height="20" rx="3"
+                  fill="url(#caronGrad)"
+                  transform={`rotate(${i * 30} 110 110)`}
+                />
+              ))}
+              <circle cx="110" cy="110" r="72" stroke="url(#caronGrad)" strokeWidth="8" />
+            </g>
+
+            {/* Vented brake disc (counter-clockwise) */}
+            <g className="caron-spin-rev">
+              <circle
+                cx="110" cy="110" r="50"
+                stroke="url(#caronGrad)" strokeWidth="3"
+                strokeDasharray="6 11" opacity="0.85"
+              />
+              {Array.from({ length: 6 }, (_, i) => (
+                <circle
+                  key={`v${i}`}
+                  cx="110" cy="72" r="4"
+                  fill="url(#caronGrad)"
+                  transform={`rotate(${i * 60} 110 110)`}
+                />
+              ))}
+            </g>
+
+            {/* Lug hub (pulsing) */}
+            <g className="caron-core-pulse">
+              <circle cx="110" cy="110" r="22" fill="url(#caronGrad)" opacity="0.16" />
+              <circle cx="110" cy="110" r="22" stroke="url(#caronGrad)" strokeWidth="2.5" />
+              {Array.from({ length: 5 }, (_, i) => (
+                <circle
+                  key={`b${i}`}
+                  cx="110" cy="95" r="3.5"
+                  fill="url(#caronGrad)"
+                  transform={`rotate(${i * 72} 110 110)`}
+                />
+              ))}
+              <circle cx="110" cy="110" r="4.5" fill="url(#caronGrad)" />
+            </g>
+          </svg>
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="caron-wordmark" aria-hidden="true">
+              {['C', 'A', 'R', 'O', 'N'].map((ch, i) => (
+                <span
+                  key={ch + i}
+                  className="caron-letter"
+                  style={{ ['--caron-delay']: `${0.09 * i}s` } as React.CSSProperties}
+                >
+                  {ch}
+                </span>
+              ))}
+            </div>
+            <div className="caron-underline" aria-hidden="true" />
+          </div>
+        </div>
       </div>
 
       <div className="absolute bottom-[9svh] flex w-full flex-col items-center gap-4 px-6">

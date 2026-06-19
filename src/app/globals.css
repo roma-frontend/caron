@@ -129,7 +129,7 @@
   --muted-foreground: oklch(0.48 0.012 250);
   --accent: oklch(0.94 0.03 248);
   --accent-foreground: oklch(0.4 0.12 248);
-  --destructive: oklch(0.55 0.2 25);
+  --destructive: oklch(0.50 0.2 25);
   --border: oklch(0.89 0.004 250);
   --input: oklch(0.89 0.004 250);
   --ring: oklch(0.5 0.14 248);
@@ -178,7 +178,7 @@
   --muted-foreground: oklch(0.7 0.01 250);
   --accent: oklch(0.34 0.04 248);
   --accent-foreground: oklch(0.92 0.03 248);
-  --destructive: oklch(0.62 0.21 25);
+  --destructive: oklch(0.50 0.2 25);
   --border: oklch(0.34 0.006 250);
   --input: oklch(0.34 0.006 250);
   --ring: oklch(0.62 0.14 246);
@@ -675,6 +675,86 @@
   0%, 100% { opacity: 0.55; transform: scale(0.96); }
   50% { opacity: 0.9; transform: scale(1.05); }
 }
+
+/* ── CARON preloader (auto-parts themed) ───────────────────── */
+@keyframes caronLetterIn {
+  0%   { opacity: 0; transform: translateY(0.55em) scale(0.82) rotateX(50deg); filter: blur(16px); }
+  55%  { filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotateX(0); filter: blur(0); }
+}
+@keyframes caronShimmer {
+  0%   { background-position: 220% 50%; }
+  100% { background-position: -120% 50%; }
+}
+@keyframes caronFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+@keyframes caronUnderline {
+  0%   { transform: scaleX(0); opacity: 0; }
+  55%  { opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0.9; }
+}
+@keyframes caronSpin    { to { transform: rotate(360deg); } }
+@keyframes caronSpinRev { to { transform: rotate(-360deg); } }
+@keyframes caronSweep   { to { transform: rotate(360deg); } }
+@keyframes caronCorePulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.94); }
+  50%      { opacity: 1;    transform: scale(1.04); }
+}
+
+.caron-stage { display: flex; flex-direction: column; align-items: center; gap: clamp(1.1rem, 3vw, 2rem); }
+.caron-svg {
+  width: clamp(8.5rem, 27vw, 14.5rem);
+  height: auto;
+  filter: drop-shadow(0 0 34px rgba(56, 189, 248, 0.4));
+}
+.caron-spin     { transform-box: fill-box; transform-origin: center; animation: caronSpin 9s linear infinite; }
+.caron-spin-rev { transform-box: fill-box; transform-origin: center; animation: caronSpinRev 6.5s linear infinite; }
+.caron-sweep    { transform-box: fill-box; transform-origin: center; animation: caronSweep 1.7s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.caron-core-pulse { transform-box: fill-box; transform-origin: center; animation: caronCorePulse 1.9s ease-in-out infinite; }
+
+.caron-wordmark {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(0.02em, 0.5vw, 0.08em);
+  animation: caronFloat 3.6s ease-in-out infinite;
+}
+.caron-letter {
+  display: inline-block;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(2rem, 8.5vw, 4.5rem);
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+  background-image: linear-gradient(110deg, #ffffff 0%, #bae6fd 22%, #38bdf8 42%, #ffffff 55%, #0ea5e9 72%, #ffffff 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 6px 26px rgba(14, 165, 233, 0.4));
+  transform-origin: 50% 100%;
+  animation:
+    caronLetterIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) var(--caron-delay, 0s) both,
+    caronShimmer 3.2s linear 1s infinite;
+}
+.caron-underline {
+  height: 2px;
+  width: clamp(7rem, 30vw, 18rem);
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, #38bdf8 35%, #e0f2fe 50%, #38bdf8 65%, transparent);
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
+  transform-origin: 50% 50%;
+  animation: caronUnderline 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .caron-wordmark, .caron-letter, .caron-underline,
+  .caron-spin, .caron-spin-rev, .caron-sweep, .caron-core-pulse {
+    animation: none !important; opacity: 1; transform: none;
+  }
+}
+
 
 .animate-in {
   animation-fill-mode: both;

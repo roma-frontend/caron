@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Truck, Shield, Clock, Star } from 'lucide-react';
@@ -109,6 +110,20 @@ type PriorityVideoProps = React.VideoHTMLAttributes<HTMLVideoElement> & {
 };
 
 function PingPongVideo({ src, className }: { src: string; className?: string }) {
+  // Defer the heavy (~1.7 MB) decorative hero video until after the page has
+  // loaded so it doesn't compete with the LCP/critical resources. The dark
+  // hero background + overlays render instantly underneath; the video fades in.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    let timer: number | undefined;
+    const start = () => { timer = window.setTimeout(() => setMounted(true), 150); };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+    return () => { if (timer) window.clearTimeout(timer); window.removeEventListener('load', start); };
+  }, []);
+
+  if (!mounted) return null;
+
   const videoProps: PriorityVideoProps = {
     src,
     autoPlay: true,
@@ -118,7 +133,7 @@ function PingPongVideo({ src, className }: { src: string; className?: string }) 
     preload: 'auto',
     width: 1920,
     height: 1080,
-    fetchPriority: 'high',
+    fetchPriority: 'low',
     'aria-hidden': true,
   };
 
