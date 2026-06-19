@@ -209,7 +209,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
         />
         <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
-            <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110" />
+            <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
           ) : (
             <div className="flex h-full items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
@@ -413,7 +413,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
       <div className="flex items-center gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
-            <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-contain" />
+            <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">■</div>
           )}

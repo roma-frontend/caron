@@ -272,7 +272,7 @@ export default function ProductDetailPage() {
               <div className="flex">
                 {imgs.length > 0 ? imgs.map((img, i) => (
                   <div key={i} className="relative min-w-0 shrink-0 grow-0 basis-full aspect-square">
-                    <ProductImageZoom src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} fit="contain" className="h-full w-full bg-muted/20" sizes="(max-width: 1024px) 100vw, 560px" />
+                    <ProductImageZoom src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} fit="cover" className="h-full w-full bg-muted/20" sizes="(max-width: 1024px) 100vw, 560px" />
                   </div>
                 )) : (
                   <div className="min-w-0 shrink-0 grow-0 basis-full aspect-square flex items-center justify-center text-muted-foreground/20">
@@ -357,7 +357,7 @@ export default function ProductDetailPage() {
               </div>
               {hoveredVariant?.images?.[0] && (
                 <div className="hidden sm:block absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-                  <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-contain" />
+                  <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-cover" />
                   <p className="mt-1 text-center text-[10px] text-muted-foreground truncate max-w-44">{hoveredVariant.name}</p>
                 </div>
               )}
