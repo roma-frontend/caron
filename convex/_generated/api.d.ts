@@ -29,6 +29,7 @@ import type * as priceAlerts from "../priceAlerts.js";
 import type * as products from "../products.js";
 import type * as promotionSubscribers from "../promotionSubscribers.js";
 import type * as promotions from "../promotions.js";
+import type * as r2Actions from "../r2Actions.js";
 import type * as reviews from "../reviews.js";
 import type * as seed from "../seed.js";
 import type * as seedFilters from "../seedFilters.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   products: typeof products;
   promotionSubscribers: typeof promotionSubscribers;
   promotions: typeof promotions;
+  r2Actions: typeof r2Actions;
   reviews: typeof reviews;
   seed: typeof seed;
   seedFilters: typeof seedFilters;

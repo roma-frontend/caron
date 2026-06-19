@@ -39,7 +39,7 @@ export default function AdminCouponsPage() {
       isActive: true,
       expiresAt: expiresAt ? new Date(expiresAt).getTime() : undefined,
     });
-    toast.success('Կուպոն ստեղծվել է');
+    toast.success('Կուպոնն ստեղծվել է');
     setShowForm(false); setCode(''); setValue(0); setMinAmount(0); setMaxUses(0); setExpiresAt('');
   };
 
@@ -102,9 +102,9 @@ export default function AdminCouponsPage() {
               <div>
                 <span className="font-mono font-bold">{c.code}</span>
                 <span className="ml-2 text-sm text-muted-foreground">{c.type === 'percent' ? `${c.value}%` : `${c.value.toLocaleString()} ֏`}</span>
-                {c.minOrderAmount ? <span className="ml-2 text-xs text-muted-foreground">ից {c.minOrderAmount.toLocaleString()} ֏</span> : null}
+                {c.minOrderAmount ? <span className="ml-2 text-xs text-muted-foreground">{c.minOrderAmount.toLocaleString()} ֏-ից</span> : null}
               </div>
-              <Badge variant={c.isActive ? 'default' : 'secondary'} className="text-[10px]">{c.isActive ? 'Ակտիվ' : 'Անակտիվ'}</Badge>
+              <Badge variant={c.isActive ? 'default' : 'secondary'} className="text-[10px]">{c.isActive ? 'Ակտիվ' : 'Պասիվ'}</Badge>
               {c.expiresAt && <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateHy(c.expiresAt)}</span>}
               {c.maxUses ? <span className="text-xs text-muted-foreground">Օգտագործվել է {c.usedCount}/{c.maxUses}</span> : null}
             </div>
