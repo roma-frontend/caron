@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation } from 'convex/react';
 import { RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -63,9 +64,9 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
         <RotateCcw className="h-3.5 w-3.5" /> Վերադարձ
       </Button>
 
-      {open && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      {open && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 1000 }}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div className="relative z-10 w-full max-w-md rounded-2xl border bg-background p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">Վերադարձ / Փոխանակում</h3>
@@ -100,7 +101,8 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
 
             <Button className="w-full" disabled={busy} onClick={submit}>{busy ? 'Ուղարկվում է...' : 'Ուղարկել հայտը'}</Button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
