@@ -366,6 +366,7 @@ export default defineSchema(
     // Loyalty
     enableLoyalty: v.optional(v.boolean()),
     loyaltyPercent: v.optional(v.number()),
+    loyaltyTiers: v.optional(v.array(v.object({ minQty: v.number(), percent: v.number() }))),
     loyaltyReviewPoints: v.optional(v.number()),
     loyaltyReviewPhotoBonus: v.optional(v.number()),
     referralReward: v.optional(v.number()),

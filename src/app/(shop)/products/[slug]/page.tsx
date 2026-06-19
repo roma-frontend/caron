@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { api } from '../../../../../convex/_generated/api';
+import { resolveCashback } from '../../../../../convex/lib/loyalty';
 import { Id } from '../../../../../convex/_generated/dataModel';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import { useRecentlyViewedStore } from '@/store/recentlyViewed';
 import { useAuthStore } from '@/store/auth';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { ProductReviews } from '@/components/ProductReviews';
+import { QuantityStepper } from '@/components/QuantityStepper';
 import { ProductQuestions } from '@/components/ProductQuestions';
 import { RecommendedForYou } from '@/components/RecommendedForYou';
 import { FrequentlyBoughtTogether } from '@/components/FrequentlyBoughtTogether';
@@ -413,11 +415,14 @@ export default function ProductDetailPage() {
             ) : null}
           </div>
 
-          {settings?.enableLoyalty && (settings.loyaltyPercent ?? 0) > 0 && cartPrice > 0 && (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-              <Gift className="h-3.5 w-3.5" /> +{Math.round(cartPrice * (settings.loyaltyPercent ?? 0) / 100)} բալ այս գնումից
-            </div>
-          )}
+          {settings?.enableLoyalty && cartPrice > 0 && (() => {
+            const { percent: eff, points: pts } = resolveCashback(qty, cartPrice * qty, settings.loyaltyTiers, settings.loyaltyPercent ?? 0);
+            return pts > 0 ? (
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                <Gift className="h-3.5 w-3.5" /> +{pts} բալ ({eff}%) այս գնումից
+              </div>
+            ) : null;
+          })()}
 
           <div className="mt-3">
             {product.stock > 0 && product.stock <= 10 ? (
@@ -477,11 +482,7 @@ export default function ProductDetailPage() {
           {/* Quantity */}
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">{'Քանակ'}</span>
-            <div className="flex items-center rounded-lg border">
-              <button onClick={() => setQty(Math.max(step, qty - step))} disabled={qty <= step} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-l-lg disabled:opacity-30">−</button>
-              <span className="flex h-10 w-12 items-center justify-center font-semibold border-x">{qty}</span>
-              <button onClick={() => setQty(Math.min(maxQty, qty + step))} disabled={qty >= maxQty} className="flex h-10 w-10 items-center justify-center text-lg hover:bg-muted transition-colors rounded-r-lg disabled:opacity-30">+</button>
-            </div>
+            <QuantityStepper value={qty} onChange={setQty} step={step} min={step} max={maxQty} size="md" />
           </div>
 
           <div className="h-3" />

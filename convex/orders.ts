@@ -4,6 +4,7 @@ import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
 import { getAdminCaller, getAuthCaller } from './lib/auth';
+import { resolveCashback } from './lib/loyalty';
 
 /**
  * Add (or subtract, when negative) loyalty points for a customer.
@@ -369,8 +370,9 @@ export const updateStatus = mutation({
       const loyaltyEnabled = !!storeSettings?.enableLoyalty;
       const loyaltyPercent = storeSettings?.loyaltyPercent ?? 0;
 
-      if (nextStatus === 'delivered' && !order.loyaltyAwarded && loyaltyEnabled && loyaltyPercent > 0) {
-        const pts = Math.round(order.total * loyaltyPercent / 100);
+      if (nextStatus === 'delivered' && !order.loyaltyAwarded && loyaltyEnabled) {
+        const totalQty = order.items.reduce((sum, it) => sum + it.quantity, 0);
+        const pts = resolveCashback(totalQty, order.total, storeSettings?.loyaltyTiers, loyaltyPercent).points;
         if (pts > 0) {
           await adjustLoyalty(ctx, { userId: order.userId, email: order.customerEmail, points: pts });
           loyaltyPatch.loyaltyAwarded = true;

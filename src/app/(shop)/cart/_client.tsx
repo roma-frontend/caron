@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Minus, Plus, Trash2, Gift } from 'lucide-react';
+import { ShoppingBag, Trash2, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/lib/formatters';
@@ -15,7 +15,9 @@ import { flyProductAway } from '@/lib/flyToTarget';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
+import { resolveCashback } from '../../../../convex/lib/loyalty';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { QuantityStepper } from '@/components/QuantityStepper';
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);
@@ -194,19 +196,14 @@ export default function CartPage() {
                 {item.sku && <p className="text-xs text-muted-foreground">Արտիկուլ: {item.sku}</p>}
 
                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
-                  <div className="flex items-center gap-0.5 rounded-full border bg-muted/30 p-0.5">
-                    <button onClick={(e) => { const step = item.qtyStep || 1; if (item.quantity - step <= 0) { void handleRemove(item.id, item.name, e.currentTarget); } else { updateQuantity(item.id, item.quantity - step); } }}
-                      disabled={item.quantity <= (item.qtyStep || 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="min-w-7 text-center text-sm font-semibold">{item.quantity}</span>
-                    <button onClick={() => { const step = item.qtyStep || 1; updateQuantity(item.id, item.quantity + step); }}
-                      disabled={item.maxStock != null && item.quantity >= item.maxStock}
-                      className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-background disabled:opacity-30">
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
+                  <QuantityStepper
+                    value={item.quantity}
+                    onChange={(n) => updateQuantity(item.id, n)}
+                    step={item.qtyStep || 1}
+                    min={item.qtyStep || 1}
+                    max={item.maxStock ?? Infinity}
+                    size="sm"
+                  />
                   <div className="text-right">
                     <p className="text-base font-bold">{formatPrice(item.price * item.quantity)}</p>
                     {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">{formatPrice(item.price)} / հատ</p>}
@@ -236,12 +233,14 @@ export default function CartPage() {
               <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{CART.shipping}</span><span className="text-muted-foreground">Հաշվարկվում է պատվիրելիս</span></div>
               <Separator />
               <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice)}</span></div>
-              {settings?.enableLoyalty && (settings.loyaltyPercent ?? 0) > 0 && (() => {
-                const orderAmount = selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice;
-                const pts = Math.round(orderAmount * (settings.loyaltyPercent ?? 0) / 100);
+              {settings?.enableLoyalty && (() => {
+                const chosen = selected.size > 0 ? items.filter((i) => selected.has(i.id)) : items;
+                const orderAmount = chosen.reduce((s, i) => s + i.price * i.quantity, 0);
+                const qty = chosen.reduce((s, i) => s + i.quantity, 0);
+                const { percent: eff, points: pts } = resolveCashback(qty, orderAmount, settings.loyaltyTiers, settings.loyaltyPercent ?? 0);
                 return pts > 0 ? (
                   <div className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
-                    <Gift className="h-4 w-4" /> Կստանաք +{pts} բալ այս պատվերից
+                    <Gift className="h-4 w-4" /> Կստանաք +{pts} բալ ({eff}%) այս պատվերից
                   </div>
                 ) : null;
               })()}

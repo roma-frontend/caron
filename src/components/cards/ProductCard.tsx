@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, memo } from 'react';
 import { useReveal, useMouseGlow, cardRevealStyle } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { QuantityStepper } from '@/components/QuantityStepper';
 import { ShoppingCart, Heart, Star, Check, Eye, Truck } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { formatDateHy } from '@/lib/formatters';
@@ -124,19 +125,6 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
     flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: normalizedImage ?? image ?? null });
   };
 
-  const incCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (atLimit) return;
-    addItem({ id, name, price: displayPrice, image: image ?? null, maxStock: stock, qtyStep: step, sku });
-  };
-
-  const decCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    updateQuantity(id, cartQty - step);
-  };
-
   return (
     <>
       <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: '0 320px' }} {...handlers}>
@@ -160,11 +148,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                   {cartQty > 0 ? (
-                    <div className="flex items-center rounded-lg border border-primary/40 bg-primary/5 h-7">
-                      <button onClick={decCart} aria-label="Պակասեցնել" className="flex h-full w-6 items-center justify-center text-xs text-primary hover:bg-primary/10 rounded-l-lg">−</button>
-                      <span className="flex h-full min-w-6 items-center justify-center px-1 text-[10px] font-bold text-primary">{cartQty}</span>
-                      <button onClick={incCart} disabled={atLimit} aria-label="Ավելացնել" className="flex h-full w-6 items-center justify-center text-xs text-primary hover:bg-primary/10 rounded-r-lg disabled:opacity-30">+</button>
-                    </div>
+                    <QuantityStepper value={cartQty} onChange={(n) => updateQuantity(id, n)} onRemove={() => updateQuantity(id, cartQty - step)} step={step} min={step} max={stock ?? Infinity} size="xs" className="border-primary/40 bg-primary/5" />
                   ) : (
                     <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={handleAddToCart} aria-label={`Ավելացնել ${name} զամբյուղ`}>
                       <ShoppingCart className="h-3 w-3" />
@@ -305,13 +289,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
 
               <div className="px-2 pb-2 sm:pb-4">
               {cartQty > 0 ? (
-                <div className="flex h-9 items-center justify-between rounded-xl border border-primary/40 bg-primary/5">
-                  <button onClick={decCart} aria-label="Պակասեցնել քանակը" className="flex h-full w-10 items-center justify-center rounded-l-xl text-lg font-medium text-primary transition-colors hover:bg-primary/10">−</button>
-                  <span className="flex items-center gap-1 text-xs font-bold text-primary">
-                    <ShoppingCart className="h-3.5 w-3.5" />{cartQty}
-                  </span>
-                  <button onClick={incCart} disabled={atLimit} aria-label="Ավելացնել քանակը" className="flex h-full w-10 items-center justify-center rounded-r-xl text-lg font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-30">+</button>
-                </div>
+                <QuantityStepper value={cartQty} onChange={(n) => updateQuantity(id, n)} onRemove={() => updateQuantity(id, cartQty - step)} step={step} min={step} max={stock ?? Infinity} size="sm" fullWidth className="border-primary/40 bg-primary/5" />
               ) : (
                 <Button size="sm" className="w-full gap-2 rounded-xl" disabled={!inStock} onClick={handleAddToCart}
                   aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : PRODUCT.outOfStock}>

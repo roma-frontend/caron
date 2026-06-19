@@ -45,6 +45,7 @@ export default function AdminSettingsPage() {
   const sendTest = useAction(api.notifications.sendTest);
 
   const [form, setForm] = useState<Record<string, string | number>>({});
+  const [tiers, setTiers] = useState<{ minQty: number; percent: number }[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showToken, setShowToken] = useState(false);
@@ -182,6 +183,7 @@ export default function AdminSettingsPage() {
       ...abFields,
       ...nbFields,
     });
+    setTiers((((settings as Record<string, unknown>).loyaltyTiers as { minQty: number; percent: number }[]) ?? []));
     setLoaded(true);
   }
 
@@ -239,13 +241,14 @@ export default function AdminSettingsPage() {
         showStockCount: flags.showStockCount !== false,
         deliveryEstimateYerevan: String(form.deliveryEstimateYerevan ?? ""),
         deliveryEstimateRegions: String(form.deliveryEstimateRegions ?? ""),
-        deliveryDaysYerevan: Number(form.deliveryDaysYerevan) || undefined,
-        deliveryDaysRegions: Number(form.deliveryDaysRegions) || undefined,
-        loyaltyPercent: Number(form.loyaltyPercent) || undefined,
-        loyaltyReviewPoints: Number(form.loyaltyReviewPoints) || undefined,
+        deliveryDaysYerevan: Number(form.deliveryDaysYerevan) || 0,
+        deliveryDaysRegions: Number(form.deliveryDaysRegions) || 0,
+        loyaltyPercent: Number(form.loyaltyPercent) || 0,
+        loyaltyTiers: tiers.filter((t) => Number(t.minQty) > 0 && Number(t.percent) > 0).map((t) => ({ minQty: Number(t.minQty), percent: Number(t.percent) })),
+        loyaltyReviewPoints: Number(form.loyaltyReviewPoints) || 0,
         loyaltyReviewPhotoBonus:
-          Number(form.loyaltyReviewPhotoBonus) || undefined,
-        referralReward: Number(form.referralReward) || undefined,
+          Number(form.loyaltyReviewPhotoBonus) || 0,
+        referralReward: Number(form.referralReward) || 0,
         maxCartItems: Number(form.maxCartItems) || 50,
         enableCrossSell: flags.enableCrossSell !== false,
         enableQuickView: flags.enableQuickView !== false,
@@ -917,6 +920,29 @@ export default function AdminSettingsPage() {
                     className="h-10"
                   />
                 </div>
+              </div>
+
+              {/* Quantity-based cashback tiers */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium">{"Cashback ըստ քանակի (շեմեր)"}</p>
+                <p className="mb-3 text-xs text-muted-foreground">{"Օր.՝ ≥10 հատ → 7%, ≥20 հատ → 10%։ Կիրառվում է ամենաբարձր հասանելի շեմը (բազային %-ը՝ որպես նվազագույն)։"}</p>
+                <div className="space-y-2">
+                  {tiers.map((t, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">≥</span>
+                      <Input {...numericInputProps(false)} value={Number(t.minQty) || 0} onChange={(e) => setTiers((prev) => prev.map((x, j) => j === i ? { ...x, minQty: Number(e.target.value) } : x))} placeholder="հատ" className="h-9 w-24" />
+                      <span className="text-xs text-muted-foreground">հատ →</span>
+                      <Input {...numericInputProps(false)} value={Number(t.percent) || 0} onChange={(e) => setTiers((prev) => prev.map((x, j) => j === i ? { ...x, percent: Number(e.target.value) } : x))} placeholder="%" className="h-9 w-20" />
+                      <span className="text-xs text-muted-foreground">%</span>
+                      <Button type="button" variant="ghost" size="icon-sm" className="text-destructive" onClick={() => setTiers((prev) => prev.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button type="button" variant="outline" size="sm" className="mt-2 gap-1.5" onClick={() => setTiers((prev) => [...prev, { minQty: 0, percent: 0 }])}>
+                  + Ավելացնել շեմ
+                </Button>
               </div>
             </CardContent>
           </Card>
