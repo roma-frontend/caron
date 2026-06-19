@@ -162,7 +162,10 @@ export const listPaginated = query({
     if (args.minPrice) filtered = filtered.filter((p) => p.price >= args.minPrice!);
     if (args.maxPrice) filtered = filtered.filter((p) => p.price <= args.maxPrice!);
     if (args.inStockOnly) filtered = filtered.filter((p) => p.stock > 0);
-    if (args.onSale) filtered = filtered.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price);
+    if (args.onSale) filtered = filtered.filter((p) =>
+      (p.compareAtPrice != null && p.compareAtPrice > p.price) ||
+      (p.retailDiscount != null && p.retailDiscount > 0)
+    );
     if (args.minRating) filtered = filtered.filter((p) => (p.rating ?? 0) >= args.minRating!);
     if (args.brand) filtered = filtered.filter((p) => {
       const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined;
