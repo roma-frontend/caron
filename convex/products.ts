@@ -1,5 +1,5 @@
 ﻿import { v } from 'convex/values';
-import { query, mutation, internalMutation } from './_generated/server';
+import { query, mutation, internalMutation, internalQuery } from './_generated/server';
 import type { MutationCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
@@ -453,6 +453,42 @@ export const backfillOemIndex = internalMutation({
       }
     }
     return healed;
+  },
+});
+
+/**
+ * Collect every image URL referenced anywhere in the database, so an R2
+ * cleanup can determine which stored objects are orphaned. Returns raw URL
+ * strings plus CMS page HTML (image URLs are extracted from it by the caller).
+ */
+export const imageReferences = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<{ urls: string[]; html: string[] }> => {
+    const urls: string[] = [];
+    const html: string[] = [];
+
+    const products = await ctx.db.query('products').take(50000);
+    for (const p of products) if (p.images) urls.push(...p.images);
+
+    const reviews = await ctx.db.query('reviews').take(50000);
+    for (const r of reviews) if (r.photos) urls.push(...r.photos);
+
+    const promos = await ctx.db.query('promotions').take(5000);
+    for (const pr of promos) {
+      if (pr.imageUrl) urls.push(pr.imageUrl);
+      if (pr.images) urls.push(...pr.images);
+    }
+
+    const cats = await ctx.db.query('categories').take(5000);
+    for (const c of cats) if (c.imageUrl) urls.push(c.imageUrl);
+
+    const settings = await ctx.db.query('settings').first();
+    if (settings?.logoUrl) urls.push(settings.logoUrl);
+
+    const pages = await ctx.db.query('pages').take(5000);
+    for (const pg of pages) if (pg.content) html.push(pg.content);
+
+    return { urls, html };
   },
 });
 

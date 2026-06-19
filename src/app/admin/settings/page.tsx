@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   Smartphone,
   BarChart3,
+  Trash2,
 } from 'lucide-react';
 
 import { toast } from 'sonner';
@@ -714,6 +715,7 @@ export default function AdminSettingsPage() {
           {/* Filter Migration */}
           <FilterMigrationCard sessionToken={sessionToken || ''} />
           <NormalizeBrandsCard sessionToken={sessionToken || ''} />
+          <ImageCleanupCard sessionToken={sessionToken || ''} />
         </TabsContent>
 
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full gap-2 mt-6">
@@ -797,6 +799,56 @@ function NormalizeBrandsCard({ sessionToken }: { sessionToken: string }) {
           catch (e) { toast.error(e instanceof Error ? e.message : 'Error'); }
           finally { setRunning(false); }
         }} className="w-full">{running ? 'Աշխատում է...' : 'Գործարկել'}</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ImageCleanupCard({ sessionToken }: { sessionToken: string }) {
+  const cleanup = useAction(api.r2Actions.cleanupImages);
+  const [running, setRunning] = useState(false);
+  return (
+    <Card className="border-destructive/30 bg-destructive/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Մաքրել չօգտագործվող նկարները</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Կհեռացնի Cloudflare R2-ից այն նկարները, որոնք այլևս չեն օգտագործվում ոչ մի ապրանքում, կատեգորիայում, ակցիայում կամ էջում։ Պաշտպանված են hero/poster ֆայլերը և վերջին 7 օրում վերբեռնվածները։
+        </p>
+        <Button
+          variant="destructive"
+          disabled={running}
+          onClick={async () => {
+            setRunning(true);
+            try {
+              // 1. Preview how many would be removed.
+              const preview = await cleanup({ sessionToken, apply: false });
+              const count = (preview as { orphanCount?: number }).orphanCount ?? 0;
+              const mb = (preview as { orphanMB?: number }).orphanMB ?? 0;
+              if (count === 0) {
+                toast.info('Չօգտագործվող նկարներ չկան');
+                return;
+              }
+              if (!window.confirm(`Գտնվեց ${count} չօգտագործվող նկար (${mb} ՄԲ)։ Հեռացնե՞լ։`)) {
+                return;
+              }
+              // 2. Apply deletion.
+              const res = await cleanup({ sessionToken, apply: true });
+              const deleted = (res as { deleted?: number }).deleted ?? 0;
+              const freed = (res as { freedMB?: number }).freedMB ?? 0;
+              toast.success(`Հեռացվեց ${deleted} նկար (${freed} ՄԲ)`);
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : 'Սխալ');
+            } finally {
+              setRunning(false);
+            }
+          }}
+          className="w-full gap-2"
+        >
+          <Trash2 className="h-4 w-4" />
+          {running ? 'Մաքրվում է...' : 'Հեռացնել նկարները'}
+        </Button>
       </CardContent>
     </Card>
   );
