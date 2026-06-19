@@ -18,23 +18,26 @@ export function Logo({ size = 36, className }: LogoProps) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
     >
-      <rect width="32" height="32" rx="7" fill="#0F6CBD" />
-      <path d="M10 14 L12 10 L20 10 L22 14 Z" fill="white" />
-      <rect x="7" y="14" width="18" height="8" rx="1.5" fill="white" />
-      <path d="M11 14 L12.5 11 L19.5 11 L21 14 Z" fill="#0F6CBD" />
-      <rect x="8" y="16" width="4" height="2.5" rx="1" fill="#FFD700" />
-      <rect x="20" y="16" width="4" height="2.5" rx="1" fill="#FFD700" />
-      <rect x="13" y="16.5" width="6" height="2" rx="0.5" fill="#0F6CBD" />
-      <circle cx="11" cy="23" r="3" fill="#0F6CBD" stroke="white" strokeWidth="1.5" />
-      <circle cx="11" cy="23" r="1.2" fill="white" />
-      <circle cx="21" cy="23" r="3" fill="#0F6CBD" stroke="white" strokeWidth="1.5" />
-      <circle cx="21" cy="23" r="1.2" fill="white" />
+      <defs>
+        <linearGradient id="caronLogoBg" x1="0" y1="0" x2="0" y2="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#1A7BD4" />
+          <stop offset="0.55" stopColor="#0066AE" />
+          <stop offset="1" stopColor="#064D86" />
+        </linearGradient>
+      </defs>
+      <rect width="48" height="48" rx="12" fill="url(#caronLogoBg)" />
+      {/* subtle top sheen */}
+      <rect width="48" height="24" rx="12" fill="#FFFFFF" opacity="0.06" />
+      {/* monogram C / rotor ring */}
+      <path d="M31.7 33.2 A12 12 0 1 1 31.7 14.8" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round" fill="none" />
+      {/* accent hub */}
+      <circle cx="24" cy="24" r="3.1" fill="#FFB020" />
     </svg>
   );
 }

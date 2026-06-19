@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { formatDateHy } from '@/lib/formatters';
+import { normalizeImageUrl } from '../../../../convex/lib/imageUrl';
+import Image from 'next/image';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
 const STATUS_LABEL: Record<string, string> = { pending: 'Քննարկվում է', approved: 'Հաստատված', rejected: 'Մերժված', completed: 'Ավարտված' };
@@ -40,8 +42,26 @@ export default function AdminReturnsPage() {
                 </div>
               </div>
               <div className="text-sm">
-                <p className="text-muted-foreground">Ապրանքներ՝ {r.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}</p>
-                <p className="mt-1">Պատճառ՝ <span className="font-medium">{r.reason}</span></p>
+                <div className="space-y-2">
+                  {r.items.map((i, idx) => {
+                    const img = (i as { image?: string | null }).image;
+                    const src = img ? (normalizeImageUrl(img) ?? img) : null;
+                    return (
+                      <div key={`${i.productId}-${idx}`} className="flex items-center gap-3">
+                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-muted/50 ring-1 ring-border/50">
+                          {src ? (
+                            <Image src={src} alt={i.name} width={44} height={44} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-base">🔧</div>
+                          )}
+                        </div>
+                        <span className="flex-1 truncate">{i.name}</span>
+                        <span className="text-xs text-muted-foreground">×{i.quantity}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-2">Պատճառ՝ <span className="font-medium">{r.reason}</span></p>
                 {r.comment && <p className="mt-1 text-muted-foreground">«{r.comment}»</p>}
               </div>
               <div className="flex flex-wrap gap-2">

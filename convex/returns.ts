@@ -86,10 +86,18 @@ export const listAll = query({
   },
   handler: async (ctx, args) => {
     try { await getAdminCaller(ctx, args.sessionToken); } catch { return []; }
-    if (args.status) {
-      return await ctx.db.query('returnRequests').withIndex('by_status', (q) => q.eq('status', args.status!)).order('desc').take(300);
-    }
-    return await ctx.db.query('returnRequests').order('desc').take(300);
+    const reqs = args.status
+      ? await ctx.db.query('returnRequests').withIndex('by_status', (q) => q.eq('status', args.status!)).order('desc').take(300)
+      : await ctx.db.query('returnRequests').order('desc').take(300);
+
+    // Enrich items with product image + slug for a card-like admin view.
+    return await Promise.all(reqs.map(async (r) => ({
+      ...r,
+      items: await Promise.all(r.items.map(async (it) => {
+        const product = await ctx.db.get(it.productId);
+        return { ...it, image: product?.images?.[0] ?? null, slug: product?.slug };
+      })),
+    })));
   },
 });
 

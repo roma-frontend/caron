@@ -109,11 +109,11 @@ export const metadata: Metadata = {
       'Ավտոպահեստամասերի առցանց խանութ Հայաստանում։ Գնեք բարձրորակ ավտոպահեստամասեր ձեր մեքենայի համար՝ մատչելի գներով և արագ առաքմամբ։',
     images: [
       {
-        url: '/og-image.svg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Caron Armenia — Ավտոպահեստամասերի առցանց խանութ',
-        type: 'image/svg+xml',
+        type: 'image/png',
       },
     ],
   },
@@ -122,7 +122,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Caron Armenia | Ավտոպահեստամասերի առցանց խանութ',
     description: 'Ավտոպահեստամասերի առցանց խանութ Հայաստանում',
-    images: ['/og-image.svg'],
+    images: ['/og-image.png'],
   },
 
   robots: {
@@ -145,7 +145,7 @@ export const metadata: Metadata = {
       { url: '/favicon.svg', type: 'image/svg+xml' },
     ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
-    other: [{ rel: 'mask-icon', url: '/favicon.svg', color: '#0F6CBD' }],
+    other: [{ rel: 'mask-icon', url: '/favicon.svg', color: '#0066AE' }],
   },
 
   manifest: '/site.webmanifest',
@@ -160,7 +160,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="hy" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Safari pinned tab */}
-        <link rel="mask-icon" href="/favicon.svg" color="#0F6CBD" />
+        <link rel="mask-icon" href="/favicon.svg" color="#0066AE" />
 
         {process.env.NEXT_PUBLIC_CONVEX_URL && (
           <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_URL} />

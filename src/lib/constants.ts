@@ -60,7 +60,7 @@ export const CHECKOUT = {
   notes: 'Նշումներ',
   notesPlaceholder: 'Նշումներ...',
   placeOrder: 'Պատվիրել',
-  paymentNote: 'Նկատարկումներ վճարման մասին',
+  paymentNote: 'Վճարման մանրամասները կհաստատվեն պատվերից հետո',
 };
 
 export const AUTH = {

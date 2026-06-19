@@ -8,7 +8,7 @@
   "dir": "ltr",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#0F6CBD",
+  "theme_color": "#0066AE",
   "background_color": "#ffffff",
   "categories": ["shopping", "auto"],
   "icons": [

@@ -6,7 +6,7 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Mail, Phone, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Phone, Lock, ArrowRight, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { setAuthCookie } from '@/actions/auth';
@@ -117,7 +117,13 @@ export default function RegisterPage() {
                 <Input type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="h-11 pl-10" placeholder="Կրկնել գաղտնաբառը" />
               </div>
             </div>
-            {refCode && <p className="rounded-lg bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">🎁 Հրավերի կոդ՝ {refCode}</p>}
+            <div className="space-y-2">
+              <Label>Հրավերի կոդ (ըստ ցանկության)</Label>
+              <div className="relative">
+                <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={refCode} onChange={(e) => setRefCode(e.target.value.toUpperCase().trim())} className="h-11 pl-10" placeholder="Օր.՝ C1A2B3" />
+              </div>
+            </div>
             <Button type="submit" disabled={busy} variant="cta" size="xl" className="w-full gap-2">
               {busy ? 'Գրանցվում է...' : 'Գրանցվել'}
             </Button>

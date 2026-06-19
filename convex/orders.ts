@@ -387,7 +387,7 @@ export const updateStatus = mutation({
       if (nextStatus === 'delivered' && order.userId && loyaltyEnabled) {
         const buyer = await ctx.db.get(order.userId);
         if (buyer && buyer.referredBy && !buyer.referralRewarded) {
-          const REFERRAL_REWARD = 100;
+          const REFERRAL_REWARD = storeSettings?.referralReward ?? 100;
           await adjustLoyalty(ctx, { userId: buyer._id, email: buyer.email, points: REFERRAL_REWARD });
           const referrer = await ctx.db.get(buyer.referredBy);
           if (referrer) await adjustLoyalty(ctx, { userId: referrer._id, email: referrer.email, points: REFERRAL_REWARD });

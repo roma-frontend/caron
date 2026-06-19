@@ -244,6 +244,7 @@ export default function AdminSettingsPage() {
         loyaltyReviewPoints: Number(form.loyaltyReviewPoints) || undefined,
         loyaltyReviewPhotoBonus:
           Number(form.loyaltyReviewPhotoBonus) || undefined,
+        referralReward: Number(form.referralReward) || undefined,
         maxCartItems: Number(form.maxCartItems) || 50,
         enableCrossSell: flags.enableCrossSell !== false,
         enableQuickView: flags.enableQuickView !== false,
@@ -899,6 +900,19 @@ export default function AdminSettingsPage() {
                       set("loyaltyReviewPhotoBonus", Number(e.target.value))
                     }
                     placeholder="30"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label>{"Բոնուս հրավերի համար (բալ)"}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={Number(form.referralReward) || 0}
+                    onChange={(e) =>
+                      set("referralReward", Number(e.target.value))
+                    }
+                    placeholder="100"
                     className="h-10"
                   />
                 </div>

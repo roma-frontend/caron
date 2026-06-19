@@ -368,6 +368,7 @@ export default defineSchema(
     loyaltyPercent: v.optional(v.number()),
     loyaltyReviewPoints: v.optional(v.number()),
     loyaltyReviewPhotoBonus: v.optional(v.number()),
+    referralReward: v.optional(v.number()),
     // Delivery (numeric days for real delivery-date display)
     deliveryDaysYerevan: v.optional(v.number()),
     deliveryDaysRegions: v.optional(v.number()),
