@@ -856,6 +856,55 @@ export const remove = mutation({
   },
 });
 
+/**
+ * Apply one action to many products at once from the admin list.
+ */
+export const bulkAction = mutation({
+  args: {
+    sessionToken: v.string(),
+    ids: v.array(v.id('products')),
+    op: v.union(
+      v.literal('activate'),
+      v.literal('deactivate'),
+      v.literal('delete'),
+      v.literal('setDiscount'),
+      v.literal('setCategory'),
+    ),
+    discount: v.optional(v.number()),
+    categoryId: v.optional(v.id('categories')),
+  },
+  handler: async (ctx, args): Promise<{ affected: number }> => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const now = Date.now();
+    let affected = 0;
+    for (const id of args.ids) {
+      const p = await ctx.db.get(id);
+      if (!p) continue;
+      if (args.op === 'delete') {
+        if (p.images?.length) {
+          const keys = p.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
+          if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
+        }
+        await syncOemIndex(ctx, id, undefined);
+        await ctx.db.delete(id);
+      } else if (args.op === 'activate') {
+        await ctx.db.patch(id, { isActive: true, updatedAt: now });
+      } else if (args.op === 'deactivate') {
+        await ctx.db.patch(id, { isActive: false, updatedAt: now });
+      } else if (args.op === 'setDiscount') {
+        const d = args.discount ?? 0;
+        await ctx.db.patch(id, { retailDiscount: d > 0 ? d : undefined, updatedAt: now });
+      } else if (args.op === 'setCategory' && args.categoryId) {
+        await ctx.db.patch(id, { categoryId: args.categoryId, updatedAt: now });
+      } else {
+        continue;
+      }
+      affected++;
+    }
+    return { affected };
+  },
+});
+
 export const bulkCreate = mutation({
   args: {
     sessionToken: v.string(),
