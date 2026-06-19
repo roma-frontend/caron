@@ -343,6 +343,12 @@ function StepBasicInfo() {
 
       <SmoothCollapseSection title="SEO" open={seoOpen} onToggle={() => setSeoOpen((v) => !v)}>
         <div className="mt-2 space-y-3">
+          <div className="flex justify-end">
+            <AiGenerateButton
+              getInput={() => ({ name: (data.name as string) ?? '', brand: data.brand as string | undefined, attributes: data.attributes as Record<string, unknown> | undefined })}
+              onResult={(r) => { update('description', r.description); update('seoTitle', r.seoTitle); update('seoDescription', r.seoDescription); }}
+            />
+          </div>
           <div><Label className="text-[11px] text-muted-foreground">SEO վերնագիր</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11 border-border/70 bg-background/90" /></div>
           <div><Label className="text-[11px] text-muted-foreground">SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} className="border-border/70 bg-background/90" /></div>
         </div>
