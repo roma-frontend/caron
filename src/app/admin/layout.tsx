@@ -43,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const logoutMutation = useMutation(api.auth.logout);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pendingCount = useOrderNotificationStore((s) => s.pendingCount);
+  const returnsPendingCount = useOrderNotificationStore((s) => s.returnsPendingCount);
   const flash = useOrderNotificationStore((s) => s.flash);
   const storeName = useStoreName();
   const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
@@ -102,6 +103,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="truncate">{item.label}</span>
               {item.href === '/admin/orders' && pendingCount > 0 && (
                 <span className={`ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-white ${flash ? 'animate-bounce' : ''}`}>{pendingCount}</span>
+              )}
+              {item.href === '/admin/returns' && returnsPendingCount > 0 && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-white">{returnsPendingCount}</span>
               )}
             </Link>
           );

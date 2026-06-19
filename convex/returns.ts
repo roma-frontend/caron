@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { internal } from './_generated/api';
 import { getAuthCaller, getAdminCaller } from './lib/auth';
 
 /** Customer creates a return/exchange request for one of their orders. */
@@ -37,7 +38,7 @@ export const create = mutation({
       throw new Error('Այս պատվերի համար արդեն կա հայտ');
     }
 
-    return await ctx.db.insert('returnRequests', {
+    const id = await ctx.db.insert('returnRequests', {
       orderId: args.orderId,
       orderNumber: order.orderNumber,
       userId: order.userId ?? caller?._id,
@@ -50,6 +51,16 @@ export const create = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await ctx.scheduler.runAfter(0, internal.notifications.sendReturnNotification, {
+      orderNumber: order.orderNumber,
+      type: args.type,
+      reason: args.reason.trim(),
+      itemsCount: args.items.length,
+      customerEmail: order.customerEmail,
+    });
+
+    return id;
   },
 });
 

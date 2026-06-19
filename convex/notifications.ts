@@ -45,6 +45,44 @@ export const sendOrderNotification = internalAction({
   },
 });
 
+export const sendReturnNotification = internalAction({
+  args: {
+    orderNumber: v.string(),
+    type: v.string(),
+    reason: v.string(),
+    itemsCount: v.number(),
+    customerEmail: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
+    const token = settings?.telegramBotToken;
+    const chatId = settings?.telegramChatId;
+    if (!token || !chatId) return;
+
+    const typeLabel = args.type === 'exchange' ? 'Փոխանակում' : 'Վերադարձ';
+    const text = [
+      `<b>🔄 Նոր հայտ՝ ${typeLabel}</b>`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<b>📝 Պատվեր՝</b> <code>${args.orderNumber}</code>`,
+      `<b>📦 Ապրանքների քանակ՝</b> ${args.itemsCount} հատ`,
+      `<b>❓ Պատճառ՝</b> ${args.reason}`,
+      `<b>📧 Email՝</b> ${args.customerEmail}`,
+      `━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `<a href="https://caron.am/admin/returns">📋 Դիտել հայտերը</a>`,
+    ].join('\n');
+
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      });
+    } catch {}
+  },
+});
+
 export const sendTest = action({
   args: { sessionToken: v.string() },
   handler: async (ctx, args): Promise<boolean> => {
