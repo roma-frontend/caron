@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { useAuth, useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
@@ -8,10 +8,12 @@ import { Loader } from '@/components/ui/loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, LogOut, Heart, Clock, Gift } from 'lucide-react';
+import { Package, User, ShoppingBag, LogOut, Heart, Clock, Gift, Copy } from 'lucide-react';
 import { clearAuthCookie } from '@/actions/auth';
+import { toast } from 'sonner';
 import { formatDateHy, formatPrice } from '@/lib/formatters';
 import { ReorderButton } from '@/components/ReorderButton';
+import { PushToggle } from '@/components/PushToggle';
 import { useSettings } from '@/hooks/useSettings';
 import Link from 'next/link';
 import { api } from '../../../../convex/_generated/api';
@@ -24,6 +26,12 @@ export default function DashboardPage() {
   const orders = useQuery(api.orders.listByUser, sessionToken ? { sessionToken } : 'skip');
   const settings = useSettings();
   const loyalty = useQuery(api.loyalty.getBalance, sessionToken ? { sessionToken } : 'skip');
+  const ensureReferral = useMutation(api.auth.ensureReferralCode);
+  const [referral, setReferral] = useState<{ code: string; referredCount: number } | null>(null);
+  useEffect(() => {
+    if (sessionToken) ensureReferral({ sessionToken }).then((r) => { if (r) setReferral(r); }).catch(() => {});
+  }, [sessionToken, ensureReferral]);
+  const referralLink = referral && typeof window !== 'undefined' ? `${window.location.origin}/register?ref=${referral.code}` : '';
 
   useEffect(() => {
     if (hydrated && !user) {
@@ -55,9 +63,12 @@ export default function DashboardPage() {
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Իմ վահանակը</h1>
-        <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
-          <LogOut className="h-4 w-4" /> Դուրս գալ
-        </Button>
+        <div className="flex items-center gap-2">
+          <PushToggle />
+          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" /> Դուրս գալ
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -143,6 +154,27 @@ export default function DashboardPage() {
               {(settings.loyaltyPercent ?? 0) > 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">Ստացե՛ք {settings.loyaltyPercent}% բալ յուրաքանչյուր առաքված պատվերից</p>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Referral program */}
+        {settings?.enableLoyalty && referral && (
+          <Card className="border-primary/30 bg-primary/5 lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Gift className="h-5 w-5 text-primary" /> Հրավիրիր ընկերոջ
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">Կիսվեք ձեր կոդով։ Ընկերոջ առաջին առաքված պատվերից հետո դուք երկուսդ էլ կստանաք բոնուսային բալեր։</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-lg border bg-background px-4 py-2 font-mono text-lg font-bold tracking-wider text-primary">{referral.code}</span>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { navigator.clipboard.writeText(referralLink); toast.success('Հղումը պատճենվեց'); }}>
+                  <Copy className="h-3.5 w-3.5" /> Պատճենել հղումը
+                </Button>
+                <span className="text-xs text-muted-foreground">Հրավիրված՝ {referral.referredCount}</span>
+              </div>
             </CardContent>
           </Card>
         )}

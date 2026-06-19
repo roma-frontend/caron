@@ -4,7 +4,7 @@ import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/admin/categories', icon: FolderTree, label: 'Կատեգորիաներ' },
   { href: '/admin/filters', icon: SlidersHorizontal, label: 'Ֆիլտրեր' },
   { href: '/admin/orders', icon: BarChart3, label: 'Պատվերներ' },
+  { href: '/admin/returns', icon: RotateCcw, label: 'Վերադարձներ' },
   { href: '/admin/customers', icon: Users, label: 'Հաճախորդներ' },
   { href: '/admin/stock', icon: Warehouse, label: 'Պահեստ' },
   { href: '/admin/analytics', icon: TrendingUp, label: 'Վերլուծություն' },
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: '/admin/promotions', icon: Tag, label: 'Ակցիաներ' },
   { href: '/admin/promotions/coupons', icon: Ticket, label: 'Կուպոններ' },
   { href: '/admin/reviews', icon: Star, label: 'Կարծիքներ' },
+  { href: '/admin/qa', icon: MessageCircleQuestion, label: 'Հարցեր' },
   { href: '/admin/pages', icon: FileText, label: 'Էջեր' },
   { href: '/admin/settings', icon: Settings, label: 'Կարգավորումներ' },
 ];

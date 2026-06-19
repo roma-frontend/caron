@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -14,22 +14,49 @@ import { Loader } from '@/components/ui/loader';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
-function CountdownBlock({ endDate }: { endDate: number }) {
-  const [now] = useState(() => Date.now());
+function useCountdown(endDate: number) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (endDate <= Date.now()) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [endDate]);
   const diff = Math.max(0, endDate - now);
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return {
+    days: Math.floor(diff / 86400000),
+    hours: Math.floor((diff % 86400000) / 3600000),
+    mins: Math.floor((diff % 3600000) / 60000),
+    secs: Math.floor((diff % 60000) / 1000),
+    ended: diff === 0,
+  };
+}
+
+function CountdownBlock({ endDate }: { endDate: number }) {
+  const { days, hours, mins, secs, ended } = useCountdown(endDate);
+  if (ended) return null;
 
   return (
     <div className="flex gap-3">
-      {[{ v: days, l: 'Օր' }, { v: hours, l: 'ժ' }, { v: mins, l: 'ր' }].map((item) => (
-        <div key={item.l} className="flex flex-col items-center rounded-xl border bg-card px-4 py-3">
-          <span className="text-2xl font-black">{item.v}</span>
+      {[{ v: days, l: 'Օր' }, { v: hours, l: 'ժ' }, { v: mins, l: 'ր' }, { v: secs, l: 'վ' }].map((item) => (
+        <div key={item.l} className="flex flex-col items-center rounded-xl border bg-card px-4 py-3 tabular-nums">
+          <span className="text-2xl font-black">{String(item.v).padStart(2, '0')}</span>
           <span className="text-[10px] uppercase tracking-wider opacity-70">{item.l}</span>
         </div>
       ))}
     </div>
+  );
+}
+
+/** Compact live countdown pill for promo cards. */
+function CountdownPill({ endDate }: { endDate: number }) {
+  const { days, hours, mins, secs, ended } = useCountdown(endDate);
+  if (ended) return null;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-bold tabular-nums text-destructive">
+      <Clock className="h-3 w-3" />
+      {days > 0 ? `${days}օր ` : ''}{pad(hours)}:{pad(mins)}:{pad(secs)}
+    </span>
   );
 }
 
@@ -88,6 +115,11 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
             <p className="mt-1 text-xs text-muted-foreground text-center line-clamp-2">
               {promo.description}
             </p>
+          )}
+          {promo.endDate > Date.now() && (
+            <div className="mt-2 flex justify-center">
+              <CountdownPill endDate={promo.endDate} />
+            </div>
           )}
         </div>
       </div>

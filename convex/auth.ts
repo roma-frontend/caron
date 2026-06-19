@@ -77,6 +77,16 @@ async function createSession(ctx: MutationCtx, userId: Id<'users'>, days: number
   return token;
 }
 
+/** Generate a unique, human-friendly referral code. */
+async function generateReferralCode(ctx: MutationCtx): Promise<string> {
+  for (let i = 0; i < 6; i++) {
+    const code = 'C' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const existing = await ctx.db.query('users').withIndex('by_referral_code', (q) => q.eq('referralCode', code)).first();
+    if (!existing) return code;
+  }
+  return 'C' + Date.now().toString(36).toUpperCase();
+}
+
 async function assertLoginAllowed(ctx: MutationCtx, key: string): Promise<void> {
   const attempt = await ctx.db.query('authAttempts').withIndex('by_key', (q) => q.eq('key', key)).unique();
   if (attempt?.lockedUntil && attempt.lockedUntil > Date.now()) {
@@ -179,7 +189,7 @@ export const logout = mutation({
 });
 
 export const register = mutation({
-  args: { name: v.string(), email: v.string(), phone: v.optional(v.string()), password: v.string() },
+  args: { name: v.string(), email: v.string(), phone: v.optional(v.string()), password: v.string(), referralCode: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Սխալ էլ․ հասցե');
@@ -187,6 +197,16 @@ export const register = mutation({
     if (args.password.length < 8) throw new Error('Գաղտնաբառը պետք է լինի առնվազն 8 նիշ');
     const existing = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', email)).unique();
     if (existing) throw new Error('Այս էլ․ հասցեն արդեն գրանցված է');
+
+    // Resolve referrer from a referral code (if provided and valid).
+    let referredBy: Id<'users'> | undefined;
+    if (args.referralCode?.trim()) {
+      const code = args.referralCode.trim().toUpperCase();
+      const refUser = await ctx.db.query('users').withIndex('by_referral_code', (q) => q.eq('referralCode', code)).first();
+      if (refUser) referredBy = refUser._id;
+    }
+    const referralCode = await generateReferralCode(ctx);
+
     const passwordHash = await hashPassword(args.password);
     const id = await ctx.db.insert('users', {
       name: args.name,
@@ -196,9 +216,31 @@ export const register = mutation({
       customerType: 'retail',
       passwordHash,
       isActive: true,
+      referralCode,
+      referredBy,
       createdAt: Date.now(),
     });
     const sessionToken = await createSession(ctx, id, 30);
     return { userId: id, sessionToken, name: args.name, email: email, role: 'customer' as const, customerType: 'retail' as const, discountPercent: undefined, phone: args.phone };
+  },
+});
+
+/** Ensure the current user has a referral code; returns code + referral count. */
+export const ensureReferralCode = mutation({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db.query('sessions').withIndex('by_token', (q) => q.eq('token', args.sessionToken)).unique();
+    const userId = session?.userId;
+    if (!userId) return null;
+    const user = await ctx.db.get(userId);
+    if (!user) return null;
+    let code = user.referralCode;
+    if (!code) {
+      code = await generateReferralCode(ctx);
+      await ctx.db.patch(userId, { referralCode: code });
+    }
+    const allUsers = await ctx.db.query('users').withIndex('by_role', (q) => q.eq('role', 'customer')).take(5000);
+    const referredCount = allUsers.filter((u) => u.referredBy === userId).length;
+    return { code, referredCount };
   },
 });

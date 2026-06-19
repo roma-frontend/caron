@@ -1255,3 +1255,54 @@ export const reorderVariantGroup = mutation({
     );
   },
 });
+
+/**
+ * Personalized recommendations derived from the shopper's recently-viewed
+ * products: returns in-stock products from the same categories, excluding the
+ * viewed ones. Falls back to featured/active products when no history.
+ */
+export const recommendedFromViewed = query({
+  args: {
+    viewedIds: v.optional(v.array(v.id('products'))),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 8;
+    const viewed = (args.viewedIds ?? []).slice(0, 12);
+    const viewedSet = new Set(viewed.map(String));
+
+    const cats = new Set<string>();
+    for (const id of viewed) {
+      const p = await ctx.db.get(id);
+      if (p && p.isActive) cats.add(p.categoryId);
+    }
+
+    const pool: Doc<'products'>[] = [];
+    if (cats.size > 0) {
+      for (const catId of cats) {
+        const inCat = await ctx.db
+          .query('products')
+          .withIndex('by_category', (q) => q.eq('categoryId', catId as Id<'categories'>))
+          .take(24);
+        pool.push(...inCat);
+      }
+    } else {
+      const active = await ctx.db
+        .query('products')
+        .withIndex('by_active', (q) => q.eq('isActive', true))
+        .take(40);
+      pool.push(...active);
+    }
+
+    const seen = new Set<string>();
+    const result: Doc<'products'>[] = [];
+    for (const p of pool) {
+      if (!p.isActive || p.stock <= 0) continue;
+      if (viewedSet.has(p._id) || seen.has(p._id)) continue;
+      seen.add(p._id);
+      result.push(p);
+      if (result.length >= limit) break;
+    }
+    return result.map((p) => normalizeProductImages(p));
+  },
+});

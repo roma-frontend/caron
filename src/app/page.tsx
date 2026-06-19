@@ -183,7 +183,7 @@ export default function HomePage() {
 
           <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden lg:rounded-[2rem] border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] lg:min-h-0 flex flex-col"
+              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] lg:min-h-0 flex flex-col md:px-8 py-12"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--sx', `${e.clientX - r.left}px`);

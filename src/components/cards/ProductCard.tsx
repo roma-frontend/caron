@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Heart, Star, Check, Eye, Truck } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
+import { formatDateHy } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useVehicleStore } from '@/store/vehicle';
@@ -106,9 +107,13 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
     : (effectiveWholesaleDiscount > 0 && displayPrice < price ? effectiveWholesaleDiscount : 0);
   const hasDiscount = discountPct > 0;
 
-  // WB-style: delivery signal line (data-driven from store settings)
+  // WB-style: delivery signal line (data-driven from store settings).
+  // If numeric delivery days are configured, show a real date; otherwise
+  // fall back to the free-text estimate. Always prefixed with "Առաքում".
   const deliveryText = inStock
-    ? (settings?.deliveryEstimateYerevan?.trim() || 'Առաքում 1-2 օր')
+    ? (typeof settings?.deliveryDaysYerevan === 'number' && settings.deliveryDaysYerevan > 0
+        ? `Առաքում մինչև ${formatDateHy(Date.now() + settings.deliveryDaysYerevan * 86400000)}`
+        : `Առաքում ${settings?.deliveryEstimateYerevan?.trim() || '1-2 օր'}`)
     : null;
 
   const handleAddToCart = (e: React.MouseEvent) => {

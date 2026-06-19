@@ -22,6 +22,8 @@ import { useRecentlyViewedStore } from '@/store/recentlyViewed';
 import { useAuthStore } from '@/store/auth';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { ProductReviews } from '@/components/ProductReviews';
+import { ProductQuestions } from '@/components/ProductQuestions';
+import { RecommendedForYou } from '@/components/RecommendedForYou';
 import { FrequentlyBoughtTogether } from '@/components/FrequentlyBoughtTogether';
 import dynamic from 'next/dynamic';
 import { PRODUCT } from '@/lib/constants';
@@ -317,9 +319,7 @@ export default function ProductDetailPage() {
 
           {orderedVariants && orderedVariants.length > 1 && (
             <div className="mt-3 relative">
-              <div className="flex items-center gap-1.5">
-                <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronLeft className="h-4 w-4" /></button>
-                <div id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
+              <div id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
                   {currentUser?.role === 'admin' ? (
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleVariantDragEnd}>
                       <SortableContext items={orderedVariants.map((v) => v._id)} strategy={horizontalListSortingStrategy}>
@@ -353,8 +353,8 @@ export default function ProductDetailPage() {
                     </div>
                   )}
                 </div>
-                <button type="button" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 120, behavior: 'smooth' }); }} className="shrink-0 rounded-full border p-1 hover:bg-accent"><ChevronRight className="h-4 w-4" /></button>
-              </div>
+              <button type="button" aria-label="Նախորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }); }} className="absolute left-0 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
+              <button type="button" aria-label="Հաջորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }); }} className="absolute right-0 top-1/2 z-20 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
               {hoveredVariant?.images?.[0] && (
                 <div className="hidden sm:block absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                   <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-cover" />
@@ -529,7 +529,11 @@ export default function ProductDetailPage() {
 
       {settings !== undefined && settings?.enableReviews !== false && <ProductReviews productId={product._id} />}
 
+      <ProductQuestions productId={product._id} />
+
       <RecentlyViewed />
+
+      <RecommendedForYou title="Ձեզ համար" />
 
       {/* Related Products */}
       <div className="mt-12">

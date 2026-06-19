@@ -3,6 +3,7 @@ import { query, mutation } from './_generated/server';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { getAuthCaller, getAdminCaller } from './lib/auth';
+import { adjustLoyalty } from './lib/loyalty';
 
 export const getByProduct = query({
   args: { productId: v.id('products') },
@@ -21,9 +22,15 @@ export const getStats = query({
       .withIndex('by_product', (q) => q.eq('productId', args.productId))
       .collect()
       .then((r) => r.filter((rev) => rev.isApproved));
-    if (reviews.length === 0) return { avg: 0, count: 0 };
+    // dist[0..4] = count of 1..5 star reviews
+    const dist = [0, 0, 0, 0, 0];
+    for (const r of reviews) {
+      const idx = Math.min(5, Math.max(1, Math.round(r.rating))) - 1;
+      dist[idx]++;
+    }
+    if (reviews.length === 0) return { avg: 0, count: 0, dist };
     const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-    return { avg: Math.round(avg * 10) / 10, count: reviews.length };
+    return { avg: Math.round(avg * 10) / 10, count: reviews.length, dist };
   },
 });
 
@@ -85,6 +92,9 @@ export const create = mutation({
       photos: args.photos && args.photos.length > 0 ? args.photos : undefined,
       verified,
       helpfulCount: 0,
+      reviewerUserId: caller?._id,
+      reviewerEmail: caller?.email,
+      pointsAwarded: false,
       isApproved: false,
       createdAt: Date.now(),
     });
@@ -118,6 +128,22 @@ export const approve = mutation({
     const review = await ctx.db.get(args.id);
     if (!review) return;
     await ctx.db.patch(args.id, { isApproved: args.approved });
+
+    // Reward the reviewer with loyalty points on first approval (WB-style).
+    if (args.approved && !review.pointsAwarded && (review.reviewerUserId || review.reviewerEmail)) {
+      const settings = await ctx.db.query('settings').first();
+      if (settings?.enableLoyalty) {
+        const hasPhotos = (review.photos?.length ?? 0) > 0;
+        const base = settings.loyaltyReviewPoints ?? 20;
+        const bonus = hasPhotos ? (settings.loyaltyReviewPhotoBonus ?? 30) : 0;
+        const pts = base + bonus;
+        if (pts > 0) {
+          await adjustLoyalty(ctx, { userId: review.reviewerUserId, email: review.reviewerEmail ?? '', points: pts });
+          await ctx.db.patch(args.id, { pointsAwarded: true });
+        }
+      }
+    }
+
     await recomputeRating(ctx, review.productId);
   },
 });

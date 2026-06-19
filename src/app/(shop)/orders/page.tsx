@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Package, ArrowLeft } from 'lucide-react';
 import { formatPrice, formatDateHy } from '@/lib/formatters';
 import { ReorderButton } from '@/components/ReorderButton';
+import { ReturnRequestButton } from '@/components/ReturnRequestButton';
 import Link from 'next/link';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -20,6 +21,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function OrdersHistoryPage() {
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listByUser, sessionToken ? { sessionToken } : 'skip');
+  const myReturns = useQuery(api.returns.listMine, sessionToken ? { sessionToken } : 'skip');
+  const returnByOrder = new Map((myReturns ?? []).map((r) => [r.orderId, r.status]));
 
   if (!sessionToken) return (
     <div className="py-16 text-center">
@@ -52,6 +55,13 @@ export default function OrdersHistoryPage() {
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-primary">{formatPrice(o.total)}</span>
                 <ReorderButton items={o.items.map((it) => ({ productId: it.productId, name: it.name, quantity: it.quantity }))} />
+                {o.status === 'delivered' && (
+                  <ReturnRequestButton
+                    orderId={o._id}
+                    items={o.items.map((it) => ({ productId: it.productId, name: it.name, quantity: it.quantity }))}
+                    existingStatus={returnByOrder.get(o._id)}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

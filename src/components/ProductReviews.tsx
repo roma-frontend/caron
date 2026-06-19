@@ -112,6 +112,25 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
         </Button>
       </div>
 
+      {/* Rating distribution histogram */}
+      {stats && stats.count > 0 && stats.dist && (
+        <div className="mb-6 max-w-md space-y-1.5">
+          {[5, 4, 3, 2, 1].map((star) => {
+            const c = stats.dist[star - 1] ?? 0;
+            const pct = stats.count > 0 ? Math.round((c / stats.count) * 100) : 0;
+            return (
+              <div key={star} className="flex items-center gap-2 text-xs">
+                <span className="flex w-8 shrink-0 items-center gap-0.5 text-muted-foreground">{star}<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /></span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-yellow-400 transition-all duration-500" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="w-8 shrink-0 text-right text-muted-foreground">{c}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {showForm && (
         <Card className="mb-6">
           <CardContent className="p-5 space-y-3">

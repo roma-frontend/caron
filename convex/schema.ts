@@ -18,12 +18,16 @@ export default defineSchema(
     sessionToken: v.optional(v.string()),
     sessionExpiry: v.optional(v.number()),
     cartJson: v.optional(v.string()),
+    referralCode: v.optional(v.string()),
+    referredBy: v.optional(v.id('users')),
+    referralRewarded: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index('by_email', ['email'])
     .index('by_google_id', ['googleId'])
     .index('by_role', ['role'])
-    .index('by_session_token', ['sessionToken']),
+    .index('by_session_token', ['sessionToken'])
+    .index('by_referral_code', ['referralCode']),
 
   // ─── Sessions (multi-session support) ─────────────────────────
   sessions: defineTable({
@@ -177,6 +181,7 @@ export default defineSchema(
     notes: v.optional(v.string()),
     loyaltyAwarded: v.optional(v.boolean()),
     loyaltyPointsAwarded: v.optional(v.number()),
+    pointsSpent: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -210,13 +215,67 @@ export default defineSchema(
     photos: v.optional(v.array(v.string())),
     verified: v.optional(v.boolean()),
     helpfulCount: v.optional(v.number()),
+    reviewerUserId: v.optional(v.id('users')),
+    reviewerEmail: v.optional(v.string()),
+    pointsAwarded: v.optional(v.boolean()),
     isApproved: v.boolean(),
     createdAt: v.number(),
   })
     .index('by_product', ['productId'])
     .index('by_approved', ['isApproved']),
 
-  // ─── Settings ──────────────────────────────────────────────────────
+  // ─── Product Q&A ───────────────────────────────────────────────────
+  productQuestions: defineTable({
+    productId: v.id('products'),
+    authorName: v.string(),
+    userId: v.optional(v.id('users')),
+    question: v.string(),
+    answer: v.optional(v.string()),
+    answeredAt: v.optional(v.number()),
+    isApproved: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_approved', ['isApproved']),
+
+  // ─── Return / Exchange requests ────────────────────────────────────
+  returnRequests: defineTable({
+    orderId: v.id('orders'),
+    orderNumber: v.string(),
+    userId: v.optional(v.id('users')),
+    customerEmail: v.string(),
+    items: v.array(v.object({
+      productId: v.id('products'),
+      name: v.string(),
+      quantity: v.number(),
+    })),
+    type: v.union(v.literal('return'), v.literal('exchange')),
+    reason: v.string(),
+    comment: v.optional(v.string()),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('approved'),
+      v.literal('rejected'),
+      v.literal('completed'),
+    ),
+    adminComment: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_status', ['status'])
+    .index('by_order', ['orderId']),
+
+  // ─── Web Push subscriptions ────────────────────────────────────────
+  pushSubscriptions: defineTable({
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userId: v.optional(v.id('users')),
+    createdAt: v.number(),
+  })
+    .index('by_endpoint', ['endpoint'])
+    .index('by_user', ['userId']),
   settings: defineTable({
     storeName: v.string(),
     phone: v.string(),
@@ -307,6 +366,11 @@ export default defineSchema(
     // Loyalty
     enableLoyalty: v.optional(v.boolean()),
     loyaltyPercent: v.optional(v.number()),
+    loyaltyReviewPoints: v.optional(v.number()),
+    loyaltyReviewPhotoBonus: v.optional(v.number()),
+    // Delivery (numeric days for real delivery-date display)
+    deliveryDaysYerevan: v.optional(v.number()),
+    deliveryDaysRegions: v.optional(v.number()),
     // Bulk order
     enableBulkOrder: v.optional(v.boolean()),
     // Install videos

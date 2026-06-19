@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Command, CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '@/components/ui/command';
 import { formatPrice } from '@/lib/formatters';
-import { Package, Clock, TrendingUp } from 'lucide-react';
+import { Package, Clock, TrendingUp, Mic } from 'lucide-react';
+
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+};
 
 const HISTORY_KEY = 'search-history';
 const MAX_HISTORY = 5;
@@ -29,8 +40,27 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
   const router = useRouter();
   const [q, setQ] = useState('');
   const [history, setHistory] = useState(getHistory);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const term = q.trim();
   const results = useQuery(api.products.list, term.length >= 2 ? { search: term, limit: 8 } : 'skip');
+
+  const startVoice = () => {
+    const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
+    const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Ctor) return;
+    if (listening) { recognitionRef.current?.stop(); return; }
+    const rec = new Ctor();
+    rec.lang = 'hy-AM';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => { const t = e.results[0]?.[0]?.transcript; if (t) setQ(t); };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recognitionRef.current = rec;
+    setListening(true);
+    rec.start();
+  };
 
   const refreshHistory = () => setHistory(getHistory());
 
@@ -55,8 +85,12 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
 
   return (
     <CommandDialog open={open} onOpenChange={handleOpenChange} title="Որոնել">
-      <Command shouldFilter={false}>
-        <CommandInput value={q} onValueChange={setQ} placeholder="Որոնել ապրանքներ..." />
+      <Command shouldFilter={false} className="relative">
+        <CommandInput value={q} onValueChange={setQ} placeholder="Որոնել ապրանքներ..." className="pr-10" />
+        <button type="button" onClick={startVoice} aria-label="Ձայնային որոնում"
+          className={`absolute right-4 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${listening ? 'bg-destructive text-white animate-pulse' : 'text-muted-foreground hover:bg-accent hover:text-primary'}`}>
+          <Mic className="h-4 w-4" />
+        </button>
         <CommandList>
           {term.length < 2 ? (
             <>

@@ -60,6 +60,7 @@ export const create = mutation({
     total: v.number(),
     paymentMethod: v.optional(v.string()),
     notes: v.optional(v.string()),
+    pointsToSpend: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx, args.sessionToken);
@@ -100,6 +101,20 @@ export const create = mutation({
 
     const serverTotal = serverSubtotal + serverShipping;
 
+    // Redeem loyalty points (1 point = 1 AMD). Only for an authenticated caller,
+    // capped at their balance and at the order total. Gated by store settings.
+    let pointsSpent = 0;
+    if (args.pointsToSpend && args.pointsToSpend > 0 && caller && settings?.enableLoyalty) {
+      let rec = await ctx.db.query('loyaltyPoints').withIndex('by_user', (q) => q.eq('userId', caller._id)).first();
+      if (!rec) rec = await ctx.db.query('loyaltyPoints').withIndex('by_email', (q) => q.eq('email', caller.email)).first();
+      const balance = rec?.points ?? 0;
+      pointsSpent = Math.max(0, Math.min(Math.floor(args.pointsToSpend), balance, serverTotal));
+      if (pointsSpent > 0) {
+        await adjustLoyalty(ctx, { userId: caller._id, email: caller.email, points: -pointsSpent });
+      }
+    }
+    const finalTotal = serverTotal - pointsSpent;
+
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const now = Date.now();
 
@@ -122,11 +137,13 @@ export const create = mutation({
       }
     }
 
+    const { sessionToken: _st, pointsToSpend: _pts, ...orderData } = args;
     const orderId = await ctx.db.insert('orders', {
-      ...args,
+      ...orderData,
       subtotal: serverSubtotal,
       shipping: serverShipping,
-      total: serverTotal,
+      total: finalTotal,
+      pointsSpent: pointsSpent > 0 ? pointsSpent : undefined,
       orderNumber,
       userId: caller?._id,
       status: 'pending',
@@ -139,7 +156,7 @@ export const create = mutation({
       orderNumber,
       customerName: args.customerName,
       customerPhone: args.customerPhone,
-      total: serverTotal,
+      total: finalTotal,
       itemsCount: args.items.length,
     });
 
@@ -364,6 +381,19 @@ export const updateStatus = mutation({
         loyaltyPatch.loyaltyAwarded = false;
         loyaltyPatch.loyaltyPointsAwarded = 0;
       }
+
+      // Referral reward: when a referred customer's first order is delivered,
+      // both the referrer and the new customer earn bonus points (once).
+      if (nextStatus === 'delivered' && order.userId && loyaltyEnabled) {
+        const buyer = await ctx.db.get(order.userId);
+        if (buyer && buyer.referredBy && !buyer.referralRewarded) {
+          const REFERRAL_REWARD = 100;
+          await adjustLoyalty(ctx, { userId: buyer._id, email: buyer.email, points: REFERRAL_REWARD });
+          const referrer = await ctx.db.get(buyer.referredBy);
+          if (referrer) await adjustLoyalty(ctx, { userId: referrer._id, email: referrer.email, points: REFERRAL_REWARD });
+          await ctx.db.patch(buyer._id, { referralRewarded: true });
+        }
+      }
     }
 
     if (nextStatus !== prevStatus) {
@@ -460,6 +490,20 @@ export const updateStatus = mutation({
         adminName: adminName ?? undefined,
         createdAt: now,
       });
+
+      // Web push to the order owner about the new status.
+      if (order.userId) {
+        const statusLabels: Record<string, string> = {
+          pending: 'սպասում է', confirmed: 'հաստատվեց', processing: 'մշակվում է',
+          shipped: 'ուղարկվեց', delivered: 'առաքվեց', cancelled: 'չեղարկվեց',
+        };
+        await ctx.scheduler.runAfter(0, internal.pushNode.sendToUser, {
+          userId: order.userId,
+          title: `Պատվեր ${order.orderNumber}`,
+          body: `Ձեր պատվերի կարգավիճակը՝ ${statusLabels[status] ?? status}`,
+          url: '/orders',
+        });
+      }
     }
 
     if (paymentStatus !== undefined && paymentStatus !== order.paymentStatus) {

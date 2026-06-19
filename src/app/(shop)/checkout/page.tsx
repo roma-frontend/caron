@@ -66,6 +66,11 @@ export default function CheckoutPage() {
   const currentUser = useAuthStore((s) => s.user);
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
+  const loyalty = useQuery(api.loyalty.getBalance, sessionToken ? { sessionToken } : 'skip');
+  const [pointsToSpend, setPointsToSpend] = useState(0);
+  const orderTotalBeforePoints = totalPrice + shippingCost - (coupon?.discount ?? 0);
+  const maxRedeemable = Math.max(0, Math.min(loyalty?.points ?? 0, orderTotalBeforePoints));
+  const appliedPoints = Math.max(0, Math.min(pointsToSpend, maxRedeemable));
 
   useEffect(() => {
     const u = me ?? currentUser;
@@ -194,12 +199,14 @@ export default function CheckoutPage() {
         : (settings?.deliveryYerevan ?? 0);
 
       const orderId = await createOrder({
+        sessionToken: sessionToken || undefined,
         customerName: form.name,
         customerEmail: form.email,
         customerPhone: form.phone,
         shippingAddress: form.address,
         paymentMethod: paymentMethod || undefined,
         notes: form.notes || undefined,
+        pointsToSpend: appliedPoints > 0 ? appliedPoints : undefined,
         items: validation.items.map((i) => ({
           productId: i.id as Id<'products'>,
           name: i.name,
@@ -430,7 +437,7 @@ export default function CheckoutPage() {
             ) : <div />}
             <Button type="submit" variant="cta" size="lg" className="gap-2 text-sm sm:text-base" disabled={loading || (step === STEPS.length - 1 && !agreed)}>
               {step === STEPS.length - 1 ? (
-                loading ? 'Ձևակերպվում է...' : <span className="truncate max-w-50 sm:max-w-none">{CHECKOUT.placeOrder} — {formatPrice(totalPrice + shippingCost)}</span>
+                loading ? 'Ձևակերպվում է...' : <span className="truncate max-w-50 sm:max-w-none">{CHECKOUT.placeOrder} — {formatPrice(orderTotalBeforePoints - appliedPoints)}</span>
               ) : (
                 <>Հաջորդ <ChevronRight className="h-4 w-4" /></>
               )}
@@ -457,8 +464,30 @@ export default function CheckoutPage() {
                   <span>-{formatPrice(coupon.discount)}</span>
                 </div>
               )}
+              {settings?.enableLoyalty && (loyalty?.points ?? 0) > 0 && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-amber-700 dark:text-amber-400">Բալերով վճարում</span>
+                    <span className="text-muted-foreground">Հասանելի՝ {loyalty?.points}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input type="number" min={0} max={maxRedeemable} value={pointsToSpend || ''} placeholder="0"
+                      onChange={(e) => setPointsToSpend(Math.max(0, Math.min(maxRedeemable, Math.floor(Number(e.target.value) || 0))))}
+                      className="h-8 text-xs flex-1" />
+                    <Button type="button" size="sm" variant="outline" className="h-8 text-xs whitespace-nowrap"
+                      onClick={() => setPointsToSpend(maxRedeemable)}>Առավելագույն</Button>
+                  </div>
+                  {appliedPoints > 0 && <p className="text-[11px] text-amber-700 dark:text-amber-400">−{formatPrice(appliedPoints)} բալերով</p>}
+                </div>
+              )}
+              {appliedPoints > 0 && (
+                <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+                  <span>Բալեր</span>
+                  <span>-{formatPrice(appliedPoints)}</span>
+                </div>
+              )}
               <Separator />
-              <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(totalPrice + shippingCost - (coupon?.discount ?? 0))}</span></div>
+              <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(orderTotalBeforePoints - appliedPoints)}</span></div>
               <div className="flex gap-2">
                 <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Կուպոնի կոդ" className="h-9 text-xs flex-1" />
                 <Button type="button" size="sm" variant="outline" disabled={!couponCode.trim()} className="h-9 text-xs">OK</Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,11 @@ export default function RegisterPage() {
   const setSession = useAuthStore((s) => s.setSession);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [busy, setBusy] = useState(false);
+  const [refCode, setRefCode] = useState('');
+  useEffect(() => {
+    const r = new URLSearchParams(window.location.search).get('ref');
+    if (r) setRefCode(r.trim());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +35,7 @@ export default function RegisterPage() {
     if (form.password.length < 6) { toast.error('Գաղտնաբառը պետք է պարունակի գոնե 6 նիշ'); return; }
     setBusy(true);
     try {
-      const result = await register({ name: form.name, email: form.email, phone: form.phone || undefined, password: form.password });
+      const result = await register({ name: form.name, email: form.email, phone: form.phone || undefined, password: form.password, referralCode: refCode || undefined });
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
       toast.success('Գրանցումը հաջողվեց');
@@ -112,6 +117,7 @@ export default function RegisterPage() {
                 <Input type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="h-11 pl-10" placeholder="Կրկնել գաղտնաբառը" />
               </div>
             </div>
+            {refCode && <p className="rounded-lg bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary">🎁 Հրավերի կոդ՝ {refCode}</p>}
             <Button type="submit" disabled={busy} variant="cta" size="xl" className="w-full gap-2">
               {busy ? 'Գրանցվում է...' : 'Գրանցվել'}
             </Button>
