@@ -88,7 +88,7 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
               <label className={`group relative flex w-24 shrink-0 cursor-pointer flex-col gap-1 ${c.locked ? 'cursor-default' : ''}`}>
                 <div className={`relative aspect-square overflow-hidden rounded-xl border-2 bg-muted/40 transition-colors ${c.checked ? 'border-primary' : 'border-transparent'}`}>
                   {c.image ? (
-                    <Image src={normalizeImageUrl(c.image) ?? c.image} alt={c.name} fill sizes="96px" className="object-contain" />
+                    <Image src={normalizeImageUrl(c.image) ?? c.image} alt={c.name} fill sizes="96px" className="object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-2xl">🔧</div>
                   )}
