@@ -84,6 +84,13 @@ const HERO_VIDEO_SRC =
     'products/hero.mp4',
   );
 
+// Lightweight poster shown instantly as the hero background. It becomes the LCP
+// element (small, discoverable in HTML), so LCP no longer waits on the video.
+// Set NEXT_PUBLIC_HERO_POSTER_URL (e.g. products/hero-poster.jpg) to enable.
+const HERO_POSTER_SRC = process.env.NEXT_PUBLIC_HERO_POSTER_URL
+  ? toR2MediaProxyUrl(process.env.NEXT_PUBLIC_HERO_POSTER_URL)
+  : '';
+
 
 
 function FeatureItem({ feature, index }: { feature: typeof FEATURES[number]; index: number }) {
@@ -109,10 +116,10 @@ type PriorityVideoProps = React.VideoHTMLAttributes<HTMLVideoElement> & {
   fetchPriority?: 'high' | 'low' | 'auto';
 };
 
-function PingPongVideo({ src, className }: { src: string; className?: string }) {
+function PingPongVideo({ src, poster, className }: { src: string; poster?: string; className?: string }) {
   // Defer the heavy (~1.7 MB) decorative hero video until after the page has
-  // loaded so it doesn't compete with the LCP/critical resources. The dark
-  // hero background + overlays render instantly underneath; the video fades in.
+  // loaded so it doesn't compete with the LCP/critical resources. An eager
+  // poster image (below) paints instantly and serves as the LCP element.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     let timer: number | undefined;
@@ -121,8 +128,6 @@ function PingPongVideo({ src, className }: { src: string; className?: string }) 
     else window.addEventListener('load', start, { once: true });
     return () => { if (timer) window.clearTimeout(timer); window.removeEventListener('load', start); };
   }, []);
-
-  if (!mounted) return null;
 
   const videoProps: PriorityVideoProps = {
     src,
@@ -137,7 +142,24 @@ function PingPongVideo({ src, className }: { src: string; className?: string }) 
     'aria-hidden': true,
   };
 
-  return <video {...videoProps} className={className} />;
+  return (
+    <>
+      {poster && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={poster}
+          alt=""
+          aria-hidden="true"
+          width={1920}
+          height={1080}
+          fetchPriority="high"
+          decoding="async"
+          className={className}
+        />
+      )}
+      {mounted && <video {...videoProps} className={className} />}
+    </>
+  );
 }
 
 export default function HomePage() {
@@ -171,7 +193,7 @@ export default function HomePage() {
                 e.currentTarget.style.setProperty('--sy', `${e.clientY - r.top}px`);
               }}
             >
-              <PingPongVideo src={HERO_VIDEO_SRC} className="absolute inset-0 h-full w-full object-cover hero-video" />
+              <PingPongVideo src={HERO_VIDEO_SRC} poster={HERO_POSTER_SRC} className="absolute inset-0 h-full w-full object-cover hero-video" />
               {/* Blue tint overlay */}
               <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply" />
               {/* Dark overlay for readability */}

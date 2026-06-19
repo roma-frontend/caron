@@ -163,8 +163,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Safari pinned tab */}
         <link rel="mask-icon" href="/favicon.svg" color="#0F6CBD" />
 
-        <link rel="dns-prefetch" href="https://pub-*.r2.dev" />
-        <link rel="preconnect" href="https://pub-21da6611c49e416480be7cc2d42af249.r2.dev" crossOrigin="anonymous" />
         {process.env.NEXT_PUBLIC_CONVEX_URL && (
           <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_URL} />
         )}
