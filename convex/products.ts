@@ -492,6 +492,43 @@ export const imageReferences = internalQuery({
   },
 });
 
+/**
+ * Catalog data-quality snapshot for the admin home panel. Admin-only.
+ */
+export const dataHealth = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args): Promise<{
+    total: number; active: number; inactive: number;
+    activeNoImage: number; activeNoDescription: number; activeZeroStock: number;
+    lowStock: number; missingSeo: number; noBrand: number; duplicateSkus: number;
+  }> => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const products = await ctx.db.query('products').take(50000);
+    const skuCount = new Map<string, number>();
+    let active = 0, inactive = 0, activeNoImage = 0, activeNoDescription = 0;
+    let activeZeroStock = 0, lowStock = 0, missingSeo = 0, noBrand = 0;
+    for (const p of products) {
+      if (p.sku) skuCount.set(p.sku, (skuCount.get(p.sku) ?? 0) + 1);
+      if (!p.isActive) { inactive++; continue; }
+      active++;
+      if (!p.images || p.images.length === 0) activeNoImage++;
+      if (!p.description || !p.description.trim()) activeNoDescription++;
+      if (p.stock <= 0) activeZeroStock++;
+      else if (p.stock <= 5) lowStock++;
+      if (!p.seoTitle || !p.seoDescription) missingSeo++;
+      const brand = p.brand ?? ((p.attributes ?? {}) as Record<string, unknown>).brand;
+      if (!brand) noBrand++;
+    }
+    let duplicateSkus = 0;
+    for (const c of skuCount.values()) if (c > 1) duplicateSkus++;
+    return {
+      total: products.length, active, inactive,
+      activeNoImage, activeNoDescription, activeZeroStock,
+      lowStock, missingSeo, noBrand, duplicateSkus,
+    };
+  },
+});
+
 export const getFeatured = query({
   args: {},
   handler: async (ctx) => {

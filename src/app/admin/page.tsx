@@ -59,6 +59,7 @@ export default function AdminDashboard() {
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
   const products = useQuery(api.products.listStockSummary);
   const categories = useQuery(api.categories.list, {});
+  const health = useQuery(api.products.dataHealth, sessionToken ? { sessionToken } : 'skip');
 
   const lowStock = products?.low ?? [];
   const outOfStock = products?.out ?? [];
@@ -163,6 +164,50 @@ export default function AdminDashboard() {
           desc={'Վճարման սպասող'}
         />
       </div>
+
+      {/* Data Health */}
+      {health && (
+        <Card className="mt-8">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="h-5 w-5 text-primary" />
+              {'Տվյալների որակ'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {([
+                { label: 'Առանց նկարի', value: health.activeNoImage, bad: true },
+                { label: 'Առանց նկարագրության', value: health.activeNoDescription, bad: true },
+                { label: '0 մնացորդ (ակտիվ)', value: health.activeZeroStock, bad: true },
+                { label: 'Կրկնվող SKU', value: health.duplicateSkus, bad: true },
+                { label: 'Առանց SEO', value: health.missingSeo, bad: false },
+                { label: 'Առանց բրենդի', value: health.noBrand, bad: false },
+                { label: 'Քիչ մնացորդ (≤5)', value: health.lowStock, bad: false },
+                { label: 'Ակտիվ ապրանքներ', value: health.active, bad: false, neutral: true },
+              ] as { label: string; value: number; bad: boolean; neutral?: boolean }[]).map((m) => {
+                const flag = !m.neutral && m.value > 0;
+                return (
+                  <Link
+                    key={m.label}
+                    href="/admin/products"
+                    className={`flex items-center justify-between rounded-lg border p-3 transition-colors hover:border-primary/40 ${
+                      flag && m.bad ? 'border-red-300 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20'
+                      : flag ? 'border-amber-300 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20'
+                      : ''
+                    }`}
+                  >
+                    <span className="text-xs text-muted-foreground">{m.label}</span>
+                    <span className={`text-lg font-bold ${flag && m.bad ? 'text-red-600' : flag ? 'text-amber-600' : ''}`}>
+                      {m.value}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* Problematic Orders */}
