@@ -13,6 +13,7 @@ import { formatPrice } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
@@ -22,6 +23,16 @@ import { SortableContext, useSortable, verticalListSortingStrategy, rectSortingS
 import { CSS } from '@dnd-kit/utilities';
 
 const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
+
+const HEALTH_LABELS: Record<string, string> = {
+  noImage: 'Առանց նկարի',
+  noDescription: 'Առանց նկարագրության',
+  zeroStock: '0 մնացորդ (ակտիվ)',
+  lowStock: 'Քիչ մնացորդ (≤5)',
+  noSeo: 'Առանց SEO',
+  noBrand: 'Առանց բրենդի',
+  dupSku: 'Կրկնվող SKU',
+};
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
@@ -594,6 +605,15 @@ export default function AdminProductsPage() {
   const categories = useQuery(api.categories.list, {});
   const allFilterDefs = useQuery(api.filters.listAll, {});
   const searchTerm = search.trim().toLowerCase();
+  const searchParams = useSearchParams();
+  const healthFilter = searchParams.get('health');
+  const dupSkuSet = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of products ?? []) if (p.sku) counts.set(p.sku, (counts.get(p.sku) ?? 0) + 1);
+    const set = new Set<string>();
+    for (const [sku, c] of counts) if (c > 1) set.add(sku);
+    return set;
+  }, [products]);
   const attrMetaMap = useMemo(() => {
     const map = new Map<string, AttrDefMeta>();
     for (const def of allFilterDefs ?? []) {
@@ -636,6 +656,16 @@ export default function AdminProductsPage() {
       if (!byName && !bySku && !byAtg) return false;
     }
     if (catFilter !== 'all' && p.categoryId !== catFilter) return false;
+    if (healthFilter) {
+      const brand = p.brand ?? ((p.attributes ?? {}) as Record<string, unknown>).brand;
+      if (healthFilter === 'noImage' && (p.images?.length ?? 0) > 0) return false;
+      if (healthFilter === 'noDescription' && !!p.description?.trim()) return false;
+      if (healthFilter === 'zeroStock' && !(p.isActive && p.stock <= 0)) return false;
+      if (healthFilter === 'lowStock' && !(p.stock > 0 && p.stock <= 5)) return false;
+      if (healthFilter === 'noSeo' && !!(p.seoTitle && p.seoDescription)) return false;
+      if (healthFilter === 'noBrand' && !!brand) return false;
+      if (healthFilter === 'dupSku' && !(p.sku && dupSkuSet.has(p.sku))) return false;
+    }
     if (stockFilter === 'instock' && p.stock <= 0) return false;
     if (stockFilter === 'low' && (p.stock > 5 || p.stock <= 0)) return false;
     if (stockFilter === 'out' && p.stock > 0) return false;
@@ -811,7 +841,15 @@ export default function AdminProductsPage() {
         </div>
         </div>
       </div>
-      <p className="mb-4 text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
+        {healthFilter && HEALTH_LABELS[healthFilter] && (
+          <Link href="/admin/products" className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20">
+            {HEALTH_LABELS[healthFilter]}
+            <span className="text-sm leading-none">×</span>
+          </Link>
+        )}
+      </div>
 
       {viewMode === 'grid' ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

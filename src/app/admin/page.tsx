@@ -177,20 +177,20 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {([
-                { label: 'Առանց նկարի', value: health.activeNoImage, bad: true },
-                { label: 'Առանց նկարագրության', value: health.activeNoDescription, bad: true },
-                { label: '0 մնացորդ (ակտիվ)', value: health.activeZeroStock, bad: true },
-                { label: 'Կրկնվող SKU', value: health.duplicateSkus, bad: true },
-                { label: 'Առանց SEO', value: health.missingSeo, bad: false },
-                { label: 'Առանց բրենդի', value: health.noBrand, bad: false },
-                { label: 'Քիչ մնացորդ (≤5)', value: health.lowStock, bad: false },
-                { label: 'Ակտիվ ապրանքներ', value: health.active, bad: false, neutral: true },
-              ] as { label: string; value: number; bad: boolean; neutral?: boolean }[]).map((m) => {
+                { label: 'Առանց նկարի', value: health.activeNoImage, bad: true, key: 'noImage' },
+                { label: 'Առանց նկարագրության', value: health.activeNoDescription, bad: true, key: 'noDescription' },
+                { label: '0 մնացորդ (ակտիվ)', value: health.activeZeroStock, bad: true, key: 'zeroStock' },
+                { label: 'Կրկնվող SKU', value: health.duplicateSkus, bad: true, key: 'dupSku' },
+                { label: 'Առանց SEO', value: health.missingSeo, bad: false, key: 'noSeo' },
+                { label: 'Առանց բրենդի', value: health.noBrand, bad: false, key: 'noBrand' },
+                { label: 'Քիչ մնացորդ (≤5)', value: health.lowStock, bad: false, key: 'lowStock' },
+                { label: 'Ակտիվ ապրանքներ', value: health.active, bad: false, neutral: true, key: '' },
+              ] as { label: string; value: number; bad: boolean; neutral?: boolean; key: string }[]).map((m) => {
                 const flag = !m.neutral && m.value > 0;
                 return (
                   <Link
                     key={m.label}
-                    href="/admin/products"
+                    href={m.key ? `/admin/products?health=${m.key}` : '/admin/products'}
                     className={`flex items-center justify-between rounded-lg border p-3 transition-colors hover:border-primary/40 ${
                       flag && m.bad ? 'border-red-300 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20'
                       : flag ? 'border-amber-300 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20'
