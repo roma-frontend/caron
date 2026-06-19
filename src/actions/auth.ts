@@ -9,7 +9,9 @@ export async function setAuthCookie(sessionToken: string) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    // Match the Convex session lifetime (30d) so the cookie does not expire
+    // before the server-side session does. Server validates the token anyway.
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import { useQuery, usePaginatedQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
@@ -97,8 +98,8 @@ export default function CategoryPage() {
         <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             {category.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={category.imageUrl} alt={category.name}
+              <Image src={category.imageUrl} alt={category.name} width={80} height={80}
+                sizes="80px" priority unoptimized={category.imageUrl.startsWith('/api/')}
                 className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-md ring-1 ring-border sm:h-20 sm:w-20" />
             ) : (
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-inner sm:h-20 sm:w-20">

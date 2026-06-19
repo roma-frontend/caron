@@ -14,6 +14,7 @@ import type * as backInStock from "../backInStock.js";
 import type * as cart from "../cart.js";
 import type * as categories from "../categories.js";
 import type * as coupons from "../coupons.js";
+import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   cart: typeof cart;
   categories: typeof categories;
   coupons: typeof coupons;
+  crons: typeof crons;
   customers: typeof customers;
   filters: typeof filters;
   "lib/auth": typeof lib_auth;

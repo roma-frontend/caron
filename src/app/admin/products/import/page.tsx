@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -724,6 +725,16 @@ export default function ImportProductsPage() {
 
   const catKeys = Object.keys(categoriesMap);
 
+  // Virtualize the preview table body so importing a large CSV (thousands of
+  // rows) renders only the visible rows instead of one <tr> per row.
+  const previewScrollRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: parsed?.length ?? 0,
+    getScrollElement: () => previewScrollRef.current,
+    estimateSize: () => 37,
+    overscan: 12,
+  });
+
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6 flex items-center gap-3">
@@ -1050,9 +1061,9 @@ export default function ImportProductsPage() {
                 </Button>
               </div>
             </div>
-            <div className="max-h-80 overflow-x-auto overflow-y-auto rounded-lg border">
+            <div ref={previewScrollRef} className="max-h-80 overflow-x-auto overflow-y-auto rounded-lg border">
               <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-muted">
+                <thead className="sticky top-0 z-10 bg-muted">
                   <tr className="border-b">
                     <th className="p-2 text-left font-medium">Ավելացնել</th>
                     <th className="p-2 text-left font-medium">Անվանում</th>
@@ -1066,29 +1077,46 @@ export default function ImportProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {parsed.map((r, i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="p-2">
-                        <Button
-                          size="sm"
-                          variant={importedRows.has(i) ? 'outline' : 'default'}
-                          disabled={importing || importingRow === i || importedRows.has(i)}
-                          onClick={() => handleImportOne(i)}
-                          className="h-7 px-2 text-[11px]"
-                        >
-                          {importingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : importedRows.has(i) ? 'Ավելացված' : 'Ավելացնել'}
-                        </Button>
-                      </td>
-                      <td className="p-2 max-w-50 truncate" title={r.name || '—'}>{r.name || '—'}</td>
-                      <td className="p-2 whitespace-nowrap">{r.price ? r.price.toLocaleString() : '—'} ֏</td>
-                      <td className="p-2">{r.category}</td>
-                      <td className="p-2 font-mono">{r.sku || '—'}</td>
-                      <td className="p-2 font-mono">{r.oemNumbers?.map(o => o.code).join(', ') || '—'}</td>
-                      <td className="p-2">{r.stock !== undefined ? r.stock : '—'}</td>
-                      <td className="p-2">{r.images && r.images.length > 0 ? '✅' : '—'}</td>
-                      <td className="p-2">{r.isActive ? '✅' : '—'}</td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const virtualRows = rowVirtualizer.getVirtualItems();
+                    const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+                    const paddingBottom = virtualRows.length > 0
+                      ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
+                      : 0;
+                    return (
+                      <>
+                        {paddingTop > 0 && <tr style={{ height: paddingTop }}><td colSpan={9} /></tr>}
+                        {virtualRows.map((vRow) => {
+                          const i = vRow.index;
+                          const r = parsed![i];
+                          return (
+                            <tr key={i} className="border-b last:border-0 hover:bg-muted/50">
+                              <td className="p-2">
+                                <Button
+                                  size="sm"
+                                  variant={importedRows.has(i) ? 'outline' : 'default'}
+                                  disabled={importing || importingRow === i || importedRows.has(i)}
+                                  onClick={() => handleImportOne(i)}
+                                  className="h-7 px-2 text-[11px]"
+                                >
+                                  {importingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : importedRows.has(i) ? 'Ավելացված' : 'Ավելացնել'}
+                                </Button>
+                              </td>
+                              <td className="p-2 max-w-50 truncate" title={r.name || '—'}>{r.name || '—'}</td>
+                              <td className="p-2 whitespace-nowrap">{r.price ? r.price.toLocaleString() : '—'} ֏</td>
+                              <td className="p-2">{r.category}</td>
+                              <td className="p-2 font-mono">{r.sku || '—'}</td>
+                              <td className="p-2 font-mono">{r.oemNumbers?.map(o => o.code).join(', ') || '—'}</td>
+                              <td className="p-2">{r.stock !== undefined ? r.stock : '—'}</td>
+                              <td className="p-2">{r.images && r.images.length > 0 ? '✅' : '—'}</td>
+                              <td className="p-2">{r.isActive ? '✅' : '—'}</td>
+                            </tr>
+                          );
+                        })}
+                        {paddingBottom > 0 && <tr style={{ height: paddingBottom }}><td colSpan={9} /></tr>}
+                      </>
+                    );
+                  })()}
                 </tbody>
               </table>
             </div>

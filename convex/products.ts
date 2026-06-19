@@ -1,5 +1,6 @@
 ﻿import { v } from 'convex/values';
-import { query, mutation } from './_generated/server';
+import { query, mutation, internalMutation } from './_generated/server';
+import type { MutationCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
 import { internal } from './_generated/api';
@@ -7,6 +8,42 @@ import { normalizeImageUrls } from './lib/imageUrl';
 import type { Doc, Id } from './_generated/dataModel';
 
 type ProductInsert = Omit<Doc<'products'>, '_id' | '_creationTime'>;
+
+/** Normalize an OEM code for indexing/lookup: lowercase, strip separators. */
+function normalizeOemCode(code: string): string {
+  return code.toLowerCase().replace(/[\s\-_/.]+/g, '');
+}
+
+/**
+ * Rebuild the denormalized oemIndex rows for a single product. Called from
+ * every product write path (create/update/bulk/delete) so OEM search stays
+ * consistent without scanning the whole products table.
+ */
+async function syncOemIndex(
+  ctx: MutationCtx,
+  productId: Id<'products'>,
+  oemNumbers?: Array<{ manufacturer: string; code: string }> | undefined,
+): Promise<void> {
+  const existing = await ctx.db
+    .query('oemIndex')
+    .withIndex('by_product', (q) => q.eq('productId', productId))
+    .collect();
+  for (const row of existing) await ctx.db.delete(row._id);
+
+  if (!oemNumbers || oemNumbers.length === 0) return;
+  const seen = new Set<string>();
+  for (const o of oemNumbers) {
+    const code = normalizeOemCode(o.code ?? '');
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+    await ctx.db.insert('oemIndex', {
+      productId,
+      code,
+      manufacturer: (o.manufacturer ?? '').toLowerCase().trim(),
+    });
+  }
+}
+
 
 function normalizeProductImages<T extends { images?: string[] }>(product: T): T {
   if (!product.images || product.images.length === 0) return product;
@@ -328,21 +365,91 @@ export const searchByOem = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const searchLower = args.oem.toLowerCase();
-    const results = await ctx.db.query('products')
+    const limit = args.limit ?? 20;
+    const term = normalizeOemCode(args.oem);
+    if (!term) return [];
+
+    const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
+    const inactiveIds = new Set(inactiveCats.map((c) => c._id));
+
+    // Fast path: prefix lookup on the denormalized oemIndex (scales to any
+    // catalog size). Codes are stored normalized, so a prefix range scan
+    // matches "0986…" when the user types the leading digits.
+    const rows = await ctx.db
+      .query('oemIndex')
+      .withIndex('by_code', (q) => q.gte('code', term).lt('code', term + '\uffff'))
+      .take(500);
+
+    if (rows.length > 0) {
+      const productIds = [...new Set(rows.map((r) => r.productId))];
+      const products = await Promise.all(productIds.map((id) => ctx.db.get(id)));
+      return products
+        .filter((p): p is Doc<'products'> => !!p && p.isActive && !inactiveIds.has(p.categoryId))
+        .slice(0, limit)
+        .map(normalizeProductImages);
+    }
+
+    // Fallback for legacy data before the index was built: bounded scan with
+    // substring matching (also covers manufacturer text).
+    const scanned = await ctx.db.query('products')
       .withIndex('by_active', (q) => q.eq('isActive', true))
       .take(300);
-    const trimmed = searchLower.trim();
-    const matches = results
-      .filter((p) => p.oemNumbers?.some((o) => o.code.toLowerCase().includes(trimmed) || o.manufacturer.toLowerCase().includes(trimmed)))
-      .slice(0, args.limit ?? 20);
-    // Exclude inactive categories
-    const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
-    if (inactiveCats.length > 0) {
-      const ids = new Set(inactiveCats.map((c) => c._id));
-      return matches.filter((p) => !ids.has(p.categoryId)).map(normalizeProductImages);
+    return scanned
+      .filter((p) => p.oemNumbers?.some((o) => normalizeOemCode(o.code).includes(term) || o.manufacturer.toLowerCase().includes(term)))
+      .filter((p) => !inactiveIds.has(p.categoryId))
+      .slice(0, limit)
+      .map(normalizeProductImages);
+  },
+});
+
+/**
+ * One-time / maintenance backfill: rebuild the entire oemIndex from products.
+ * Safe to re-run; it clears and recreates rows per product. Admin-only.
+ */
+export const rebuildOemIndex = mutation({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    // Clear existing index.
+    const all = await ctx.db.query('oemIndex').take(100000);
+    for (const row of all) await ctx.db.delete(row._id);
+    // Rebuild from products that have OEM numbers.
+    const products = await ctx.db.query('products').take(50000);
+    let indexed = 0;
+    for (const p of products) {
+      if (p.oemNumbers && p.oemNumbers.length > 0) {
+        await syncOemIndex(ctx, p._id, p.oemNumbers);
+        indexed++;
+      }
     }
-    return matches.map(normalizeProductImages);
+    return `OEM ինդեքսը վերակառուցվեց՝ ${indexed} ապրանք`;
+  },
+});
+
+/**
+ * Idempotent, self-healing OEM-index backfill, run automatically by the daily
+ * cron (convex/crons.ts). It only indexes products that have OEM numbers but no
+ * index rows yet, so once the catalog is fully indexed this becomes a cheap
+ * read-only pass. This also covers products created before the index existed
+ * without requiring a manual rebuild. Internal (no auth) — cron-invoked only.
+ */
+export const backfillOemIndex = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').take(50000);
+    let healed = 0;
+    for (const p of products) {
+      if (!p.oemNumbers || p.oemNumbers.length === 0) continue;
+      const existing = await ctx.db
+        .query('oemIndex')
+        .withIndex('by_product', (q) => q.eq('productId', p._id))
+        .first();
+      if (!existing) {
+        await syncOemIndex(ctx, p._id, p.oemNumbers);
+        healed++;
+      }
+    }
+    return healed;
   },
 });
 
@@ -490,7 +597,9 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     };
-    return await ctx.db.insert('products', createPayload);
+    const newId = await ctx.db.insert('products', createPayload);
+    await syncOemIndex(ctx, newId, data.oemNumbers);
+    return newId;
   },
 });
 
@@ -581,6 +690,11 @@ export const update = mutation({
     if (wholesaleDiscount !== undefined) patch.wholesaleDiscount = wholesaleDiscount > 0 ? wholesaleDiscount : undefined;
     patch.updatedAt = Date.now();
     await ctx.db.patch(id, patch);
+
+    // Keep the OEM search index in sync only when the field was provided.
+    if (args.oemNumbers !== undefined) {
+      await syncOemIndex(ctx, id, args.oemNumbers);
+    }
 
     if (stock !== undefined && old && old.stock !== stock) {
       const caller = await getAdminCaller(ctx, args.sessionToken);
@@ -678,6 +792,7 @@ export const remove = mutation({
     if (product?.images?.length) {
       await Promise.all(product.images.map(deleteR2Image));
     }
+    await syncOemIndex(ctx, args.id, undefined); // remove OEM index rows
     await ctx.db.delete(args.id);
   },
 });
@@ -838,6 +953,7 @@ export const bulkCreate = mutation({
         if (p.vehicleCompat !== undefined) updatePayload.vehicleCompat = p.vehicleCompat;
         
         await ctx.db.patch(existing._id, updatePayload);
+        if (p.oemNumbers !== undefined) await syncOemIndex(ctx, existing._id, p.oemNumbers);
         updated++;
       } else {
         if (nextSku) {
@@ -877,7 +993,8 @@ export const bulkCreate = mutation({
           if (safeAttrs) createPayload.attributes = safeAttrs;
         }
         
-        await ctx.db.insert('products', createPayload);
+        const insertedId = await ctx.db.insert('products', createPayload);
+        if (p.oemNumbers !== undefined) await syncOemIndex(ctx, insertedId, p.oemNumbers);
         created++;
       }
     }

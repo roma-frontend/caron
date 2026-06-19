@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useSyncExternalStore, useEffect, useRef } from 'react';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useSearchParams } from 'next/navigation';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -132,6 +133,52 @@ export default function ProductsPage() {
     fchips.push({ key: k, label: val, clear: () => { const a = { ...(filters.attributes ?? {}) }; delete a[k]; setFilters({ ...filters, attributes: Object.keys(a).length ? a : undefined }); } });
   }
 
+  // ── Virtualized grid ──────────────────────────────────────────────
+  // Keep the DOM bounded to the visible rows even when thousands of products
+  // have been loaded via infinite scroll. Data loading stays paginated; this
+  // only windows the *rendering* so memory/DOM size stays flat at any scroll
+  // depth. Uses the window scroll (the page scrolls as a whole).
+  const isList = viewMode === 'list';
+  const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
+  const [columnCount, setColumnCount] = useState(1);
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  useEffect(() => {
+    if (!gridEl) return;
+    const GAP = 20; // ≈ var(--space-5)
+    const MIN_COL = 170; // matches minmax(170px, 1fr)
+    const recompute = () => {
+      const width = gridEl.clientWidth;
+      if (width > 0) setColumnCount(Math.max(1, Math.floor((width + GAP) / (MIN_COL + GAP))));
+      setScrollMargin(gridEl.getBoundingClientRect().top + window.scrollY);
+    };
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(gridEl);
+    window.addEventListener('resize', recompute);
+    return () => { ro.disconnect(); window.removeEventListener('resize', recompute); };
+  }, [gridEl]);
+
+  // Recompute the grid's document offset when content above it changes height
+  // (filter chips, vehicle banner, type-filter row, view mode). Guarded with a
+  // functional update so an unchanged offset never triggers a re-render.
+  useEffect(() => {
+    if (!gridEl) return;
+    const next = gridEl.getBoundingClientRect().top + window.scrollY;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setScrollMargin((prev) => (Math.abs(prev - next) > 1 ? next : prev));
+  }, [gridEl, fchips.length, viewMode, filterDefs, vehicle, mounted, brandLoading]);
+
+  const cols = isList ? 1 : columnCount;
+  const rowCount = Math.ceil(results.length / cols);
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rowCount,
+    estimateSize: () => (isList ? 104 : 380),
+    overscan: 4,
+    scrollMargin,
+  });
+  const virtualRows = rowVirtualizer.getVirtualItems();
+
   return (
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
       <div className="flex flex-col justify-between md:flex-row md:items-center" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
@@ -231,11 +278,40 @@ export default function ProductsPage() {
             </div>
           ) : null}
 
-          {!brandLoading && (
-            <div className={viewMode === 'list' ? 'mx-auto max-w-3xl flex flex-col gap-3' : 'grid'} style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
-              {results.map((p, i) => (
-                <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} />
-              ))}
+          {!brandLoading && results.length > 0 && (
+            <div
+              ref={setGridEl}
+              className={isList ? 'mx-auto max-w-3xl' : ''}
+              style={{ position: 'relative', width: '100%', height: `${rowVirtualizer.getTotalSize()}px` }}
+            >
+              {virtualRows.map((vRow) => {
+                const start = vRow.index * cols;
+                const rowItems = results.slice(start, start + cols);
+                return (
+                  <div
+                    key={vRow.key}
+                    data-index={vRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${vRow.start - rowVirtualizer.options.scrollMargin}px)`,
+                      paddingBottom: 'var(--space-5)',
+                    }}
+                  >
+                    <div
+                      className={isList ? 'flex flex-col gap-3' : 'grid'}
+                      style={isList ? {} : { gap: 'var(--space-5)', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+                    >
+                      {rowItems.map((p, j) => (
+                        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 

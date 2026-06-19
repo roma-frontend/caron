@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import { useReveal, useMouseGlow, cardRevealStyle } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,7 +61,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -69,9 +69,10 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const normalizedImage = useMemo(() => normalizeImageUrl(image), [image]);
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const cartItems = useCartStore((s) => s.items);
+  // Subscribe only to THIS product's quantity (a primitive) so adding any other
+  // item to the cart does not re-render every ProductCard on the page.
+  const cartQty = useCartStore((s) => s.items.find((i) => i.id === id)?.quantity ?? 0);
   const toggleFav = useFavoritesStore((s) => s.toggle);
-  const favoriteItems = useFavoritesStore((s) => s.items);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === id));
   const vehicle = useVehicleStore((s) => s.vehicle);
   const settings = useSettings();
@@ -94,7 +95,6 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
   const displayPrice = isWholesale ? fallbackWholesale : retailDisplayPrice;
   const fits = checkFits(vehicle, carBrand, attributes);
   const [quickOpen, setQuickOpen] = useState(false);
-  const cartQty = cartItems.find((i) => i.id === id)?.quantity ?? 0;
   const atLimit = stock != null && cartQty >= stock;
   const detailHref = `/products/${encodeURIComponent(slug ?? id)}`;
 
@@ -151,7 +151,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
                   {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white shrink-0">-{discountPct}%</span>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 ml-auto">
-                  <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
+                  <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = useFavoritesStore.getState().items.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                   {cartQty > 0 ? (
@@ -225,7 +225,7 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
               <button
                 aria-label="Նախընտրած"
                 aria-pressed={isFav}
-                onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = favoriteItems.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}
+                onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = useFavoritesStore.getState().items.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}
                 className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-lg backdrop-blur-sm transition-all duration-300 ${isFav ? 'border-red-500 bg-red-500 text-white scale-110' : 'border-border bg-card/80 text-muted-foreground hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-500 hover:scale-110'}`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
@@ -328,3 +328,10 @@ export function ProductCard({ id, name, slug, atgCode, sku, price, wholesalePric
     </>
   );
 }
+
+/**
+ * Memoized so a card only re-renders when its own props change. Combined with
+ * the per-product cart-quantity selector above, mutating one product in the
+ * cart no longer cascades a re-render across the entire product grid.
+ */
+export const ProductCard = memo(ProductCardImpl);

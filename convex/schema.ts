@@ -81,6 +81,18 @@ export default defineSchema(
     name: v.string(),
   }).index('by_code', ['code']),
 
+  // ─── OEM Index (denormalized for scalable OEM-number search) ──
+  // One row per (product, normalized OEM code). Lets us look up products by
+  // OEM number via an index/prefix scan instead of loading every product and
+  // filtering its oemNumbers array in memory.
+  oemIndex: defineTable({
+    productId: v.id('products'),
+    code: v.string(), // normalized: lowercased, separators stripped
+    manufacturer: v.string(), // lowercased
+  })
+    .index('by_code', ['code'])
+    .index('by_product', ['productId']),
+
   // ─── Products ──────────────────────────────────────────────────
   products: defineTable({
     name: v.string(),

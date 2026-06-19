@@ -1,6 +1,13 @@
 'use client';
 
-export default function AdminError({ error, reset }: { error: Error; reset: () => void }) {
+import { useEffect } from 'react';
+import { captureError } from '@/lib/observability';
+
+export default function AdminError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    captureError(error, { boundary: 'admin/error' });
+  }, [error]);
+
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center" style={{ paddingInline: 'var(--space-container)' }}>
       <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-destructive/10">
