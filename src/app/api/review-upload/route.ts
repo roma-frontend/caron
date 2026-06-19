@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { checkRateLimit } from '@/lib/ratelimit';
+import { optimizeImage } from '@/lib/optimizeImage';
+
+export const runtime = 'nodejs';
 
 /**
  * Public, rate-limited upload endpoint for customer review photos.
@@ -64,12 +67,13 @@ export async function POST(req: NextRequest) {
   const key = `reviews/${crypto.randomUUID()}`;
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const original = Buffer.from(await file.arrayBuffer());
+    const { buffer, contentType } = await optimizeImage(original, file.type, 1280);
     await R2.send(new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
       Body: buffer,
-      ContentType: file.type,
+      ContentType: contentType,
     }));
     const publicUrl = buildImageUrl(key);
     return NextResponse.json({ publicUrl, key });
