@@ -925,7 +925,7 @@ export default function AdminSettingsPage() {
               {/* Quantity-based cashback tiers */}
               <div className="border-t pt-4">
                 <p className="text-sm font-medium">{"Cashback ըստ քանակի (շեմեր)"}</p>
-                <p className="mb-3 text-xs text-muted-foreground">{"Օր.՝ ≥10 հատ → 7%, ≥20 հատ → 10%։ Կիրառվում է ամենաբարձր հասանելի շեմը (բազային %-ը՝ որպես նվազագույն)։"}</p>
+                <p className="mb-3 text-xs text-muted-foreground">{"Գործում է ամենաբարձր շեմի տոկոսը, որին հասել է քանակը (ստորին շեմից ցածր՝ բազային %)։ Օր.՝ բազա 0%, ≥10 հատ → 3%, ≥50 հատ → 5% ⇒ 1–9 հատ՝ 0%, 10–49 հատ՝ 3%, 50+ հատ՝ 5%։ Բալերը = տոկոս × պատվերի գումար։"}</p>
                 <div className="space-y-2">
                   {tiers.map((t, i) => (
                     <div key={i} className="flex items-center gap-2">
