@@ -5,7 +5,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Wizard, WizardStep, useWizardData } from '@/components/ui/wizard';
 import { AiGenerateButton } from '@/components/admin/AiGenerateButton';
-import { cn } from '@/lib/utils';
+import { cn, numericInputProps } from '@/lib/utils';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -250,10 +250,10 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
         <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-3 text-xs">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">7. Գնային Տվյալներ</div>
           <div className="grid grid-cols-2 gap-2">
-            <Input type="number" value={price} onChange={(e) => update('price', e.target.value)} placeholder="Մանրածախ" className="h-11 border-border/70 bg-background/90" />
-            <Input type="number" value={wholesalePrice} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="Մեծածախ" className="h-11 border-border/70 bg-background/90" />
-            <Input type="number" value={stock} onChange={(e) => update('stock', e.target.value)} placeholder="Քանակ" className="h-11 border-border/70 bg-background/90" />
-            <Input type="number" value={qtyStep} onChange={(e) => update('qtyStep', e.target.value)} placeholder="Քայլ" className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={price} onChange={(e) => update('price', e.target.value)} placeholder="Մանրածախ" className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={wholesalePrice} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="Մեծածախ" className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={stock} onChange={(e) => update('stock', e.target.value)} placeholder="Քանակ" className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={qtyStep} onChange={(e) => update('qtyStep', e.target.value)} placeholder="Քայլ" className="h-11 border-border/70 bg-background/90" />
           </div>
         </div>
 
@@ -325,7 +325,7 @@ function StepBasicInfo() {
     <div className="space-y-3">
       <SmoothCollapseSection title="Լրացուցիչ գնային դաշտեր" open={priceExtraOpen} onToggle={() => setPriceExtraOpen((v) => !v)}>
         <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-1">
-          <div><Label className="text-[11px] text-muted-foreground">Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} className="h-11 border-border/70 bg-background/90" min={0} max={100} /></div>
+          <div><Label className="text-[11px] text-muted-foreground">Զեղչ %</Label><Input {...numericInputProps(false)} value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} className="h-11 border-border/70 bg-background/90" min={0} max={100} /></div>
         </div>
       </SmoothCollapseSection>
 
@@ -407,21 +407,21 @@ function StepPricing() {
     <ChevronSection title="2. Գնային տվյալներ">
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Մանրածախ (֏)</Label><Input type="number" value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
-          <div><Label>Մեծածախ (֏)</Label><Input type="number" value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
+          <div><Label>Մանրածախ (֏)</Label><Input {...numericInputProps(false)} value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
+          <div><Label>Մեծածախ (֏)</Label><Input {...numericInputProps(false)} value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>{'Ինքնարժեք (֏)'}</Label><Input type="number" value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
+          <div><Label>{'Ինքնարժեք (֏)'}</Label><Input {...numericInputProps(false)} value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>Զեղչ %</Label><Input type="number" value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
+          <div><Label>Զեղչ %</Label><Input {...numericInputProps(false)} value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div><Label>ԱՏԳԱ կոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
-          <div><Label>Քանակ *</Label><Input type="number" value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
+          <div><Label>Քանակ *</Label><Input {...numericInputProps(false)} value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>Քանակի քայլ</Label><Input type="number" value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
+          <div><Label>Քանակի քայլ</Label><Input {...numericInputProps(false)} value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
         </div>
       </div>
     </ChevronSection>

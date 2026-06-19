@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { numericInputProps } from '@/lib/utils';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
@@ -184,7 +185,7 @@ export default function AdminCustomersPage() {
                     </Badge>
                   </td>
                   <td className="p-3 hidden sm:table-cell">
-                    <input type="number" className="h-7 w-16 rounded border border-input bg-background px-2 text-xs" defaultValue={c.discountPercent ?? 0} onBlur={(e) => setDiscount(c._id, Number(e.target.value))} />
+                    <input {...numericInputProps(false)} className="h-7 w-16 rounded border border-input bg-background px-2 text-xs" defaultValue={c.discountPercent ?? 0} onBlur={(e) => setDiscount(c._id, Number(e.target.value))} />
                     <span className="text-xs text-muted-foreground ml-1">%</span>
                   </td>
                   <td className="p-3 hidden md:table-cell">{c.isActive ? <Badge className="text-[10px] bg-green-500">Ակտ.</Badge> : <Badge variant="secondary" className="text-[10px]">Բլոկ.</Badge>}</td>
@@ -239,7 +240,7 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Percent className="h-3.5 w-3.5 text-muted-foreground" />
-            <input type="number" className="h-7 w-14 rounded border border-input bg-background px-2 text-xs" defaultValue={customer.discountPercent ?? 0} onBlur={(e) => onSetDiscount(Number(e.target.value))} />
+            <input {...numericInputProps(false)} className="h-7 w-14 rounded border border-input bg-background px-2 text-xs" defaultValue={customer.discountPercent ?? 0} onBlur={(e) => onSetDiscount(Number(e.target.value))} />
             <span className="text-xs text-muted-foreground">%</span>
           </div>
           <Badge variant={customer.isActive ? 'default' : 'secondary'} className="text-[10px]">

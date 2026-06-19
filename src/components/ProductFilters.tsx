@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { numericInputProps } from '@/lib/utils';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -135,12 +136,12 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
         <div className="flex gap-2 mb-3">
           <div className="flex-1">
             <label className="text-[10px] text-muted-foreground mb-1 block">Սկսած</label>
-            <Input type="number" placeholder="0" className="h-8 text-xs" value={activeFilters.minPrice ?? ''}
+            <Input {...numericInputProps(false)} placeholder="0" className="h-8 text-xs" value={activeFilters.minPrice ?? ''}
               onChange={(e) => onFilterChange({ ...activeFilters, minPrice: e.target.value ? Number(e.target.value) : undefined })} />
           </div>
           <div className="flex-1">
             <label className="text-[10px] text-muted-foreground mb-1 block">Մինչև</label>
-            <Input type="number" placeholder="100000" className="h-8 text-xs" value={activeFilters.maxPrice ?? ''}
+            <Input {...numericInputProps(false)} placeholder="100000" className="h-8 text-xs" value={activeFilters.maxPrice ?? ''}
               onChange={(e) => onFilterChange({ ...activeFilters, maxPrice: e.target.value ? Number(e.target.value) : undefined })} />
           </div>
         </div>
@@ -225,7 +226,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
           )}
           {def.type === 'range' && (
             <div className="flex gap-2 items-center">
-              <Input type="number" placeholder="Նվազագույն" className="h-8 text-xs"
+              <Input {...numericInputProps(false)} placeholder="Նվազագույն" className="h-8 text-xs"
                 onChange={(e) => updateAttr(def._id, e.target.value ? Number(e.target.value) : null)} />
               {def.unit && <span className="text-xs text-muted-foreground">{def.unit}</span>}
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { numericInputProps } from '@/lib/utils';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Wizard, WizardStep, useWizardData } from '@/components/ui/wizard';
@@ -34,7 +35,7 @@ function StepInfo() {
     <div className="space-y-5">
       <div><Label>Ակցիայի անուն *</Label><Input value={(data.title as string) ?? ''} onChange={(e) => update('title', e.target.value)} placeholder="Ակցիայի անուն" className="h-11" /></div>
       <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Ակցիայի նկարագրություն..." rows={3} /></div>
-      <div><Label>Զեղչ (%)</Label><Input type="number" value={(data.discountPercent as number) ?? 10} onChange={(e) => update('discountPercent', Number(e.target.value))} className="h-11" /></div>
+      <div><Label>Զեղչ (%)</Label><Input {...numericInputProps(false)} value={(data.discountPercent as number) ?? 10} onChange={(e) => update('discountPercent', Number(e.target.value))} className="h-11" /></div>
       <div>
         <Label>Պատկերներ</Label>
         <div className="mt-2 grid grid-cols-3 gap-2">

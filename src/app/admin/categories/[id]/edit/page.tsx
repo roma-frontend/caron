@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import { numericInputProps } from '@/lib/utils';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../convex/_generated/dataModel';
@@ -68,7 +69,7 @@ export default function EditCategoryPage() {
           <div><Label>Նկարագրություն</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
           <div><Label>SEO Անվանում</Label><Input value={form.seoTitle} onChange={(e) => setForm({ ...form, seoTitle: e.target.value })} className="h-11" /></div>
           <div><Label>SEO Նկարագրություն</Label><Textarea value={form.seoDescription} onChange={(e) => setForm({ ...form, seoDescription: e.target.value })} rows={2} /></div>
-          <div><Label>Հերթական համար</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} className="h-11" /></div>
+          <div><Label>Հերթական համար</Label><Input {...numericInputProps(false)} value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} className="h-11" /></div>
           <div>
             <Label>Պատկեր</Label>
             {form.imageUrl ? (

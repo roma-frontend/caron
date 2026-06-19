@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { numericInputProps } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -749,7 +750,7 @@ export default function AdminSettingsPage() {
               <div>
                 <Label>{"Երևան (֏)"}</Label>
                 <Input
-                  type="number"
+                  {...numericInputProps(false)}
                   value={Number(form.deliveryYerevan) || 0}
                   onChange={(e) =>
                     set("deliveryYerevan", Number(e.target.value))
@@ -760,7 +761,7 @@ export default function AdminSettingsPage() {
               <div>
                 <Label>{"Մարզեր (֏)"}</Label>
                 <Input
-                  type="number"
+                  {...numericInputProps(false)}
                   value={Number(form.deliveryRegions) || 0}
                   onChange={(e) =>
                     set("deliveryRegions", Number(e.target.value))
@@ -771,7 +772,7 @@ export default function AdminSettingsPage() {
               <div>
                 <Label>{"Անվճար առաքում (֏)"}</Label>
                 <Input
-                  type="number"
+                  {...numericInputProps(false)}
                   value={Number(form.freeShippingThreshold) || 0}
                   onChange={(e) =>
                     set("freeShippingThreshold", Number(e.target.value))
@@ -820,7 +821,7 @@ export default function AdminSettingsPage() {
                   <div>
                     <Label>{"Օրեր՝ Երևան"}</Label>
                     <Input
-                      type="number"
+                      {...numericInputProps(false)}
                       min={0}
                       value={Number(form.deliveryDaysYerevan) || 0}
                       onChange={(e) =>
@@ -833,7 +834,7 @@ export default function AdminSettingsPage() {
                   <div>
                     <Label>{"Օրեր՝ Մարզեր"}</Label>
                     <Input
-                      type="number"
+                      {...numericInputProps(false)}
                       min={0}
                       value={Number(form.deliveryDaysRegions) || 0}
                       onChange={(e) =>
@@ -868,7 +869,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <Label>{"Cashback պատվերից (%)"}</Label>
                   <Input
-                    type="number"
+                    {...numericInputProps(false)}
                     min={0}
                     value={Number(form.loyaltyPercent) || 0}
                     onChange={(e) =>
@@ -880,7 +881,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <Label>{"Բալ կարծիքի համար"}</Label>
                   <Input
-                    type="number"
+                    {...numericInputProps(false)}
                     min={0}
                     value={Number(form.loyaltyReviewPoints) || 0}
                     onChange={(e) =>
@@ -893,7 +894,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <Label>{"Բոնուս լուսանկարով կարծիքի"}</Label>
                   <Input
-                    type="number"
+                    {...numericInputProps(false)}
                     min={0}
                     value={Number(form.loyaltyReviewPhotoBonus) || 0}
                     onChange={(e) =>
@@ -906,7 +907,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <Label>{"Բոնուս հրավերի համար (բալ)"}</Label>
                   <Input
-                    type="number"
+                    {...numericInputProps(false)}
                     min={0}
                     value={Number(form.referralReward) || 0}
                     onChange={(e) =>
@@ -935,7 +936,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <Label>{"Նվազագույն պատվեր (֏)"}</Label>
                   <Input
-                    type="number"
+                    {...numericInputProps(false)}
                     value={Number(form.minOrderAmount) || 0}
                     onChange={(e) =>
                       set("minOrderAmount", Number(e.target.value))
@@ -946,7 +947,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <Label>{"Ապրանքներ էջում"}</Label>
                   <Input
-                    type="number"
+                    {...numericInputProps(false)}
                     value={Number(form.productsPerPage) || 20}
                     onChange={(e) =>
                       set("productsPerPage", Number(e.target.value))

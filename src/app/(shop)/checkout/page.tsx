@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { numericInputProps } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -471,7 +472,7 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">Հասանելի՝ {loyalty?.points}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Input type="number" min={0} max={maxRedeemable} value={pointsToSpend || ''} placeholder="0"
+                    <Input {...numericInputProps(false)} min={0} max={maxRedeemable} value={pointsToSpend || ''} placeholder="0"
                       onChange={(e) => setPointsToSpend(Math.max(0, Math.min(maxRedeemable, Math.floor(Number(e.target.value) || 0))))}
                       className="h-8 text-xs flex-1" />
                     <Button type="button" size="sm" variant="outline" className="h-8 text-xs whitespace-nowrap"

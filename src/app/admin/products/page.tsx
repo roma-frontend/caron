@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef } from 'react';
+import { numericInputProps } from '@/lib/utils';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -65,9 +66,9 @@ function toArmenianUpdateError(error: unknown): string {
 function InlineField({ value, onSave, prefix, className, plain }: { value: number; onSave: (v: number) => void; prefix?: string; className?: string; plain?: boolean }) {
   const [editing, setEditing] = useState(false);
   if (editing) {
-    return <input autoFocus type="number" defaultValue={value} className={`w-20 rounded border bg-background px-2 py-0.5 text-sm outline-none focus:ring-1 focus:ring-primary ${className ?? ''}`}
+    return <input autoFocus type="text" inputMode="numeric" defaultValue={value} className={`w-20 rounded border bg-background px-2 py-0.5 text-sm outline-none focus:ring-1 focus:ring-primary ${className ?? ''}`}
       onBlur={(e) => { onSave(Number(e.target.value)); setEditing(false); }}
-      onKeyDown={(e) => { if (e.key === 'Enter') { onSave(Number(e.currentTarget.value)); setEditing(false); } if (e.key === 'Escape') setEditing(false); }} />;
+      onKeyDown={(e) => { if (e.key === 'Enter') { onSave(Number(e.currentTarget.value)); setEditing(false); return; } if (e.key === 'Escape') { setEditing(false); return; } const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End']; if (allowed.includes(e.key)) return; if (!/^\d$/.test(e.key)) e.preventDefault(); }} />;
   }
   return <span className={`cursor-pointer hover:underline decoration-dashed ${className ?? ''}`} onClick={() => setEditing(true)}>{prefix}{plain ? value : formatPrice(value)}</span>;
 }
@@ -276,7 +277,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
             <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
-            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='number'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch((error)=>toast.error(toArmenianUpdateError(error))); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter')input.blur(); if(ev.key==='Escape'){el.style.display='';input.remove();}}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
+            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='text'; input.inputMode='numeric'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch((error)=>toast.error(toArmenianUpdateError(error))); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter'){input.blur();return;} if(ev.key==='Escape'){el.style.display='';input.remove();return;} const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End']; if(allowed.includes(ev.key))return; if(!/^\d$/.test(ev.key))ev.preventDefault();}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
               {product.stock > 0 ? 'Պահեստում է' : 'Անհասանելի'}
             </Badge>

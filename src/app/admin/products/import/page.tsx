@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { numericInputProps } from '@/lib/utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
@@ -1045,7 +1046,7 @@ export default function ImportProductsPage() {
               <div className="text-xs text-muted-foreground">Ներմուծված: {importedRows.size} / {parsed.length}</div>
               <div className="flex flex-wrap items-center gap-2">
                 <input
-                  type="number"
+                  {...numericInputProps(false)}
                   min={1}
                   max={parsed.length}
                   value={moveToManualCount}

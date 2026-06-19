@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { numericInputProps } from '@/lib/utils';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { Wizard, WizardStep, useWizardData } from '@/components/ui/wizard';
@@ -54,7 +55,7 @@ function StepSEO() {
     <div className="space-y-5">
       <div><Label>SEO նկարագրություն</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11" /></div>
       <div><Label>SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={3} /></div>
-      <div><Label>Ակցիա</Label><Input value={(data.order as string) ?? '0'} onChange={(e) => update('order', e.target.value)} type="number" className="h-11" /></div>
+      <div><Label>Ակցիա</Label><Input value={(data.order as string) ?? '0'} onChange={(e) => update('order', e.target.value)} {...numericInputProps(false)} className="h-11" /></div>
     </div>
   );
 }
