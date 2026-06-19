@@ -51,11 +51,12 @@
   },
   "browserslist": {
     "production": [
-      "last 2 versions",
-      "not dead",
-      "not ie 11",
-      "not ie_mob 11",
-      "since 2022"
+      "chrome >= 93",
+      "edge >= 93",
+      "firefox >= 92",
+      "safari >= 15.4",
+      "ios_saf >= 15.4",
+      "not dead"
     ],
     "development": [
       "last 1 chrome version",
