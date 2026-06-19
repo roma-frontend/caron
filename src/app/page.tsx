@@ -10,13 +10,11 @@ import { ProductCard } from '@/components/cards/ProductCard';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { CategoryCard } from '@/components/cards/CategoryCard';
 import { VehicleSelector } from '@/components/VehicleSelector';
-import { useReveal, revealStyle, useMouseGlow } from '@/lib/motion';
+import { useReveal, revealStyle } from '@/lib/motion';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { formatPrice } from '@/lib/formatters';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuthStore } from '@/store/auth';
-import Image from 'next/image';
 import { toR2MediaProxyUrl } from '@/lib/r2Media';
 
 const BRAND_COLORS: Record<string, string> = {
@@ -274,9 +272,30 @@ export default function HomePage() {
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {featured === undefined
-                  ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '12rem' }} />)
+                  ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-2xl bg-muted" style={{ height: '20rem' }} />)
                   : featured.slice(0, 4).map((p, i) => (
-                      <HeroMiniCard key={p._id} product={p} index={i} />
+                      <ProductCard
+                        key={p._id}
+                        id={p._id}
+                        slug={p.slug}
+                        atgCode={p.atgCode}
+                        sku={p.sku}
+                        name={p.name}
+                        price={p.price}
+                        wholesalePrice={p.wholesalePrice}
+                        compareAtPrice={p.compareAtPrice}
+                        retailDiscount={p.retailDiscount}
+                        wholesaleDiscount={p.wholesaleDiscount}
+                        image={p.images?.[0]}
+                        inStock={p.stock > 0}
+                        stock={p.stock}
+                        rating={p.rating}
+                        reviewCount={p.reviewCount}
+                        carBrand={p.attributes?.carBrand}
+                        qtyStep={p.qtyStep}
+                        attributes={p.attributes}
+                        index={i}
+                      />
                     ))}
               </div>
             </div>
@@ -428,88 +447,4 @@ export default function HomePage() {
 }
 
 /* ─── Hero Mini Card — full ProductCard hover treatment ─── */
-function HeroMiniCard({ product, index = 0 }: { product: NonNullable<ReturnType<typeof useQuery<typeof api.products.getFeatured>>>[number]; index?: number }) {
-  const { mousePos, isHovered, handlers } = useMouseGlow();
-  const currentUser = useAuthStore((s) => s.user);
-  const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
-  const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
-  const displayPrice = isWholesale
-    ? (typeof product.wholesalePrice === 'number' && product.wholesalePrice > 0
-        ? product.wholesalePrice
-        : Math.round(product.price * (1 - userDiscount / 100)))
-    : (product.retailDiscount && product.retailDiscount > 0
-        ? Math.round(product.price * (1 - product.retailDiscount / 100))
-        : product.price);
-  return (
-    <Link
-      href={`/products/${product.slug}`}
-      {...handlers}
-      className="group relative overflow-hidden rounded-2xl border bg-background/80 backdrop-blur-sm card-modern aspect-3/4"
-      style={{
-        viewTransitionName: `hero-product-${product._id}`,
-        transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
-        transform: isHovered
-          ? `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${(mousePos.y - 150) / -30}deg) rotateY(${(mousePos.x - 100) / 30}deg)`
-          : 'translateY(0) scale(1) perspective(1000px) rotateX(0deg) rotateY(0deg)',
-        boxShadow: isHovered ? 'var(--shadow-card-hover)' : 'var(--shadow-card)',
-      }}
-    >
-      {/* Mouse-follow radial glow (same as ProductCard) */}
-      {isHovered && (
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 rounded-2xl"
-          style={{ background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, oklch(0.6 0.14 248 / 0.14), transparent 50%)`, filter: 'blur(30px)' }}
-        />
-      )}
-
-      {/* Image with subtle zoom on hover */}
-      {product.images?.[0] ? (
-        <Image
-          src={product.images[0]}
-          alt={product.name}
-          fill
-          priority={index < 1}
-          loading={index < 2 ? 'eager' : 'lazy'}
-          fetchPriority={index < 2 ? 'high' : 'auto'}
-          sizes="(max-width: 640px) 50vw, 200px"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted/30 text-muted-foreground/30">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        </div>
-      )}
-
-      {/* Bottom gradient vignette — always visible on mobile, hover-only on desktop */}
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-      {/* Info overlay — fade in/out only, no slide */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/80 to-transparent p-3 pt-14 text-center transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
-        <p className="text-[11px] font-semibold text-white line-clamp-2 drop-shadow-md">{product.name}</p>
-        {product.sku && <p className="mt-1 text-[10px] text-white drop-shadow-md">Արտիկուլ: <span className="font-mono">{product.sku}</span></p>}
-        <p className="mt-1 text-sm font-bold text-white drop-shadow-md">{formatPrice(displayPrice)}</p>
-      </div>
-
-      {/* Featured badge — magnetic glass pill that follows mouse tilt */}
-      {product.isFeatured && (
-        <div
-          className="absolute left-2 top-2 z-10"
-          style={{
-            transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1)',
-            transform: isHovered
-              ? `translate(${(mousePos.x - 100) / 15}px, ${(mousePos.y - 120) / 15}px)`
-              : 'translate(0, 0)',
-          }}
-        >
-          <div className="badge-hit-solid relative overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide text-white shadow-lg transition-all duration-300 group-hover:shadow-[0_0_16px_oklch(0.7_0.15_80/0.6)] group-hover:scale-110">
-            <span className="relative z-10 flex items-center gap-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-              <svg className="h-2.5 w-2.5 animate-pulse fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              Թոփ
-            </span>
-            <div className="badge-shimmer absolute inset-0 z-0 opacity-40" aria-hidden="true" />
-          </div>
-        </div>
-      )}
-    </Link>
-  );
-}
+/* HeroMiniCard removed — featured products now use the shared ProductCard. */
