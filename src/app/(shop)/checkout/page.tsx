@@ -117,6 +117,10 @@ export default function CheckoutPage() {
       toast.error('Խնդրում ենք համաձայնել պայմաններին');
       return;
     }
+    if ((settings?.paymentMethods?.length ?? 0) > 0 && !paymentMethod) {
+      toast.error('Ընտրեք վճարման եղանակ');
+      return;
+    }
     if (settings?.minOrderAmount && totalPrice < settings.minOrderAmount) {
       toast.error(`Նվազագույն պատվերի գումարը ${formatPrice(settings.minOrderAmount)} է`);
       return;
@@ -436,7 +440,7 @@ export default function CheckoutPage() {
                 <ChevronLeft className="h-4 w-4" /> Հետ
               </Button>
             ) : <div />}
-            <Button type="submit" variant="cta" size="lg" className="gap-2 text-sm sm:text-base" disabled={loading || (step === STEPS.length - 1 && !agreed)}>
+            <Button type="submit" variant="cta" size="lg" className="gap-2 text-sm sm:text-base" disabled={loading || (step === STEPS.length - 1 && (!agreed || ((settings?.paymentMethods?.length ?? 0) > 0 && !paymentMethod)))}>
               {step === STEPS.length - 1 ? (
                 loading ? 'Ձևակերպվում է...' : <span className="truncate max-w-50 sm:max-w-none">{CHECKOUT.placeOrder} — {formatPrice(orderTotalBeforePoints - appliedPoints)}</span>
               ) : (
