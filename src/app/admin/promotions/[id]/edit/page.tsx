@@ -16,7 +16,7 @@ import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
-import { formatDateHy } from '@/lib/formatters';
+import { DatePicker } from '@/components/ui/DatePicker';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
@@ -95,8 +95,8 @@ export default function EditPromotionPage() {
           <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
           <div><Label>Զեղչ (%)</Label><Input {...numericInputProps(false)} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })} className="h-11" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Սկիզբ</Label><Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-11" />{form.startDate ? <p className="mt-1 text-xs text-muted-foreground">{formatDateHy(new Date(form.startDate).getTime())}</p> : null}</div>
-            <div><Label>Ավարտ</Label><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="h-11" />{form.endDate ? <p className="mt-1 text-xs text-muted-foreground">{formatDateHy(new Date(form.endDate).getTime())}</p> : null}</div>
+            <div><Label>Սկիզբ</Label><DatePicker value={form.startDate} onChange={(v) => setForm({ ...form, startDate: v })} /></div>
+            <div><Label>Ավարտ</Label><DatePicker value={form.endDate} onChange={(v) => setForm({ ...form, endDate: v })} /></div>
           </div>
           <div className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
             <div>

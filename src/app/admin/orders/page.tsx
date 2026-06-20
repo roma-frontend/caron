@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -445,8 +446,8 @@ export default function AdminDashboardPage() {
             </Select>
             {period === 'custom' && (
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-9 text-xs" aria-label="Սկիզբ" />
-                <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-9 text-xs" aria-label="Ավարտ" />
+                <div className="w-44"><DatePicker value={customFrom} onChange={setCustomFrom} placeholder="Սկիզբ" /></div>
+                <div className="w-44"><DatePicker value={customTo} onChange={setCustomTo} placeholder="Ավարտ" /></div>
               </div>
             )}
           </div>

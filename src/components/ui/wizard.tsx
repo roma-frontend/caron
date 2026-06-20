@@ -103,11 +103,11 @@ export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծ�
       <div className="shrink-0 border-t p-4 md:p-6 flex items-center gap-3">
         {!submitOnly && (
           <Button variant="outline" onClick={step > 0 ? () => setStep((s) => s - 1) : onCancel} disabled={submitting}>
-            <ChevronLeft className="h-4 w-4 mr-1" /> {step > 0 ? 'Առաջ' : 'Ետ'}
+            <ChevronLeft className="h-4 w-4 mr-1" /> {step > 0 ? 'Ետ' : 'Չեղարկել'}
           </Button>
         )}
         <Button onClick={next} disabled={!canNext || submitting} className={cn(submitOnly && 'w-full')}>
-          {submitting ? 'Հարցազրույց...' : step === steps.length - 1 || submitOnly ? submitLabel : <><span>Առաջ</span><ChevronRight className="h-4 w-4 ml-1" /></>}
+          {submitting ? 'Պահպանվում է...' : step === steps.length - 1 || submitOnly ? submitLabel : <><span>Առաջ</span><ChevronRight className="h-4 w-4 ml-1" /></>}
         </Button>
       </div>
     </div>
