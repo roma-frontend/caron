@@ -17,6 +17,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import Image from 'next/image';
+import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';
 
 export default function AdminPromotionsPage() {
   const promotions = useQuery(api.promotions.list, {});
@@ -148,8 +149,9 @@ function PromotedProductsSection() {
   );
 }
 
-function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promotions'>; title: string; description?: string; imageUrl?: string; images?: string[]; discountPercent?: number; discountAmount?: number; productIds?: Id<'products'>[]; categoryIds?: Id<'categories'>[]; startDate: number; endDate: number; isActive: boolean }; index: number; onDelete: () => void; onEdit: () => void }) {
+function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promotions'>; title: string; description?: string; imageUrl?: string; images?: string[]; templateJson?: string; discountPercent?: number; discountAmount?: number; productIds?: Id<'products'>[]; categoryIds?: Id<'categories'>[]; startDate: number; endDate: number; isActive: boolean }; index: number; onDelete: () => void; onEdit: () => void }) {
   const { ref, visible } = useReveal();
+  const tpl = parsePromoConfig(promo.templateJson);
   const [now] = useState(() => Date.now());
   const isExpired = promo.endDate < now;
   const isUpcoming = promo.startDate > now;
@@ -162,14 +164,16 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
       <div className="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-muted">
-          {promo.imageUrl ? (
+          {tpl ? (
+            <PromoTemplate config={tpl} className="absolute inset-0 h-full w-full" />
+          ) : promo.imageUrl ? (
             <Image src={promo.imageUrl} alt={promo.title} fill sizes="320px" className="object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center">
               <Percent className="h-16 w-16 text-primary/20" strokeWidth={1} />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent" />
+          {!tpl && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent" />}
 
           {/* Discount badge */}
           {promo.discountPercent && (

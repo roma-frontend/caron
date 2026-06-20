@@ -196,6 +196,7 @@ export default defineSchema(
     description: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
+    templateJson: v.optional(v.string()),
     discountPercent: v.optional(v.number()),
     discountAmount: v.optional(v.number()),
     productIds: v.optional(v.array(v.id('products'))),

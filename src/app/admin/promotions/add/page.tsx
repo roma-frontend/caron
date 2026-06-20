@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import { useRef } from 'react';
 import Image from 'next/image';
+import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
+import { defaultPromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';
 import { useAuthStore } from '@/store/auth';
 
 function StepInfo() {
@@ -31,24 +33,36 @@ function StepInfo() {
     } catch { toast.error('Error'); }
   };
   const removeImage = (i: number) => update('images', images.filter((_, idx) => idx !== i));
+  const mode = (data.imageMode as string) ?? 'template';
+  const config = (data.templateConfig as PromoTemplateConfig) ?? defaultPromoConfig();
   return (
     <div className="space-y-5">
       <div><Label>Ակցիայի անուն *</Label><Input value={(data.title as string) ?? ''} onChange={(e) => update('title', e.target.value)} placeholder="Ակցիայի անուն" className="h-11" /></div>
       <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Ակցիայի նկարագրություն..." rows={3} /></div>
       <div><Label>Զեղչ (%)</Label><Input {...numericInputProps(false)} value={(data.discountPercent as number) ?? 10} onChange={(e) => update('discountPercent', Number(e.target.value))} className="h-11" /></div>
+
       <div>
-        <Label>Պատկերներ</Label>
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          {images.map((img, i) => (
-            <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
-              <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
-              <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 text-[10px]">✕</button>
-            </div>
-          ))}
-          <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-            <ImagePlus className="h-6 w-6" />
-          </button>
+        <Label>Քարտի պատկեր</Label>
+        <div className="mt-2 mb-3 inline-flex rounded-lg border p-0.5 text-sm">
+          <button type="button" onClick={() => update('imageMode', 'template')} className={`rounded-md px-3 py-1.5 transition-colors ${mode === 'template' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Շաբլոն</button>
+          <button type="button" onClick={() => update('imageMode', 'upload')} className={`rounded-md px-3 py-1.5 transition-colors ${mode === 'upload' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Նկարներ</button>
         </div>
+
+        {mode === 'template' ? (
+          <PromoTemplateBuilder value={config} onChange={(c) => update('templateConfig', c)} />
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {images.map((img, i) => (
+              <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
+                <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 text-[10px]">✕</button>
+              </div>
+            ))}
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+              <ImagePlus className="h-6 w-6" />
+            </button>
+          </div>
+        )}
         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImages} />
       </div>
     </div>
@@ -77,13 +91,16 @@ export default function AddPromotionPage() {
 
   const handleComplete = async (data: Record<string, unknown>) => {
     const images = (data.images as string[]) ?? [];
+    const useTemplate = (data.imageMode as string ?? 'template') === 'template';
+    const config = data.templateConfig as PromoTemplateConfig | undefined;
     await create({
       sessionToken: sessionToken!,
       title: data.title as string,
       description: (data.description as string) || undefined,
       discountPercent: Number(data.discountPercent) || undefined,
-      imageUrl: images[0] || undefined,
-      images: images.length > 0 ? images : undefined,
+      templateJson: useTemplate && config ? JSON.stringify(config) : undefined,
+      imageUrl: !useTemplate ? (images[0] || undefined) : undefined,
+      images: !useTemplate && images.length > 0 ? images : undefined,
       startDate: new Date(data.startDate as string).getTime(),
       endDate: new Date(data.endDate as string).getTime(),
       isActive: true,

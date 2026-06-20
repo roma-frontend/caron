@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
+import { defaultPromoConfig, parsePromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';
 
 export default function EditPromotionPage() {
   const params = useParams();
@@ -30,6 +32,8 @@ export default function EditPromotionPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', discountPercent: 0, imageUrl: '', images: [] as string[], startDate: '', endDate: '', productIds: [] as Id<'products'>[], isActive: true });
+  const [imageMode, setImageMode] = useState<'template' | 'upload'>('upload');
+  const [templateConfig, setTemplateConfig] = useState<PromoTemplateConfig>(defaultPromoConfig());
   const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState('');
   const allProducts = useQuery(api.products.list, { limit: 200 });
@@ -49,6 +53,9 @@ export default function EditPromotionPage() {
       productIds: (promo.productIds ?? []) as Id<'products'>[],
       isActive: promo.isActive,
     });
+    const parsed = parsePromoConfig(promo.templateJson);
+    if (parsed) { setTemplateConfig(parsed); setImageMode('template'); }
+    else { setImageMode('upload'); }
     setLoaded(true);
   }
 
@@ -66,7 +73,7 @@ export default function EditPromotionPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await update({ sessionToken: sessionToken!, id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, imageUrl: form.images[0] || undefined, images: form.images.length > 0 ? form.images : undefined, productIds: form.productIds, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime(), isActive: form.isActive });
+      await update({ sessionToken: sessionToken!, id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, templateJson: imageMode === 'template' ? JSON.stringify(templateConfig) : undefined, imageUrl: imageMode === 'upload' ? (form.images[0] || undefined) : undefined, images: imageMode === 'upload' && form.images.length > 0 ? form.images : undefined, productIds: form.productIds, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime(), isActive: form.isActive });
       toast.success('Ակցիան հաջողությամբ թարմացվեց');
       router.push('/admin/promotions');
     } catch { toast.error('Ակցիան չի հաջողվել թարմացնել'); } finally { setSaving(false); }
@@ -98,18 +105,26 @@ export default function EditPromotionPage() {
             <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} />
           </div>
           <div>
-            <Label>Պատկերներ</Label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {form.images.map((img, i) => (
-                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
-                  <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
-                  <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 text-[10px]">✕</button>
-                </div>
-              ))}
-              <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-                <ImagePlus className="h-6 w-6" />
-              </button>
+            <Label>Քարտի պատկեր</Label>
+            <div className="mt-2 mb-3 inline-flex rounded-lg border p-0.5 text-sm">
+              <button type="button" onClick={() => setImageMode('template')} className={`rounded-md px-3 py-1.5 transition-colors ${imageMode === 'template' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Շաբլոն</button>
+              <button type="button" onClick={() => setImageMode('upload')} className={`rounded-md px-3 py-1.5 transition-colors ${imageMode === 'upload' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Նկարներ</button>
             </div>
+            {imageMode === 'template' ? (
+              <PromoTemplateBuilder value={templateConfig} onChange={setTemplateConfig} />
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {form.images.map((img, i) => (
+                  <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                    <Image src={img} alt="" width={200} height={200} className="h-full w-full object-cover" />
+                    <button onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 text-[10px]">✕</button>
+                  </div>
+                ))}
+                <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                  <ImagePlus className="h-6 w-6" />
+                </button>
+              </div>
+            )}
             <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImages} />
           </div>
           {/* Product selection */}

@@ -6,6 +6,7 @@ import { api } from '../../../../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/loader';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Clock, Percent, Calendar, ArrowLeft, Tag, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDateHy } from '@/lib/formatters';
@@ -86,6 +87,7 @@ export default function PromotionDetailPage() {
   }) ?? [];
 
   const images = (promo.images ?? (promo.imageUrl ? [promo.imageUrl] : [])) as string[];
+  const tpl = parsePromoConfig(promo.templateJson);
 
   return (
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
@@ -95,7 +97,11 @@ export default function PromotionDetailPage() {
       <div className="relative mt-4 overflow-hidden rounded-2xl border bg-gradient-to-b from-muted/30 to-muted/10">
         {/* Carousel area */}
         <div className="relative mx-auto flex aspect-[21/9] max-h-[400px] w-full items-center justify-center overflow-hidden p-5 sm:p-8">
-          {images.length > 0 ? (
+          {tpl ? (
+            <div className="relative h-full aspect-square overflow-hidden rounded-2xl shadow-xl ring-1 ring-black/[0.04]">
+              <PromoTemplate config={tpl} className="h-full w-full" />
+            </div>
+          ) : images.length > 0 ? (
             <>
               {/* Blurred backdrop */}
               <div className="absolute inset-0 -z-10 scale-110 overflow-hidden opacity-30">

@@ -10,6 +10,7 @@ import { Clock, Flame, Percent, Gift, Zap, Bell, ImageIcon } from 'lucide-react'
 import Link from 'next/link';
 import { useReveal, cardRevealStyle } from '@/lib/motion';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';
 import { Loader } from '@/components/ui/loader';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -60,8 +61,9 @@ function CountdownPill({ endDate }: { endDate: number }) {
   );
 }
 
-function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; imageUrl?: string; images?: string[]; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
+function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; imageUrl?: string; images?: string[]; templateJson?: string; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
   const { ref, visible } = useReveal();
+  const tpl = parsePromoConfig(promo.templateJson);
 
   return (
     <Link href={`/promotions/${promo._id}`} className="group block mx-auto w-full max-w-[420px]">
@@ -73,7 +75,9 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
         {/* Gallery frame — matted area around the image */}
         <div className="relative overflow-hidden bg-gradient-to-b from-muted/30 to-muted/10 p-5">
           <div className="relative aspect-square overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-black/[0.04]">
-            {promo.imageUrl ? (
+            {tpl ? (
+              <PromoTemplate config={tpl} className="h-full w-full" />
+            ) : promo.imageUrl ? (
               <Image
                 src={promo.imageUrl}
                 alt=""
