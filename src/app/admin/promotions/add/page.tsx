@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
+import { formatDateHy } from '@/lib/formatters';
 import { useRef } from 'react';
 import Image from 'next/image';
 import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
@@ -73,8 +74,8 @@ function StepDates() {
   const { data, update } = useWizardData();
   return (
     <div className="space-y-5">
-      <div><Label>Սկիզբ *</Label><Input type="date" value={(data.startDate as string) ?? ''} onChange={(e) => update('startDate', e.target.value)} className="h-11" /></div>
-      <div><Label>Ավարտ *</Label><Input type="date" value={(data.endDate as string) ?? ''} onChange={(e) => update('endDate', e.target.value)} className="h-11" /></div>
+      <div><Label>Սկիզբ *</Label><Input type="date" value={(data.startDate as string) ?? ''} onChange={(e) => update('startDate', e.target.value)} className="h-11" />{data.startDate ? <p className="mt-1 text-xs text-muted-foreground">{formatDateHy(new Date(data.startDate as string).getTime())}</p> : null}</div>
+      <div><Label>Ավարտ *</Label><Input type="date" value={(data.endDate as string) ?? ''} onChange={(e) => update('endDate', e.target.value)} className="h-11" />{data.endDate ? <p className="mt-1 text-xs text-muted-foreground">{formatDateHy(new Date(data.endDate as string).getTime())}</p> : null}</div>
     </div>
   );
 }
