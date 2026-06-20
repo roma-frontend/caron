@@ -313,7 +313,7 @@ export default function ProductsPage() {
                       style={isList ? {} : { gap: 'var(--space-5)', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
                     >
                       {rowItems.map((p, j) => (
-                        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} />
+                        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} lite />
                       ))}
                     </div>
                   </div>

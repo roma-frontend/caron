@@ -49,6 +49,8 @@ interface ProductCardProps {
   index?: number;
   description?: string;
   compact?: boolean;
+  /** Lightweight mode (catalog grid): no blur, no parallax/glow — smoother scroll. */
+  lite?: boolean;
 }
 
 function checkFits(vehicle: { brand: string; model: string; year: string } | null, carBrand?: string, attributes?: Record<string, unknown>): boolean {
@@ -63,11 +65,12 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact }: ProductCardProps) {
+function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact, lite }: ProductCardProps) {
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
   const { mousePos, isHovered, handlers } = useMouseGlow();
+  const hover = !lite && isHovered;
   const normalizedImage = useMemo(() => normalizeImageUrl(image), [image]);
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -127,7 +130,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
 
   return (
     <>
-      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: '0 320px' }} {...handlers}>
+      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: 'auto 380px' }} {...(lite ? {} : handlers)}>
         {compact ? (
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>
@@ -162,21 +165,21 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
           /* ─── Grid card mode (original) ─── */
           <div className="relative overflow-hidden rounded-2xl">
             <div
-              className="group relative border bg-background/80 backdrop-blur-sm card-modern rounded-2xl"
+              className={`group relative border card-modern rounded-2xl ${lite ? 'bg-card' : 'bg-background/80 backdrop-blur-sm'}`}
               style={{
                 viewTransitionName: `product-img-${id}`,
                 transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, border-color 0.4s cubic-bezier(0.22,1,0.36,1)',
-                transform: isHovered
+                transform: hover
                   ? `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${(mousePos.y - 150) / -30}deg) rotateY(${(mousePos.x - 150) / 30}deg)`
-                  : 'translateY(0) scale(1) perspective(1000px) rotateX(0deg) rotateY(0deg)',
-                transformStyle: 'preserve-3d',
-                backfaceVisibility: 'hidden',
-                boxShadow: isHovered
+                  : 'none',
+                transformStyle: hover ? 'preserve-3d' : undefined,
+                backfaceVisibility: hover ? 'hidden' : undefined,
+                boxShadow: hover
                   ? 'var(--shadow-card-hover)'
                   : 'var(--shadow-card)',
               }}
             >
-            {isHovered && (
+            {hover && (
               <div
                 className="pointer-events-none absolute inset-0 -z-10 rounded-2xl"
                 style={{ background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, oklch(0.6 0.14 248 / 0.14), transparent 50%)`, filter: 'blur(30px)' }}
@@ -303,11 +306,13 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
         )}
       </div>
 
-      <QuickView
-        open={quickOpen}
-        onOpenChange={setQuickOpen}
-        product={{ id, slug, name, price, wholesalePrice, compareAtPrice, image, description, inStock, rating, reviewCount, carBrand }}
-      />
+      {quickOpen && (
+        <QuickView
+          open={quickOpen}
+          onOpenChange={setQuickOpen}
+          product={{ id, slug, name, price, wholesalePrice, compareAtPrice, image, description, inStock, rating, reviewCount, carBrand }}
+        />
+      )}
     </>
   );
 }

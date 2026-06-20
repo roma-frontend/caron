@@ -24,18 +24,28 @@ export function useReveal(threshold = 0.1, rootMargin = '0px') {
   return { ref, visible };
 }
 
-/** Hook: track mouse position relative to element */
+/** Hook: track mouse position relative to element (rAF-throttled) */
 export function useMouseGlow() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  const pending = useRef<{ x: number; y: number } | null>(null);
 
   const handlers = {
     onMouseMove: useCallback((e: React.MouseEvent<HTMLElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      pending.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      if (rafRef.current != null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        if (pending.current) setMousePos(pending.current);
+      });
     }, []),
     onMouseEnter: useCallback(() => setIsHovered(true), []),
-    onMouseLeave: useCallback(() => setIsHovered(false), []),
+    onMouseLeave: useCallback(() => {
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+      setIsHovered(false);
+    }, []),
   };
 
   return { mousePos, isHovered, handlers };
