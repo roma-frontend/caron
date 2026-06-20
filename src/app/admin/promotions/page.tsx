@@ -163,7 +163,7 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
     <div ref={ref} style={revealStyle(visible, index * 0.06)}>
       <div className="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         {/* Image */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-muted">
+        <div className={`relative ${tpl ? 'aspect-square' : 'aspect-[4/3]'} overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-muted`}>
           {tpl ? (
             <PromoTemplate config={tpl} className="absolute inset-0 h-full w-full" />
           ) : promo.imageUrl ? (
