@@ -188,7 +188,7 @@ export default function ProductsPage() {
 
   return (
     <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
-      <div className="flex flex-col justify-between md:flex-row md:items-center" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+      <div className="sticky z-30 -mx-1 flex flex-col justify-between bg-background/95 px-1 py-3 backdrop-blur md:flex-row md:items-center" style={{ gap: 'var(--space-4)', top: 'var(--header-height)', marginBottom: 'var(--space-4)' }}>
         <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)' }}>{NAV.catalog}</h1>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
