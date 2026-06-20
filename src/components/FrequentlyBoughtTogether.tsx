@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQuery } from 'convex/react';
 import Image from 'next/image';
 import { Plus, Check, ShoppingCart } from 'lucide-react';
@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
+import { flyProductToTarget } from '@/lib/flyToTarget';
 import { normalizeImageUrl } from '../../convex/lib/imageUrl';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -38,6 +39,7 @@ function retailPrice(p: { price: number; retailDiscount?: number }): number {
 export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
   const related = useQuery(api.products.list, { categoryId: base.categoryId, limit: 8 });
   const addItem = useCartStore((s) => s.addItem);
+  const flyRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const suggestions = useMemo(
     () => (related ?? []).filter((p) => p._id !== base.id && p.stock > 0).slice(0, 2),
@@ -68,6 +70,20 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
     for (const p of selectedProducts) {
       addItem({ id: p._id, name: p.name, price: retailPrice(p), image: p.images?.[0] ?? null, maxStock: p.stock, qtyStep: p.qtyStep ?? 1 });
     }
+
+    // Animate each chosen product flying to the cart, with a small stagger so
+    // they "gather" and fly one after another.
+    const flying: { id: string; image: string | null }[] = [
+      { id: base.id, image: base.image },
+      ...selectedProducts.map((p) => ({ id: p._id, image: p.images?.[0] ?? null })),
+    ];
+    flying.forEach((f, idx) => {
+      window.setTimeout(() => {
+        const el = flyRefs.current[f.id];
+        if (el) flyProductToTarget({ triggerEl: el, kind: 'cart', imageSrc: f.image ? (normalizeImageUrl(f.image) ?? f.image) : null });
+      }, idx * 140);
+    });
+
     toast.success(`${itemCount} ապրանք ավելացվեց զամբյուղ`);
   };
 
@@ -86,7 +102,7 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
             <div key={c.id} className="flex items-center gap-2 sm:gap-3">
               {i > 0 && <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />}
               <label className={`group relative flex w-24 shrink-0 cursor-pointer flex-col gap-1 ${c.locked ? 'cursor-default' : ''}`}>
-                <div className={`relative aspect-square overflow-hidden rounded-xl border-2 bg-muted/40 transition-colors ${c.checked ? 'border-primary' : 'border-transparent'}`}>
+                <div ref={(el) => { flyRefs.current[c.id] = el; }} className={`relative aspect-square overflow-hidden rounded-xl border-2 bg-muted/40 transition-colors ${c.checked ? 'border-primary' : 'border-transparent'}`}>
                   {c.image ? (
                     <Image src={normalizeImageUrl(c.image) ?? c.image} alt={c.name} fill sizes="96px" className="object-cover" />
                   ) : (
