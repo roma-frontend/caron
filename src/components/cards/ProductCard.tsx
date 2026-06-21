@@ -289,7 +289,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                 </div>
               )}
               {settings?.showStockCount && inStock && stock !== undefined && stock <= (settings.lowStockThreshold ?? 5) && (
-                <p className="mt-1.5 text-[11px] font-medium text-orange-600">Մնացել է {stock} հատ</p>
+                <p className="mt-1.5 text-[11px] font-semibold text-orange-700 dark:text-orange-400">Մնացել է {stock} հատ</p>
               )}
             </div>
 
