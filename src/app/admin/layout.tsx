@@ -15,6 +15,7 @@ import { useOrderNotificationStore } from '@/store/orderNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { clearAuthCookie } from '@/actions/auth';
 import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
+import { Loader } from '@/components/ui/loader';
 
 const NAV_ITEMS = [
   { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ' },
@@ -71,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push('/');
   };
 
-  if (!hydrated) return <div className="flex min-h-screen items-center justify-center">...</div>;
+  if (!hydrated) return <div className="flex min-h-screen items-center justify-center"><Loader /></div>;
   if (!user || user.role !== 'admin') return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
       <div className="flex flex-col items-center gap-4 text-center max-w-sm">
