@@ -13,6 +13,7 @@ import { FloatingActions } from '@/components/FloatingActions';
 import { CartSync } from '@/components/CartSync';
 import { AdminOrderWatcher } from '@/components/AdminOrderWatcher';
 import { AdminReturnWatcher } from '@/components/AdminReturnWatcher';
+import { CustomerReturnWatcher } from '@/components/CustomerReturnWatcher';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
@@ -188,6 +189,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <CartSync />
               <AdminOrderWatcher />
               <AdminReturnWatcher />
+              <CustomerReturnWatcher />
             </SettingsProvider>
             <ThemedToaster />
             <FloatingActions />

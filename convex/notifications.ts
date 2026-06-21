@@ -83,6 +83,133 @@ export const sendReturnNotification = internalAction({
   },
 });
 
+// === Telegram helper: resolve an @username to a numeric chat_id ===
+// getUpdates only returns recent updates, so this is most reliable right after
+// the customer presses "Start" in the bot. Returns null if not resolvable.
+async function resolveTelegramChatId(token: string, rawUsername: string): Promise<string | null> {
+  const username = rawUsername.replace(/^@/, '').trim();
+  if (!username) return null;
+  if (/^\d+$/.test(username)) return username; // already a numeric chat_id
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
+    const data = (await res.json()) as {
+      ok: boolean;
+      result?: Array<{ message?: { chat?: { id: number; username?: string } } }>;
+    };
+    if (data.ok && data.result) {
+      const match = data.result.find(
+        (u) => u.message?.chat?.username?.toLowerCase() === username.toLowerCase(),
+      );
+      if (match?.message?.chat?.id) return String(match.message.chat.id);
+    }
+  } catch {}
+  return null;
+}
+
+/** Internal: on return creation, resolve the customer's @username -> chat_id,
+ *  store it for later, and send a "request received" confirmation. */
+export const sendReturnCreatedToCustomer = internalAction({
+  args: {
+    requestId: v.id('returnRequests'),
+    username: v.string(),
+    orderNumber: v.string(),
+    type: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
+    const token = settings?.telegramBotToken;
+    if (!token) return;
+
+    const chatId = await resolveTelegramChatId(token, args.username);
+    if (!chatId) return;
+
+    // Persist for later status-change notifications.
+    await ctx.runMutation(internal.returns.setReturnTelegramChatId, {
+      requestId: args.requestId,
+      chatId,
+    });
+
+    const typeLabel = args.type === 'exchange' ? 'փոխանակման' : 'վերադարձի';
+    const storeName = (settings as Record<string, unknown> | null)?.storeName as string | undefined;
+
+    const text = [
+      `<b>🔄 Ձեր ${typeLabel} հայտը ընդունված է</b>`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<b>📝 Պատվեր՝</b> <code>${args.orderNumber}</code>`,
+      `Հայտը քննարկման փուլում է։ Կարգավիճակի փոփոխության մասին կտեղեկացնենք այստեղ։`,
+      `━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `<a href="https://caron.am/orders">📋 Դիտել իմ պատվերները</a>`,
+      ...(storeName ? [``, `<i>${storeName}</i> 🚗`] : []),
+    ].join('\n');
+
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      });
+    } catch {}
+  },
+});
+
+/** Internal: notify the customer in Telegram about a return status change. */
+export const sendReturnStatusToCustomer = internalAction({
+  args: {
+    orderNumber: v.string(),
+    type: v.string(),
+    status: v.union(
+      v.literal('approved'),
+      v.literal('rejected'),
+      v.literal('completed'),
+    ),
+    chatId: v.optional(v.string()),
+    username: v.optional(v.string()),
+    adminComment: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
+    const token = settings?.telegramBotToken;
+    if (!token) return;
+
+    // Prefer the previously-resolved chat_id; fall back to resolving now.
+    let chatId = args.chatId || null;
+    if (!chatId && args.username) chatId = await resolveTelegramChatId(token, args.username);
+    if (!chatId) return;
+
+    const typeLabel = args.type === 'exchange' ? 'փոխանակման' : 'վերադարձի';
+    const headline =
+      args.status === 'approved'
+        ? `✅ Ձեր ${typeLabel} հայտը հաստատվել է`
+        : args.status === 'completed'
+          ? `📦 Ձեր ${typeLabel} հայտն ավարտված է`
+          : `❌ Ձեր ${typeLabel} հայտը մերժվել է`;
+
+    const storeName = (settings as Record<string, unknown> | null)?.storeName as string | undefined;
+
+    const text = [
+      `<b>${headline}</b>`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<b>📝 Պատվեր՝</b> <code>${args.orderNumber}</code>`,
+      ...(args.adminComment ? [`<b>💬 Մեկնաբանություն՝</b> ${args.adminComment}`] : []),
+      `━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `<a href="https://caron.am/orders">📋 Դիտել իմ պատվերները</a>`,
+      ...(storeName ? [``, `<i>${storeName}</i> 🚗`] : []),
+    ].join('\n');
+
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      });
+    } catch {}
+  },
+});
+
 export const sendTest = action({
   args: { sessionToken: v.string() },
   handler: async (ctx, args): Promise<boolean> => {

@@ -33,6 +33,14 @@ import {
 
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
+import {
+  parseBannerConfig,
+  BANNER_TEMPLATES,
+  BANNER_RATIO_CLASS,
+  type BannerConfig,
+} from "@/lib/bannerConfig";
+import { BannerSlide, type Banner } from "@/components/home/HomeBanners";
+import { parsePromoConfig } from "@/components/PromoTemplate";
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -43,6 +51,7 @@ export default function AdminSettingsPage() {
   );
   const save = useMutation(api.settings.save);
   const sendTest = useAction(api.notifications.sendTest);
+  const activePromos = useQuery(api.promotions.active, {});
 
   const [form, setForm] = useState<Record<string, string | number>>({});
   const [tiers, setTiers] = useState<{ minQty: number; percent: number }[]>([]);
@@ -280,6 +289,23 @@ export default function AdminSettingsPage() {
   if (!settings) return null;
 
   const flags = settings as Record<string, unknown>;
+
+  const bannerCfg = parseBannerConfig(
+    (form.homeBannerConfig as string | undefined) ??
+      (flags.homeBannerConfig as string | undefined),
+  );
+  const updateBanner = (patch: Partial<BannerConfig>) =>
+    saveField("homeBannerConfig", JSON.stringify({ ...bannerCfg, ...patch }));
+
+  const previewPromo = (activePromos ?? []).find((p) => p.images?.[0] || p.imageUrl || p.templateJson);
+  const previewBanner: Banner = {
+    id: "preview",
+    title: previewPromo?.title || String(form.storeName ?? "Ակցիա"),
+    description: previewPromo?.description || "Շահավետ առաջարկ ընտրված ապրանքների վրա",
+    image: previewPromo?.images?.[0] || previewPromo?.imageUrl || "/og-image.png",
+    discountPercent: previewPromo?.discountPercent ?? 25,
+    template: previewPromo ? parsePromoConfig(previewPromo.templateJson) : null,
+  };
 
   const TAB_ICONS: Record<string, typeof Store> = {
     main: Store,
@@ -1281,8 +1307,15 @@ export default function AdminSettingsPage() {
               {(
                 [
                   ["announcementEnabled", "Հայտարարության գոտի"],
+                  ["showStories", "Սթորիզ (գլխավոր)"],
+                  ["showBanners", "Բաններների կարուսել (գլխավոր)"],
                   ["showCategories", "Կատեգորիաների բաժին (գլխավոր)"],
+                  ["showForYou", "«Ձեզ համար» անհատական (գլխավոր)"],
+                  ["showNewArrivals", "Նորույթներ (գլխավոր)"],
                   ["showFeatured", "Առաջարկվող ապրանքներ (գլխավոր)"],
+                  ["showBestsellers", "Բեսթսելլերներ (գլխավոր)"],
+                  ["showDiscounts", "Զեղչեր (գլխավոր)"],
+                  ["showShelves", "Կատեգորիաների շարքեր (գլխավոր)"],
                   ["showBrands", "Բրենդների շարք (գլխավոր)"],
                   ["showFeatures", "Առավելությունների բաժին (գլխավոր)"],
                   ["enableCarSelector", "Ավտոյի ընտրիչ"],
@@ -1301,6 +1334,97 @@ export default function AdminSettingsPage() {
                   />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* Homepage Banner designer */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Palette className="h-5 w-5 text-primary" />
+                {"Բաններ (գլխավոր)"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Live preview */}
+              <div>
+                <Label className="mb-2 block text-sm font-medium">{"Նախադիտում"}</Label>
+                <div className={`group relative overflow-hidden border border-border/40 shadow-sm ${bannerCfg.rounded ? "rounded-2xl" : ""}`}>
+                  <BannerSlide
+                    banner={previewBanner}
+                    cfg={bannerCfg}
+                    aspect={BANNER_RATIO_CLASS[bannerCfg.ratio]}
+                    preview
+                  />
+                </div>
+              </div>
+
+              {/* Template */}
+              <div>
+                <Label className="mb-2 block text-sm font-medium">{"Ձևանմուշ"}</Label>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {BANNER_TEMPLATES.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => updateBanner({ template: t.value })}
+                      className={`rounded-xl border p-3 text-left transition-colors ${bannerCfg.template === t.value ? "border-primary bg-primary/10" : "hover:border-primary/40"}`}
+                    >
+                      <span className="block text-sm font-semibold">{t.label}</span>
+                      <span className="block text-[11px] leading-tight text-muted-foreground">{t.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Autoplay + accent */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label className="mb-1.5 block text-sm font-medium">{"Ավտո-փոխում (վրկ, 0=անջատ)"}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={30}
+                    value={bannerCfg.autoplay}
+                    onChange={(e) => updateBanner({ autoplay: Math.max(0, Math.min(30, Number(e.target.value) || 0)) })}
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1.5 block text-sm font-medium">{"Ակցենտ գույն"}</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      aria-label="Ակցենտ գույն"
+                      value={bannerCfg.accent}
+                      onChange={(e) => updateBanner({ accent: e.target.value })}
+                      className="h-10 w-14 cursor-pointer rounded-lg border bg-transparent"
+                    />
+                    <span className="text-xs text-muted-foreground">{bannerCfg.accent}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Switches */}
+              {(
+                [
+                  ["overlay", "Տեքստ նկարի վրա"],
+                  ["kenBurns", "Դանդաղ խոշորացում (Ken Burns)"],
+                  ["rounded", "Կլորացված անկյուններ"],
+                ] as [keyof BannerConfig, string][]
+              ).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between gap-3">
+                  <span className="text-sm">{label}</span>
+                  <Switch
+                    checked={bannerCfg[key] === true}
+                    onCheckedChange={(v) => updateBanner({ [key]: v } as Partial<BannerConfig>)}
+                  />
+                </div>
+              ))}
+
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                {"Էֆեկտները (Cinematic, Spotlight, Ken Burns, օverlay) կիրառվում են գլխավորի բոլոր բаннерների վրա։ Համամասնությունը (ձևը) որոշվում է յուրաքանչյուր ակցիայի մեջ՝ ստեղծելիս։"}
+              </p>
             </CardContent>
           </Card>
 

@@ -10,7 +10,7 @@ import { Clock, Flame, Percent, Gift, Zap, Bell, ImageIcon } from 'lucide-react'
 import Link from 'next/link';
 import { useReveal, cardRevealStyle } from '@/lib/motion';
 import { ProductCard } from '@/components/cards/ProductCard';
-import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';
+import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS } from '@/components/PromoTemplate';
 import { Loader } from '@/components/ui/loader';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -48,16 +48,18 @@ function CountdownBlock({ endDate }: { endDate: number }) {
   );
 }
 
-/** Compact live countdown pill for promo cards. */
+/** Compact live countdown pill for promo cards. Renders nothing once ended. */
 function CountdownPill({ endDate }: { endDate: number }) {
   const { days, hours, mins, secs, ended } = useCountdown(endDate);
   if (ended) return null;
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-bold tabular-nums text-destructive">
-      <Clock className="h-3 w-3" />
-      {days > 0 ? `${days}օր ` : ''}{pad(hours)}:{pad(mins)}:{pad(secs)}
-    </span>
+    <div className="mt-2 flex justify-center">
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-bold tabular-nums text-destructive">
+        <Clock className="h-3 w-3" />
+        {days > 0 ? `${days}օր ` : ''}{pad(hours)}:{pad(mins)}:{pad(secs)}
+      </span>
+    </div>
   );
 }
 
@@ -74,9 +76,9 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
       >
         {/* Gallery frame — matted area around the image */}
         <div className="relative overflow-hidden bg-gradient-to-b from-muted/30 to-muted/10 p-5">
-          <div className="relative aspect-square overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-black/[0.04]">
+          <div className={`relative ${tpl ? PROMO_RATIO_CLASS[tpl.cardRatio ?? '1/1'] : 'aspect-square'} overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-black/[0.04]`}>
             {tpl ? (
-              <PromoTemplate config={tpl} className="h-full w-full" />
+              <PromoTemplate config={tpl} ratio={tpl.cardRatio ?? '1/1'} className="h-full w-full" />
             ) : promo.imageUrl ? (
               <Image
                 src={promo.imageUrl}
@@ -120,11 +122,7 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
               {promo.description}
             </p>
           )}
-          {promo.endDate > Date.now() && (
-            <div className="mt-2 flex justify-center">
-              <CountdownPill endDate={promo.endDate} />
-            </div>
-          )}
+          <CountdownPill endDate={promo.endDate} />
         </div>
       </div>
     </Link>

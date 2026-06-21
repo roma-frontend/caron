@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query, mutation } from './_generated/server';
+import { query, mutation, internalMutation } from './_generated/server';
 import { internal } from './_generated/api';
 import { getAuthCaller, getAdminCaller } from './lib/auth';
 
@@ -16,6 +16,7 @@ export const create = mutation({
     })),
     reason: v.string(),
     comment: v.optional(v.string()),
+    customerTelegram: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId);
@@ -38,6 +39,8 @@ export const create = mutation({
       throw new Error('Այս պատվերի համար արդեն կա հայտ');
     }
 
+    const customerTelegram = args.customerTelegram?.trim().replace(/^@/, '') || undefined;
+
     const id = await ctx.db.insert('returnRequests', {
       orderId: args.orderId,
       orderNumber: order.orderNumber,
@@ -47,6 +50,7 @@ export const create = mutation({
       type: args.type,
       reason: args.reason.trim(),
       comment: args.comment?.trim() || undefined,
+      customerTelegram,
       status: 'pending',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -59,6 +63,19 @@ export const create = mutation({
       itemsCount: args.items.length,
       customerEmail: order.customerEmail,
     });
+
+    // Resolve the customer's @username -> numeric chat_id now, while the
+    // customer has just started the bot (getUpdates is freshest at this point),
+    // store it for later status notifications, and send a "request received"
+    // confirmation to the customer.
+    if (customerTelegram) {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendReturnCreatedToCustomer, {
+        requestId: id,
+        username: customerTelegram,
+        orderNumber: order.orderNumber,
+        type: args.type,
+      });
+    }
 
     return id;
   },
@@ -111,10 +128,42 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
+    const req = await ctx.db.get(args.id);
+    if (!req) throw new Error('Հայտը չի գտնվել');
+
+    const adminComment = args.adminComment?.trim() || undefined;
     await ctx.db.patch(args.id, {
       status: args.status,
-      adminComment: args.adminComment?.trim() || undefined,
+      adminComment,
       updatedAt: Date.now(),
     });
+
+    // Notify the customer in Telegram on meaningful status changes (skip a
+    // no-op patch back to "pending"). On-site notification is handled live by
+    // CustomerReturnWatcher via the reactive listMine query.
+    if (
+      args.status !== 'pending' &&
+      args.status !== req.status &&
+      (req.customerTelegramChatId || req.customerTelegram)
+    ) {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendReturnStatusToCustomer, {
+        orderNumber: req.orderNumber,
+        type: req.type,
+        status: args.status,
+        chatId: req.customerTelegramChatId,
+        username: req.customerTelegram,
+        adminComment,
+      });
+    }
+  },
+});
+
+/** Internal: store a resolved Telegram chat id on a return request. */
+export const setReturnTelegramChatId = internalMutation({
+  args: { requestId: v.id('returnRequests'), chatId: v.string() },
+  handler: async (ctx, args) => {
+    const req = await ctx.db.get(args.requestId);
+    if (!req) return;
+    await ctx.db.patch(args.requestId, { customerTelegramChatId: args.chatId });
   },
 });

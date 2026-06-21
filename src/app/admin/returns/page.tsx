@@ -55,7 +55,7 @@ export default function AdminReturnsPage() {
       </div>
 
       {/* Filter chips */}
-      <div className="-mx-1 mb-5 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
+      <div className="-mx-1 mb-5 flex flex-wrap gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
         {FILTERS.map((f) => {
           const n = f.key === 'all' ? (requests?.length ?? 0) : (counts[f.key] ?? 0);
           const active = filter === f.key;
@@ -104,7 +104,7 @@ export default function AdminReturnsPage() {
                     const img = (i as { image?: string | null }).image;
                     const src = img ? (normalizeImageUrl(img) ?? img) : null;
                     return (
-                      <div key={`${i.productId}-${idx}`} className="flex items-center gap-3">
+                      <div key={`${i.productId}-${idx}`} className="flex flex-wrap items-center gap-3">
                         <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-background ring-1 ring-border/50">
                           {src ? (
                             <Image src={src} alt={i.name} width={44} height={44} className="h-full w-full object-cover" />

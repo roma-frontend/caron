@@ -260,6 +260,11 @@ export default defineSchema(
       v.literal('completed'),
     ),
     adminComment: v.optional(v.string()),
+    // Optional customer Telegram contact for status notifications.
+    // `customerTelegram` is the @username as entered; `customerTelegramChatId`
+    // is the numeric chat id once resolved (so later sends are reliable).
+    customerTelegram: v.optional(v.string()),
+    customerTelegramChatId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -303,6 +308,16 @@ export default defineSchema(
     showFeatured: v.optional(v.boolean()),
     showBrands: v.optional(v.boolean()),
     showFeatures: v.optional(v.boolean()),
+    // Homepage sections (WB/OZON-style modules)
+    showStories: v.optional(v.boolean()),
+    showBanners: v.optional(v.boolean()),
+    showForYou: v.optional(v.boolean()),
+    showNewArrivals: v.optional(v.boolean()),
+    showBestsellers: v.optional(v.boolean()),
+    showShelves: v.optional(v.boolean()),
+    showDiscounts: v.optional(v.boolean()),
+    /** Homepage banner design module (JSON string, see lib/bannerConfig). */
+    homeBannerConfig: v.optional(v.string()),
     enableCarSelector: v.optional(v.boolean()),
     enablePriceFilter: v.optional(v.boolean()),
     enableReviews: v.optional(v.boolean()),

@@ -51,6 +51,7 @@ const nextConfig = {
     // Allow the local R2 proxy route to pass dynamic encoded URLs via query string.
     localPatterns: [
       { pathname: '/api/r2-image' },
+      { pathname: '/og-image.png' },
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '*.r2.cloudflarestorage.com', pathname: '/**' },

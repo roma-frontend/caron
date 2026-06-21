@@ -563,6 +563,44 @@ export const getFeatured = query({
   },
 });
 
+export const getBestsellers = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 12;
+    // Tally sold quantities from recent non-cancelled orders (bounded scan).
+    const orders = await ctx.db.query('orders').order('desc').take(5000);
+    const qty = new Map<string, number>();
+    for (const o of orders) {
+      if (o.status === 'cancelled') continue;
+      for (const it of o.items) {
+        const id = it.productId as unknown as string;
+        qty.set(id, (qty.get(id) ?? 0) + (it.quantity ?? 0));
+      }
+    }
+    if (qty.size === 0) return [];
+
+    const inactiveCats = await ctx.db
+      .query('categories')
+      .withIndex('by_active', (q) => q.eq('isActive', false))
+      .take(200);
+    const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
+
+    const sortedIds = [...qty.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id as Id<'products'>);
+
+    const result: Doc<'products'>[] = [];
+    for (const id of sortedIds) {
+      const p = await ctx.db.get(id);
+      if (p && p.isActive && p.stock > 0 && !inactiveCatIds.has(p.categoryId)) {
+        result.push(p);
+        if (result.length >= limit) break;
+      }
+    }
+    return result.map(normalizeProductImages);
+  },
+});
+
 export const getRetailDiscounted = query({
   args: {},
   handler: async (ctx) => {

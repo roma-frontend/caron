@@ -6,7 +6,7 @@ import { api } from '../../../../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/loader';
 import { ProductCard } from '@/components/cards/ProductCard';
-import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';
+import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS } from '@/components/PromoTemplate';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Clock, Percent, Calendar, ArrowLeft, Tag, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDateHy } from '@/lib/formatters';
@@ -96,11 +96,9 @@ export default function PromotionDetailPage() {
       {/* Hero with image carousel */}
       <div className="relative mt-4 overflow-hidden rounded-2xl border bg-gradient-to-b from-muted/30 to-muted/10">
         {/* Carousel area */}
-        <div className="relative mx-auto flex aspect-[21/9] max-h-[400px] w-full items-center justify-center overflow-hidden p-5 sm:p-8">
+        <div className={`relative mx-auto w-full overflow-hidden ${tpl ? PROMO_RATIO_CLASS[tpl.bannerRatio ?? '16/5'] : 'flex aspect-[21/9] max-h-[400px] items-center justify-center p-5 sm:p-8'}`}>
           {tpl ? (
-            <div className="relative h-full aspect-square overflow-hidden rounded-2xl shadow-xl ring-1 ring-black/[0.04]">
-              <PromoTemplate config={tpl} className="h-full w-full" />
-            </div>
+            <PromoTemplate config={tpl} ratio={tpl.bannerRatio ?? '16/5'} className="absolute inset-0 h-full w-full" />
           ) : images.length > 0 ? (
             <>
               {/* Blurred backdrop */}

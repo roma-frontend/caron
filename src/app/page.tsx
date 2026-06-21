@@ -8,6 +8,13 @@ import { Footer } from '@/components/layout/Footer';
 import { HOME, FEATURES } from '@/lib/constants';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
+import { HomeStories } from '@/components/home/HomeStories';
+import { HomeBanners } from '@/components/home/HomeBanners';
+import { ForYou } from '@/components/home/ForYou';
+import { NewArrivals } from '@/components/home/NewArrivals';
+import { Bestsellers } from '@/components/home/Bestsellers';
+import { CategoryShelves } from '@/components/home/CategoryShelves';
+import { FlashCountdown } from '@/components/home/FlashCountdown';
 import { CategoryCard } from '@/components/cards/CategoryCard';
 import { VehicleSelector } from '@/components/VehicleSelector';
 import { useReveal, revealStyle } from '@/lib/motion';
@@ -173,7 +180,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <Header />
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         {/* Hero — integrated section module */}
           <section className="relative min-h-[calc(100svh-var(--header-height))] overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
@@ -260,7 +267,11 @@ export default function HomePage() {
         </section>
       </div>
       {/* Rest of page content — normal flow */}
-      <div>
+      <div className="min-w-0">
+        {/* Stories + promo banners (WB/OZON style) — auto-hide when empty */}
+        {settings?.showStories !== false && <HomeStories />}
+        {settings?.showBanners !== false && <HomeBanners />}
+
         {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-md sm:p-8">
@@ -270,7 +281,7 @@ export default function HomePage() {
                   <Button variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid sm:grid-cols-2 gap-3 sm:grid-cols-4">
                 {featured === undefined
                   ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-2xl bg-muted" style={{ height: '20rem' }} />)
                   : featured.slice(0, 4).map((p, i) => (
@@ -316,6 +327,11 @@ export default function HomePage() {
           </div>
         </section>
         )}
+
+        {/* Personalized recommendations + new arrivals (auto-hide when empty) */}
+        {settings?.showForYou !== false && <ForYou />}
+        {settings?.showNewArrivals !== false && <NewArrivals />}
+        {settings?.showBestsellers !== false && <Bestsellers />}
 
         {/* Brands — luxury showcase */}
         {settings?.showBrands !== false && (
@@ -371,7 +387,7 @@ export default function HomePage() {
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
               <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
@@ -385,21 +401,22 @@ export default function HomePage() {
         )}
 
         {/* Discounts */}
-        {hasDiscounts && (
+        {settings?.showDiscounts !== false && hasDiscounts && (
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card/60 to-orange-500/5 p-6 backdrop-blur-md sm:p-8">
-              <div className="mb-5 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
                     <span className="text-lg">🔥</span>
                   </div>
                   <h2 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Զեղչեր</h2>
+                  <FlashCountdown className="ml-1" />
                 </div>
                 <Link href="/discounts">
                   <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid sm:grid-cols-2 gap-3 sm:grid-cols-4">
                 {discountedSample === undefined
                   ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '12rem' }} />)
                   : discountedSample.map((p, i) => (
@@ -428,6 +445,9 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* Per-category product shelves (OZON-style) — auto-hide when sparse */}
+        {settings?.showShelves !== false && <CategoryShelves limit={4} />}
 
         {/* Features */}
         {settings?.showFeatures !== false && (

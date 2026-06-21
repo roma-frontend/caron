@@ -31,6 +31,7 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
   const [selected, setSelected] = useState<Set<string>>(new Set(items.map((i) => i.productId)));
   const [reason, setReason] = useState(REASONS[0]);
   const [comment, setComment] = useState('');
+  const [telegram, setTelegram] = useState('');
   const [busy, setBusy] = useState(false);
 
   if (existingStatus) {
@@ -52,6 +53,7 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
         items: chosen.map((i) => ({ productId: i.productId, name: i.name, quantity: i.quantity })),
         reason,
         comment: comment || undefined,
+        customerTelegram: telegram.trim() || undefined,
       });
       toast.success('Հայտն ուղարկվեց');
       setOpen(false);
@@ -98,6 +100,17 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
             </select>
 
             <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Մեկնաբանություն (ըստ ցանկության)" rows={2} className="mb-4" />
+
+            <label className="mb-1 block text-sm font-medium">Telegram (ըստ ցանկության)</label>
+            <input
+              value={telegram}
+              onChange={(e) => setTelegram(e.target.value)}
+              placeholder="@username"
+              className="mb-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+            />
+            <p className="mb-4 text-xs text-muted-foreground">
+              Կարգավիճակի մասին ծանուցում ստանալու համար նախ սեղմեք <b>Start</b> մեր Telegram բոտում, ապա մուտքագրեք ձեր @username։
+            </p>
 
             <Button className="w-full" disabled={busy} onClick={submit}>{busy ? 'Ուղարկվում է...' : 'Ուղարկել հայտը'}</Button>
           </div>

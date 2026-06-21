@@ -328,6 +328,12 @@
   50% { opacity: 0.8; transform: scaleY(1); }
 }
 
+/* Stories progress bar fill */
+@keyframes storyFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 /* Mesh orb float */
 .mesh-orb-1 { animation: orbFloat1 20s ease-in-out infinite; }
 .mesh-orb-2 { animation: orbFloat2 25s ease-in-out infinite; }
