@@ -46,9 +46,13 @@ export function showUndoCountdownToast(options: UndoCountdownOptions) {
         const elapsed = now - start;
         const p = Math.max(0, 1 - elapsed / durationMs);
         setProgress(p);
-        setSecondsLeft(Math.ceil((durationMs - elapsed) / 1000));
+        setSecondsLeft(Math.max(0, Math.ceil((durationMs - elapsed) / 1000)));
         if (p > 0) {
           rafRef.current = requestAnimationFrame(tick);
+        } else {
+          // Time is up (also handles tabs that were backgrounded and resumed
+          // with a large elapsed time) — clean up the lingering toast.
+          toast.dismiss(toastId);
         }
       };
       rafRef.current = requestAnimationFrame(tick);
