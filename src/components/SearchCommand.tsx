@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -27,41 +27,27 @@ function ResultThumb({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-/** Live microphone equalizer — bars driven by real audio, with an animated fallback. */
-function VoiceVisualizer({ analyserRef, active }: { analyserRef: { current: AnalyserNode | null }; active: boolean }) {
-  const N = 32;
+/** Animated equalizer shown while listening (a lively voice-wave). */
+function VoiceVisualizer({ active }: { active: boolean }) {
+  const N = 28;
   const barsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const rafRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!active) return;
-    const data = new Uint8Array(256);
     const loop = () => {
-      const an = analyserRef.current;
-      if (an) {
-        an.getByteFrequencyData(data);
-        const bins = an.frequencyBinCount;
-        for (let i = 0; i < N; i++) {
-          const idx = Math.min(bins - 1, 2 + Math.floor((i / N) * bins * 0.7));
-          const v = data[idx] / 255;
-          const h = 4 + Math.pow(v, 1.3) * 44;
-          const el = barsRef.current[i];
-          if (el) el.style.height = `${h}px`;
-        }
-      } else {
-        const t = performance.now() / 220;
-        for (let i = 0; i < N; i++) {
-          const v = (Math.sin(t + i * 0.5) * 0.5 + 0.5) * (0.45 + 0.55 * (Math.sin(t * 0.8 + i * 0.3) * 0.5 + 0.5));
-          const h = 5 + v * 30;
-          const el = barsRef.current[i];
-          if (el) el.style.height = `${h}px`;
-        }
+      const t = performance.now() / 220;
+      for (let i = 0; i < N; i++) {
+        const v = (Math.sin(t + i * 0.5) * 0.5 + 0.5) * (0.45 + 0.55 * (Math.sin(t * 0.8 + i * 0.3) * 0.5 + 0.5));
+        const h = 5 + v * 30;
+        const el = barsRef.current[i];
+        if (el) el.style.height = `${h}px`;
       }
       rafRef.current = requestAnimationFrame(loop);
     };
     loop();
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [active, analyserRef]);
+  }, [active]);
 
   return (
     <div className="flex h-12 items-end justify-center gap-[3px]" aria-hidden="true">
@@ -70,12 +56,26 @@ function VoiceVisualizer({ analyserRef, active }: { analyserRef: { current: Anal
           key={i}
           ref={(el) => { barsRef.current[i] = el; }}
           className="w-[3px] rounded-full bg-gradient-to-t from-primary/50 to-primary"
-          style={{ height: '4px', transition: 'height 80ms linear' }}
+          style={{ height: '5px', transition: 'height 90ms linear' }}
         />
       ))}
     </div>
   );
 }
+
+type SpeechResultList = ArrayLike<ArrayLike<{ transcript: string }>>;
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  onstart: (() => void) | null;
+  onresult: ((e: { results: SpeechResultList }) => void) | null;
+  onend: (() => void) | null;
+  onerror: ((e: { error?: string }) => void) | null;
+};
 
 const HISTORY_KEY = 'search-history';
 const MAX_HISTORY = 5;
@@ -94,11 +94,13 @@ function addToHistory(term: string) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
 }
 
-/** Pick an audio mime type the browser can record and Whisper accepts. */
-function pickAudioMime(): string | undefined {
-  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return undefined;
-  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
-  return types.find((t) => MediaRecorder.isTypeSupported(t));
+function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
+  if (typeof window === 'undefined') return null;
+  const w = window as unknown as {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+  return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
 export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -106,20 +108,12 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
   const [q, setQ] = useState('');
   const [history, setHistory] = useState(getHistory);
   const [listening, setListening] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [imgErr, setImgErr] = useState<string | null>(null);
   const [voiceErr, setVoiceErr] = useState<string | null>(null);
 
-  const streamRef = useRef<MediaStream | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const recStartRef = useRef(0);
-  const lastLoudRef = useRef(0);
-  const silenceTimerRef = useRef<number | undefined>(undefined);
-  const maxTimerRef = useRef<number | undefined>(undefined);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const retriedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const term = q.trim();
@@ -169,156 +163,66 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
     }
   };
 
-  // ─── Voice search (record → server-side Whisper transcription) ───
-  const clearTimers = useCallback(() => {
-    if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current); silenceTimerRef.current = undefined; }
-    if (maxTimerRef.current) { clearTimeout(maxTimerRef.current); maxTimerRef.current = undefined; }
-  }, []);
+  // ─── Voice search (browser SpeechRecognition; no getUserMedia to avoid mic
+  //     contention). Tries Armenian first, falls back to Russian if the speech
+  //     service does not support the language. ───
+  const mapVoiceError = (code?: string) => {
+    if (code === 'no-speech') return 'Ձայն չհայտնաբերվեց, փորձեք կրկին';
+    if (code === 'not-allowed' || code === 'service-not-allowed') return 'Թույլատրեք միկրոֆոնի օգտագործումը';
+    if (code === 'audio-capture') return 'Միկրոֆոն չի գտնվել';
+    if (code === 'network') return 'Ցանցի սխալ, ստուգեք ինտերնետը';
+    return 'Ձայնային որոնման սխալ';
+  };
 
-  const releaseAudio = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    analyserRef.current = null;
-    audioCtxRef.current?.close().catch(() => {});
-    audioCtxRef.current = null;
-  }, []);
-
-  // Stop recording → triggers transcription (onstop handler).
-  const stopRecording = useCallback(() => {
-    clearTimers();
-    const mr = recorderRef.current;
-    if (mr && mr.state !== 'inactive') {
-      try { mr.stop(); } catch { /* noop */ }
-    } else {
-      setListening(false);
-      releaseAudio();
-    }
-  }, [clearTimers, releaseAudio]);
-
-  // Abort and discard (e.g. dialog closed / unmount) — no transcription.
-  const cancelRecording = useCallback(() => {
-    clearTimers();
-    const mr = recorderRef.current;
-    if (mr) {
-      mr.onstop = null;
-      if (mr.state !== 'inactive') { try { mr.stop(); } catch { /* noop */ } }
-    }
-    recorderRef.current = null;
-    chunksRef.current = [];
-    releaseAudio();
-    setListening(false);
-    setTranscribing(false);
-  }, [clearTimers, releaseAudio]);
-
-  const startVoice = async () => {
-    if (transcribing) return;
-    if (listening) { stopRecording(); return; }
-    setVoiceErr(null);
-
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setVoiceErr('Ձեր բրաուզերը չի աջակցում ձայնագրությունը');
-      return;
-    }
-
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      setVoiceErr('Թույլատրեք միկրոֆոնի օգտագործումը');
-      return;
-    }
-    streamRef.current = stream;
-
-    // Live amplitude analyser (optional — visualizer falls back if unavailable).
-    try {
-      const w = window as unknown as { webkitAudioContext?: typeof AudioContext };
-      const AC = window.AudioContext || w.webkitAudioContext;
-      if (AC) {
-        const ac = new AC();
-        audioCtxRef.current = ac;
-        if (ac.state === 'suspended') await ac.resume().catch(() => {});
-        const src = ac.createMediaStreamSource(stream);
-        const analyser = ac.createAnalyser();
-        analyser.fftSize = 128;
-        analyser.smoothingTimeConstant = 0.7;
-        src.connect(analyser);
-        analyserRef.current = analyser;
+  const beginRecognition = (lang: string) => {
+    const SR = getSpeechRecognition();
+    if (!SR) { setVoiceErr('Ձեր բրաուզերը չի աջակցում ձայնային որոնումը'); return; }
+    const rec = new SR();
+    rec.lang = lang;
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+    rec.onstart = () => setListening(true);
+    rec.onresult = (e) => {
+      let transcript = '';
+      for (let i = 0; i < e.results.length; i++) {
+        transcript += e.results[i]?.[0]?.transcript ?? '';
       }
-    } catch { /* visualization optional */ }
-
-    const mime = pickAudioMime();
-    let mr: MediaRecorder;
-    try {
-      mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-    } catch {
-      releaseAudio();
-      setVoiceErr('Չհաջողվեց սկսել ձայնագրությունը');
-      return;
-    }
-    chunksRef.current = [];
-    mr.ondataavailable = (e) => { if (e.data && e.data.size) chunksRef.current.push(e.data); };
-    mr.onstop = async () => {
-      clearTimers();
-      const type = mr.mimeType || mime || 'audio/webm';
-      const blob = new Blob(chunksRef.current, { type });
-      chunksRef.current = [];
-      releaseAudio();
-      setListening(false);
-      if (blob.size < 1500) return; // nothing meaningful captured
-      setTranscribing(true);
-      try {
-        const ext = type.includes('mp4') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm';
-        const fd = new FormData();
-        fd.append('file', blob, `audio.${ext}`);
-        const res = await fetch('/api/voice-search', { method: 'POST', body: fd });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'failed');
-        const text = String(data.text ?? '').trim();
-        if (text) setQ(text);
-        else setVoiceErr('Ձայնը չհաջողվեց ճանաչել, փորձեք կրկին');
-      } catch {
-        setVoiceErr('Չհաջողվեց ճանաչել ձայնը');
-      } finally {
-        setTranscribing(false);
-      }
+      if (transcript) setQ(transcript.trim());
     };
-    recorderRef.current = mr;
-    try {
-      mr.start();
-    } catch {
-      releaseAudio();
-      setVoiceErr('Չհաջողվեց սկսել ձայնագրությունը');
-      return;
-    }
-    setListening(true);
+    rec.onend = () => setListening(false);
+    rec.onerror = (ev) => {
+      const code = ev?.error;
+      // Armenian not supported by the speech service → retry once in Russian.
+      if ((code === 'language-not-supported' || code === 'service-not-allowed') && !retriedRef.current && lang !== 'ru-RU') {
+        retriedRef.current = true;
+        recognitionRef.current = null;
+        beginRecognition('ru-RU');
+        return;
+      }
+      setVoiceErr(mapVoiceError(code));
+      setListening(false);
+    };
+    recognitionRef.current = rec;
+    try { rec.start(); } catch { /* already started */ }
+  };
 
-    // Auto-stop on silence (when amplitude is available) + hard safety cap.
-    recStartRef.current = performance.now();
-    lastLoudRef.current = performance.now();
-    if (analyserRef.current) {
-      const data = new Uint8Array(analyserRef.current.frequencyBinCount);
-      silenceTimerRef.current = window.setInterval(() => {
-        const a = analyserRef.current;
-        if (!a) return;
-        a.getByteFrequencyData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += data[i];
-        const avg = sum / data.length;
-        const now = performance.now();
-        if (avg > 10) lastLoudRef.current = now;
-        if (now - recStartRef.current > 1000 && now - lastLoudRef.current > 1600) stopRecording();
-      }, 150);
-    }
-    maxTimerRef.current = window.setTimeout(() => stopRecording(), 12000);
+  const startVoice = () => {
+    if (listening) { try { recognitionRef.current?.stop(); } catch { /* noop */ } return; }
+    setVoiceErr(null);
+    if (!getSpeechRecognition()) { setVoiceErr('Ձեր բրաուզերը չի աջակցում ձայնային որոնումը'); return; }
+    retriedRef.current = false;
+    beginRecognition('hy-AM');
+  };
+
+  const stopVoice = () => {
+    try { recognitionRef.current?.stop(); } catch { /* noop */ }
+    recognitionRef.current = null;
+    setListening(false);
   };
 
   // Cleanup on unmount.
-  useEffect(() => () => {
-    clearTimers();
-    const mr = recorderRef.current;
-    if (mr) { mr.onstop = null; if (mr.state !== 'inactive') { try { mr.stop(); } catch { /* noop */ } } }
-    releaseAudio();
-  }, [clearTimers, releaseAudio]);
+  useEffect(() => () => { try { recognitionRef.current?.stop(); } catch { /* noop */ } }, []);
 
   const refreshHistory = () => setHistory(getHistory());
 
@@ -338,7 +242,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const handleOpenChange = (v: boolean) => {
     if (v) refreshHistory();
-    else cancelRecording();
+    else stopVoice();
     onOpenChange(v);
   };
 
@@ -351,38 +255,30 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
           className={`absolute right-12 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${analyzing ? 'text-primary' : 'text-muted-foreground hover:bg-accent hover:text-primary'}`}>
           {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
         </button>
-        <button type="button" onClick={startVoice} disabled={transcribing} aria-label="Ձայնային որոնում" title="Ձայնային որոնում"
+        <button type="button" onClick={startVoice} aria-label="Ձայնային որոնում" title="Ձայնային որոնում"
           className={`absolute right-4 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90 ${listening ? 'scale-110 bg-destructive text-white shadow-[0_0_0_4px_rgba(239,68,68,0.25)]' : 'text-muted-foreground hover:bg-accent hover:text-primary'}`}>
-          {transcribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" />}
+          <Mic className="h-4 w-4" />
         </button>
         {(analyzing || imgErr || voiceErr) && (
           <div className={`px-4 pb-1 text-xs ${imgErr || voiceErr ? 'text-destructive' : 'text-muted-foreground'}`}>
             {analyzing ? 'Վերլուծում ենք նկարը…' : (imgErr ?? voiceErr)}
           </div>
         )}
-        {(listening || transcribing) && (
+        {listening && (
           <div className="mx-3 mb-2 flex flex-col items-center gap-3 rounded-2xl border bg-card/60 p-4 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-200">
-            {listening ? (
-              <>
-                <div className="relative flex h-16 w-16 items-center justify-center">
-                  <span className="absolute inset-0 rounded-full bg-destructive/20 animate-ping" />
-                  <span className="absolute inset-0 rounded-full bg-destructive/10 animate-pulse" />
-                  <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-destructive text-white shadow-lg">
-                    <Mic className="h-5 w-5" />
-                  </span>
-                </div>
-                <VoiceVisualizer analyserRef={analyserRef} active={listening} />
-                <p className="text-center text-sm font-medium text-foreground">{q ? `«${q}»` : 'Խոսեք հիմա…'}</p>
-                <button type="button" onClick={stopRecording}
-                  className="rounded-full border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                  Կանգնեցնել
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Ճանաչում ենք ձայնը…
-              </div>
-            )}
+            <div className="relative flex h-16 w-16 items-center justify-center">
+              <span className="absolute inset-0 rounded-full bg-destructive/20 animate-ping" />
+              <span className="absolute inset-0 rounded-full bg-destructive/10 animate-pulse" />
+              <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-destructive text-white shadow-lg">
+                <Mic className="h-5 w-5" />
+              </span>
+            </div>
+            <VoiceVisualizer active={listening} />
+            <p className="text-center text-sm font-medium text-foreground">{q ? `«${q}»` : 'Խոսեք հիմա…'}</p>
+            <button type="button" onClick={stopVoice}
+              className="rounded-full border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              Կանգնեցնել
+            </button>
           </div>
         )}
         <CommandList>
