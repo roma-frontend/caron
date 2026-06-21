@@ -281,7 +281,7 @@ export default function HomePage() {
                   <Button variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {featured === undefined
                   ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-2xl bg-muted" style={{ height: '20rem' }} />)
                   : featured.slice(0, 4).map((p, i) => (
@@ -317,7 +317,7 @@ export default function HomePage() {
         {settings?.showCategories !== false && (
         <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
           <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
-          <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {categories === undefined
               ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '8rem' }} />)
               : categories.slice(0, 4).map((cat, i) => <CategoryCard key={cat._id} id={cat._id} name={cat.name} slug={cat.slug} description={cat.description} index={i} />)}
@@ -387,7 +387,7 @@ export default function HomePage() {
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2">
               <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
@@ -405,7 +405,7 @@ export default function HomePage() {
           <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-section)' }}>
             <div className="rounded-3xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card/60 to-orange-500/5 p-6 backdrop-blur-md sm:p-8">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex flex-col sm:flex-row min-w-0 items-start sm:items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
                     <span className="text-lg">🔥</span>
                   </div>
@@ -416,7 +416,7 @@ export default function HomePage() {
                   <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {discountedSample === undefined
                   ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '12rem' }} />)
                   : discountedSample.map((p, i) => (

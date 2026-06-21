@@ -98,12 +98,12 @@ export function ProductRail({
       >
         {loading
           ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={i} className="w-[325px] shrink-0 snap-start">
+              <div key={i} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[18.5%] shrink-0 snap-start">
                 <div className="h-[20rem] animate-pulse rounded-2xl bg-muted" />
               </div>
             ))
           : products.map((p, i) => (
-              <div key={p._id} className="w-[325px] shrink-0 snap-start">
+              <div key={p._id} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[18.5%] shrink-0 snap-start">
                 <ProductCard
                   id={p._id}
                   slug={p.slug}

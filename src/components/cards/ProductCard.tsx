@@ -130,7 +130,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
 
   return (
     <>
-      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicSize: 'auto 380px' }} {...(lite ? {} : handlers)}>
+      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicHeight: 'auto 380px' }} {...(lite ? {} : handlers)}>
         {compact ? (
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>

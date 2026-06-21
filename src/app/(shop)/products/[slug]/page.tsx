@@ -270,7 +270,7 @@ export default function ProductDetailPage() {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
         {/* Gallery — Embla carousel */}
-        <div className="lg:max-w-140">
+        <div className="min-w-0 lg:max-w-140">
           <div className="relative overflow-hidden rounded-2xl border bg-muted/30 group/carousel">
             <div ref={emblaRef} className="overflow-hidden">
               <div className="flex">
@@ -316,7 +316,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Info */}
-        <div>
+        <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
 
           {orderedVariants && orderedVariants.length > 1 && (
@@ -355,8 +355,8 @@ export default function ProductDetailPage() {
                     </div>
                   )}
                 </div>
-              <button type="button" aria-label="Նախորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }); }} className="absolute left-0 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
-              <button type="button" aria-label="Հաջորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }); }} className="absolute right-0 top-1/2 z-20 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
+              <button type="button" aria-label="Նախորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }); }} className="absolute left-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
+              <button type="button" aria-label="Հաջորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }); }} className="absolute right-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
               {hoveredVariant?.images?.[0] && (
                 <div className="hidden sm:block absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                   <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-cover" />
