@@ -34,7 +34,7 @@ const playfair = Playfair_Display({
   subsets: ['latin'],
   display: 'swap',
   preload: false,
-  weight: ['400', '700', '900'],
+  weight: ['700', '900'],
 });
 
 // Armenian language support
