@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   // prompt makes Whisper hallucinate a comma-separated list on short clips.
   const groqForm = new FormData();
   groqForm.append('file', file, 'audio.webm');
-  groqForm.append('model', 'whisper-large-v3-turbo');
+  groqForm.append('model', 'whisper-large-v3');
   groqForm.append('response_format', 'json');
   groqForm.append('language', 'hy');
   groqForm.append('temperature', '0');
