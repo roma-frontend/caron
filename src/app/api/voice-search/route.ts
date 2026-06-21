@@ -31,11 +31,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Forward to Groq Whisper (OpenAI-compatible). Language is auto-detected so
-  // shoppers can speak Armenian, Russian or English.
+  // The shop and catalog are Armenian, so force Armenian transcription —
+  // auto-detect mis-reads short Armenian phrases (e.g. as Russian).
   const groqForm = new FormData();
   groqForm.append('file', file, 'audio.webm');
   groqForm.append('model', 'whisper-large-v3-turbo');
   groqForm.append('response_format', 'json');
+  groqForm.append('language', 'hy');
+  groqForm.append('prompt', 'Ավտոպահեստամասեր: ապակու խոզանակ, յուղի ֆիլտր, արգելակման բարձիկներ, շարժիչի յուղ, կայծային մոմ, ամորտիզատոր, անվադող։');
   groqForm.append('temperature', '0');
 
   try {
