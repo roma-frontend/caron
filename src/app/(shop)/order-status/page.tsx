@@ -30,7 +30,7 @@ export default function OrderStatusPage() {
   const currentStep = order ? STEPS.findIndex((s) => s.key === order.status) : -1;
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className="mb-10 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
           <Package className="h-7 w-7 text-primary" />

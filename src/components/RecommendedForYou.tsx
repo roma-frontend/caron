@@ -20,7 +20,7 @@ export function RecommendedForYou({ title = 'Ձեզ համար', limit = 8 }: { 
 
   return (
     <section className="mt-12">
-      <h2 className="mb-6 text-xl font-bold">{title}</h2>
+      <h2 className="mb-6 text-xl font-bold px-4 sm:px-0">{title}</h2>
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {products.map((p, i) => (
           <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />

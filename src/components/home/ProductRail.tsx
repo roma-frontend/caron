@@ -66,8 +66,8 @@ export function ProductRail({
   const loading = products === undefined;
 
   return (
-    <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
+      <div className="mb-4 flex items-center justify-between gap-3 p-4 sm:p-0">
         <h2 className="flex min-w-0 items-center gap-2 font-bold" style={{ fontSize: 'var(--text-2xl)' }}>
           {icon}
           <span className="truncate">{title}</span>
@@ -93,17 +93,17 @@ export function ProductRail({
 
       <div
         ref={scrollRef}
-        className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-1 pb-2"
+        className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-1 sm:gap-3 overflow-x-auto overscroll-x-contain px-1 pb-2"
         style={{ scrollPadding: '0 0.25rem' }}
       >
         {loading
           ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={i} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[18.5%] shrink-0 snap-start">
+              <div key={i} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[19.2%] shrink-0 snap-start">
                 <div className="h-[20rem] animate-pulse rounded-2xl bg-muted" />
               </div>
             ))
           : products.map((p, i) => (
-              <div key={p._id} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[18.5%] shrink-0 snap-start">
+              <div key={p._id} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[19.2%] shrink-0 snap-start">
                 <ProductCard
                   id={p._id}
                   slug={p.slug}

@@ -50,7 +50,7 @@ export function HomeStories() {
   if (stories.length === 0) return null;
 
   return (
-    <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-6)' }}>
+    <section className="mx-auto max-w-[var(--container-max)] px-[var(--space-container)] py-[var(--space-6)]">
       <div className="scrollbar-none -mx-1 flex gap-4 overflow-x-auto overscroll-x-contain px-1 pb-1">
         {stories.map((s, i) => (
           <button key={s.id} onClick={() => setOpen(i)} className="flex w-[72px] shrink-0 flex-col items-center gap-1.5">

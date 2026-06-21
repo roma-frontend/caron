@@ -94,7 +94,7 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
 
   return (
     <section className="mt-12">
-      <h2 className="mb-6 text-xl font-bold">Հաճախ գնում են միասին</h2>
+      <h2 className="mb-6 text-xl font-bold px-4 sm:px-0">Հաճախ գնում են միասին</h2>
       <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4 sm:p-5 shadow-sm lg:flex-row lg:items-center">
         {/* Product row */}
         <div className="flex flex-1 flex-wrap items-center gap-2 sm:gap-3">

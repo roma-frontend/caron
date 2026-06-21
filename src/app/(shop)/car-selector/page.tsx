@@ -17,7 +17,7 @@ function Guard({ children }: { children: React.ReactNode }) {
   const settings = useSettings();
   if (settings && settings.enableCarSelector === false) {
     return (
-      <div className="mx-auto py-16 text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
+      <div className="mx-auto py-16 text-center max-w-[var(--container-max)] px-[var(--space-container)]">
         <h1 className="text-2xl font-bold">Ավտոմեքենայի ընտրություն</h1>
         <p className="mt-3 text-muted-foreground">Այս ֆունկցիան ժամանակավոր անհասանելի է</p>
         <Link href="/products" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
@@ -50,7 +50,7 @@ export default function CarSelectorPage() {
 
   return (
     <Guard>
-      <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+      <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
         <div className="mb-10 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
           <Car className="h-7 w-7 text-primary" />

@@ -103,8 +103,7 @@ export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: s
   const content = (
     <div className={`relative overflow-hidden ${styleClass}`}>
 
-      <div className="mx-auto flex items-center justify-center gap-1.5 px-4 py-2 sm:py-2.5 text-center text-[11px] sm:text-xs font-medium leading-tight"
-        style={{ maxWidth: 'var(--container-max)' }}
+      <div className="mx-auto flex items-center justify-center gap-1.5 px-4 py-2 sm:py-2.5 text-center text-[11px] sm:text-xs font-medium leading-tight max-w-[var(--container-max)]"
       >
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />}
 

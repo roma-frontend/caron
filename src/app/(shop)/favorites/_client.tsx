@@ -22,7 +22,7 @@ export default function FavoritesPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-16)' }}>
+      <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)] py-[var(--space-16)]">
         <div className="flex flex-col items-center" style={{ gap: 'var(--space-4)' }}>
           <div className="flex items-center justify-center rounded-full bg-muted" style={{ height: '6rem', width: '6rem' }}>
             <Heart className="text-muted-foreground" style={{ height: '3rem', width: '3rem' }} />
@@ -36,7 +36,7 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>Ընտրված ({items.length})</h1>
       <div className="grid" style={{ gap: 'var(--space-4)', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
         {fullProducts?.map((product: Doc<"products">, i: number) => (

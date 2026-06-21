@@ -238,7 +238,7 @@ export default function PromotionsPage() {
           <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto flex flex-col items-center text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: '5rem' }}>
+        <div className="relative mx-auto flex flex-col items-center text-center max-w-[var(--container-max)] px-[var(--space-container)] py-[5rem]">
           <div className="hero-fade-1 mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-5 py-2">
             <Flame className="h-5 w-5 text-primary" />
             <span className="text-sm font-semibold">Ակցիա</span>
@@ -277,7 +277,7 @@ export default function PromotionsPage() {
 
       {/* Promo cards */}
       {promotions.length > 0 && (
-        <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section) 0' }}>
+        <section className="mx-auto max-w-[var(--container-max)] px-[var(--space-container)] pt-[var(--space-section)] pb-0">
           <h2 className="mb-8 text-center text-2xl font-bold">Ակցիաներ</h2>
           <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
             {promotions.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} />)}
@@ -287,7 +287,7 @@ export default function PromotionsPage() {
 
       {/* Products on sale */}
       {promoProducts && promoProducts.length > 0 && (
-        <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: '4rem 5rem' }}>
+        <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] pt-[4rem] pb-[5rem]">
           {/* Decorative divider */}
           <div className="mb-8 flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
@@ -315,7 +315,7 @@ export default function PromotionsPage() {
       {/* Subscribe banner — glass strip at the very bottom */}
       {(promotions.length > 0 || (promoProducts && promoProducts.length > 0)) && (
         <div className="border-t bg-gradient-to-r from-muted/40 via-muted/20 to-muted/40">
-          <div className="mx-auto py-5" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
+          <div className="mx-auto py-5 max-w-[var(--container-max)] px-[var(--space-container)]">
             <PromoSubscribe />
           </div>
         </div>

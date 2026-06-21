@@ -90,7 +90,7 @@ export default function PromotionDetailPage() {
   const tpl = parsePromoConfig(promo.templateJson);
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <Breadcrumbs items={[{ label: 'Ակցիաներ', href: '/promotions' }, { label: promo.title }]} />
 
       {/* Hero with image carousel */}

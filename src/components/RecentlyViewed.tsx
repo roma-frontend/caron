@@ -21,9 +21,9 @@ export function RecentlyViewed() {
   if (visible.length === 0) return null;
 
   return (
-    <section className="mx-auto w-full" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
-      <h2 className="mb-6 text-xl font-bold">{'Վերջերս դիտված ապրանքներ'}</h2>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <section className="mx-auto w-full max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-section)]">
+      <h2 className="mb-6 text-xl font-bold px-4 sm:px-0">{'Վերջերս դիտված ապրանքներ'}</h2>
+      <div className="grid grid-cols-2 gap-1 sm:gap-3 lg:grid-cols-4">
         {visible.map((item, i) => {
           const p = productMap.get(item.id);
           return (

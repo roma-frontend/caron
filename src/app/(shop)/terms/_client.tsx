@@ -7,13 +7,13 @@ import { CmsPageWrapper } from '@/components/shared/CmsPageWrapper';
 export default function TermsPageClient() {
   return (
     <CmsPageWrapper slug="terms">
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className="mb-12 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
           <FileText className="h-7 w-7 text-primary" />
         </div>
         <h1 className="text-4xl font-bold">Պայմաններ և դրույթներ</h1>
-        <p className="mt-3 text-sm text-muted-foreground"><strong>Վերջին թարմացում՝</strong> Մայիս 2026</p>
+        <p className="mt-3 text-sm text-muted-foreground"><strong>Վերջին թարմացում՝</strong> Հուլիս 2026</p>
       </div>
 
       <div className="rounded-2xl border bg-card p-6 md:p-10">

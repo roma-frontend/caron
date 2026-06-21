@@ -90,7 +90,7 @@ export function Header() {
           )}
         </div>
         <header className="glass-header w-full" style={{ height: 'var(--header-base-height)' }}>
-        <div className="mx-auto flex h-full items-center justify-between gap-1 px-4" style={{ maxWidth: 'var(--container-max)' }}>
+        <div className="mx-auto flex h-full items-center justify-between gap-1 px-4 max-w-[var(--container-max)]">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Logo size={36} />

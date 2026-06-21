@@ -127,7 +127,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-16)' }}>
+      <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)] py-[var(--space-16)]">
         <div className="flex flex-col items-center" style={{ gap: 'var(--space-4)' }}>
           <div className="flex items-center justify-center rounded-full bg-muted" style={{ height: '6rem', width: '6rem' }}>
             <ShoppingBag className="text-muted-foreground" style={{ height: '3rem', width: '3rem' }} />
@@ -143,7 +143,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{CART.title}</h1>
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">

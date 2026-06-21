@@ -56,7 +56,7 @@ export function CmsPageWrapper({ slug, children }: Props) {
 
   // Render CMS content
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <h1 className="mb-8 text-center text-3xl font-bold">{page.title}</h1>
       <div className="rounded-2xl border bg-card p-6 md:p-10">
         <div

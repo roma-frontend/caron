@@ -58,7 +58,7 @@ export default function AboutPage() {
     <CmsPageWrapper slug="about">
     <div>
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5" style={{ paddingBlock: 'var(--space-20)' }}>
-        <div className="mx-auto text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
+        <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)]">
           <Badge variant="default" className="mb-4">Մեր մասին</Badge>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed">
             Բարի գալուստ մեր կայք։ Մենք ուրախ ենք տրամադրել բարձրորակ ավտոպահեստամասեր և գերազանց ծառայություն մեր հաճախորդներին Հայաստանում։ Մեր առաքելությունն է ապահովել, որ ձեր մեքենան միշտ պատրաստ լինի ճանապարհին լինելու համար՝ առաջարկելով լայն տեսականի ապրանքներ և անհատականացված աջակցություն։
@@ -67,20 +67,20 @@ export default function AboutPage() {
       </section>
 
       <section className="border-y bg-muted/30" style={{ paddingBlock: 'var(--space-12)' }}>
-        <div className="mx-auto grid grid-cols-2 gap-8 md:grid-cols-4" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
+        <div className="mx-auto grid grid-cols-2 gap-8 md:grid-cols-4 max-w-[var(--container-max)] px-[var(--space-container)]">
           {STATS.map((s, i) => <StatItem key={s.label} stat={s} index={i} />)}
         </div>
       </section>
 
-      <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-section)' }}>
+      <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-section)]">
         <h2 className="mb-10 text-center text-2xl font-bold">Մեր արժեքներ</h2>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 px-4 sm:px-0">
           {VALUES.map((v, i) => <ValueCard key={v.title} value={v} index={i} />)}
         </div>
       </section>
 
       <section className="border-y bg-muted/40" style={{ paddingBlock: 'var(--space-16)' }}>
-        <div className="mx-auto text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
+        <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)]">
           <h2 className="text-3xl font-bold">Ունե ՞ք հարցեր</h2>
           <p className="mx-auto mt-3 max-w-lg text-muted-foreground">Հարցերի և առաջարկների դեպքում կարող եք կապ հաստատել մեզ հետ</p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">

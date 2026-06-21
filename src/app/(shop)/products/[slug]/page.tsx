@@ -262,7 +262,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div data-product-content className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div data-product-content className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       {settings?.enableBreadcrumbs !== false && (
         <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
       )}
@@ -538,7 +538,7 @@ export default function ProductDetailPage() {
 
       {/* Related Products */}
       <div className="mt-12">
-        <h2 className="mb-6 text-xl font-bold">{'Նմանատիպ ապրանքներ'}</h2>
+        <h2 className="mb-6 text-xl font-bold px-4 s,:px-0">{'Նմանատիպ ապրանքներ'}</h2>
         <RelatedProducts categoryId={product.categoryId} currentId={product._id} />
       </div>
 

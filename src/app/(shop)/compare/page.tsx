@@ -34,7 +34,7 @@ export default function ComparePage() {
   const allKeys = [...new Set(items.flatMap((i) => Object.keys(i.attributes)))];
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{'Համեմատություն'} <span className="text-lg font-normal text-muted-foreground">({items.length} ապրանք)</span></h1>
         <Button variant="outline" size="sm" onClick={clear}>{'Մաքրել'}</Button>

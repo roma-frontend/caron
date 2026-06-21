@@ -38,7 +38,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-8)]">
       {/* Header */}
       <div className="mb-12 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -86,7 +86,7 @@ export default function ContactPage() {
         <div className="lg:col-span-3">
           <Card style={{ boxShadow: 'var(--shadow-lg)' }}>
             <CardContent className="p-6 md:p-8">
-              <h2 className="mb-6 text-xl font-bold">Կապ մեզ հետ</h2>
+              <h2 className="mb-6 text-xl font-bold px-4 s,:px-0">Կապ մեզ հետ</h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div><Label>Անուն, ազգանուն *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Անուն, ազգանուն" className="h-11" /></div>

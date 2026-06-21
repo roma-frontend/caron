@@ -47,7 +47,7 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur-md shadow-2xl animate-in slide-in-from-bottom-4 duration-300 lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="mx-auto flex items-center gap-3 px-4 py-3" style={{ maxWidth: 'var(--container-max)' }}>
+      <div className="mx-auto flex items-center gap-3 px-4 py-3 max-w-[var(--container-max)]">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">{productName}</p>
           <div className="flex items-baseline gap-2">

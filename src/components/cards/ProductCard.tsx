@@ -114,9 +114,12 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
   // WB-style: delivery signal line (data-driven from store settings).
   // If numeric delivery days are configured, show a real date; otherwise
   // fall back to the free-text estimate. Always prefixed with "Առաքում".
+  // `now` is captured once via a lazy initializer (not called during render),
+  // keeping the component pure and SSR/CSR consistent at day granularity.
+  const [now] = useState(() => Date.now());
   const deliveryText = inStock
     ? (typeof settings?.deliveryDaysYerevan === 'number' && settings.deliveryDaysYerevan > 0
-        ? `Առաքում մինչև ${formatDateHy(Date.now() + settings.deliveryDaysYerevan * 86400000)}`
+        ? `Առաքում մինչև ${formatDateHy(now + settings.deliveryDaysYerevan * 86400000)}`
         : `Առաքում ${settings?.deliveryEstimateYerevan?.trim() || '1-2 օր'}`)
     : null;
 
@@ -265,7 +268,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
               ) : null}
 
               <div className="mt-2 flex items-end gap-2 flex-wrap">
-                <span className="text-xl font-extrabold tracking-tight text-primary leading-none">{formatPrice(displayPrice)}</span>
+                <span className="tet-lg sm:text-xl font-extrabold tracking-tight text-primary leading-none">{formatPrice(displayPrice)}</span>
                 {hasDiscount && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
                 {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">-{discountPct}%</span>}
               </div>

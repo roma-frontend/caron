@@ -57,7 +57,7 @@ export function HomeBanners() {
 
   if (promos === undefined) {
     return (
-      <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+      <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
         <div className={`${aspect} animate-pulse bg-muted ${radius}`} />
       </section>
     );
@@ -65,7 +65,7 @@ export function HomeBanners() {
   if (count === 0) return null;
 
   return (
-    <section className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className={`group relative overflow-hidden border border-border/40 shadow-lg ${radius}`}>
         <div
           className="flex transition-transform duration-500 ease-out"

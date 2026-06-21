@@ -62,7 +62,7 @@ export default async function OemCodePage({ params }: { params: Promise<{ code: 
 
   if (!decoded || decoded.length < 3) {
     return (
-      <div className="mx-auto py-16 text-center" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)' }}>
+      <div className="mx-auto py-16 text-center max-w-[var(--container-max)] px-[var(--space-container)]">
         <h1 className="text-2xl font-bold">OEM որոնում</h1>
         <p className="mt-3 text-muted-foreground">Մուտքագրեք OEM համարը որոնման համար</p>
         <Link href="/products" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
@@ -75,7 +75,7 @@ export default async function OemCodePage({ params }: { params: Promise<{ code: 
   const products = await fetchOemProducts(decoded);
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">Գլխավոր</Link>
         <span>/</span>

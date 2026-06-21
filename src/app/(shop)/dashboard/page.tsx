@@ -60,7 +60,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Իմ վահանակը</h1>
         <div className="flex items-center gap-2">

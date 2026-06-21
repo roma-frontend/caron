@@ -64,7 +64,7 @@ export function Footer() {
   const settings = useSettings();
   return (
     <footer className="mt-auto border-t bg-muted/30">
-      <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'max(var(--space-container), 0.75rem)', paddingBlock: 'var(--space-12)' }}>
+      <div className="mx-auto max-w-[var(--container-max)] px-[max(var(--space-container),0.75rem)] py-[var(--space-12)]">
         <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center gap-2 shrink-0 mb-4">

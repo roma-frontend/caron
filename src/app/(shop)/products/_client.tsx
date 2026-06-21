@@ -187,8 +187,8 @@ export default function ProductsPage() {
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   return (
-    <div className="mx-auto" style={{ maxWidth: 'var(--container-max)', paddingInline: 'var(--space-container)', paddingBlock: 'var(--space-8)' }}>
-      <div className="sticky z-30 -mx-1 flex flex-col justify-between bg-background/95 px-1 py-3 backdrop-blur md:flex-row md:items-center" style={{ gap: 'var(--space-4)', top: 'var(--header-height)', marginBottom: 'var(--space-4)' }}>
+    <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
+      <div className="sticky z-30 -mx-1 flex flex-col justify-between bg-background/95 px-4 sm:px-0 py-3 backdrop-blur md:flex-row md:items-center" style={{ gap: 'var(--space-4)', top: 'var(--header-height)', marginBottom: 'var(--space-4)' }}>
         <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)' }}>{NAV.catalog}</h1>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -206,7 +206,7 @@ export default function ProductsPage() {
         }} activeFilters={filters} />
 
         <div ref={setContentEl} className="flex-1 min-w-0 pb-24 lg:pb-0">
-          <div className="mb-5 flex flex-col items-start sm:flex-row sm:items-center justify-between gap-3">
+          <div className="mb-5 flex flex-col items-start sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <SortBar activeFilters={filters} onFilterChange={setFilters} />
               <span className="mx-0.5 hidden h-4 w-px bg-border sm:inline-block" />

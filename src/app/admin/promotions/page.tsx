@@ -35,7 +35,7 @@ export default function AdminPromotionsPage() {
         <Link href="/admin/promotions/add"><Button className="gap-2"><Plus className="h-4 w-4" /> Ավելացնել</Button></Link>
       </div>
 
-      <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {promotions?.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} onEdit={() => router.push(`/admin/promotions/${promo._id}/edit`)} onDelete={async () => { await remove({ sessionToken: sessionToken!, id: promo._id }); toast.success('Ակցիան հաջողությամբ հեռացվեց'); }} />)}
       </div>
 
@@ -109,7 +109,7 @@ function PromotedProductsSection() {
       </div>
 
       {/* Search & add */}
-      <div>
+      <div className="py-4">
         <Label className="text-xs text-muted-foreground">Ավելացնել ապրանք</Label>
         <div className="relative mt-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

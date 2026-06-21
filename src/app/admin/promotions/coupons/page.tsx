@@ -97,7 +97,7 @@ export default function AdminCouponsPage() {
       <div className="space-y-2">
         {coupons?.map((c) => (
           <div key={c._id} className="flex items-center justify-between rounded-xl border bg-background p-4">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Tag className="h-5 w-5 text-primary" />
               <div>
                 <span className="font-mono font-bold">{c.code}</span>
