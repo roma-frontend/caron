@@ -917,7 +917,7 @@ export default function AdminProductsPage() {
 
       {selectMode ? (
         <div
-          className={viewMode === 'grid' ? 'grid gap-4' : 'flex flex-col gap-3'}
+          className={viewMode === 'grid' ? 'grid gap-2' : 'flex flex-col gap-2'}
           style={viewMode === 'grid' ? { gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' } : undefined}
         >
           {visibleProducts?.map((p, i) => {

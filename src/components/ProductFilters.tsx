@@ -32,7 +32,7 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
     <>
       {/* Desktop sidebar - always visible */}
       <aside className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-24 space-y-1">
+        <div className="sticky top-32 space-y-1">
           <FilterContent categoryId={categoryId} onFilterChange={onFilterChange} activeFilters={activeFilters} />
         </div>
       </aside>

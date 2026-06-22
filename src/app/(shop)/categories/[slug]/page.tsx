@@ -44,12 +44,6 @@ export default function CategoryPage() {
   const settings = useSettings();
   const PAGE_SIZE = settings?.productsPerPage || 20;
 
-  const [columnCount, setColumnCount] = useState(() => {
-      if (typeof window === 'undefined') return 4;
-      const w = window.innerWidth;
-      const contentW = w >= 1024 ? w - 256 - 64 : Math.max(0, w - 32); // minus sidebar + paddings
-      return Math.max(1, Math.floor((contentW + 20) / (170 + 20)));
-    });
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { results, status, loadMore } = usePaginatedQuery(
@@ -152,7 +146,6 @@ export default function CategoryPage() {
   
   const hasActiveFilters = fchips.length > 0;
   const isList = viewMode === "list";
-  const cols = isList ? 1 : columnCount;
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
@@ -281,9 +274,8 @@ export default function CategoryPage() {
             className={
               isList
                 ? "flex flex-col gap-1"
-                : "grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] gap-1 sm:gap-3"
+                : "grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
             }
-            style={{ "--grid-cols": cols } as React.CSSProperties}
           >
             {results.map((p, i) => (
               <ProductCard
