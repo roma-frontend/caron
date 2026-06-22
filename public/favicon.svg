@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1B5FCB"/><text x="32" y="44" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="800" fill="#fff" text-anchor="middle">C</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="15" fill="#1B5FCB"/>
+  <rect x="11" y="22" width="42" height="20" rx="10" fill="#ffffff"/>
+  <rect x="19" y="27.5" width="26" height="9" rx="4.5" fill="none" stroke="#1B5FCB" stroke-width="2.4"/>
+  <line x1="19" y1="32" x2="45" y2="32" stroke="#1B5FCB" stroke-width="1.8"/>
+</svg>
