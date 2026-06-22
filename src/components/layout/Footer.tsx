@@ -126,7 +126,7 @@ export function Footer() {
         )}
 
         <Separator style={{ marginBlock: 'var(--space-8)' }} />
-        <p className="text-left sm:text-center text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{FOOTER.rights}</p>
+        <p className="text-left text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{FOOTER.rights}</p>
       </div>
     </footer>
   );

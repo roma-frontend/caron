@@ -10,6 +10,68 @@ const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+async function getStoreContext(client: ConvexHttpClient): Promise<string> {
+  try {
+    const [settings, categories, promotions] = await Promise.all([
+      client.query(api.settings.getPublic, {}),
+      client.query(api.categories.list, {}),
+      client.query(api.promotions.active, {}),
+    ]);
+    if (!settings) return '';
+
+    const cats = categories?.map((c: Record<string, unknown>) => c.name).join(', ') || '';
+    const promos = promotions?.slice(0, 5).map((p: Record<string, unknown>) =>
+      `• ${p.title}${p.discountPercent ? ` (-${p.discountPercent}%)` : ''}`
+    ).join('\n') || 'Այս պահին գործող ակցիաներ չկան';
+
+    return `
+─── STORE SETTINGS (live data) ───
+
+STORE INFO:
+- Name: ${settings.storeName || 'Caron'}
+- Phone: ${settings.phone || ''}
+- Email: ${settings.email || ''}
+- Address: ${settings.address || ''}
+- Working hours: ${settings.workingHours || ''}
+- WhatsApp: ${settings.whatsapp || ''}
+- Telegram: ${settings.telegram || ''}
+- Instagram: ${settings.instagram || ''}
+
+DELIVERY PRICING:
+- Yerevan: ${settings.deliveryYerevan?.toLocaleString() || '?'} AMD (${settings.deliveryEstimateYerevan || '1-3 days'})
+- Regions: ${settings.deliveryRegions?.toLocaleString() || '?'} AMD (${settings.deliveryEstimateRegions || '3-5 days'})
+- Free shipping above: ${settings.freeShippingThreshold?.toLocaleString() || '?'} AMD
+- Pickup: ${settings.enablePickup ? `Yes — ${settings.pickupAddress || 'address in settings'}` : 'No'}
+
+PAYMENT:
+- Methods: ${settings.paymentMethods?.join(', ') || 'Cash, Card, Idram, EasyPay, Bank Transfer'}
+- Bank: ${settings.bankName || ''} ${settings.bankAccount || ''}
+- Card: ${settings.cardNumber || ''}
+
+CATEGORIES (${categories?.length || 0}):
+${cats}
+
+ACTIVE PROMOTIONS:
+${promos}
+
+FEATURES ENABLED:
+- Car selector: ${settings.enableCarSelector ? 'Yes' : 'No'}
+- VIN decoder: ${settings.enableVinDecoder ? 'Yes' : 'No'}
+- OEM search: ${settings.enableOemSearch ? 'Yes' : 'No'}
+- Reviews: ${settings.enableReviews ? 'Yes' : 'No'}
+- Loyalty program: ${settings.enableLoyalty ? `Yes (${settings.loyaltyPercent || 0}% cashback)` : 'No'}
+- Registration: ${settings.enableRegistration ? 'Yes' : 'No'}
+- Quick Buy: ${settings.enableQuickBuy ? 'Yes' : 'No'}
+- Back-in-stock alerts: ${settings.enableBackInStock ? 'Yes' : 'No'}
+- Price alerts: ${settings.enablePriceAlert ? 'Yes' : 'No'}
+${settings.minOrderAmount ? `- Min order: ${settings.minOrderAmount.toLocaleString()} AMD` : ''}
+${settings.defaultWarranty ? `- Default warranty: ${settings.defaultWarranty}` : ''}
+`;
+  } catch {
+    return '';
+  }
+}
+
 async function getAdminContext(client: ConvexHttpClient, token: string): Promise<string> {
   try {
     const [orders, products] = await Promise.all([
@@ -124,23 +186,31 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get('auth-token')?.value;
     let user: UserContext = { name: 'Guest', email: '', role: 'guest' };
     let adminData = '';
+    let storeData = '';
 
-    if (token && process.env.NEXT_PUBLIC_CONVEX_URL) {
-      const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
-      const me = await client.query(api.auth.me, { sessionToken: token }).catch(() => null);
-      if (me) {
-        user = {
-          name: me.name,
-          email: me.email,
-          role: me.role === 'admin' ? 'admin' : 'customer',
-        };
-        if (me.role === 'admin') {
-          adminData = await getAdminContext(client, token);
+    const client = process.env.NEXT_PUBLIC_CONVEX_URL
+      ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
+      : null;
+
+    if (client) {
+      storeData = await getStoreContext(client);
+
+      if (token) {
+        const me = await client.query(api.auth.me, { sessionToken: token }).catch(() => null);
+        if (me) {
+          user = {
+            name: me.name,
+            email: me.email,
+            role: me.role === 'admin' ? 'admin' : 'customer',
+          };
+          if (me.role === 'admin') {
+            adminData = await getAdminContext(client, token);
+          }
         }
       }
     }
 
-    const systemPrompt = buildSystemPrompt(user) + adminData;
+    const systemPrompt = buildSystemPrompt(user) + storeData + adminData;
 
     const messages = [
       ...(history || []).slice(-10).filter((m) => typeof m.content === 'string' && (m.role === 'user' || m.role === 'assistant')).map((m) => ({
