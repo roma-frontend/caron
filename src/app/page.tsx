@@ -414,8 +414,8 @@ export default function HomePage() {
                   </div>
                   <FlashCountdown className="ml-1" />
                 </div>
-                <Link href="/discounts">
-                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10 self-end sm:self-auto mt-2 sm:mt-0">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
+                <Link href="/discounts" className="self-end sm:self-auto mt-2 sm:mt-0">
+                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
               <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
