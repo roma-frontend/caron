@@ -694,22 +694,28 @@ export default function AdminProductsPage() {
   const orderedFiltered = useMemo(() => {
     if (!filtered) return filtered;
     const originalIndex = new Map(filtered.map((p, idx) => [String(p._id), idx]));
+    const variantOrderById = new Map(filtered.map((p) => [String(p._id), p.variantOrder]));
 
     return [...filtered].sort((a, b) => {
       if (!a.variantGroup || a.variantGroup !== b.variantGroup) {
         return (originalIndex.get(String(a._id)) ?? 0) - (originalIndex.get(String(b._id)) ?? 0);
       }
 
+      // Optimistic order set during a drag (takes precedence for instant feedback).
       const order = groupOrders[a.variantGroup];
-      if (!order || order.length === 0) {
+      if (order && order.length > 0) {
+        const ai = order.indexOf(String(a._id));
+        const bi = order.indexOf(String(b._id));
+        const an = ai >= 0 ? ai : Number.MAX_SAFE_INTEGER;
+        const bn = bi >= 0 ? bi : Number.MAX_SAFE_INTEGER;
+        if (an !== bn) return an - bn;
         return (originalIndex.get(String(a._id)) ?? 0) - (originalIndex.get(String(b._id)) ?? 0);
       }
 
-      const ai = order.indexOf(String(a._id));
-      const bi = order.indexOf(String(b._id));
-      const an = ai >= 0 ? ai : Number.MAX_SAFE_INTEGER;
-      const bn = bi >= 0 ? bi : Number.MAX_SAFE_INTEGER;
-      if (an !== bn) return an - bn;
+      // Persisted order from the database (variantOrder), saved by reorderVariantGroup.
+      const av = variantOrderById.get(String(a._id)) ?? Number.MAX_SAFE_INTEGER;
+      const bv = variantOrderById.get(String(b._id)) ?? Number.MAX_SAFE_INTEGER;
+      if (av !== bv) return av - bv;
       return (originalIndex.get(String(a._id)) ?? 0) - (originalIndex.get(String(b._id)) ?? 0);
     });
   }, [filtered, groupOrders]);

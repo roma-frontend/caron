@@ -497,6 +497,51 @@ export default function HomePage() {
         {/* Stories + promo banners (WB/OZON style) — auto-hide when empty */}
         {settings?.showStories !== false && <HomeStories />}
         {settings?.showBanners !== false && <HomeBanners />}
+
+        {/* Categories */}
+        {settings?.showCategories !== false && (
+          <section className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-section)]">
+            <h2
+              className="text-center text-balance font-bold"
+              style={{
+                fontSize: "var(--text-2xl)",
+                marginBottom: "var(--space-8)",
+              }}
+            >
+              {HOME.categoriesTitle}
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
+              {categories === undefined
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse rounded-xl bg-muted"
+                      style={{ height: "8rem" }}
+                    />
+                  ))
+                : categories
+                    .slice(0, 4)
+                    .map((cat, i) => (
+                      <CategoryCard
+                        key={cat._id}
+                        id={cat._id}
+                        name={cat.name}
+                        slug={cat.slug}
+                        description={cat.description}
+                        index={i}
+                      />
+                    ))}
+            </div>
+            <div className="mt-8 flex justify-center">
+              <Link href="/categories">
+                <Button size="lg" variant="outline" className="gap-2">
+                  Դիտել բոլորը{" "}
+                  <ArrowRight style={{ height: "1rem", width: "1rem" }} />
+                </Button>
+              </Link>
+            </div>
+          </section>
+        )}
         {settings?.showNewArrivals !== false && <NewArrivals />}
 
         {settings?.showFeatured !== false &&
@@ -556,51 +601,6 @@ export default function HomePage() {
               </div>
             </section>
           )}
-
-        {/* Categories */}
-        {settings?.showCategories !== false && (
-          <section className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-section)]">
-            <h2
-              className="text-center text-balance font-bold"
-              style={{
-                fontSize: "var(--text-2xl)",
-                marginBottom: "var(--space-8)",
-              }}
-            >
-              {HOME.categoriesTitle}
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
-              {categories === undefined
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="animate-pulse rounded-xl bg-muted"
-                      style={{ height: "8rem" }}
-                    />
-                  ))
-                : categories
-                    .slice(0, 4)
-                    .map((cat, i) => (
-                      <CategoryCard
-                        key={cat._id}
-                        id={cat._id}
-                        name={cat.name}
-                        slug={cat.slug}
-                        description={cat.description}
-                        index={i}
-                      />
-                    ))}
-            </div>
-            <div className="mt-8 flex justify-center">
-              <Link href="/categories">
-                <Button size="lg" variant="outline" className="gap-2">
-                  Դիտել բոլորը{" "}
-                  <ArrowRight style={{ height: "1rem", width: "1rem" }} />
-                </Button>
-              </Link>
-            </div>
-          </section>
-        )}
 
         {/* Personalized recommendations + new arrivals (auto-hide when empty) */}
         {settings?.showForYou !== false && <ForYou />}
