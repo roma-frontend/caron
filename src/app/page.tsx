@@ -405,9 +405,9 @@ export default function HomePage() {
           <section className="mx-auto max-w-[var(--container-max)] px-0 pt-[var(--space-8)] pb-[var(--space-section)] sm:px-[var(--space-container)]">
             <div className="rounded-3xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card/60 to-orange-500/5 backdrop-blur-md sm:p-8 max-sm:rounded-none max-sm:border-x-0">
               <div className="mb-5 flex flex-col flex-wrap items-center justify-between gap-2 p-6 sm:p-0">
-                <div className="w-full flex flex-col sm:flex-row min-w-0 items-center justify-between gap-3">
+                <div className="w-full flex min-w-0 items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                  <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
                     <span className="text-lg">🔥</span>
                   </div>
                   <h2 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Զեղչեր</h2>
@@ -415,7 +415,7 @@ export default function HomePage() {
                   <FlashCountdown className="ml-1" />
                 </div>
                 <Link href="/discounts">
-                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
+                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10 self-end sm:self-auto mt-2 sm:mt-0">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
               <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
