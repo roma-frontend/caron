@@ -4,7 +4,7 @@ import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -33,6 +33,7 @@ const NAV_ITEMS = [
   { href: '/admin/reviews', icon: Star, label: 'Կարծիքներ' },
   { href: '/admin/qa', icon: MessageCircleQuestion, label: 'Հարցեր' },
   { href: '/admin/pages', icon: FileText, label: 'Էջեր' },
+  { href: '/admin/delivery', icon: Truck, label: 'Առաքում' },
   { href: '/admin/settings', icon: Settings, label: 'Կարգավորումներ' },
 ];
 
@@ -91,7 +92,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/" className="transition-transform hover:scale-110">
           <Logo size={32} />
         </Link>
-        <span className="font-bold" style={{fontFamily: 'var(--font-playfair), Georgia, serif' }}>{storeName}</span>
         
         <button onClick={() => setSidebarOpen(false)} className="ml-2 lg:hidden"><X className="h-5 w-5" /></button>
       </div>

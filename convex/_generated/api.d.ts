@@ -16,6 +16,7 @@ import type * as categories from "../categories.js";
 import type * as coupons from "../coupons.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
+import type * as delivery from "../delivery.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_imageUrl from "../lib/imageUrl.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   coupons: typeof coupons;
   crons: typeof crons;
   customers: typeof customers;
+  delivery: typeof delivery;
   filters: typeof filters;
   "lib/auth": typeof lib_auth;
   "lib/imageUrl": typeof lib_imageUrl;

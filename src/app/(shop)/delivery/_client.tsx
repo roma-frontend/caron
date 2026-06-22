@@ -6,6 +6,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { formatPrice } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Truck, Clock, MapPin, Package, CheckCircle } from 'lucide-react';
+import { DeliverySchedule } from '@/components/DeliverySchedule';
 
 
 // moved inside component
@@ -118,6 +119,9 @@ export default function DeliveryPage() {
           </div>
         ))}
       </div>
+
+      {/* Delivery schedule by location */}
+      <DeliverySchedule />
 
       {/* Note */}
       <div className="mt-12 rounded-xl border bg-muted/30 p-6 text-center">

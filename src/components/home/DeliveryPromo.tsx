@@ -67,8 +67,8 @@ export function DeliveryPromo() {
   const right = images.slice(3, 6);
 
   return (
-    <section className="mx-auto max-w-[var(--container-max)] px-0 sm:px-[var(--space-container)] pt-[var(--space-6)]">
-      <Link href="/products?sort=newest" className="group block">
+    <section className="mx-auto max-w-[var(--container-max)] px-0 sm:px-[var(--space-container)] pb-[var(--space-section)]">
+      <Link href="/delivery" className="group block">
         <div className="relative overflow-hidden rounded-none sm:rounded-2xl bg-gradient-to-r from-primary via-[#0a78c9] to-[#0b5ed7] shadow-lg">
           {/* Subtle radial sheen */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.18),transparent_60%)]" />
@@ -101,7 +101,7 @@ export function DeliveryPromo() {
                 {'Արագ առաքում Հայաստանի պահեստից'}
               </span>
               <span className="shrink-0 rounded-md bg-yellow-400 px-2 py-0.5 text-[10px] sm:text-xs font-extrabold text-gray-900 uppercase tracking-wide shadow-md">
-                {'Ձեռք Տուր'}
+                {'Մանրամասներ'}
               </span>
               <ArrowRight className="hidden sm:block h-5 w-5 text-white/80 transition-transform group-hover:translate-x-1" />
             </div>

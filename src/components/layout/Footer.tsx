@@ -67,9 +67,8 @@ export function Footer() {
       <div className="mx-auto max-w-[var(--container-max)] px-[max(var(--space-container),0.75rem)] py-[var(--space-12)]">
         <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-4">
           <div>
-            <Link href="/" className="flex items-center gap-2 shrink-0 mb-4">
-            <Logo size={36} />
-            <span className="hidden text-xl font-bold sm:inline" style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>{storeName}</span>
+            <Link href="/" className="flex items-center shrink-0 mb-4" aria-label={storeName}>
+            <Logo size={34} />
           </Link>
             <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{SITE.heroDesc}</p>
             <div className="mt-4 flex items-center gap-3">

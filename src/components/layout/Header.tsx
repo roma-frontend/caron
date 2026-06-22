@@ -92,9 +92,8 @@ export function Header() {
         <header className="glass-header w-full" style={{ height: 'var(--header-base-height)' }}>
         <div className="mx-auto flex h-full items-center justify-between gap-1 px-4 max-w-[var(--container-max)]">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Logo size={36} />
-            <span className="text-xl font-bold sm:inline" style={{fontFamily: 'var(--font-playfair), Georgia, serif' }}>{storeName}</span>
+          <Link href="/" className="flex items-center shrink-0" aria-label={storeName}>
+            <Logo size={34} />
           </Link>
 
           {/* Desktop Nav */}
@@ -190,9 +189,8 @@ export function Header() {
             {/* Header */}
             <div className="flex-1 overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b">
-              <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
-                <Logo size={32} />
-                <span className="text-lg font-bold">{storeName}</span>
+              <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center" aria-label={storeName}>
+                <Logo size={30} />
               </Link>
               <button onClick={() => setMenuOpen(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent transition-colors">
                 <X className="h-5 w-5" />

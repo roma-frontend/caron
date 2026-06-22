@@ -69,7 +69,7 @@ export function QuantityStepper({ value, onChange, step = 1, min = step, max = I
         onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, ''))}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur(); } }}
-        className={`${s.h} ${fullWidth ? 'flex-1 min-w-0' : s.inp} border-x bg-transparent text-center font-semibold outline-none`}
+        className={`${s.h} ${fullWidth ? 'flex-1 min-w-0' : s.inp} border-x bg-transparent text-center font-semibold outline-none text-sm`}
         aria-label="Քանակ"
       />
       <button type="button" aria-label="Ավելացնել" onClick={(e) => { e.preventDefault(); e.stopPropagation(); inc(); }}

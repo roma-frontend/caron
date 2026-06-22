@@ -513,6 +513,15 @@ export default defineSchema(
     adminName: v.optional(v.string()),
     createdAt: v.number(),
   }).index('by_order', ['orderId']),
+
+  // ─── Delivery Zones (schedule per location) ───────────────────
+  deliveryZones: defineTable({
+    group: v.union(v.literal('yerevan'), v.literal('region')),
+    name: v.string(),        // location name (Armenian)
+    schedule: v.string(),    // delivery schedule / dates text (multi-line)
+    order: v.number(),
+    isActive: v.boolean(),
+  }).index('by_group', ['group']),
   },
   { schemaValidation: true },
 );

@@ -13,7 +13,7 @@ export function NewArrivals() {
 
   return (
     <ProductRail
-      title={"\u0546\u0578\u0580\u0578\u0582\u0575\u0569\u0576\u0565\u0580"}
+      title={"Նոր Ապրանքներ"}
       icon={<Sparkle className="h-5 w-5 text-primary" />}
       products={inStock as RailProduct[] | undefined}
       viewAllHref="/products?sort=newest"
