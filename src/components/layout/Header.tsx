@@ -161,7 +161,7 @@ export function Header() {
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative overflow-visible" aria-label={NAV.cart}>
                 <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" data-cart-icon />
-                <Badge className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center p-0 text-[9px] sm:text-[10px]">{displayCartCount}</Badge>
+                <Badge className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center p-0 text-[9px] sm:text-[10px] bg-primary text-white dark:bg-primary dark:text-white">{displayCartCount}</Badge>
               </Button>
             </Link>
             <Link href={accountHref}>
