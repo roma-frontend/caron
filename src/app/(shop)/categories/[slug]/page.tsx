@@ -90,13 +90,13 @@ export default function CategoryPage() {
       <Breadcrumbs items={[{ label: 'Կատեգորիաներ', href: '/categories' }, { label: category.name }]} />
 
       {/* ── Modern category hero ───────────────────────────────── */}
-      <div className="group relative mt-4 mb-8 overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/10 via-card to-muted/40 p-6 shadow-sm sm:p-8">
+      <div className="group relative mt-4 mb-8 overflow-hidden rounded-none sm:rounded-3xl border border-primary/10 bg-linear-to-br from-primary/10 via-card to-muted/40 p-6 shadow-sm sm:p-8">
         {/* Decorative animated orbs */}
         <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/15 blur-3xl transition-transform duration-700 group-hover:scale-125" />
         <div className="pointer-events-none absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
 
         <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {category.imageUrl ? (
               <Image src={category.imageUrl} alt={category.name} width={80} height={80}
                 sizes="80px" priority unoptimized={category.imageUrl.startsWith('/api/')}
@@ -139,7 +139,7 @@ export default function CategoryPage() {
           {/* Sort + view toggle */}
           <div className="mb-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <SortBar activeFilters={filters} onFilterChange={setFilters} />
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1 shrink-0 px-4 sm:px-0">
               <button onClick={() => setViewMode('grid')} className={`rounded-lg p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`} aria-label="Grid">
                 <LayoutGrid className="h-4 w-4" />
               </button>
@@ -163,8 +163,7 @@ export default function CategoryPage() {
 
           {/* Products */}
           <div
-            className={viewMode === 'list' ? 'mx-auto flex max-w-3xl flex-col gap-3' : 'grid'}
-            style={viewMode === 'list' ? {} : { gap: 'var(--space-5)', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+            className={viewMode === 'list' ? 'mx-auto flex max-w-3xl flex-col gap-1' : 'grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4 '}
           >
             {results.map((p, i) => (
               <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={i} compact={viewMode === 'list'} lite />

@@ -37,8 +37,8 @@ export default function FavoritesPage() {
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>Ընտրված ({items.length})</h1>
-      <div className="grid" style={{ gap: 'var(--space-4)', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+      <h1 className="font-bold mx-4 sm:mx-0" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>Ընտրված ({items.length})</h1>
+      <div className="grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4">
         {fullProducts?.map((product: Doc<"products">, i: number) => (
           <div key={product._id} className="relative group">
             <ProductCard

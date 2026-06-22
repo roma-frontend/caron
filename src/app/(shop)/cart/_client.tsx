@@ -144,8 +144,8 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{CART.title}</h1>
-      <div className="grid gap-8 lg:grid-cols-3">
+      <h1 className="font-bold mx-4 sm:mx-0" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{CART.title}</h1>
+      <div className="grid gap-8 lg:grid-cols-3 px-4 sm:px-0">
         <div className="space-y-3 lg:col-span-2">
           {/* Toolbar */}
           <div className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3 shadow-sm">
@@ -263,8 +263,8 @@ export default function CartPage() {
       {/* Cross-sell */}
       {featured && featured.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-xl font-bold mb-6">Այս ապրանքի հետ գնում են</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <h2 className="text-xl font-bold mb-6 mx-4 sm:mx-0">Այս ապրանքի հետ գնում են</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1 sm:gap-4">
             {featured.slice(0, 4).map((p, i) => (
               <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
             ))}

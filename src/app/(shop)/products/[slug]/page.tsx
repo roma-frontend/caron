@@ -262,7 +262,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div data-product-content className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
+    <div data-product-content className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-8)]">
       {settings?.enableBreadcrumbs !== false && (
         <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
       )}

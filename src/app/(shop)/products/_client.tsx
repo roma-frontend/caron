@@ -305,12 +305,11 @@ export default function ProductsPage() {
                       left: 0,
                       width: '100%',
                       transform: `translateY(${vRow.start - rowVirtualizer.options.scrollMargin}px)`,
-                      paddingBottom: 'var(--space-5)',
+                      paddingBottom: 'var(--space-2)',
                     }}
                   >
                     <div
-                      className={isList ? 'flex flex-col gap-3' : 'grid'}
-                      style={isList ? {} : { gap: 'var(--space-5)', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+                      className={isList ? 'flex flex-col gap-1' : 'grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4 '}
                     >
                       {rowItems.map((p, j) => (
                         <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} lite />

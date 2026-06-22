@@ -315,7 +315,7 @@ export default function HomePage() {
 
         {/* Categories */}
         {settings?.showCategories !== false && (
-        <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-section)]">
+        <section className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-section)]">
           <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-8)' }}>{HOME.categoriesTitle}</h2>
           <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
             {categories === undefined
@@ -347,7 +347,7 @@ export default function HomePage() {
               const color = brandColor(b);
               return (
                 <Link key={b} href={`/products?brand=${encodeURIComponent(b)}`}
-                  className="group relative flex h-20 w-[190px] items-center justify-center rounded-2xl border border-transparent bg-gradient-to-br from-card to-muted/30 px-6 shadow-xs transition-all duration-500 hover:scale-[1.03] hover:shadow-xl overflow-hidden"
+                  className="group relative flex h-20 w-[190px] items-center justify-center rounded-2xl border border-transparent bg-gradient-to-br from-card to-muted/30 shadow-xs transition-all duration-500 hover:scale-[1.03] hover:shadow-xl overflow-hidden"
                   style={{ '--brand-color': color } as React.CSSProperties}>
                   {/* Shine overlay on hover */}
                   <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -453,8 +453,8 @@ export default function HomePage() {
 
         {/* Features */}
         {settings?.showFeatures !== false && (
-        <section className="bg-muted/30" style={{ paddingBlock: 'var(--space-section)' }}>
-          <div className="mx-auto max-w-[var(--container-max)] px-[var(--space-container)]">
+        <section className="bg-muted/30 py-6 sm:py-[var(--space-section)]">
+          <div className="mx-auto max-w-[var(--container-max)] px-0 sm:px-[var(--space-container)]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--space-6)' }}>
               {FEATURES.map((f, i) => <FeatureItem key={f.key} feature={f} index={i} />)}
             </div>
