@@ -112,7 +112,7 @@ export default function DiscountsClient() {
       {/* ── Grid ── */}
       <div className="mx-auto max-w-[var(--container-max)] px-[var(--space-container)] py-8">
         {products === undefined ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] sm:[--grid-cols:3] md:[--grid-cols:4] lg:[--grid-cols:5] gap-4">
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="animate-pulse rounded-2xl bg-muted" style={{ height: '18rem' }} />
             ))}
@@ -126,7 +126,7 @@ export default function DiscountsClient() {
             <p className="mt-2 text-sm text-muted-foreground">Ստուգեք ավելի ուշ — շուտով կլինեն</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] sm:[--grid-cols:3] md:[--grid-cols:4] lg:[--grid-cols:5] gap-3">
             {sorted.map((p, i) => (
               <ProductCard
                 key={p._id}

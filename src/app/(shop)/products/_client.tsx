@@ -309,7 +309,8 @@ export default function ProductsPage() {
                     }}
                   >
                     <div
-                      className={isList ? 'flex flex-col gap-1' : 'grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4 '}
+                      className={isList ? 'flex flex-col gap-1' : 'grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] gap-1 sm:gap-3'}
+                      style={{ '--grid-cols': cols } as React.CSSProperties}
                     >
                       {rowItems.map((p, j) => (
                         <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} lite />

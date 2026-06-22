@@ -281,7 +281,7 @@ export default function HomePage() {
                   <Button variant="outline" className="gap-2">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4">
+              <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
                 {featured === undefined
                   ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-2xl bg-muted" style={{ height: '20rem' }} />)
                   : featured.slice(0, 4).map((p, i) => (
@@ -387,7 +387,7 @@ export default function HomePage() {
             <div className="flex flex-col items-start sm:items-center justify-between mb-8 gap-2 p-4 sm:p-0">
               <h2 className="text-center text-balance font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Թոփ վաճառք</h2>
             </div>
-            <div className="grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
               {featured === undefined
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '16rem' }} />)
                 : featured.slice(0, 4).map((p, i) => (
@@ -418,7 +418,7 @@ export default function HomePage() {
                   <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10">Դիտել բոլորը <ArrowRight style={{ height: '1rem', width: '1rem' }} /></Button>
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-1 sm:gap-3 md:grid-cols-4">
+              <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
                 {discountedSample === undefined
                   ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse rounded-xl bg-muted" style={{ height: '12rem' }} />)
                   : discountedSample.map((p, i) => (

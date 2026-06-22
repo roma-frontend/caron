@@ -264,7 +264,7 @@ export default function CartPage() {
       {featured && featured.length > 0 && (
         <section className="mt-12">
           <h2 className="text-xl font-bold mb-6 mx-4 sm:mx-0">Այս ապրանքի հետ գնում են</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-1 sm:gap-4">
+          <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-4">
             {featured.slice(0, 4).map((p, i) => (
               <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
             ))}
