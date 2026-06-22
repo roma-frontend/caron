@@ -117,11 +117,15 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
   // `now` is captured once via a lazy initializer (not called during render),
   // keeping the component pure and SSR/CSR consistent at day granularity.
   const [now] = useState(() => Date.now());
-  const deliveryText = inStock
-    ? (typeof settings?.deliveryDaysYerevan === 'number' && settings.deliveryDaysYerevan > 0
-        ? `Առաքում մինչև ${formatDateHy(now + settings.deliveryDaysYerevan * 86400000)}`
-        : `Առաքում ${settings?.deliveryEstimateYerevan?.trim() || '1-2 օր'}`)
+  const deliveryDate = inStock && typeof settings?.deliveryDaysYerevan === 'number' && settings.deliveryDaysYerevan > 0
+    ? formatDateHy(now + settings.deliveryDaysYerevan * 86400000)
     : null;
+  const deliveryText = inStock
+    ? (deliveryDate
+        ? `Առաքում մինչև ${deliveryDate}`
+        : `Առաքում ${settings?.deliveryEstimateYerevan?.trim() || '1-3 օր'}`)
+    : null;
+  const btnDeliveryLabel = deliveryDate || (inStock ? (settings?.deliveryEstimateYerevan?.trim() || '1-3 օր') : null);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -273,12 +277,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                 {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">-{discountPct}%</span>}
               </div>
 
-              {deliveryText && (
-                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Truck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  <span>{deliveryText}</span>
-                </div>
-              )}
+              
 
               {fits && (
                 <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 shadow-xs dark:text-emerald-400">
@@ -300,7 +299,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                 <Button size="sm" className="w-full gap-2 rounded-xl" disabled={!inStock} onClick={handleAddToCart}
                   aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : PRODUCT.outOfStock}>
                   <ShoppingCart className="h-4 w-4" />
-                  {PRODUCT.addToCart}
+                  {btnDeliveryLabel || PRODUCT.addToCart}
                 </Button>
               )}
             </div>

@@ -17,6 +17,7 @@ import { CustomerReturnWatcher } from '@/components/CustomerReturnWatcher';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
+import { ScrollToTop } from '@/components/ScrollToTop';
 // Primary UI font
 const inter = Inter({
   variable: '--font-inter',
@@ -187,6 +188,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main id="main-content" className="min-h-dvh">{children}</main>
               <CookieConsentWrapper />
               <CartSync />
+              <ScrollToTop />
               <AdminOrderWatcher />
               <AdminReturnWatcher />
               <CustomerReturnWatcher />

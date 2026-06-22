@@ -12,6 +12,7 @@ import { HomeStories } from '@/components/home/HomeStories';
 import { HomeBanners } from '@/components/home/HomeBanners';
 import { ForYou } from '@/components/home/ForYou';
 import { NewArrivals } from '@/components/home/NewArrivals';
+import { DeliveryPromo } from '@/components/home/DeliveryPromo';
 import { Bestsellers } from '@/components/home/Bestsellers';
 import { CategoryShelves } from '@/components/home/CategoryShelves';
 import { FlashCountdown } from '@/components/home/FlashCountdown';
@@ -23,6 +24,7 @@ import { api } from '../../convex/_generated/api';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuthStore } from '@/store/auth';
 import { toR2MediaProxyUrl } from '@/lib/r2Media';
+import Image from 'next/image';
 
 const BRAND_COLORS: Record<string, string> = {
   Mobil: '#0072C6', Castrol: '#005EB8', 'Liqui Moly': '#003D7A', Motul: '#005EB8',
@@ -182,7 +184,7 @@ export default function HomePage() {
       <Header />
       <div className="min-w-0 flex-1">
         {/* Hero — integrated section module */}
-          <section className="relative min-h-[calc(100svh-var(--header-height))] overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
+          <section className="relative min-h-[calc(100svh-var(--header-height))] sm:min-h-auto overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]" data-hero>
           <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute left-[-6%] top-[-25%] h-[620px] w-[620px] rounded-full mesh-orb-1" style={{ background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)', filter: 'blur(95px)' }} />
             <div className="absolute right-[-10%] top-[0%] h-[560px] w-[560px] rounded-full mesh-orb-2" style={{ background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)', filter: 'blur(95px)' }} />
@@ -190,7 +192,7 @@ export default function HomePage() {
 
           <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] lg:min-h-0 flex flex-col md:px-8 py-12"
+              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] sm:min-h-auto lg:min-h-0 flex flex-col md:px-8 py-12"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--sx', `${e.clientX - r.left}px`);
@@ -268,9 +270,14 @@ export default function HomePage() {
       </div>
       {/* Rest of page content — normal flow */}
       <div className="min-w-0">
+
+        {/* Delivery promo strip (WB-style, real product images) */}
+        <DeliveryPromo />
+
         {/* Stories + promo banners (WB/OZON style) — auto-hide when empty */}
         {settings?.showStories !== false && <HomeStories />}
         {settings?.showBanners !== false && <HomeBanners />}
+        {settings?.showNewArrivals !== false && <NewArrivals />}
 
         {settings?.showFeatured !== false && (featured === undefined || featured.length > 0) && (
           <section className="mx-auto max-w-[var(--container-max)] px-0 pt-[var(--space-8)] pb-[var(--space-section)] sm:px-[var(--space-container)]">
@@ -330,7 +337,6 @@ export default function HomePage() {
 
         {/* Personalized recommendations + new arrivals (auto-hide when empty) */}
         {settings?.showForYou !== false && <ForYou />}
-        {settings?.showNewArrivals !== false && <NewArrivals />}
         {settings?.showBestsellers !== false && <Bestsellers />}
 
         {/* Brands — luxury showcase */}

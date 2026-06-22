@@ -52,6 +52,7 @@ const nextConfig = {
     localPatterns: [
       { pathname: '/api/r2-image' },
       { pathname: '/og-image.png' },
+      { pathname: '/images/promo/**' },
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '*.r2.cloudflarestorage.com', pathname: '/**' },
