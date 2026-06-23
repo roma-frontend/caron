@@ -382,15 +382,12 @@ function TypeFilterRow({
   onToggle: (option: string, isActive: boolean) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const [isScrollable, setIsScrollable] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const updateScrollState = () => {
     const el = rowRef.current;
     if (!el) return;
-    const scrollable = el.scrollWidth > el.clientWidth + 4;
-    setIsScrollable(scrollable);
     setCanScrollLeft(el.scrollLeft > 4);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   };
@@ -439,6 +436,7 @@ function TypeFilterRow({
         <div
           ref={rowRef}
           onScroll={updateScrollState}
+          onWheel={handleWheel}
           className="scrollbar-none flex items-center gap-1.5 overflow-x-auto py-0.5"
         >
           {def.options?.map((opt) => {
