@@ -127,6 +127,61 @@ function productMatchesBrand(
   return false;
 }
 
+/** Collect all distinct brand strings from a product (any storage form). */
+function collectProductBrands(product: { brand?: string; attributes?: unknown }, brandKeys: Set<string>, out: Set<string>): void {
+  const add = (val: unknown) => {
+    if (typeof val === 'string' && val.trim()) out.add(val.trim());
+    else if (Array.isArray(val)) for (const v of val) if (typeof v === 'string' && v.trim()) out.add(v.trim());
+  };
+  if (product.brand && product.brand.trim()) { out.add(product.brand.trim()); return; }
+  const attrs = (product.attributes ?? {}) as Record<string, unknown>;
+  for (const key of brandKeys) add(attrs[key]);
+}
+
+/**
+ * Recompute the denormalized catalogStats singleton from the active products.
+ * Called from product write paths (and a daily cron) — never from the customer
+ * read path. Scans active products once and upserts a single small document, so
+ * hot public queries (getBrands, categories.listWithCounts) read O(1) instead of
+ * scanning thousands of rows on every page load.
+ */
+async function recomputeCatalogStats(ctx: MutationCtx): Promise<void> {
+  const brandKeys = await getBrandAttributeKeys(ctx);
+  const products = await ctx.db
+    .query('products')
+    .withIndex('by_active', (q) => q.eq('isActive', true))
+    .take(100000);
+
+  const categoryCounts: Record<string, number> = {};
+  const brands = new Set<string>();
+  for (const p of products) {
+    const cat = p.categoryId as unknown as string;
+    categoryCounts[cat] = (categoryCounts[cat] ?? 0) + 1;
+    collectProductBrands(p, brandKeys, brands);
+  }
+
+  const data = {
+    key: 'singleton',
+    categoryCounts,
+    brands: [...brands].sort(),
+    updatedAt: Date.now(),
+  };
+  const existing = await ctx.db
+    .query('catalogStats')
+    .withIndex('by_key', (q) => q.eq('key', 'singleton'))
+    .unique();
+  if (existing) await ctx.db.patch(existing._id, data);
+  else await ctx.db.insert('catalogStats', data);
+}
+
+/** Daily self-healing recompute (cron-invoked). Idempotent. */
+export const recomputeCatalogStatsCron = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    await recomputeCatalogStats(ctx);
+  },
+});
+
 export const listPaginated = query({
   args: {
     categoryId: v.optional(v.id('categories')),
@@ -340,18 +395,20 @@ export const list = query({
 export const getBrands = query({
   args: {},
   handler: async (ctx) => {
+    // Fast path: read the denormalized singleton (O(1)), so this hot homepage
+    // query doesn't scan the products table on every visit.
+    const stats = await ctx.db
+      .query('catalogStats')
+      .withIndex('by_key', (q) => q.eq('key', 'singleton'))
+      .unique();
+    if (stats && Array.isArray(stats.brands)) return stats.brands as string[];
+
+    // Fallback (stats not yet computed): live scan. A product write or the daily
+    // cron will populate the singleton and switch to the fast path.
     const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
     const brandKeys = await getBrandAttributeKeys(ctx);
     const brands = new Set<string>();
-    const addBrand = (val: unknown) => {
-      if (typeof val === 'string' && val.trim()) brands.add(val);
-      else if (Array.isArray(val)) for (const v of val) if (typeof v === 'string' && v.trim()) brands.add(v);
-    };
-    for (const p of products) {
-      if (p.brand) { brands.add(p.brand); continue; }
-      const attrs = (p.attributes ?? {}) as Record<string, unknown>;
-      for (const key of brandKeys) addBrand(attrs[key]);
-    }
+    for (const p of products) collectProductBrands(p, brandKeys, brands);
     return [...brands].sort();
   },
 });
@@ -770,6 +827,7 @@ export const create = mutation({
     };
     const newId = await ctx.db.insert('products', createPayload);
     await syncOemIndex(ctx, newId, data.oemNumbers);
+    await recomputeCatalogStats(ctx);
     return newId;
   },
 });
@@ -879,6 +937,16 @@ export const update = mutation({
       await syncOemIndex(ctx, id, args.oemNumbers);
     }
 
+    // Refresh denormalized catalog stats only when something that affects them
+    // changed (active flag, category, or brand). Pure stock/price/SEO edits —
+    // the frequent inventory operations — are skipped so they stay cheap.
+    const activeChanged = args.isActive !== undefined && !!old && args.isActive !== old.isActive;
+    const categoryChanged = args.categoryId !== undefined && !!old && args.categoryId !== old.categoryId;
+    const brandTouched = args.brand !== undefined || clearBrand === true || args.attributes !== undefined;
+    if (activeChanged || categoryChanged || brandTouched) {
+      await recomputeCatalogStats(ctx);
+    }
+
     if (stock !== undefined && old && old.stock !== stock) {
       const caller = await getAdminCaller(ctx, args.sessionToken);
       await ctx.db.insert('stockMovements', {
@@ -948,6 +1016,7 @@ export const remove = mutation({
     }
     await syncOemIndex(ctx, args.id, undefined); // remove OEM index rows
     await ctx.db.delete(args.id);
+    await recomputeCatalogStats(ctx);
   },
 });
 
@@ -995,6 +1064,11 @@ export const bulkAction = mutation({
         continue;
       }
       affected++;
+    }
+    // setDiscount doesn't change the active set / category / brand, so it
+    // doesn't affect catalogStats. All other ops do.
+    if (affected > 0 && args.op !== 'setDiscount') {
+      await recomputeCatalogStats(ctx);
     }
     return { affected };
   },
@@ -1231,6 +1305,9 @@ export const bulkCreate = mutation({
       }
     }
     
+    if (created > 0 || updated > 0) {
+      await recomputeCatalogStats(ctx);
+    }
     return `Ստեղծվել է ${created}, թարմացվել է ${updated} ապրանք`;
   },
 });

@@ -182,10 +182,29 @@ export const listWithCounts = query({
       .query('categories')
       .withIndex('by_active', (q) => q.eq('isActive', true))
       .take(100);
-    const products = await ctx.db.query('products').collect();
+
+    // Fast path: read precomputed per-category counts from the singleton, so we
+    // don't scan the whole products table on every category/nav render.
+    const stats = await ctx.db
+      .query('catalogStats')
+      .withIndex('by_key', (q) => q.eq('key', 'singleton'))
+      .unique();
+    if (stats && stats.categoryCounts) {
+      const counts = stats.categoryCounts as Record<string, number>;
+      return cats.map((c) => ({
+        ...normalizeCategoryImage(c),
+        count: counts[c._id as string] ?? 0,
+      }));
+    }
+
+    // Fallback (stats not yet computed): live count from active products.
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_active', (q) => q.eq('isActive', true))
+      .take(100000);
     return cats.map((c) => ({
       ...normalizeCategoryImage(c),
-      count: products.filter((p) => p.categoryId === c._id && p.isActive).length,
+      count: products.filter((p) => p.categoryId === c._id).length,
     }));
   },
 });

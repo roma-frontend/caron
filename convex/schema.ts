@@ -142,6 +142,20 @@ export default defineSchema(
     .index('by_variant_group', ['variantGroup'])
     .searchIndex('search_products', { searchField: 'name', filterFields: ['categoryId', 'isActive'] }),
 
+  // ─── Denormalized catalog stats (singleton) ────────────────────
+  // Precomputed aggregates for hot public queries (brand list, per-category
+  // product counts) so they don't scan the whole products table on every page
+  // load. Maintained on product writes and a daily self-healing cron. Only the
+  // active-product set / brand / category affect it — stock & price edits do
+  // NOT, so order traffic never invalidates it. Reads fall back to a live scan
+  // when the doc is missing (e.g. before the first recompute).
+  catalogStats: defineTable({
+    key: v.string(), // always 'singleton'
+    categoryCounts: v.any(), // Record<categoryId, number> of active products
+    brands: v.array(v.string()),
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
+
   // ─── Orders ────────────────────────────────────────────────────
   orders: defineTable({
     orderNumber: v.string(),

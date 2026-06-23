@@ -39,4 +39,14 @@ crons.daily(
   {},
 );
 
+// Daily: self-healing recompute of denormalized catalog stats (brand list +
+// per-category counts). Product writes already keep it current; this heals any
+// rare drift and covers data imported outside the normal write paths.
+crons.daily(
+  'recompute-catalog-stats',
+  { hourUTC: 2, minuteUTC: 30 },
+  internal.products.recomputeCatalogStatsCron,
+  {},
+);
+
 export default crons;
