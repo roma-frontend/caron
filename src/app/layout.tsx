@@ -48,7 +48,7 @@ const notoSansArmenian = Noto_Sans_Armenian({
   fallback: ['sans-serif'],
 });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caron.am';
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://caron.am').trim().replace(/\/+$/, '');
 
 export const viewport: Viewport = {
   themeColor: [

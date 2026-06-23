@@ -22,12 +22,13 @@ export function JsonLd() {
   if (settings?.telegram) sameAs.push(socialUrl('telegram', settings.telegram));
   if (settings?.whatsapp) sameAs.push(socialUrl('whatsapp', settings.whatsapp));
 
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am').trim().replace(/\/+$/, '');
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Store',
     name: settings?.storeName || 'Caron Armenia',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am',
-    logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am'}/favicon.svg`,
+    url: baseUrl,
+    logo: `${baseUrl}/favicon.svg`,
     description: 'Ավտոպահեստամասերի առցանց խանութ Հայաստանում',
     address: { '@type': 'PostalAddress', addressLocality: 'Yerevan', addressCountry: 'AM' },
     priceRange: '$$',

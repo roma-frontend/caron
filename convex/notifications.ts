@@ -6,6 +6,9 @@ function fmt(n: number): string {
   return n.toLocaleString('hy-AM');
 }
 
+/** Public site base URL for links in notifications (no trailing slash). */
+const SITE = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am').trim().replace(/\/+$/, '');
+
 export const sendOrderNotification = internalAction({
   args: {
     orderNumber: v.string(),
@@ -32,7 +35,7 @@ export const sendOrderNotification = internalAction({
       `<b>💰 Ընդհանուր գումար՝</b> <b>${fmt(args.total)} ֏</b>`,
       `━━━━━━━━━━━━━━━━━━`,
       ``,
-      `<a href="https://caron.am/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
+      `<a href="${SITE}/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
     ].join('\n');
 
     try {
@@ -70,7 +73,7 @@ export const sendReturnNotification = internalAction({
       `<b>📧 Email՝</b> ${args.customerEmail}`,
       `━━━━━━━━━━━━━━━━━━`,
       ``,
-      `<a href="https://caron.am/admin/returns">📋 Դիտել հայտերը</a>`,
+      `<a href="${SITE}/admin/returns">📋 Դիտել հայտերը</a>`,
     ].join('\n');
 
     try {
@@ -140,7 +143,7 @@ export const sendReturnCreatedToCustomer = internalAction({
       `Հայտը քննարկման փուլում է։ Կարգավիճակի փոփոխության մասին կտեղեկացնենք այստեղ։`,
       `━━━━━━━━━━━━━━━━━━`,
       ``,
-      `<a href="https://caron.am/orders">📋 Դիտել իմ պատվերները</a>`,
+      `<a href="${SITE}/orders">📋 Դիտել իմ պատվերները</a>`,
       ...(storeName ? [``, `<i>${storeName}</i> 🚗`] : []),
     ].join('\n');
 
@@ -196,7 +199,7 @@ export const sendReturnStatusToCustomer = internalAction({
       ...(args.adminComment ? [`<b>💬 Մեկնաբանություն՝</b> ${args.adminComment}`] : []),
       `━━━━━━━━━━━━━━━━━━`,
       ``,
-      `<a href="https://caron.am/orders">📋 Դիտել իմ պատվերները</a>`,
+      `<a href="${SITE}/orders">📋 Դիտել իմ պատվերները</a>`,
       ...(storeName ? [``, `<i>${storeName}</i> 🚗`] : []),
     ].join('\n');
 
@@ -259,7 +262,7 @@ export const sendDailyReport = action({
       `<b>💰 Եկամուտ՝</b> ${fmt(revenue)} ֏`,
       `<b>🕐 Ամսաթիվ՝</b> ${new Date().toLocaleDateString('hy-AM')}`,
       `━━━━━━━━━━━━━━━━━━`,
-      `<a href="https://caron.am/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
+      `<a href="${SITE}/admin/orders">📋 Դիտել բոլոր պատվերները</a>`,
     ].join('\n');
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -282,7 +285,7 @@ export const sendLowStockAlert = action({
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `<b>Շեմ՝</b> ${threshold} հատ`,
-      `<a href="https://caron.am/admin/products">📋 Դիտել ապրանքները</a>`,
+      `<a href="${SITE}/admin/products">📋 Դիտել ապրանքները</a>`,
       `━━━━━━━━━━━━━━━━━━`,
     ].join('\n');
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -406,7 +409,7 @@ export const sendCartRecovery = action({
       `━━━━━━━━━━━━━━━━━━`,
       `<b>📦 Ապրանքներ՝</b> ${args.cartItems} հատ`,
       `<b>💰 Գումար՝</b> ${fmt(args.cartTotal)} ֏`,
-      `<a href="https://caron.am/cart">🛒 Վերադառնալ զամբյուղ</a>`,
+      `<a href="${SITE}/cart">🛒 Վերադառնալ զամբյուղ</a>`,
       `━━━━━━━━━━━━━━━━━━`,
     ].join('\n');
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { fetchQuery } from 'convex/nextjs';
 import { api } from '../../convex/_generated/api';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am';
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am').trim().replace(/\/+$/, '');
 
 export const revalidate = 3600; // regenerate every hour
 

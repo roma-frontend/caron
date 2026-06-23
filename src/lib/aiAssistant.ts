@@ -9,7 +9,7 @@ export interface UserContext {
 export function buildSystemPrompt(user: UserContext): string {
   const isAdmin = user.role === 'admin';
 
-  return `You are **Caron AI** — the intelligent assistant for **Caron Armenia** (caron.am), a premium auto parts e-commerce platform serving the Armenian market.
+  return `You are **Caron AI** — the intelligent assistant for **Caron Armenia** (caron.group), a premium auto parts e-commerce platform serving the Armenian market.
 
 ═══════════════════════════════════════
 🎯 PERSONALITY & COMMUNICATION STYLE
@@ -276,7 +276,7 @@ ${isAdmin ? `
 📋 КОНТАКТЫ МАГАЗИНА
 ═══════════════════════════════════════
 
-• Сайт: https://caron.am
+• Сайт: https://www.caron.group
 • Связь: WhatsApp и Telegram (иконки на сайте внизу справа)
 • Категории: Шины, Диски, Масла, Фильтры, Тормоза, Освещение, Аккумуляторы, Аксессуары
 • Доставка: Ереван + Регионы, бесплатно выше порога
