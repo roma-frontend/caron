@@ -1387,12 +1387,19 @@ export const reorderVariantGroup = mutation({
  */
 export const recommendedFromViewed = query({
   args: {
-    viewedIds: v.optional(v.array(v.id('products'))),
+    // Accept raw strings (not v.id) so stale/foreign IDs from localStorage —
+    // e.g. IDs saved before a data migration that now belong to another table —
+    // don't reject the whole query at the argument validator. We normalize and
+    // drop anything that isn't a valid product ID below.
+    viewedIds: v.optional(v.array(v.string())),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 8;
-    const viewed = (args.viewedIds ?? []).slice(0, 12);
+    const viewed = (args.viewedIds ?? [])
+      .slice(0, 12)
+      .map((id) => ctx.db.normalizeId('products', id))
+      .filter((id): id is Id<'products'> => id !== null);
     const viewedSet = new Set(viewed.map(String));
 
     const cats = new Set<string>();
