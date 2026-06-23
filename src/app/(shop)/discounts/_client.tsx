@@ -58,7 +58,7 @@ export default function DiscountsClient() {
               </div>
               <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Զեղ&shy;չեր</h1>
               <p className="mt-2 max-w-sm text-white/70 text-sm">
-                Ավտոպահեստամասեր՝ հատուկ գներով։ Մի բաց թողեք հնարավորությունը։
+                Ավտոպահեստամասեր՝ հատուկ գներով։ Բաց մի թողեք հնարավորությունը։
               </p>
             </div>
 

@@ -273,7 +273,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
                 }
               />
             </div>
-            <InlineField value={product.price} className="text-md font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
+            <InlineField value={product.price} className="text-sm font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
             <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
