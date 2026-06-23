@@ -91,7 +91,7 @@ export function HomeBanners() {
             <button onClick={() => go(current + 1)} aria-label="Հաջորդ" className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 sm:flex">
               <ChevronRight className="h-5 w-5" />
             </button>
-            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center">
+            <div className="absolute bottom-2 right-[2%] z-20 flex -translate-x-1/2 items-center">
               {banners.map((b, i) => (
                 <button
                   key={b.id}
