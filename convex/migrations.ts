@@ -241,3 +241,49 @@ export const normalizeBrand = mutation({
     return `Normalized brand for ${updated} products`;
   },
 });
+
+/**
+ * Backfill brand for products that only have it stored under the brand
+ * filter-definition's _id key in attributes (e.g. bulk-imported products),
+ * mirroring it into the top-level `brand` field and `attributes.brand`.
+ * Idempotent — safe to re-run.
+ */
+export const backfillBrandFromFilterDef = mutation({
+  args: { sessionToken: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const brandDefs = await ctx.db
+      .query('filterDefinitions')
+      .filter((q) => q.eq(q.field('slug'), 'brand'))
+      .collect();
+    const brandDefByCategory = new Map(brandDefs.map((d) => [d.categoryId, d._id as string]));
+
+    const pickString = (val: unknown): string | undefined => {
+      if (typeof val === 'string' && val.trim()) return val.trim();
+      if (Array.isArray(val)) { const f = val.find((v) => typeof v === 'string' && v.trim()); return f as string | undefined; }
+      return undefined;
+    };
+
+    const products = await ctx.db.query('products').collect();
+    let updated = 0;
+    for (const p of products) {
+      const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+      // Already consistent — skip.
+      if (p.brand && attrs.brand === p.brand) continue;
+
+      const defId = brandDefByCategory.get(p.categoryId);
+      const brand =
+        pickString(attrs.brand) ??
+        (p.brand && p.brand.trim() ? p.brand.trim() : undefined) ??
+        (defId ? pickString(attrs[defId]) : undefined);
+      if (!brand) continue;
+
+      if (p.brand === brand && attrs.brand === brand) continue;
+      await ctx.db.patch(p._id, {
+        brand,
+        attributes: { ...attrs, brand },
+      });
+      updated++;
+    }
+    return `Backfilled brand for ${updated} products`;
+  },
+});

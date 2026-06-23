@@ -1,6 +1,6 @@
 ﻿import { v } from 'convex/values';
 import { query, mutation, internalMutation, internalQuery } from './_generated/server';
-import type { MutationCtx } from './_generated/server';
+import type { MutationCtx, QueryCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { getAdminCaller } from './lib/auth';
 import { internal } from './_generated/api';
@@ -85,6 +85,48 @@ function normalizeSlugValue(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/**
+ * Collect every attribute key under which a product's brand may be stored.
+ * Brands can live as:
+ *   - the top-level `brand` field,
+ *   - `attributes.brand` (literal slug),
+ *   - `attributes[<filterDefinitionId>]` where the definition's slug is 'brand'.
+ * Bulk-imported products often only have the filter-definition-id form, so we
+ * must look there too or they silently fail brand filtering.
+ */
+async function getBrandAttributeKeys(ctx: QueryCtx): Promise<Set<string>> {
+  const keys = new Set<string>(['brand']);
+  try {
+    const brandDefs = await ctx.db
+      .query('filterDefinitions')
+      .filter((q) => q.eq(q.field('slug'), 'brand'))
+      .take(500);
+    for (const d of brandDefs) keys.add(d._id as string);
+  } catch {
+    /* ignore — fall back to literal 'brand' key */
+  }
+  return keys;
+}
+
+/** Does the product's brand (in any storage form) match the requested brand? */
+function productMatchesBrand(
+  product: { brand?: string; attributes?: unknown },
+  brandKeys: Set<string>,
+  targetLower: string,
+): boolean {
+  const matches = (val: unknown): boolean => {
+    if (typeof val === 'string') return val.toLowerCase() === targetLower;
+    if (Array.isArray(val)) return val.some((v) => typeof v === 'string' && v.toLowerCase() === targetLower);
+    return false;
+  };
+  if (matches(product.brand)) return true;
+  const attrs = (product.attributes ?? {}) as Record<string, unknown>;
+  for (const key of brandKeys) {
+    if (matches(attrs[key])) return true;
+  }
+  return false;
+}
+
 export const listPaginated = query({
   args: {
     categoryId: v.optional(v.id('categories')),
@@ -167,12 +209,11 @@ export const listPaginated = query({
       (p.retailDiscount != null && p.retailDiscount > 0)
     );
     if (args.minRating) filtered = filtered.filter((p) => (p.rating ?? 0) >= args.minRating!);
-    if (args.brand) filtered = filtered.filter((p) => {
-      const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined;
-      const topBrand = p.brand as string | undefined;
-      const brand = attrBrand ?? topBrand;
-      return typeof brand === 'string' && brand.toLowerCase() === args.brand!.toLowerCase();
-    });
+    if (args.brand) {
+      const brandKeys = await getBrandAttributeKeys(ctx);
+      const targetLower = args.brand.toLowerCase();
+      filtered = filtered.filter((p) => productMatchesBrand(p, brandKeys, targetLower));
+    }
 
     // Attribute filtering (arbitrary keys can't be indexed)
     if (args.attributes && typeof args.attributes === 'object') {
@@ -300,10 +341,16 @@ export const getBrands = query({
   args: {},
   handler: async (ctx) => {
     const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
+    const brandKeys = await getBrandAttributeKeys(ctx);
     const brands = new Set<string>();
+    const addBrand = (val: unknown) => {
+      if (typeof val === 'string' && val.trim()) brands.add(val);
+      else if (Array.isArray(val)) for (const v of val) if (typeof v === 'string' && v.trim()) brands.add(v);
+    };
     for (const p of products) {
-      const b = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined ?? p.brand;
-      if (b) brands.add(b);
+      if (p.brand) { brands.add(p.brand); continue; }
+      const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+      for (const key of brandKeys) addBrand(attrs[key]);
     }
     return [...brands].sort();
   },
@@ -504,9 +551,20 @@ export const dataHealth = query({
   }> => {
     await getAdminCaller(ctx, args.sessionToken);
     const products = await ctx.db.query('products').take(50000);
+    const brandKeys = await getBrandAttributeKeys(ctx);
     const skuCount = new Map<string, number>();
     let active = 0, inactive = 0, activeNoImage = 0, activeNoDescription = 0;
     let activeZeroStock = 0, lowStock = 0, missingSeo = 0, noBrand = 0;
+    const hasBrand = (p: { brand?: string; attributes?: unknown }): boolean => {
+      if (typeof p.brand === 'string' && p.brand.trim()) return true;
+      const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+      for (const key of brandKeys) {
+        const v = attrs[key];
+        if (typeof v === 'string' && v.trim()) return true;
+        if (Array.isArray(v) && v.some((x) => typeof x === 'string' && x.trim())) return true;
+      }
+      return false;
+    };
     for (const p of products) {
       if (p.sku) skuCount.set(p.sku, (skuCount.get(p.sku) ?? 0) + 1);
       if (!p.isActive) { inactive++; continue; }
@@ -516,8 +574,7 @@ export const dataHealth = query({
       if (p.stock <= 0) activeZeroStock++;
       else if (p.stock <= 5) lowStock++;
       if (!p.seoTitle || !p.seoDescription) missingSeo++;
-      const brand = p.brand ?? ((p.attributes ?? {}) as Record<string, unknown>).brand;
-      if (!brand) noBrand++;
+      if (!hasBrand(p)) noBrand++;
     }
     let duplicateSkus = 0;
     for (const c of skuCount.values()) if (c > 1) duplicateSkus++;
@@ -989,6 +1046,7 @@ export const bulkCreate = mutation({
       byId: Set<string>;
       bySlug: Map<string, string>;
       byName: Map<string, string>;
+      brandId: string | undefined;
     }>();
 
     const getFilterIndexForCategory = async (categoryId: Id<'categories'>) => {
@@ -1004,9 +1062,31 @@ export const bulkCreate = mutation({
         byId: new Set(defs.map((d) => d._id)),
         bySlug: new Map(defs.map((d) => [d.slug.toLowerCase().trim(), d._id])),
         byName: new Map(defs.map((d) => [d.name.toLowerCase().trim(), d._id])),
+        brandId: defs.find((d) => d.slug.toLowerCase().trim() === 'brand')?._id as string | undefined,
       };
       filterIndexCache.set(categoryId, index);
       return index;
+    };
+
+    /**
+     * Mirror the brand into the canonical `brand` top-level field and the
+     * `attributes.brand` literal key, so brand-based queries (filter, brand
+     * list, analytics, "no brand" health) stay consistent regardless of which
+     * attribute key the import used. Mutates `attrs` in place and returns the
+     * resolved brand string (if any).
+     */
+    const syncBrand = (categoryId: Id<'categories'>, attrs: Record<string, unknown> | undefined): string | undefined => {
+      if (!attrs) return undefined;
+      const index = filterIndexCache.get(categoryId);
+      const pickString = (val: unknown): string | undefined => {
+        if (typeof val === 'string' && val.trim()) return val.trim();
+        if (Array.isArray(val)) { const first = val.find((v) => typeof v === 'string' && v.trim()); return first as string | undefined; }
+        return undefined;
+      };
+      const brand = pickString(attrs.brand)
+        ?? (index?.brandId ? pickString(attrs[index.brandId]) : undefined);
+      if (brand) attrs.brand = brand;
+      return brand;
     };
 
     const sanitizeAttributes = async (categoryId: Id<'categories'>, attributes: unknown): Promise<Record<string, unknown> | undefined> => {
@@ -1094,7 +1174,9 @@ export const bulkCreate = mutation({
         if (p.images !== undefined) updatePayload.images = p.images;
         if (p.attributes !== undefined) {
           const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
+          const brand = syncBrand(p.categoryId, safeAttrs);
           updatePayload.attributes = safeAttrs;
+          if (brand) updatePayload.brand = brand;
         }
         if (p.vehicleCompat !== undefined) updatePayload.vehicleCompat = p.vehicleCompat;
         
@@ -1136,7 +1218,11 @@ export const bulkCreate = mutation({
         if (p.seoDescription !== undefined) createPayload.seoDescription = p.seoDescription;
         if (p.attributes !== undefined) {
           const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
-          if (safeAttrs) createPayload.attributes = safeAttrs;
+          if (safeAttrs) {
+            const brand = syncBrand(p.categoryId, safeAttrs);
+            createPayload.attributes = safeAttrs;
+            if (brand) createPayload.brand = brand;
+          }
         }
         
         const insertedId = await ctx.db.insert('products', createPayload);

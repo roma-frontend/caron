@@ -89,18 +89,28 @@ export const getByBrand = query({
       .take(200);
     const inactiveCatIds = new Set(inactiveCats.map((c) => c._id));
 
+    // Brand can be stored as the top-level `brand` field, as `attributes.brand`,
+    // or as `attributes[<brandFilterDefinitionId>]` (bulk-imported products).
+    const brandDefs = await ctx.db
+      .query('filterDefinitions')
+      .filter((q) => q.eq(q.field('slug'), 'brand'))
+      .take(500);
+    const brandKeys = new Set<string>(['brand']);
+    for (const d of brandDefs) brandKeys.add(d._id as string);
+    const targetLower = args.brand.toLowerCase();
+    const matchesBrand = (val: unknown): boolean => {
+      if (typeof val === 'string') return val.toLowerCase() === targetLower;
+      if (Array.isArray(val)) return val.some((v) => typeof v === 'string' && v.toLowerCase() === targetLower);
+      return false;
+    };
+
     const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
     return products.filter((p) => {
-      const attrBrand = ((p.attributes ?? {}) as Record<string, unknown>).brand as string | undefined;
-      const topBrand = p.brand as string | undefined;
-      const brand = attrBrand ?? topBrand;
-      return (
-        p.isActive &&
-        p.stock > 0 &&
-        !inactiveCatIds.has(p.categoryId) &&
-        typeof brand === 'string' &&
-        brand.toLowerCase() === args.brand.toLowerCase()
-      );
+      if (!p.isActive || p.stock <= 0 || inactiveCatIds.has(p.categoryId)) return false;
+      if (matchesBrand(p.brand)) return true;
+      const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+      for (const key of brandKeys) if (matchesBrand(attrs[key])) return true;
+      return false;
     }).slice(0, 200);
   },
 });
