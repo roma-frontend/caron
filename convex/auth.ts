@@ -225,6 +225,93 @@ export const register = mutation({
   },
 });
 
+/**
+ * Verify the HMAC signature of a Telegram Login Widget payload.
+ * secret_key = SHA256(bot_token); hash = HMAC_SHA256(data_check_string, secret_key).
+ * data_check_string = the received fields (except `hash`) as `key=value`, sorted
+ * alphabetically and joined by "\n". See https://core.telegram.org/widgets/login
+ */
+async function verifyTelegramHash(fields: Record<string, string>, hash: string, botToken: string): Promise<boolean> {
+  const dataCheckString = Object.keys(fields)
+    .filter((k) => fields[k] !== undefined && fields[k] !== '')
+    .sort()
+    .map((k) => `${k}=${fields[k]}`)
+    .join('\n');
+  const enc = new TextEncoder();
+  const secretKey = await crypto.subtle.digest('SHA-256', enc.encode(botToken));
+  const key = await crypto.subtle.importKey('raw', secretKey, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(dataCheckString));
+  return safeEqual(bytesToHex(new Uint8Array(sig)), hash.toLowerCase());
+}
+
+const TELEGRAM_AUTH_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Sign in (or sign up) with the Telegram Login Widget. The widget hands the
+ * client a signed payload; we re-verify the HMAC server-side with the bot token
+ * (never trusting the client), reject stale authorizations, then find-or-create
+ * a user keyed by Telegram id and issue a session — same shape as email login.
+ */
+export const loginWithTelegram = mutation({
+  args: {
+    id: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    username: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
+    authDate: v.string(),
+    hash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) throw new Error('Telegram մուտքը կարգավորված չէ');
+
+    // Reconstruct exactly the fields Telegram signed (omit empty/optional ones).
+    const fields: Record<string, string> = { id: args.id, auth_date: args.authDate };
+    if (args.firstName) fields.first_name = args.firstName;
+    if (args.lastName) fields.last_name = args.lastName;
+    if (args.username) fields.username = args.username;
+    if (args.photoUrl) fields.photo_url = args.photoUrl;
+
+    if (!(await verifyTelegramHash(fields, args.hash, botToken))) {
+      throw new Error('Telegram ստուգումը ձախողվեց');
+    }
+
+    // Replay protection: the signature is reusable, so freshness is enforced here.
+    const authDateMs = Number(args.authDate) * 1000;
+    if (!Number.isFinite(authDateMs) || Date.now() - authDateMs > TELEGRAM_AUTH_MAX_AGE_MS) {
+      throw new Error('Telegram վավերացման ժամկետը լրացել է, փորձեք կրկին');
+    }
+
+    let user = await ctx.db.query('users').withIndex('by_telegram_id', (q) => q.eq('telegramId', args.id)).unique();
+    if (!user) {
+      const name = [args.firstName, args.lastName].filter(Boolean).join(' ').trim() || args.username || `Telegram ${args.id}`;
+      const referralCode = await generateReferralCode(ctx);
+      // Telegram doesn't provide an email; use a clearly-synthetic placeholder so
+      // the schema invariant holds. The user can set a real email later.
+      const placeholderEmail = `tg_${args.id}@telegram.local`;
+      const newId = await ctx.db.insert('users', {
+        name,
+        email: placeholderEmail,
+        telegramId: args.id,
+        telegramUsername: args.username,
+        role: 'customer',
+        customerType: 'retail',
+        isActive: true,
+        referralCode,
+        createdAt: Date.now(),
+      });
+      user = (await ctx.db.get(newId))!;
+    } else if (args.username && user.telegramUsername !== args.username) {
+      await ctx.db.patch(user._id, { telegramUsername: args.username });
+    }
+    if (!user.isActive) throw new Error('Օգտագործողը արգելափակված է');
+
+    const sessionToken = await createSession(ctx, user._id, 30);
+    return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address };
+  },
+});
+
 /** Ensure the current user has a referral code; returns code + referral count. */
 export const ensureReferralCode = mutation({
   args: { sessionToken: v.string() },

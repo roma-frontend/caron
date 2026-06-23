@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -13,10 +13,12 @@ import { Logo } from '@/components/layout/Logo';
 import { useAuthStore } from '@/store/auth';
 import { setAuthCookie } from '@/actions/auth';
 import { toast } from 'sonner';
+import { TelegramLoginButton, type TelegramAuthUser } from '@/components/TelegramLoginButton';
 
 export default function LoginPage() {
   const router = useRouter();
   const login = useMutation(api.auth.login);
+  const loginWithTelegram = useMutation(api.auth.loginWithTelegram);
   const setSession = useAuthStore((s) => s.setSession);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
@@ -39,6 +41,26 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleTelegram = useCallback(async (u: TelegramAuthUser) => {
+    try {
+      const result = await loginWithTelegram({
+        id: String(u.id),
+        firstName: u.first_name,
+        lastName: u.last_name,
+        username: u.username,
+        photoUrl: u.photo_url,
+        authDate: String(u.auth_date),
+        hash: u.hash,
+      });
+      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
+      await setAuthCookie(result.sessionToken);
+      toast.success(`Բարի գալուստ, ${result.name}!`);
+      router.push(result.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Telegram մուտքի սխալ');
+    }
+  }, [loginWithTelegram, setSession, router]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
@@ -78,6 +100,14 @@ export default function LoginPage() {
               {loading ? 'Մուտք...' : 'Մուտք'}
             </Button>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            կամ
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <TelegramLoginButton onAuth={handleTelegram} />
+
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {'Չունեք հաշիվ? '}
             <Link href="/register" className="font-medium text-primary hover:underline">

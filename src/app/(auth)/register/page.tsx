@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/layout/Logo';
 import { useSettings } from '@/hooks/useSettings';
+import { TelegramLoginButton, type TelegramAuthUser } from '@/components/TelegramLoginButton';
 
 export default function RegisterPage() {
   const router = useRouter();
   const settings = useSettings();
   const register = useMutation(api.auth.register);
+  const loginWithTelegram = useMutation(api.auth.loginWithTelegram);
   const setSession = useAuthStore((s) => s.setSession);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [busy, setBusy] = useState(false);
@@ -27,6 +29,26 @@ export default function RegisterPage() {
     const r = new URLSearchParams(window.location.search).get('ref');
     if (r) setRefCode(r.trim());
   }, []);
+
+  const handleTelegram = useCallback(async (u: TelegramAuthUser) => {
+    try {
+      const result = await loginWithTelegram({
+        id: String(u.id),
+        firstName: u.first_name,
+        lastName: u.last_name,
+        username: u.username,
+        photoUrl: u.photo_url,
+        authDate: String(u.auth_date),
+        hash: u.hash,
+      });
+      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
+      await setAuthCookie(result.sessionToken);
+      toast.success(`Բարի գալուստ, ${result.name}!`);
+      router.push(result.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Telegram մուտքի սխալ');
+    }
+  }, [loginWithTelegram, setSession, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +150,14 @@ export default function RegisterPage() {
               {busy ? 'Գրանցվում է...' : 'Գրանցվել'}
             </Button>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            կամ
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <TelegramLoginButton onAuth={handleTelegram} />
+
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Արդեն ունեք հաշիվ?{' '}
             <Link href="/login" className="font-medium text-primary hover:underline">

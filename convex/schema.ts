@@ -9,6 +9,8 @@ export default defineSchema(
     name: v.string(),
     passwordHash: v.optional(v.string()),
     googleId: v.optional(v.string()),
+    telegramId: v.optional(v.string()),
+    telegramUsername: v.optional(v.string()),
     role: v.union(v.literal('admin'), v.literal('customer')),
     phone: v.optional(v.string()),
     address: v.optional(v.string()),
@@ -25,6 +27,7 @@ export default defineSchema(
   })
     .index('by_email', ['email'])
     .index('by_google_id', ['googleId'])
+    .index('by_telegram_id', ['telegramId'])
     .index('by_role', ['role'])
     .index('by_session_token', ['sessionToken'])
     .index('by_referral_code', ['referralCode']),
