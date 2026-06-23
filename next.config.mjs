@@ -12,13 +12,13 @@ const isDev = process.env.NODE_ENV === 'development';
 // app's inline styles; script eval is only allowed in dev for React DX.
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://telegram.org${isDev ? " 'unsafe-eval'" : ''}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: https:`,
   `media-src 'self' blob: https://*.r2.dev https://*.r2.cloudflarestorage.com`,
   `font-src 'self' data:`,
   `connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://*.r2.dev https://*.r2.cloudflarestorage.com https://vitals.vercel-insights.com`,
-  `frame-src 'self' https://www.google.com https://maps.google.com`,
+  `frame-src 'self' https://www.google.com https://maps.google.com https://oauth.telegram.org`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
