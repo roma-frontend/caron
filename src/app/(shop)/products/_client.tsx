@@ -96,6 +96,27 @@ export default function ProductsPage() {
     { initialNumItems: PAGE_SIZE },
   );
 
+  // When the active filter/sort set changes, jump back to the top so the freshly
+  // filtered products are visible from the start (not from the previous scroll
+  // position). Search typing is intentionally excluded to avoid jumping on every
+  // keystroke; the first render is skipped so the initial load doesn't scroll.
+  const filterKey = JSON.stringify({
+    categoryId: filters.categoryId,
+    brand: activeBrand,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    inStockOnly: filters.inStockOnly,
+    onSale: filters.onSale,
+    minRating: filters.minRating,
+    sort: filters.sort,
+    attributes: filters.attributes,
+  });
+  const firstFilterRender = useRef(true);
+  useEffect(() => {
+    if (firstFilterRender.current) { firstFilterRender.current = false; return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [filterKey]);
+
   // WB-style auto infinite scroll: load next page when sentinel enters viewport
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

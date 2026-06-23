@@ -70,6 +70,25 @@ export default function CategoryPage() {
     { initialNumItems: PAGE_SIZE },
   );
 
+  // Jump to the top when the active filter/sort set changes so freshly filtered
+  // products are visible from the start. Search typing is excluded; the first
+  // render is skipped so the initial load doesn't scroll.
+  const filterKey = JSON.stringify({
+    brand: filters.brand,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    inStockOnly: filters.inStockOnly,
+    onSale: filters.onSale,
+    minRating: filters.minRating,
+    sort: filters.sort,
+    attributes: filters.attributes,
+  });
+  const firstFilterRender = useRef(true);
+  useEffect(() => {
+    if (firstFilterRender.current) { firstFilterRender.current = false; return; }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filterKey]);
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
