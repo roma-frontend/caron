@@ -451,13 +451,9 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {(settings === undefined ||
-                  settings?.enableCarSelector !== false) && (
+                {settings !== undefined && settings?.enableCarSelector !== false && (
                   <div
                     className="hero-fade-4 hidden lg:block w-full rounded-2xl border border-border/40 bg-card/70 p-5 shadow-xl backdrop-blur-md lg:w-[22rem]"
-                    style={{
-                      visibility: settings === undefined ? "hidden" : "visible",
-                    }}
                   >
                     <p className="mb-3 text-sm font-semibold text-white/60 uppercase tracking-wider">
                       Ընտրել մեքենա
