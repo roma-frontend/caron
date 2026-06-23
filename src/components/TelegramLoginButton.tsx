@@ -61,5 +61,14 @@ export function TelegramLoginButton({
   }, [botUsername, cornerRadius]);
 
   if (!botUsername) return null;
-  return <div ref={containerRef} className="flex justify-center" />;
+  return (
+    <>
+      <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        կամ
+        <span className="h-px flex-1 bg-border" />
+      </div>
+      <div ref={containerRef} className="flex justify-center" />
+    </>
+  );
 }

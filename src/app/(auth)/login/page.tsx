@@ -101,11 +101,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            կամ
-            <span className="h-px flex-1 bg-border" />
-          </div>
           <TelegramLoginButton onAuth={handleTelegram} />
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
