@@ -26,7 +26,7 @@ export function Logo({ size = 32, className }: LogoProps) {
         height={size}
         className={className}
         style={{ height: size, width: 'auto', objectFit: 'contain' }}
-        priority
+        loading="eager"
       />
     );
   }
@@ -42,7 +42,7 @@ export function Logo({ size = 32, className }: LogoProps) {
         height={size}
         className={`${className ?? ''} block dark:hidden`}
         style={{ height: size, width: 'auto', objectFit: 'contain' }}
-        priority
+        loading="eager"
       />
       {/* Dark theme → white wordmark */}
       <Image
@@ -52,6 +52,7 @@ export function Logo({ size = 32, className }: LogoProps) {
         height={size}
         className={`${className ?? ''} hidden dark:block`}
         style={{ height: size, width: 'auto', objectFit: 'contain' }}
+        loading="eager"
       />
     </>
   );

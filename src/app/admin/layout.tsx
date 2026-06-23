@@ -88,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const sidebar = (
     <>
-      <div className="flex h-14 items-center gap-2 border-b px-4">
+      <div className="flex h-14 items-center justify-between gap-2 border-b px-4">
         <Link href="/" className="transition-transform hover:scale-110">
           <Logo size={32} />
         </Link>
