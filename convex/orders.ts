@@ -161,6 +161,19 @@ export const create = mutation({
       itemsCount: args.items.length,
     });
 
+    // Branded confirmation email to the customer (best-effort; no-ops without
+    // RESEND_API_KEY or for Telegram placeholder emails).
+    await ctx.scheduler.runAfter(0, internal.email.sendOrderConfirmation, {
+      to: args.customerEmail,
+      orderNumber,
+      customerName: args.customerName,
+      items: args.items.map((i) => ({ name: i.name, price: i.price, quantity: i.quantity })),
+      subtotal: serverSubtotal,
+      shipping: serverShipping,
+      total: finalTotal,
+      shippingAddress: args.shippingAddress,
+    });
+
     await ctx.db.insert('orderEvents', {
       orderId,
       type: 'created',
