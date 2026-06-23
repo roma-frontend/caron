@@ -162,6 +162,19 @@ export const login = mutation({
   },
 });
 
+/** Public numeric Telegram bot id (the token prefix before ':'). Not secret —
+ * it's embedded in the login widget — and needed by the custom Telegram button
+ * to call Telegram.Login.auth(). Null when the bot token isn't configured. */
+export const telegramBotId = query({
+  args: {},
+  handler: async () => {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) return null;
+    const id = token.split(':')[0];
+    return /^\d+$/.test(id) ? id : null;
+  },
+});
+
 export const me = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
