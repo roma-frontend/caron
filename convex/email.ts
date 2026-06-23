@@ -42,7 +42,7 @@ export const sendOrderConfirmation = internalAction({
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: 'Caron <noreply@caron.am>', to: args.to, subject, html }),
+        body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Caron <noreply@caron.am>', to: args.to, subject, html }),
       });
     } catch {
       /* best-effort: never block order flow on email failure */

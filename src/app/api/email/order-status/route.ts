@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: 'Caron <noreply@caron.am>', to, subject, html }),
+    body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Caron <noreply@caron.am>', to, subject, html }),
   });
 
   if (!res.ok) return NextResponse.json({ error: 'Failed to send' }, { status: 500 });
