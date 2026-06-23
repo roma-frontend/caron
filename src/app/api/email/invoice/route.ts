@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: (process.env.EMAIL_FROM || 'Caron <noreply@caron.am>').trim(),
+      from: (process.env.EMAIL_FROM || 'Caron <noreply@caron.group>').trim(),
       to,
       subject,
       html,

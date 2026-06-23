@@ -26,7 +26,7 @@ export const notifySubscribers = internalAction({
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `<b>${args.productName}</b>`,
-      `🌐 <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am'}/products/${args.productId}">Դիտել ապրանքը</a>`,
+      `🌐 <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group'}/products/${args.productId}">Դիտել ապրանքը</a>`,
       `━━━━━━━━━━━━━━━━━━`,
     ].join('\n');
 

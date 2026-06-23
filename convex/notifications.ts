@@ -7,7 +7,7 @@ function fmt(n: number): string {
 }
 
 /** Public site base URL for links in notifications (no trailing slash). */
-const SITE = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am').trim().replace(/\/+$/, '');
+const SITE = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group').trim().replace(/\/+$/, '');
 
 export const sendOrderNotification = internalAction({
   args: {

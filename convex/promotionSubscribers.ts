@@ -54,7 +54,7 @@ export const notifySubscribers = internalAction({
     );
     const productLinks = products
       .filter(Boolean)
-      .map((p) => `• <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am'}/products/${(p as Record<string, unknown>).slug}"><b>${(p as Record<string, unknown>).name}</b></a>`)
+      .map((p) => `• <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group'}/products/${(p as Record<string, unknown>).slug}"><b>${(p as Record<string, unknown>).name}</b></a>`)
       .join('\n');
 
     const text = [
@@ -66,7 +66,7 @@ export const notifySubscribers = internalAction({
       productLinks,
       ``,
       `━━━━━━━━━━━━━━━━━━`,
-      `<a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am'}/promotions/${args.promotionId}">🔗 Դիտել ակցիան</a>`,
+      `<a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group'}/promotions/${args.promotionId}">🔗 Դիտել ակցիան</a>`,
       ``,
       `<i>Դուք ստանում եք այս նամակը, քանի որ բաժանորդագրվել եք ակցիաների թարմացումներին:</i>`,
     ].join('\n');

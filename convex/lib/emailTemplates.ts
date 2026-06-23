@@ -18,8 +18,8 @@ const BRAND = {
   bg: '#f4f5f6',
   card: '#ffffff',
   border: '#e5e7eb',
-  site: (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am').trim().replace(/\/+$/, ''),
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@caron.am',
+  site: (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group').trim().replace(/\/+$/, ''),
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@caron.group',
 };
 
 function escapeHtml(str: unknown): string {

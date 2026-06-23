@@ -22,7 +22,7 @@ export function JsonLd() {
   if (settings?.telegram) sameAs.push(socialUrl('telegram', settings.telegram));
   if (settings?.whatsapp) sameAs.push(socialUrl('whatsapp', settings.whatsapp));
 
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.am').trim().replace(/\/+$/, '');
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group').trim().replace(/\/+$/, '');
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Store',

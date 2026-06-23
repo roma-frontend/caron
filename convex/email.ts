@@ -9,7 +9,7 @@ import { orderConfirmationEmail } from './lib/emailTemplates';
  * customer has no real email (Telegram placeholder).
  *
  * Requires RESEND_API_KEY in the Convex deployment env (dev + prod) and a
- * verified `caron.am` domain in Resend for delivery from noreply@caron.am.
+ * verified `caron.group` domain in Resend for delivery from noreply@caron.group.
  */
 export const sendOrderConfirmation = internalAction({
   args: {
@@ -42,7 +42,7 @@ export const sendOrderConfirmation = internalAction({
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: (process.env.EMAIL_FROM || 'Caron <noreply@caron.am>').trim(), to: args.to, subject, html }),
+        body: JSON.stringify({ from: (process.env.EMAIL_FROM || 'Caron <noreply@caron.group>').trim(), to: args.to, subject, html }),
       });
     } catch {
       /* best-effort: never block order flow on email failure */

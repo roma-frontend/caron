@@ -20,7 +20,7 @@ export const sendToUser = internalAction({
   handler: async (ctx, args) => {
     const publicKey = process.env.VAPID_PUBLIC_KEY;
     const privateKey = process.env.VAPID_PRIVATE_KEY;
-    const subject = process.env.VAPID_SUBJECT || 'mailto:admin@caron.am';
+    const subject = process.env.VAPID_SUBJECT || 'mailto:admin@caron.group';
     if (!publicKey || !privateKey) return; // not configured — silently skip
 
     webpush.setVapidDetails(subject, publicKey, privateKey);
