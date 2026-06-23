@@ -167,6 +167,18 @@ function exportPDF(o: Record<string, unknown>) {
 function OrderCard({ order, sessionToken, index, settings }: { order: Record<string, unknown>; sessionToken: string; index: number; settings: ReturnType<typeof useSettings> }) {
   const { ref, visible } = useReveal();
   const updateStatus = useMutation(api.orders.updateStatus);
+  // Best-effort: email the customer when their order status changes. Never
+  // blocks the admin action; silently skipped if email isn't configured or the
+  // account has no real email (Telegram placeholder).
+  const notifyStatusEmail = (status: string) => {
+    const email = String(order.customerEmail ?? '');
+    if (!email || email.endsWith('@telegram.local')) return;
+    fetch('/api/email/order-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: email, orderNumber: String(order.orderNumber), status, customerName: String(order.customerName ?? '') }),
+    }).catch(() => {});
+  };
   const s = STATUS_MAP[String(order.status)] ?? STATUS_MAP.pending;
   const p = PAYMENT_MAP[String(order.paymentStatus)] ?? PAYMENT_MAP.awaiting;
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -196,6 +208,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
         cancelComment,
       });
       toast.success('Պատվերը չեղարկվեց');
+      notifyStatusEmail('cancelled');
       setCancelOpen(false);
       setCancelReason('');
       setCancelComment('');
@@ -240,7 +253,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
                 setCancelOpen(true);
                 return;
               }
-              updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' });
+              void updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' }).then(() => notifyStatusEmail(v));
             }}>
               <SelectTrigger className="h-8 w-full sm:w-[110px] text-xs min-w-0"><span>{s.label}</span></SelectTrigger>
               <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>

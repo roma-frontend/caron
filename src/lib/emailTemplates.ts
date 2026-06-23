@@ -169,3 +169,156 @@ export function invoiceEmail(input: InvoiceEmailInput): { subject: string; html:
     }),
   };
 }
+
+/** Group thousands for amounts, e.g. 24500 -> "24 500". */
+function formatAmount(n: number): string {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+export type OrderItem = { name: string; price: number; quantity: number };
+
+export type OrderConfirmationInput = {
+  to: string;
+  orderNumber: string;
+  customerName?: string;
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  shippingAddress?: string;
+};
+
+/** Order-placed confirmation with an itemized summary. */
+export function orderConfirmationEmail(input: OrderConfirmationInput): { subject: string; html: string } {
+  const orderNumber = escapeHtml(input.orderNumber);
+  const greetingName = input.customerName ? escapeHtml(input.customerName) : '';
+
+  const rows = input.items.map((it) => `
+    <tr>
+      <td style="padding:12px 0;border-bottom:1px solid ${BRAND.border};">
+        <span style="font-weight:600;color:${BRAND.text};">${escapeHtml(it.name)}</span><br/>
+        <span style="color:${BRAND.muted};font-size:13px;">${escapeHtml(String(it.quantity))} × ${formatAmount(it.price)} ֏</span>
+      </td>
+      <td align="right" style="padding:12px 0;border-bottom:1px solid ${BRAND.border};font-weight:700;color:${BRAND.text};white-space:nowrap;">
+        ${formatAmount(it.price * it.quantity)} ֏
+      </td>
+    </tr>`).join('');
+
+  const totalsRow = (label: string, value: string, bold = false) => `
+    <tr>
+      <td style="padding:6px 0;color:${bold ? BRAND.text : BRAND.muted};font-size:${bold ? '16px' : '14px'};font-weight:${bold ? '800' : '400'};">${label}</td>
+      <td align="right" style="padding:6px 0;color:${bold ? BRAND.text : BRAND.text};font-size:${bold ? '18px' : '14px'};font-weight:${bold ? '800' : '600'};white-space:nowrap;">${value}</td>
+    </tr>`;
+
+  const addressBlock = input.shippingAddress
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border:1px solid ${BRAND.border};border-radius:12px;background-color:#f9fafb;">
+        <tr><td style="padding:16px 20px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${BRAND.muted};">Առաքման հասցե</p>
+          <p style="margin:0;color:${BRAND.text};font-size:14px;">${escapeHtml(input.shippingAddress)}</p>
+        </td></tr>
+      </table>`
+    : '';
+
+  const content = `
+    <p style="margin:0 0 16px;font-size:18px;font-weight:700;color:${BRAND.text};">
+      ${greetingName ? `Հարգելի ${greetingName}, շ` : 'Շ'}նորհակալություն գնման համար։ 🎉
+    </p>
+    <p style="margin:0 0 20px;color:${BRAND.muted};">
+      Ձեր պատվերը հաջողությամբ ընդունված է և մշակման փուլում է։
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+      <tr><td style="background-color:${BRAND.primary}14;border:1px solid ${BRAND.primary}33;border-radius:999px;padding:8px 16px;color:${BRAND.primary};font-weight:700;font-size:14px;">
+        Պատվեր №${orderNumber}
+      </td></tr>
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+      ${rows}
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
+      ${totalsRow('Ապրանքներ', `${formatAmount(input.subtotal)} ֏`)}
+      ${totalsRow('Առաքում', input.shipping > 0 ? `${formatAmount(input.shipping)} ֏` : 'Անվճար')}
+      <tr><td colspan="2" style="padding:8px 0 0;border-top:2px solid ${BRAND.border};"></td></tr>
+      ${totalsRow('Ընդհանուր', `${formatAmount(input.total)} ֏`, true)}
+    </table>
+
+    ${addressBlock}
+
+    ${button('Հետևել պատվերին', `${BRAND.site}/order-status`)}
+
+    <p style="margin:20px 0 0;color:${BRAND.muted};font-size:13px;">
+      Հարցերի դեպքում գրեք <a href="mailto:${BRAND.email}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.email}</a>։
+    </p>
+  `;
+
+  return {
+    subject: `Caron — Պատվեր №${input.orderNumber} ընդունված է ✓`,
+    html: baseEmailLayout({
+      title: `Պատվեր №${input.orderNumber}`,
+      preheader: `Ձեր պատվերն ընդունված է։ Ընդհանուր՝ ${formatAmount(input.total)} ֏`,
+      content,
+    }),
+  };
+}
+
+type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+const STATUS_META: Record<OrderStatus, { label: string; color: string; message: string }> = {
+  pending: { label: 'Սպասվում է', color: '#f59e0b', message: 'Ձեր պատվերն ստացվել է և սպասում է հաստատման։' },
+  confirmed: { label: 'Հաստատվել է', color: '#0066AE', message: 'Ձեր պատվերը հաստատվել է և շուտով կմշակվի։' },
+  processing: { label: 'Մշակվում է', color: '#6366f1', message: 'Ձեր պատվերը մշակման փուլում է։ Շուտով կուղարկվի։' },
+  shipped: { label: 'Ուղարկվել է', color: '#0ea5e9', message: 'Ձեր պատվերը ճանապարհին է։ 🚚' },
+  delivered: { label: 'Առաքվել է', color: '#16a34a', message: 'Ձեր պատվերն առաքվել է։ Շնորհակալություն գնման համար։ 🎉' },
+  cancelled: { label: 'Չեղարկվել է', color: '#dc2626', message: 'Ձեր պատվերը չեղարկվել է։ Հարցերի դեպքում կապվեք մեզ հետ։' },
+};
+
+export type OrderStatusInput = {
+  to: string;
+  orderNumber: string;
+  status: OrderStatus;
+  customerName?: string;
+};
+
+/** Order status-change notification. */
+export function orderStatusEmail(input: OrderStatusInput): { subject: string; html: string } {
+  const meta = STATUS_META[input.status] ?? STATUS_META.pending;
+  const orderNumber = escapeHtml(input.orderNumber);
+  const greetingName = input.customerName ? escapeHtml(input.customerName) : '';
+
+  const content = `
+    <p style="margin:0 0 16px;font-size:18px;font-weight:700;color:${BRAND.text};">
+      ${greetingName ? `Հարգելի ${greetingName}, ` : ''}Ձեր պատվերի կարգավիճակը թարմացվել է։
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+      <tr><td style="background-color:${BRAND.primary}14;border:1px solid ${BRAND.primary}33;border-radius:999px;padding:8px 16px;color:${BRAND.primary};font-weight:700;font-size:14px;">
+        Պատվեր №${orderNumber}
+      </td></tr>
+    </table>
+
+    <!-- Status badge -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 8px;border:1px solid ${meta.color}40;border-radius:12px;background-color:${meta.color}10;">
+      <tr><td style="padding:20px 24px;text-align:center;">
+        <span style="display:inline-block;background-color:${meta.color};color:#ffffff;font-weight:700;font-size:15px;padding:8px 20px;border-radius:999px;">${escapeHtml(meta.label)}</span>
+        <p style="margin:14px 0 0;color:${BRAND.text};font-size:15px;">${escapeHtml(meta.message)}</p>
+      </td></tr>
+    </table>
+
+    <div style="margin:20px 0 0;">${button('Հետևել պատվերին', `${BRAND.site}/order-status`)}</div>
+
+    <p style="margin:20px 0 0;color:${BRAND.muted};font-size:13px;">
+      Հարցերի դեպքում գրեք <a href="mailto:${BRAND.email}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.email}</a>։
+    </p>
+  `;
+
+  return {
+    subject: `Caron — Պատվեր №${input.orderNumber}՝ ${meta.label}`,
+    html: baseEmailLayout({
+      title: `Պատվեր №${input.orderNumber}`,
+      preheader: meta.message,
+      content,
+    }),
+  };
+}
