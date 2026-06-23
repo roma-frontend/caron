@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/adminAuth';
 import { checkRateLimit } from '@/lib/ratelimit';
-
-function escapeHtml(str: string): string {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-}
+import { invoiceEmail } from '@/lib/emailTemplates';
 
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
@@ -26,25 +18,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Email not configured' }, { status: 500 });
   }
 
-  let body: { to?: string; orderNumber?: string; total?: string; bankAccount?: string; bankName?: string };
+  let body: { to?: string; orderNumber?: string; total?: string; bankAccount?: string; bankName?: string; customerName?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { to, orderNumber, total, bankAccount, bankName } = body;
+  const { to, orderNumber, total, bankAccount, bankName, customerName } = body;
   if (!to || !orderNumber || !total) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
-  // HTML-escape all user-supplied values
-  const html = `
-    <h2>Պատվեր #${escapeHtml(orderNumber)}</h2>
-    <p>Ընդհատված պատվեր: <strong>${escapeHtml(total)} ֏</strong></p>
-    <h3>Բանկային հաշիվ:</h3>
-    <p>Բանկ: ${escapeHtml(bankName ?? '')}<br/>Հաշիվ: <code>${escapeHtml(bankAccount ?? '')}</code></p>
-  `;
+  const { subject, html } = invoiceEmail({ to, orderNumber, total, bankName, bankAccount, customerName });
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -54,8 +40,8 @@ export async function POST(req: Request) {
     },
     body: JSON.stringify({
       from: 'Caron <noreply@caron.am>',
-      to: escapeHtml(to),
-      subject: `Պատվեր #${escapeHtml(orderNumber)}`,
+      to,
+      subject,
       html,
     }),
   });
