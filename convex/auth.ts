@@ -171,12 +171,12 @@ export const me = query({
       if (session.expiresAt < Date.now()) return null;
       const user = await ctx.db.get(session.userId);
       if (!user || !user.isActive) return null;
-      return { id: user._id, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address };
+      return { id: user._id, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address, telegramUsername: user.telegramUsername };
     }
     // Fallback: old sessionToken on user document
     const user = await ctx.db.query('users').withIndex('by_session_token', (q) => q.eq('sessionToken', args.sessionToken)).unique();
     if (!user || !user.isActive || !user.sessionExpiry || user.sessionExpiry < Date.now()) return null;
-    return { id: user._id, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address };
+    return { id: user._id, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address, telegramUsername: user.telegramUsername };
   },
 });
 
@@ -308,7 +308,7 @@ export const loginWithTelegram = mutation({
     if (!user.isActive) throw new Error('Օգտագործողը արգելափակված է');
 
     const sessionToken = await createSession(ctx, user._id, 30);
-    return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address };
+    return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address, telegramUsername: user.telegramUsername };
   },
 });
 

@@ -41,7 +41,7 @@ export default function RegisterPage() {
         authDate: String(u.auth_date),
         hash: u.hash,
       });
-      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
+      setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone, telegramUsername: result.telegramUsername });
       await setAuthCookie(result.sessionToken);
       toast.success(`Բարի գալուստ, ${result.name}!`);
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');

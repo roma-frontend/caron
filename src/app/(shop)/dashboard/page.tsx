@@ -84,10 +84,17 @@ export default function DashboardPage() {
               <span className="text-muted-foreground">Անուն</span>
               <span className="font-medium">{user.name}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Էլ․ հասցե</span>
-              <span>{user.email}</span>
-            </div>
+            {user.email?.endsWith('@telegram.local') ? (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Telegram</span>
+                <span className="font-medium">{user.telegramUsername ? `@${user.telegramUsername}` : 'Միացված է'}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Էլ․ հասցե</span>
+                <span>{user.email}</span>
+              </div>
+            )}
             {user.customerType && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Տիպ</span>
