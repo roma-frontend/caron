@@ -30,7 +30,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "convex": "^1.31.7",
+    "convex": "^1.41.0",
     "convex-helpers": "^0.1.113",
     "dompurify": "^3.4.11",
     "embla-carousel-react": "^8.6.0",

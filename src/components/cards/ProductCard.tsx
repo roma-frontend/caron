@@ -272,7 +272,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
               ) : null}
 
               <div className="mt-2 flex items-end gap-2 flex-wrap">
-                <span className="text-lg font-extrabold tracking-tight text-primary leading-none">{formatPrice(displayPrice)}</span>
+                <span className="text-md font-extrabold tracking-tight text-primary leading-none">{formatPrice(displayPrice)}</span>
                 {hasDiscount && <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>}
                 {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">-{discountPct}%</span>}
               </div>

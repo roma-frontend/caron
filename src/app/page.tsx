@@ -350,7 +350,7 @@ export default function HomePage() {
 
           <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] sm:min-h-auto lg:min-h-0 flex flex-col md:px-8 py-12"
+              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] sm:min-h-auto lg:min-h-0 flex flex-col md:p-8"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty(
@@ -369,12 +369,12 @@ export default function HomePage() {
                 className="absolute inset-0 h-full w-full object-cover hero-video"
               />
               {/* Blue tint overlay */}
-              <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply" />
+              <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply rounded-4xl" />
               {/* Dark overlay for readability */}
-              <div className="absolute inset-0 bg-black/40" />
+              <div className="absolute inset-0 bg-black/40 rounded-4xl" />
               {/* Vignette */}
               <div
-                className="absolute inset-0"
+                className="absolute inset-0 rounded-4xl"
                 style={{
                   background:
                     "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%)",
@@ -382,14 +382,14 @@ export default function HomePage() {
               />
               {/* Spotlight — follows cursor */}
               <div
-                className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 opacity-0 group-hover:opacity-100 rounded-4xl"
                 style={{
                   background:
                     "radial-gradient(400px circle at var(--sx, 50%) var(--sy, 50%), rgba(99,179,255,0.12), transparent 70%)",
                 }}
               />
               <div
-                className="pointer-events-none absolute inset-0 opacity-70"
+                className="pointer-events-none absolute inset-0 opacity-70 rounded-4xl"
                 style={{
                   background:
                     "linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 100%)",
