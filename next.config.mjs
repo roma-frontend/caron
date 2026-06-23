@@ -9,10 +9,11 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // Content-Security-Policy without a nonce, so pages stay statically cacheable
 // (ISR/CDN). 'unsafe-inline' is required for styled-jsx, next-themes and the
-// app's inline styles; script eval is only allowed in dev for React DX.
-const csp = [
+// app's inline styles; script eval is only allowed in dev for React DX, plus on
+// the auth pages where the Telegram Login Widget requires it (scoped below).
+const buildCsp = (extraScriptSrc = '') => [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://telegram.org${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://telegram.org${extraScriptSrc}${isDev ? " 'unsafe-eval'" : ''}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: https:`,
   `media-src 'self' blob: https://*.r2.dev https://*.r2.cloudflarestorage.com`,
@@ -26,6 +27,11 @@ const csp = [
   ...(isDev ? [] : ['upgrade-insecure-requests']),
 ].join('; ');
 
+// Strict CSP for the whole site; a slightly looser one (adds 'unsafe-eval') is
+// applied ONLY to /login and /register, where telegram-widget.js needs eval.
+const csp = buildCsp();
+const cspAuth = buildCsp(" 'unsafe-eval'");
+
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -37,6 +43,11 @@ const securityHeaders = [
   { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
   { key: 'Content-Security-Policy', value: csp },
 ];
+
+// Same headers, but with the auth-page CSP (Telegram widget needs 'unsafe-eval').
+const securityHeadersAuth = securityHeaders.map((h) =>
+  h.key === 'Content-Security-Policy' ? { ...h, value: cspAuth } : h,
+);
 
 const nextConfig = {
   reactStrictMode: true,
@@ -103,8 +114,13 @@ const nextConfig = {
 
   async headers() {
     return [
-      // Security headers on all routes
-      { source: '/(.*)', headers: securityHeaders },
+      // Security headers on all routes EXCEPT the auth pages (which need the
+      // looser Telegram-widget CSP). Negative lookahead keeps a single CSP per
+      // route so the strict and auth policies never intersect.
+      { source: '/((?!login|register).*)', headers: securityHeaders },
+      // Auth pages — same headers but CSP allows the Telegram Login Widget eval.
+      { source: '/login', headers: securityHeadersAuth },
+      { source: '/register', headers: securityHeadersAuth },
       // Static assets — long cache
       {
         source: '/:path*\\.{png,jpg,jpeg,gif,webp,avif,svg,ico,woff,woff2}',
