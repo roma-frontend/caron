@@ -20,7 +20,7 @@ export function ScrollToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="fixed bottom-10 left-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border bg-primary shadow-lg transition-all hover:bg-accent hover:text-white hover:-translate-y-1 lg:bottom-6"
+      className="fixed bottom-10 left-4 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary/90 hover:-translate-y-1 lg:bottom-6"
       aria-label="Ոլորել վերև"
     >
       <ArrowUp className="h-5 w-5" />
