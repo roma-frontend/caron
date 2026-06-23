@@ -323,7 +323,7 @@ export default function HomePage() {
       <div className="min-w-0 flex-1">
         {/* Hero — integrated section module */}
         <section
-          className="relative min-h-[calc(100svh-var(--header-height))] sm:min-h-auto overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]"
+          className="relative min-h-[calc(100svh-var(--header-base-height))] sm:min-h-0 overflow-hidden lg:min-h-0 lg:px-[max(var(--space-container),0.75rem)] lg:pt-[var(--space-8)] lg:pb-[var(--space-10)]"
           data-hero
         >
           <div
@@ -350,7 +350,7 @@ export default function HomePage() {
 
           <div className="mx-auto lg:max-w-[var(--container-max)]">
             <div
-              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-height))] sm:min-h-auto lg:min-h-0 flex flex-col md:p-8"
+              className="group relative overflow-hidden lg:rounded-4xl border-0 lg:border border-border/50 shadow-[0_20px_60px_rgba(0,0,0,0.18)] min-h-[calc(100svh-var(--header-base-height))] sm:min-h-0 lg:min-h-0 flex flex-col md:p-8"
               onMouseMove={(e) => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty(
