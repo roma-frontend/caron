@@ -32,17 +32,17 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   if (count === 0) {
     return {
       title: `OEM ${decoded} — ապրանքներ չեն գտնվել`,
-      description: `${decoded} OEM համարով ապրանքներ չեն գտնվել Caron.am խանութում:`,
+      description: `${decoded} OEM համարով ապրանքներ չեն գտնվել Caron.group խանութում:`,
       robots: { index: false },
     };
   }
 
   const productNames = products.slice(0, 3).map((p: { name: string }) => p.name).join(', ');
-  const title = `OEM ${decoded} — ${count} ապրանք Caron.am`;
+  const title = `OEM ${decoded} — ${count} ապրանք Caron.group`;
   const description =
     count === 1
-      ? `${decoded} OEM համար — ${products[0].name}։ Գնել Caron.am առցանց խանութում։`
-      : `${decoded} OEM համար — գտնվել է ${count} ապրանք (${productNames}...)։ Գնել Caron.am առցանց խանութում։`;
+      ? `${decoded} OEM համար — ${products[0].name}։ Գնել Caron.group առցանց խանութում։`
+      : `${decoded} OEM համար — գտնվել է ${count} ապրանք (${productNames}...)։ Գնել Caron.group առցանց խանութում։`;
 
   return {
     title,

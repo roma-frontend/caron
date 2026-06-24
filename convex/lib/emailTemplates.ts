@@ -20,6 +20,8 @@ const BRAND = {
   border: '#e5e7eb',
   site: (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group').trim().replace(/\/+$/, ''),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@caron.group',
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@caron.group',
+  salesEmail: process.env.NEXT_PUBLIC_SALES_EMAIL || 'sales@caron.group',
 };
 
 function escapeHtml(str: unknown): string {
@@ -159,7 +161,7 @@ export function invoiceEmail(input: InvoiceEmailInput): { subject: string; html:
 
     <p style="margin:20px 0 0;color:${BRAND.muted};font-size:13px;">
       Հարցերի դեպքում պատասխանեք այս նամակին կամ գրեք
-      <a href="mailto:${BRAND.email}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.email}</a>։
+      <a href="mailto:${BRAND.supportEmail}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.supportEmail}</a>։
     </p>
   `;
 
@@ -252,7 +254,7 @@ export function orderConfirmationEmail(input: OrderConfirmationInput): { subject
     ${button('Հետևել պատվերին', `${BRAND.site}/order-status`)}
 
     <p style="margin:20px 0 0;color:${BRAND.muted};font-size:13px;">
-      Հարցերի դեպքում գրեք <a href="mailto:${BRAND.email}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.email}</a>։
+      Հարցերի դեպքում գրեք <a href="mailto:${BRAND.supportEmail}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.supportEmail}</a>։
     </p>
   `;
 
@@ -312,7 +314,7 @@ export function orderStatusEmail(input: OrderStatusInput): { subject: string; ht
     <div style="margin:20px 0 0;">${button('Հետևել պատվերին', `${BRAND.site}/order-status`)}</div>
 
     <p style="margin:20px 0 0;color:${BRAND.muted};font-size:13px;">
-      Հարցերի դեպքում գրեք <a href="mailto:${BRAND.email}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.email}</a>։
+      Հարցերի դեպքում գրեք <a href="mailto:${BRAND.supportEmail}" style="color:${BRAND.primary};text-decoration:none;">${BRAND.supportEmail}</a>։
     </p>
   `;
 

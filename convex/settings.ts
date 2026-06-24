@@ -10,7 +10,7 @@ export const get = query({
     return settings ?? {
       storeName: 'Caron Armenia',
       phone: '+374 XX XXX XXX',
-      email: 'info@caron.am',
+      email: 'info@caron.group',
       address: 'Երևան, Հայաստան',
       whatsapp: '',
       telegram: '',

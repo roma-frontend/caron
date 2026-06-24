@@ -85,7 +85,7 @@ export const metadata: Metadata = {
     'auto parts Armenia',
     'ավտոպահեստ Երևան',
     'Caron',
-    'caron.am',
+    'caron.group',
   ],
 
   authors: [{ name: SITE.fullName, url: APP_URL }],
