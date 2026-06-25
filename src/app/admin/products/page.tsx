@@ -422,7 +422,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
           e.target.value = '';
         }}
       />
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <div className="relative flex flex-col items-start gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-cover" />
@@ -557,7 +557,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-1">
+        <div className="absolute right-0 top-0 flex shrink-0 gap-1">
           <Link href={`/admin/products/${product._id}/edit`}>
             <Button size="icon-sm" variant="secondary" className="h-8 w-8"><Edit className="h-3.5 w-3.5" /></Button>
           </Link>
@@ -962,7 +962,7 @@ export default function AdminProductsPage() {
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={visibleProducts?.map((p) => String(p._id)) ?? []} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {visibleProducts?.map((p, i) => (
                 <SortableProductShell key={p._id} id={String(p._id)} disabled={!p.variantGroup}>
                   <AdminProductListRow product={p} sessionToken={sessionToken ?? ''} index={i} attrMetaMap={attrMetaMap} attrDefsByCategoryMap={attrDefsByCategoryMap} />
