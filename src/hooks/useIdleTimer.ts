@@ -63,17 +63,21 @@ export function useIdleTimer({ onIdle, onLogout }: UseIdleTimerOptions) {
   useEffect(() => {
     startIdleTimer();
 
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    // Use capture phase so non-bubbling events (notably `scroll` inside admin
+    // tables/modals) still reset the timer. `keydown` is used instead of the
+    // deprecated `keypress`, which doesn't fire for many keys.
+    const events = ['mousedown', 'mousemove', 'keydown', 'wheel', 'scroll', 'touchstart', 'pointerdown'];
+    const opts = { passive: true, capture: true } as const;
 
     const handleActivity = () => {
       if (!warningRef.current) startIdleTimer();
     };
 
-    events.forEach((e) => window.addEventListener(e, handleActivity, { passive: true }));
+    events.forEach((e) => window.addEventListener(e, handleActivity, opts));
 
     return () => {
       clearAllTimers();
-      events.forEach((e) => window.removeEventListener(e, handleActivity));
+      events.forEach((e) => window.removeEventListener(e, handleActivity, opts));
     };
   }, [startIdleTimer, clearAllTimers]);
 

@@ -962,7 +962,7 @@ export default function AdminProductsPage() {
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={visibleProducts?.map((p) => String(p._id)) ?? []} strategy={verticalListSortingStrategy}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div className="flex flex-col gap-3">
               {visibleProducts?.map((p, i) => (
                 <SortableProductShell key={p._id} id={String(p._id)} disabled={!p.variantGroup}>
                   <AdminProductListRow product={p} sessionToken={sessionToken ?? ''} index={i} attrMetaMap={attrMetaMap} attrDefsByCategoryMap={attrDefsByCategoryMap} />

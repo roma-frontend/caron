@@ -16,6 +16,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { clearAuthCookie } from '@/actions/auth';
 import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
 import { Loader } from '@/components/ui/loader';
+import { BottomTabBar, GridMenuSheet, AiMenuBanner, type TabItem, type GridMenuItem } from '@/components/shared/MobileTabBar';
 
 const NAV_ITEMS = [
   { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ' },
@@ -44,6 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const logoutStore = useAuthStore((s) => s.logout);
   const logoutMutation = useMutation(api.auth.logout);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const pendingCount = useOrderNotificationStore((s) => s.pendingCount);
   const returnsPendingCount = useOrderNotificationStore((s) => s.returnsPendingCount);
   const flash = useOrderNotificationStore((s) => s.flash);
@@ -196,44 +198,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 p-4 pb-20 md:p-8 lg:pb-8">{children}</main>
       </div>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t bg-background/95 backdrop-blur-md lg:hidden transition-all duration-300 group/nav touch-none" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="mx-auto w-10 h-1.5 rounded-full bg-muted-foreground/30 mt-2 mb-1 cursor-grab touch-none"
-          onTouchStart={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).dataset.touchY = String(e.touches[0].clientY); }}
-          onTouchMove={(e) => { e.preventDefault(); }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            const startY = Number((e.currentTarget as HTMLElement).dataset.touchY);
-            const endY = e.changedTouches[0].clientY;
-            const nav = e.currentTarget.closest('nav') as HTMLElement;
-            if (startY - endY > 20) nav.dataset.expanded = 'true';
-            else if (endY - startY > 20) nav.dataset.expanded = '';
-          }}
-        />
-        <div className="flex items-stretch h-14">
-          {NAV_ITEMS.slice(0, 5).map((item, i) => {
-            const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
-            return (
-              <Link key={`bottom-${i}`} href={item.href} className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] p-2 font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
-                <item.icon className="h-5 w-5" />
-                {item.label.slice(0, 6)}
-                {item.href === '/admin/orders' && pendingCount > 0 && <span className="absolute left-1/2 top-1 ml-1 rounded-full bg-destructive px-1.5 text-[9px] font-bold text-white">{pendingCount}</span>}
-              </Link>
-            );
-          })}
-        </div>
-        <div className="grid grid-cols-5 overflow-hidden transition-all duration-300 h-0 group-data-[expanded]/nav:h-14">
-          {NAV_ITEMS.slice(5).map((item, i) => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link key={`exp-${i}`} href={item.href} className={`flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
-                <item.icon className="h-5 w-5" />
-                {item.label.slice(0, 6)}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile bottom nav: 4 tabs + central FAB opening the full sections grid */}
+      <BottomTabBar
+        tabs={[
+          { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ', active: pathname === '/admin' },
+          { href: '/admin/products', icon: Package, label: 'Ապրանքներ', active: pathname.startsWith('/admin/products') },
+          { href: '/admin/orders', icon: BarChart3, label: 'Պատվերներ', active: pathname.startsWith('/admin/orders'), badge: pendingCount },
+          { href: '/admin/analytics', icon: TrendingUp, label: 'Անալիտիկա', active: pathname.startsWith('/admin/analytics') },
+        ] satisfies TabItem[]}
+        fabIcon={Menu}
+        fabLabel="Բոլորը"
+        onFabClick={() => setMenuOpen(true)}
+      />
+      <GridMenuSheet
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        title={storeName || 'Կառավարում'}
+        feature={
+          <AiMenuBanner
+            onClick={() => {
+              setMenuOpen(false);
+              window.dispatchEvent(new Event('caron:open-ai-chat'));
+            }}
+            subtitle="Հարցրեք պատվերների ու վիճակագրության մասին"
+          />
+        }
+        items={[
+          ...NAV_ITEMS.map((item) => ({
+            href: item.href,
+            icon: item.icon,
+            label: item.label,
+            badge:
+              item.href === '/admin/orders'
+                ? pendingCount
+                : item.href === '/admin/returns'
+                  ? returnsPendingCount
+                  : undefined,
+          })),
+          { icon: LogOut, label: 'Դուրս գալ', onClick: handleLogout, highlight: true },
+        ] satisfies GridMenuItem[]}
+      />
     </div>
   );
 }

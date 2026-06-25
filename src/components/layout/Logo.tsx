@@ -9,8 +9,10 @@ interface LogoProps {
   className?: string;
 }
 
-// Intrinsic aspect ratio of the generated wordmark (791 x 200).
-const ASPECT = 3.955;
+// Intrinsic dimensions of the generated wordmark (791 x 200 → ratio 3.955).
+const LOGO_W = 791;
+const LOGO_H = 200;
+const ASPECT = LOGO_W / LOGO_H;
 
 export function Logo({ size = 32, className }: LogoProps) {
   const settings = useSettings();
@@ -38,8 +40,8 @@ export function Logo({ size = 32, className }: LogoProps) {
       <Image
         src="/logo/caron-light.png"
         alt="CARON GROUP"
-        width={width}
-        height={size}
+        width={LOGO_W}
+        height={LOGO_H}
         className={`${className ?? ''} block dark:hidden`}
         style={{ height: size, width: 'auto', objectFit: 'contain' }}
         loading="eager"
@@ -48,8 +50,8 @@ export function Logo({ size = 32, className }: LogoProps) {
       <Image
         src="/logo/caron-dark.png"
         alt="CARON GROUP"
-        width={width}
-        height={size}
+        width={LOGO_W}
+        height={LOGO_H}
         className={`${className ?? ''} hidden dark:block`}
         style={{ height: size, width: 'auto', objectFit: 'contain' }}
         loading="eager"

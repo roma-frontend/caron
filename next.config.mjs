@@ -53,6 +53,7 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
+  devIndicators: false,
   typescript: { ignoreBuildErrors: false },
   turbopack: {
     root: path.resolve(process.cwd()),
