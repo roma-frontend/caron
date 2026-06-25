@@ -32,7 +32,7 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
     <>
       {/* Desktop sidebar - always visible */}
       <aside className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-32 space-y-1">
+        <div className="scrollbar-none sticky top-32 space-y-1 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(100vh - 9rem)' }}>
           <FilterContent categoryId={categoryId} onFilterChange={onFilterChange} activeFilters={activeFilters} />
         </div>
       </aside>
