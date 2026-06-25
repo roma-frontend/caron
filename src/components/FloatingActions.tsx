@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bot, Send, X, Loader2, Phone, MessageSquare, Smartphone } from 'lucide-react';
+import { Bot, Send, X, Loader2, Phone, MessageCircle, MessageSquare, Smartphone } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/store/auth';
 import { getRoleSuggestions, type UserRole } from '@/lib/aiAssistant';
@@ -45,9 +45,6 @@ export function FloatingActions() {
   const suggestions = getRoleSuggestions(role);
   const noMobileNav = pathname === '/' || /^\/products\/.+/.test(pathname);
   const mobileBottom = noMobileNav ? '1.5rem' : '5rem';
-  // In the admin panel the AI assistant lives in the menu banner, so the
-  // standalone floating buttons are hidden to avoid clutter.
-  const isAdmin = pathname.startsWith('/admin');
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 400);
@@ -149,8 +146,9 @@ export function FloatingActions() {
         </div>
       )}
 
-      {/* Floating buttons (hidden in admin — AI is reachable from the menu banner) */}
-      {!isAdmin && (
+      {/* Floating buttons. The AI button is desktop-only — on mobile the
+          assistant lives in the bottom-menu banner, so it's hidden there to
+          avoid duplication / clutter over the bottom navigation. */}
       <div data-fab className="fixed right-4 z-50 flex flex-col items-end gap-3" style={{ bottom: mobileBottom, transition: 'bottom 0.35s cubic-bezier(0.22, 1, 0.36, 1)', marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.25rem)' }}>
         <style>{'@media (min-width:768px){[data-fab]{bottom:1.5rem!important;right:1.5rem!important;transition:none!important}}'}</style>
         {!chatOpen && settings?.whatsapp && (
@@ -167,8 +165,10 @@ export function FloatingActions() {
             <Smartphone className="h-5 w-5" />
           </Link>
         )}
+        <button onClick={() => setChatOpen(!chatOpen)} className={`hidden h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 lg:flex ${chatOpen ? 'bg-foreground/80 text-background rotate-90' : 'bg-primary text-white hover:scale-110'}`} aria-label="AI Assistant">
+          {chatOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        </button>
       </div>
-      )}
     </>
   );
 }
