@@ -93,17 +93,16 @@ export function ProductRail({
 
       <div
         ref={scrollRef}
-        className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-1 sm:gap-3 overflow-x-auto overscroll-x-contain px-1 pb-2"
-        style={{ scrollPadding: '0 0.25rem' }}
+        className="scrollbar-none -mx-1 flex scroll-smooth gap-1 sm:gap-3 overflow-x-auto overscroll-x-contain px-1 pb-2 [-webkit-overflow-scrolling:touch]"
       >
         {loading
           ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={i} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[19.2%] shrink-0 snap-start">
+              <div key={i} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[19.2%] shrink-0">
                 <div className="h-[20rem] animate-pulse rounded-2xl bg-muted" />
               </div>
             ))
           : products.map((p, i) => (
-              <div key={p._id} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[19.2%] shrink-0 snap-start">
+              <div key={p._id} className="w-[42%] sm:w-[30%] md:w-[23%] lg:w-[19.2%] shrink-0">
                 <ProductCard
                   id={p._id}
                   slug={p.slug}
