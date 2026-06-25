@@ -19,7 +19,7 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -131,7 +131,7 @@ function SortableProductShell({ id, disabled, children }: { id: string; disabled
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={disabled ? '' : 'touch-none'}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       {children}
     </div>
   );
@@ -721,7 +721,10 @@ export default function AdminProductsPage() {
   }, [filtered, groupOrders]);
 
   const visibleProducts = orderedFiltered?.slice(0, visibleCount);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+  );
 
   const toggleSelect = (id: string) => setSelectedIds((s) => {
     const n = new Set(s);

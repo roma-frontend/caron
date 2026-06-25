@@ -13,7 +13,7 @@ import { Plus, Trash2, Edit, SlidersHorizontal, AlertTriangle, GripVertical } fr
 import { toast } from 'sonner';
 import { useAuth } from '@/store/auth';
 import type { Id } from '../../../../convex/_generated/dataModel';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { flushSync } from 'react-dom';
@@ -29,7 +29,7 @@ function SortableFilterCard({ f, catName, onEdit, onDelete }: {
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:bg-muted/30">
-      <button {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing">
+      <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing">
         <GripVertical className="h-4 w-4" />
       </button>
       <div className="min-w-0 flex-1">
@@ -63,7 +63,10 @@ export default function AdminFiltersPage() {
   const [form, setForm] = useState({ name: '', slug: '', categoryId: '' as string, options: '', order: 0 });
   const [optimisticOrder, setOptimisticOrder] = useState<Map<string, number>>(new Map());
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+  );
 
   const resetForm = () => setForm({ name: '', slug: '', categoryId: '', options: '', order: 0 });
 
