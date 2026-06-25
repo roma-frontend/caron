@@ -369,12 +369,12 @@ export default function HomePage() {
                 className="absolute inset-0 h-full w-full object-cover hero-video"
               />
               {/* Blue tint overlay */}
-              <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply rounded-4xl" />
+              <div className="absolute inset-0 bg-blue-950/50 mix-blend-multiply" />
               {/* Dark overlay for readability */}
-              <div className="absolute inset-0 bg-black/40 rounded-4xl" />
+              <div className="absolute inset-0 bg-black/40" />
               {/* Vignette */}
               <div
-                className="absolute inset-0 rounded-4xl"
+                className="absolute inset-0"
                 style={{
                   background:
                     "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%)",
@@ -382,14 +382,14 @@ export default function HomePage() {
               />
               {/* Spotlight — follows cursor */}
               <div
-                className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 opacity-0 group-hover:opacity-100 rounded-4xl"
+                className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                 style={{
                   background:
                     "radial-gradient(400px circle at var(--sx, 50%) var(--sy, 50%), rgba(99,179,255,0.12), transparent 70%)",
                 }}
               />
               <div
-                className="pointer-events-none absolute inset-0 opacity-70 rounded-4xl"
+                className="pointer-events-none absolute inset-0 opacity-70"
                 style={{
                   background:
                     "linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 100%)",
