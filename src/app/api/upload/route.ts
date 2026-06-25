@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { checkRateLimit } from '@/lib/ratelimit';
+import { checkAdminRateLimit } from '@/lib/ratelimit';
 import { requireAdminAuth } from '@/lib/adminAuth';
 import { optimizeImage } from '@/lib/optimizeImage';
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1';
-  const { allowed } = await checkRateLimit(ip);
+  const { allowed } = await checkAdminRateLimit(ip);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const formData = await req.formData();
