@@ -202,6 +202,26 @@ export default function ProductDetailPage() {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
   );
 
+  // Variant strip scroll arrows: only shown when there is overflow to scroll,
+  // and hidden at the respective edge (start hides left, end hides right).
+  const variantScrollRef = useRef<HTMLDivElement>(null);
+  const [variantArrows, setVariantArrows] = useState({ left: false, right: false });
+  const updateVariantArrows = useCallback(() => {
+    const el = variantScrollRef.current;
+    if (!el) { setVariantArrows({ left: false, right: false }); return; }
+    const max = el.scrollWidth - el.clientWidth;
+    setVariantArrows({ left: el.scrollLeft > 1, right: el.scrollLeft < max - 1 });
+  }, []);
+  useEffect(() => {
+    const el = variantScrollRef.current;
+    if (!el) return;
+    updateVariantArrows();
+    el.addEventListener('scroll', updateVariantArrows, { passive: true });
+    const ro = new ResizeObserver(updateVariantArrows);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', updateVariantArrows); ro.disconnect(); };
+  }, [updateVariantArrows, variants]);
+
   if (product === undefined) return <Loader />;
   if (product === null) return (
     <div className="py-20 text-center">
@@ -327,7 +347,7 @@ export default function ProductDetailPage() {
 
           {orderedVariants && orderedVariants.length > 1 && (
             <div className="mt-3 relative group">
-              <div id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
+              <div ref={variantScrollRef} id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
                   {currentUser?.role === 'admin' ? (
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleVariantDragEnd}>
                       <SortableContext items={orderedVariants.map((v) => v._id)} strategy={horizontalListSortingStrategy}>
@@ -361,8 +381,12 @@ export default function ProductDetailPage() {
                     </div>
                   )}
                 </div>
-              <button type="button" aria-label="Նախորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }); }} className="opacity-0 group-hover:opacity-100 absolute left-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
-              <button type="button" aria-label="Հաջորդ" onClick={() => { const el = document.getElementById('variant-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }); }} className="opacity-0 group-hover:opacity-100 absolute right-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
+              {variantArrows.left && (
+              <button type="button" aria-label="Նախորդ" onClick={() => { variantScrollRef.current?.scrollBy({ left: -160, behavior: 'smooth' }); }} className="opacity-0 group-hover:opacity-100 absolute left-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
+              )}
+              {variantArrows.right && (
+              <button type="button" aria-label="Հաջորդ" onClick={() => { variantScrollRef.current?.scrollBy({ left: 160, behavior: 'smooth' }); }} className="opacity-0 group-hover:opacity-100 absolute right-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
+              )}
               {hoveredVariant?.images?.[0] && (
                 <div className="hidden sm:block absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                   <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-cover" />
