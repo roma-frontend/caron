@@ -41,7 +41,7 @@ import { useCompareStore } from '@/store/compare';
 import { GitCompareArrows } from 'lucide-react';
 import Image from 'next/image';
 import Script from 'next/script';
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -78,7 +78,7 @@ function SortableVariantThumb({
       onClick={onClick}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
-      className={`shrink-0 rounded-xl border-2 p-1 transition-all touch-none ${active ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+      className={`shrink-0 rounded-xl border-2 p-1 transition-all ${active ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
       {...attributes}
       {...listeners}
     >
@@ -194,7 +194,13 @@ export default function ProductDetailPage() {
     emblaApi.on('select', onEmblaSelect);
   }, [emblaApi, onEmblaSelect]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  // Mouse drags instantly (desktop reorder), while touch requires a short
+  // press-and-hold before dragging — so a normal horizontal swipe scrolls the
+  // variant strip on mobile instead of starting a drag.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+  );
 
   if (product === undefined) return <Loader />;
   if (product === null) return (

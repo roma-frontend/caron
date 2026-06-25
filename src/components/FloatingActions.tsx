@@ -39,7 +39,7 @@ export function FloatingActions() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showTop, setShowTop] = useState(false);
+  const [, setShowTop] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const role: UserRole = user?.role === 'admin' ? 'admin' : user ? 'customer' : 'guest';
   const suggestions = getRoleSuggestions(role);
