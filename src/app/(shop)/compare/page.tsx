@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { X, GitCompareArrows, ShoppingCart, TrendingDown, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
-import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from '@/lib/motion';
@@ -14,8 +13,6 @@ export default function ComparePage() {
   const { items, remove, clear } = useCompareStore();
   const addToCart = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
-  const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
   const bestPrice = items.length > 0 ? Math.min(...items.map((i) => i.price)) : 0;
 
   if (items.length === 0) {

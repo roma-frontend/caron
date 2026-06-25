@@ -24,7 +24,6 @@ export default function CartPage() {
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
-  const setSelectedIds = useCartStore((s) => s.setSelectedIds);
   const totalPrice = useCartStore((s) => s.totalPrice());
   const settings = useSettings();
   const [selected, setSelected] = useState<Set<string>>(new Set());

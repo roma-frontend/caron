@@ -36,8 +36,6 @@ interface QuickViewProps {
 export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
-  const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
   const toggleFav = useFavoritesStore((s) => s.toggle);
   const favoriteItems = useFavoritesStore((s) => s.items);
   const isFav = useFavoritesStore((s) => s.items.some((i) => i.id === product.id));

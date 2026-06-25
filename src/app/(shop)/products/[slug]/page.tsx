@@ -151,8 +151,6 @@ export default function ProductDetailPage() {
   const items = useCartStore((s) => s.items);
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
-  const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
   const step = product?.qtyStep || 1;
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
   const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
@@ -346,7 +344,13 @@ export default function ProductDetailPage() {
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
 
           {orderedVariants && orderedVariants.length > 1 && (
-            <div className="mt-3 relative group">
+            <div className="mt-3 relative">
+              {(variantArrows.left || variantArrows.right) && (
+                <div className="mb-1.5 hidden items-center justify-end gap-1 sm:flex">
+                  <button type="button" aria-label="Նախորդ" disabled={!variantArrows.left} onClick={() => { variantScrollRef.current?.scrollBy({ left: -160, behavior: 'smooth' }); }} className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 transition-all hover:bg-background hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-30 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:hover:bg-muted"><ChevronLeft className="h-4 w-4" strokeWidth={2.5} /></button>
+                  <button type="button" aria-label="Հաջորդ" disabled={!variantArrows.right} onClick={() => { variantScrollRef.current?.scrollBy({ left: 160, behavior: 'smooth' }); }} className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 transition-all hover:bg-background hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-30 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:hover:bg-muted"><ChevronRight className="h-4 w-4" strokeWidth={2.5} /></button>
+                </div>
+              )}
               <div ref={variantScrollRef} id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
                   {currentUser?.role === 'admin' ? (
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleVariantDragEnd}>
@@ -381,12 +385,6 @@ export default function ProductDetailPage() {
                     </div>
                   )}
                 </div>
-              {variantArrows.left && (
-              <button type="button" aria-label="Նախորդ" onClick={() => { variantScrollRef.current?.scrollBy({ left: -160, behavior: 'smooth' }); }} className="opacity-0 group-hover:opacity-100 absolute left-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
-              )}
-              {variantArrows.right && (
-              <button type="button" aria-label="Հաջորդ" onClick={() => { variantScrollRef.current?.scrollBy({ left: 160, behavior: 'smooth' }); }} className="opacity-0 group-hover:opacity-100 absolute right-1 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-md ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-background hover:shadow-lg hover:scale-110 active:scale-95 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:shadow-black/50 dark:hover:bg-muted"><ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} /></button>
-              )}
               {hoveredVariant?.images?.[0] && (
                 <div className="hidden sm:block absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 rounded-xl border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                   <Image src={hoveredVariant.images[0]} alt={hoveredVariant.name} width={176} height={200} className="h-50 w-44 rounded-lg object-cover" />
