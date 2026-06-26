@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Send, X, Bot, Loader2 } from 'lucide-react';
 import { SITE } from '@/lib/constants';
 import Link from 'next/link';
+import { useT } from '@/lib/i18n/admin';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -29,6 +30,7 @@ function MessageContent({ content }: { content: string }) {
 }
 
 export function AIChatWidget() {
+  const { t } = useT();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -63,7 +65,7 @@ export function AIChatWidget() {
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.reply || data.error || 'Error' };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Ծառայությունը անհասանելի է։ Փորձեք ավելի ուշ։' }]);
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: t('acmp.chat.unavailable') }]);
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export function AIChatWidget() {
       {/* Header */}
       <div className="flex items-center gap-3 border-b px-4 py-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Bot className="h-4 w-4 text-primary" /></div>
-        <div className="flex-1"><p className="text-sm font-semibold">{SITE.name} AI</p><p className="text-[10px] text-muted-foreground">Ավտոպահեստամասերի օգնական</p></div>
+        <div className="flex-1"><p className="text-sm font-semibold">{SITE.name} AI</p><p className="text-[10px] text-muted-foreground">{t('acmp.chat.assistant')}</p></div>
         <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>
       </div>
 
@@ -90,7 +92,7 @@ export function AIChatWidget() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="space-y-3 pt-4">
-            <p className="text-center text-xs text-muted-foreground">Հարցրեք ինձ</p>
+            <p className="text-center text-xs text-muted-foreground">{t('acmp.chat.askMe')}</p>
             <div className="grid gap-2">
               {suggestions.map((s) => (
                 <button key={s} onClick={() => sendMessage(s)} className="rounded-xl border px-3 py-2 text-left text-xs transition-colors hover:border-primary/40 hover:bg-primary/5">{s}</button>
@@ -117,7 +119,7 @@ export function AIChatWidget() {
       {/* Input */}
       <div className="border-t p-3">
         <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
-          <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Գրեք հաղորդագրություն..." className="h-9 text-sm rounded-xl" disabled={loading} />
+          <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t('acmp.chat.inputPlaceholder')} className="h-9 text-sm rounded-xl" disabled={loading} />
           <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-xl" disabled={!input.trim() || loading}>
             <Send className="h-4 w-4" />
           </Button>

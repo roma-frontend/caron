@@ -9,30 +9,32 @@ import { Badge } from '@/components/ui/badge';
 import { Check, X, PackageCheck, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized } from '@/lib/formatters';
 import { normalizeImageUrl } from '../../../../convex/lib/imageUrl';
 import Image from 'next/image';
 import type { Id } from '../../../../convex/_generated/dataModel';
+import { useAdminT } from '@/lib/i18n/admin';
 
 type Status = 'pending' | 'approved' | 'rejected' | 'completed';
 
 const STATUS: Record<Status, { label: string; cls: string }> = {
-  pending: { label: 'Քննարկվում է', cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
-  approved: { label: 'Հաստատված', cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  rejected: { label: 'Մերժված', cls: 'bg-red-500/15 text-red-600 dark:text-red-400' },
-  completed: { label: 'Ավարտված', cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
+  pending: { label: 'ao.ret.status.pending', cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  approved: { label: 'ao.ret.status.approved', cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  rejected: { label: 'ao.ret.status.rejected', cls: 'bg-red-500/15 text-red-600 dark:text-red-400' },
+  completed: { label: 'ao.ret.status.completed', cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
 };
 
 const FILTERS: { key: 'all' | Status; label: string }[] = [
-  { key: 'all', label: 'Բոլորը' },
-  { key: 'pending', label: 'Քննարկվում է' },
-  { key: 'approved', label: 'Հաստատված' },
-  { key: 'completed', label: 'Ավարտված' },
-  { key: 'rejected', label: 'Մերժված' },
+  { key: 'all', label: 'ao.all' },
+  { key: 'pending', label: 'ao.ret.status.pending' },
+  { key: 'approved', label: 'ao.ret.status.approved' },
+  { key: 'completed', label: 'ao.ret.status.completed' },
+  { key: 'rejected', label: 'ao.ret.status.rejected' },
 ];
 
 export default function AdminReturnsPage() {
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
   const requests = useQuery(api.returns.listAll, sessionToken ? { sessionToken } : 'skip');
   const updateStatus = useMutation(api.returns.updateStatus);
   const [filter, setFilter] = useState<'all' | Status>('all');
@@ -40,8 +42,8 @@ export default function AdminReturnsPage() {
   const setStatus = async (id: Id<'returnRequests'>, status: Status) => {
     try {
       await updateStatus({ sessionToken: sessionToken!, id, status });
-      toast.success('Թարմացված');
-    } catch { toast.error('Սխալ'); }
+      toast.success(t('ao.ret.toast.updated'));
+    } catch { toast.error(t('ao.ret.toast.error')); }
   };
 
   const counts = (requests ?? []).reduce<Record<string, number>>((acc, r) => { acc[r.status] = (acc[r.status] ?? 0) + 1; return acc; }, {});
@@ -50,8 +52,8 @@ export default function AdminReturnsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold sm:text-3xl">Վերադարձներ / Փոխանակումներ</h1>
-        <p className="text-sm text-muted-foreground">{requests?.length ?? 0} հայտ</p>
+        <h1 className="text-2xl font-bold sm:text-3xl">{t('ao.ret.title')}</h1>
+        <p className="text-sm text-muted-foreground">{requests?.length ?? 0} {t('ao.ret.requestWord')}</p>
       </div>
 
       {/* Filter chips */}
@@ -62,7 +64,7 @@ export default function AdminReturnsPage() {
           return (
             <button key={f.key} onClick={() => setFilter(f.key)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'border-transparent bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:border-primary/40 hover:text-primary'}`}>
-              {f.label}{n > 0 ? ` · ${n}` : ''}
+              {t(f.label)}{n > 0 ? ` · ${n}` : ''}
             </button>
           );
         })}
@@ -79,7 +81,7 @@ export default function AdminReturnsPage() {
       {requests && visible.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><Inbox className="h-6 w-6 text-muted-foreground" /></div>
-          <p className="text-muted-foreground">Հայտեր չկան</p>
+          <p className="text-muted-foreground">{t('ao.ret.empty')}</p>
         </div>
       )}
 
@@ -92,9 +94,9 @@ export default function AdminReturnsPage() {
                 {/* Header */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-sm font-bold">{r.orderNumber}</span>
-                  <Badge variant="outline" className="text-[10px]">{r.type === 'return' ? '↩ Վերադարձ' : '⇄ Փոխանակում'}</Badge>
-                  <Badge className={`${st.cls} border-0 text-[10px]`}>{st.label}</Badge>
-                  <span className="ml-auto text-xs text-muted-foreground">{formatDateHy(r.createdAt)}</span>
+                  <Badge variant="outline" className="text-[10px]">{r.type === 'return' ? t('ao.ret.typeReturn') : t('ao.ret.typeExchange')}</Badge>
+                  <Badge className={`${st.cls} border-0 text-[10px]`}>{t(st.label)}</Badge>
+                  <span className="ml-auto text-xs text-muted-foreground">{formatDateLocalized(r.createdAt, t)}</span>
                 </div>
                 <p className="break-all text-xs text-muted-foreground">{r.customerEmail}</p>
 
@@ -121,20 +123,20 @@ export default function AdminReturnsPage() {
 
                 {/* Reason */}
                 <div className="text-sm">
-                  <p>Պատճառ՝ <span className="font-medium">{r.reason}</span></p>
+                  <p>{t('ao.ret.reasonLabel')} <span className="font-medium">{r.reason}</span></p>
                   {r.comment && <p className="mt-1 text-muted-foreground">«{r.comment}»</p>}
                 </div>
 
                 {/* Actions */}
                 <div className="grid grid-cols-3 gap-2 pt-1">
                   <Button size="sm" variant="outline" disabled={r.status === 'approved'} className="h-9 gap-1.5 text-xs text-blue-600" onClick={() => setStatus(r._id, 'approved')}>
-                    <Check className="h-3.5 w-3.5" /> Հաստատել
+                    <Check className="h-3.5 w-3.5" /> {t('ao.ret.approve')}
                   </Button>
                   <Button size="sm" variant="outline" disabled={r.status === 'completed'} className="h-9 gap-1.5 text-xs text-emerald-600" onClick={() => setStatus(r._id, 'completed')}>
-                    <PackageCheck className="h-3.5 w-3.5" /> Ավարտել
+                    <PackageCheck className="h-3.5 w-3.5" /> {t('ao.ret.complete')}
                   </Button>
                   <Button size="sm" variant="outline" disabled={r.status === 'rejected'} className="h-9 gap-1.5 text-xs text-destructive" onClick={() => setStatus(r._id, 'rejected')}>
-                    <X className="h-3.5 w-3.5" /> Մերժել
+                    <X className="h-3.5 w-3.5" /> {t('ao.ret.reject')}
                   </Button>
                 </div>
               </CardContent>

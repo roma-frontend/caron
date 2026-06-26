@@ -9,6 +9,7 @@ import { useFavoritesStore } from '@/store/favorites';
 import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
+import { useT } from '@/lib/i18n/admin';
 
 interface StickyBuyBarProps {
   productId: string;
@@ -23,6 +24,7 @@ interface StickyBuyBarProps {
 }
 
 export function StickyBuyBar({ productId, productName, productPrice, productImage, productCompareAtPrice, inStock = true, slug: _slug, qty = 1, productStock }: StickyBuyBarProps) {
+  const { t } = useT();
   const [visible, setVisible] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
@@ -57,8 +59,8 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
-            aria-label={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
-            onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === productId); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: productImage ?? null }); toggleFav({ id: productId, name: productName, price: productPrice, image: productImage ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: productImage ?? null }); toast.success('Ավելացված է'); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացված է', onUndo: () => toggleFav(existing) }); } }}
+            aria-label={isFav ? t('sp.removeFromFavorites') : t('sp.addToFavorites')}
+            onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === productId); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: productImage ?? null }); toggleFav({ id: productId, name: productName, price: productPrice, image: productImage ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: productImage ?? null }); toast.success(t('sp.added')); } else if (existing) { showUndoCountdownToast({ message: t('sp.removed'), onUndo: () => toggleFav(existing) }); } }}
             className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all ${isFav ? 'border-red-500 bg-red-500 text-white' : 'border-border text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}
           >
             <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />
@@ -69,7 +71,7 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
             disabled={!inStock}
             onClick={(e) => { const prevQty = cartItems.find((i) => i.id === productId)?.quantity ?? 0; for (let i = 0; i < qty; i++) addItem({ id: productId, name: productName, price: productPrice, image: productImage ?? null, maxStock: productStock, qtyStep: 1 }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: productImage ?? null }); }}
           >
-            <ShoppingCart className="h-4 w-4" /> Զամբյուղ
+            <ShoppingCart className="h-4 w-4" /> {t('sp.cart')}
           </Button>
         </div>
       </div>

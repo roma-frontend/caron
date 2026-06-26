@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import { formatPrice } from '@/lib/formatters';
 import { useAuth } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
 
 function StatCard({
   title,
@@ -55,6 +56,7 @@ function StatCard({
 }
 
 export default function AdminDashboard() {
+  const { t } = useAdminT();
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
   const products = useQuery(api.products.listStockSummary);
@@ -88,17 +90,17 @@ export default function AdminDashboard() {
     const result: Array<{ order: typeof orders[number]; reason: string }> = [];
     for (const o of orders) {
       if (o.status === 'delivered' && o.paymentStatus !== 'paid') {
-        result.push({ order: o, reason: 'Առաքված, բայց չվճարված' });
+        result.push({ order: o, reason: t('ac.reasonDeliveredUnpaid') });
       } else if (o.status === 'cancelled' && o.paymentStatus === 'paid') {
-        result.push({ order: o, reason: 'Չեղարկված, Վճարված' });
+        result.push({ order: o, reason: t('ac.reasonCancelledPaid') });
       } else if (o.status === 'pending' && now - o.createdAt > 2 * DAY) {
-        result.push({ order: o, reason: 'Սպասում > 2 օր' });
+        result.push({ order: o, reason: t('ac.reasonPending2Days') });
       } else if (o.paymentStatus === 'awaiting' && o.status !== 'cancelled' && now - o.createdAt > 3 * DAY) {
-        result.push({ order: o, reason: 'Վճարում սպասում > 3 օր' });
+        result.push({ order: o, reason: t('ac.reasonPayment3Days') });
       } else if (!o.customerPhone && !o.customerEmail) {
-        result.push({ order: o, reason: 'Չկա կոնտակտային տվյալներ' });
+        result.push({ order: o, reason: t('ac.reasonNoContact') });
       } else if (o.total === 0) {
-        result.push({ order: o, reason: 'Ընդհատված գին 0' });
+        result.push({ order: o, reason: t('ac.reasonZeroPrice') });
       }
     }
     return result;
@@ -108,60 +110,60 @@ export default function AdminDashboard() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold">
-          {'Ադմինիստրատորի վահանակ'}
+          {t('ac.adminPanel')}
         </h1>
 
         <p className="text-muted-foreground">
-          {'Վիճակագրություն և խանութի կառավարում'}
+          {t('ac.dashboardSubtitle')}
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <StatCard
-          title={'Պատվերներ'}
+          title={t('ac.orders')}
           value={String(stats.totalOrders)}
           icon={ShoppingBag}
-          desc={'Ընդամենը'}
+          desc={t('ac.total')}
           href="/admin/orders"
         />
 
         <StatCard
-          title={'Սպասման մեջ'}
+          title={t('ac.pending')}
           value={String(stats.pendingOrders)}
           icon={Clock}
-          desc={'Նոր պատվերներ'}
+          desc={t('ac.newOrders')}
           href="/admin/orders"
         />
 
         <StatCard
-          title={'Հասույթ'}
+          title={t('ac.revenue')}
           value={formatPrice(stats.revenue)}
           icon={DollarSign}
-          desc={'Վճարված'}
+          desc={t('ac.paid')}
         />
 
         <StatCard
-          title={'Ապրանքներ'}
+          title={t('ac.products')}
           value={String(stats.totalProducts)}
           icon={Package}
-          desc={'Ընդամենը'}
+          desc={t('ac.total')}
           href="/admin/products"
         />
 
         <StatCard
-          title={'Կատեգորիաներ'}
+          title={t('ac.categories')}
           value={String(stats.totalCategories)}
           icon={FolderTree}
-          desc={'Ընդամենը'}
+          desc={t('ac.total')}
           href="/admin/categories"
         />
 
         <StatCard
-          title={'Սպասող'}
+          title={t('ac.awaiting')}
           value={String(stats.awaitingPayment)}
           icon={TrendingUp}
-          desc={'Վճարման սպասող'}
+          desc={t('ac.awaitingPayment')}
         />
       </div>
 
@@ -171,20 +173,20 @@ export default function AdminDashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <AlertTriangle className="h-5 w-5 text-primary" />
-              {'Տվյալների որակ'}
+              {t('ac.dataQuality')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {([
-                { label: 'Առանց նկարի', value: health.activeNoImage, bad: true, key: 'noImage' },
-                { label: 'Առանց նկարագրության', value: health.activeNoDescription, bad: true, key: 'noDescription' },
-                { label: '0 մնացորդ (ակտիվ)', value: health.activeZeroStock, bad: true, key: 'zeroStock' },
-                { label: 'Կրկնվող SKU', value: health.duplicateSkus, bad: true, key: 'dupSku' },
-                { label: 'Առանց SEO', value: health.missingSeo, bad: false, key: 'noSeo' },
-                { label: 'Առանց բրենդի', value: health.noBrand, bad: false, key: 'noBrand' },
-                { label: 'Քիչ մնացորդ (≤5)', value: health.lowStock, bad: false, key: 'lowStock' },
-                { label: 'Ակտիվ ապրանքներ', value: health.active, bad: false, neutral: true, key: '' },
+                { label: t('ac.noImage'), value: health.activeNoImage, bad: true, key: 'noImage' },
+                { label: t('ac.noDescription'), value: health.activeNoDescription, bad: true, key: 'noDescription' },
+                { label: t('ac.zeroStockActive'), value: health.activeZeroStock, bad: true, key: 'zeroStock' },
+                { label: t('ac.duplicateSku'), value: health.duplicateSkus, bad: true, key: 'dupSku' },
+                { label: t('ac.noSeo'), value: health.missingSeo, bad: false, key: 'noSeo' },
+                { label: t('ac.noBrand'), value: health.noBrand, bad: false, key: 'noBrand' },
+                { label: t('ac.lowStock5'), value: health.lowStock, bad: false, key: 'lowStock' },
+                { label: t('ac.activeProducts'), value: health.active, bad: false, neutral: true, key: '' },
               ] as { label: string; value: number; bad: boolean; neutral?: boolean; key: string }[]).map((m) => {
                 const flag = !m.neutral && m.value > 0;
                 return (
@@ -216,7 +218,7 @@ export default function AdminDashboard() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-red-600">
                   <AlertTriangle className="h-5 w-5" />
-                  {'Պրոբլեմատիկ պատվերներ'} <Badge variant="destructive" className="ml-1">{problems.length}</Badge>
+                  {t('ac.problematicOrders')} <Badge variant="destructive" className="ml-1">{problems.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -241,7 +243,7 @@ export default function AdminDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-orange-600">
                 <AlertTriangle className="h-5 w-5" />
-                {'Պահեստի ահազանգ'}
+                {t('ac.stockAlert')}
               </CardTitle>
             </CardHeader>
 
@@ -258,7 +260,7 @@ export default function AdminDashboard() {
                     </span>
 
                     <Badge variant="destructive">
-                      {'Սպառված է'}
+                      {t('ac.outOfStock')}
                     </Badge>
                   </Link>
                 ))}
@@ -274,7 +276,7 @@ export default function AdminDashboard() {
                     </span>
 
                     <Badge className="bg-orange-500">
-                      {p.stock} {'հատ'}
+                      {p.stock} {t('ac.pcs')}
                     </Badge>
                   </Link>
                 ))}
@@ -287,7 +289,7 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle>
-              {'Վերջին պատվերներ'}
+              {t('ac.recentOrders')}
             </CardTitle>
           </CardHeader>
 
@@ -323,8 +325,8 @@ export default function AdminDashboard() {
                       className="text-[10px]"
                     >
                       {order.paymentStatus === 'paid'
-                        ? 'Վճարված'
-                        : 'Սպասման մեջ'}
+                        ? t('ac.paid')
+                        : t('ac.pending')}
                     </Badge>
                   </div>
                 </Link>
@@ -332,7 +334,7 @@ export default function AdminDashboard() {
 
               {(!orders || orders.length === 0) && (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  {'Պատվերներ չկան'}
+                  {t('ac.noOrders')}
                 </p>
               )}
             </div>

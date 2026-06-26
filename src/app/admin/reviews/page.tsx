@@ -8,17 +8,19 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized } from '@/lib/formatters';
+import { useAdminT } from '@/lib/i18n/admin';
 
 export default function AdminReviewsPage() {
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
   const reviews = useQuery(api.reviews.listAll, sessionToken ? { sessionToken } : 'skip');
   const approve = useMutation(api.reviews.approve);
   const remove = useMutation(api.reviews.remove);
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Կարծիքներ</h1>
+      <h1 className="text-3xl font-bold mb-6">{t('acat.reviews')}</h1>
       <div className="space-y-3">
         {reviews?.map((r) => (
           <Card key={r._id}>
@@ -29,25 +31,25 @@ export default function AdminReviewsPage() {
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((i) => <Star key={i} className={`h-3 w-3 ${i <= r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} />)}
                   </div>
-                  <Badge variant={r.isApproved ? 'default' : 'secondary'} className="text-[10px]">{r.isApproved ? 'Հաստատված' : 'Սպասում'}</Badge>
-                  <span className="text-xs text-muted-foreground">{formatDateHy(r.createdAt)}</span>
+                  <Badge variant={r.isApproved ? 'default' : 'secondary'} className="text-[10px]">{r.isApproved ? t('acat.approved') : t('acat.pending')}</Badge>
+                  <span className="text-xs text-muted-foreground">{formatDateLocalized(r.createdAt, t)}</span>
                 </div>
                 {r.text && <p className="mt-1 text-sm text-muted-foreground">{r.text}</p>}
               </div>
               <div className="flex gap-2 shrink-0">
                 {!r.isApproved && (
-                  <Button size="sm" variant="outline" className="h-8 gap-1 text-xs text-green-600" onClick={async () => { await approve({ sessionToken: sessionToken!, id: r._id, approved: true }); toast.success('Հաստատված'); }}>
+                  <Button size="sm" variant="outline" className="h-8 gap-1 text-xs text-green-600" onClick={async () => { await approve({ sessionToken: sessionToken!, id: r._id, approved: true }); toast.success(t('acat.approved')); }}>
                     <Check className="h-3 w-3" />
                   </Button>
                 )}
-                <Button size="sm" variant="outline" className="h-8 gap-1 text-xs text-destructive" onClick={async () => { await remove({ sessionToken: sessionToken!, id: r._id }); toast.success('Ջնջված'); }}>
+                <Button size="sm" variant="outline" className="h-8 gap-1 text-xs text-destructive" onClick={async () => { await remove({ sessionToken: sessionToken!, id: r._id }); toast.success(t('acat.removed')); }}>
                   <X className="h-3 w-3" />
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
-        {reviews?.length === 0 && <p className="py-8 text-center text-muted-foreground">Կարծիքներ չկան</p>}
+        {reviews?.length === 0 && <p className="py-8 text-center text-muted-foreground">{t('acat.noReviews')}</p>}
       </div>
     </div>
   );

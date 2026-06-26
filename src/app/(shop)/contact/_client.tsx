@@ -10,17 +10,19 @@ import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
 import { useReveal, revealStyle } from '@/lib/motion';
+import { useT } from '@/lib/i18n/admin';
 
 
 
 export default function ContactPage() {
+  const { t } = useT();
   const settings = useSettings();
   const CONTACTS = [
-  { icon: Phone, label: 'Հեռախոս', value: settings?.phone || '+374 XX XXX XXX', href: `tel:${settings?.phone || ''}` },
-  { icon: Mail, label: 'Էլ. փոստ', value: settings?.email || 'info@caron.group', href: `mailto:${settings?.email || 'info@caron.group'}` },
-  { icon: Mail, label: 'Վաճառք / Համագործակցություն', value: 'sales@caron.group', href: 'mailto:sales@caron.group' },
-  { icon: MapPin, label: 'Հասցե', value: settings?.address || 'Երեւան', href: `https://www.google.com/maps/search/${encodeURIComponent(settings?.address || '')}` },
-  { icon: Clock, label: 'Աշխատանքի ժամանակ', value: settings?.workingHours || '10:00 - 19:00' },
+  { icon: Phone, label: t('pg.contact.phone'), value: settings?.phone || '+374 XX XXX XXX', href: `tel:${settings?.phone || ''}` },
+  { icon: Mail, label: t('pg.contact.email'), value: settings?.email || 'info@caron.group', href: `mailto:${settings?.email || 'info@caron.group'}` },
+  { icon: Mail, label: t('pg.contact.salesCoop'), value: 'sales@caron.group', href: 'mailto:sales@caron.group' },
+  { icon: MapPin, label: t('pg.contact.address'), value: settings?.address || t('pg.contact.defaultCity'), href: `https://www.google.com/maps/search/${encodeURIComponent(settings?.address || '')}` },
+  { icon: Clock, label: t('pg.contact.workHours'), value: settings?.workingHours || '10:00 - 19:00' },
 ];
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' });
   const [sending, setSending] = useState(false);
@@ -29,13 +31,13 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.message) { toast.error('Բոլոր դաշտերը պարտադիր են'); return; }
+    if (!form.name || !form.phone || !form.message) { toast.error(t('pg.contact.allRequired')); return; }
     setSending(true);
     try {
       await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      toast.success('Հաղորդագրությունը ուղարկվեց');
+      toast.success(t('pg.contact.sent'));
       setForm({ name: '', phone: '', email: '', message: '' });
-    } catch { toast.error('Սխալ է տեղի ունեցել'); } finally { setSending(false); }
+    } catch { toast.error(t('pg.contact.error')); } finally { setSending(false); }
   };
 
   return (
@@ -45,8 +47,8 @@ export default function ContactPage() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
           <MessageCircle className="h-7 w-7 text-primary" />
         </div>
-        <h1 className="text-4xl font-bold">Կապ</h1>
-        <p className="mt-3 text-lg text-muted-foreground">Ունեք հարցեր կամ առաջարկներ - կապ հաստատեք մեզ հետ</p>
+        <h1 className="text-4xl font-bold">{t('pg.contact.title')}</h1>
+        <p className="mt-3 text-lg text-muted-foreground">{t('pg.contact.subtitle')}</p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-5">
@@ -78,7 +80,7 @@ export default function ContactPage() {
             {settings?.mapUrl ? (
               <iframe src={settings.mapUrl} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" />
             ) : (
-              <iframe src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ""}&q=${encodeURIComponent(settings?.address || "Երևան, Հայաստան")}`} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" />
+              <iframe src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ""}&q=${encodeURIComponent(settings?.address || t('pg.contact.mapCity'))}`} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" />
             )}
           </div>
         </div>
@@ -87,16 +89,16 @@ export default function ContactPage() {
         <div className="lg:col-span-3">
           <Card style={{ boxShadow: 'var(--shadow-lg)' }}>
             <CardContent className="p-6 md:p-8">
-              <h2 className="mb-6 text-xl font-bold px-4 s,:px-0">Կապ մեզ հետ</h2>
+              <h2 className="mb-6 text-xl font-bold px-4 s,:px-0">{t('pg.contact.formTitle')}</h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><Label>Անուն, ազգանուն *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Անուն, ազգանուն" className="h-11" /></div>
-                  <div><Label>Հեռախոս *</Label><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374..." className="h-11" /></div>
+                  <div><Label>{t('pg.contact.fullName')} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('pg.contact.fullName')} className="h-11" /></div>
+                  <div><Label>{t('pg.contact.phone')} *</Label><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374..." className="h-11" /></div>
                 </div>
-                <div><Label>Էլ. փոստ</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11" /></div>
-                <div><Label>Հարցում *</Label><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Նախատեսված հարցում..." rows={5} /></div>
+                <div><Label>{t('pg.contact.email')}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('pg.contact.emailPlaceholder')} className="h-11" /></div>
+                <div><Label>{t('pg.contact.message')} *</Label><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('pg.contact.messagePlaceholder')} rows={5} /></div>
                 <Button type="submit" variant="cta" size="xl" className="w-full gap-2" disabled={sending}>
-                  <Send className="h-5 w-5" /> {sending ? 'Ուղարկվում է...' : 'Ուղարկել'}
+                  <Send className="h-5 w-5" /> {sending ? t('pg.contact.sending') : t('pg.contact.send')}
                 </Button>
               </form>
             </CardContent>

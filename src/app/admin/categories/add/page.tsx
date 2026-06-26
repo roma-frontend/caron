@@ -15,9 +15,11 @@ import { useUpload } from '@/hooks/useUpload';
 import { useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
 
 function StepBasicInfo() {
   const { data, update } = useWizardData();
+  const { t } = useAdminT();
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
   const handleImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,11 +30,11 @@ function StepBasicInfo() {
 
   return (
     <div className="space-y-5">
-      <div><Label>Կարգ</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder="Կատեգորիա" className="h-11" /></div>
+      <div><Label>{t('acat.kargLabel')}</Label><Input value={(data.name as string) ?? ''} onChange={(e) => { update('name', e.target.value); update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')); }} placeholder={t('acat.category')} className="h-11" /></div>
       <div><Label>Slug</Label><Input value={(data.slug as string) ?? ''} onChange={(e) => update('slug', e.target.value)} placeholder="category-slug" className="h-11 font-mono" /></div>
-      <div><Label>Նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Կատեգորիայի նկարագրություն" rows={3} /></div>
+      <div><Label>{t('acat.description')}</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder={t('acat.categoryDescPlaceholder')} rows={3} /></div>
       <div>
-        <Label>Պատկեր</Label>
+        <Label>{t('acat.image')}</Label>
         {data.imageUrl ? (
           <div className="relative mt-2 aspect-video overflow-hidden rounded-lg border">
             <Image src={data.imageUrl as string} alt="" width={300} height={300} className="h-full w-full object-cover" />
@@ -40,7 +42,7 @@ function StepBasicInfo() {
           </div>
         ) : (
           <button onClick={() => fileRef.current?.click()} disabled={uploading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-muted-foreground hover:border-primary hover:text-primary">
-            <ImagePlus className="h-5 w-5" /> {uploading ? '...' : 'Ներբեռնել պատկեր'}
+            <ImagePlus className="h-5 w-5" /> {uploading ? '...' : t('acat.uploadImage')}
           </button>
         )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImg} />
@@ -51,11 +53,12 @@ function StepBasicInfo() {
 
 function StepSEO() {
   const { data, update } = useWizardData();
+  const { t } = useAdminT();
   return (
     <div className="space-y-5">
-      <div><Label>SEO նկարագրություն</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11" /></div>
-      <div><Label>SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={3} /></div>
-      <div><Label>Ակցիա</Label><Input value={(data.order as string) ?? '0'} onChange={(e) => update('order', e.target.value)} {...numericInputProps(false)} className="h-11" /></div>
+      <div><Label>{t('acat.seoDescLower')}</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11" /></div>
+      <div><Label>{t('acat.seoDescLower')}</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={3} /></div>
+      <div><Label>{t('acat.promoCap')}</Label><Input value={(data.order as string) ?? '0'} onChange={(e) => update('order', e.target.value)} {...numericInputProps(false)} className="h-11" /></div>
     </div>
   );
 }
@@ -64,9 +67,10 @@ export default function AddCategoryPage() {
   const router = useRouter();
   const create = useMutation(api.categories.create);
   const { sessionToken } = useAuth();
+  const { t } = useAdminT();
 
   const steps: WizardStep[] = [
-    { id: 'basic', title: 'Սկզբնական տվյալներ', content: <StepBasicInfo />, validation: (d) => !!(d.name && d.slug) },
+    { id: 'basic', title: t('acat.basicInfo'), content: <StepBasicInfo />, validation: (d) => !!(d.name && d.slug) },
     { id: 'seo', title: 'SEO', content: <StepSEO /> },
   ];
 
@@ -82,14 +86,14 @@ export default function AddCategoryPage() {
       seoTitle: (data.seoTitle as string) || undefined,
       seoDescription: (data.seoDescription as string) || undefined,
     });
-    toast.success('Կատեգորիան հաջողությամբ ստեղծվեց');
+    toast.success(t('acat.catCreated'));
     router.push('/admin/categories');
   };
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center">
       <Card className="w-full max-w-2xl overflow-hidden rounded-2xl border-0" style={{ boxShadow: 'var(--shadow-xl)' }}>
-        <Wizard steps={steps} onComplete={handleComplete} onCancel={() => router.push('/admin/categories')} submitLabel="Ստեղծել" />
+        <Wizard steps={steps} onComplete={handleComplete} onCancel={() => router.push('/admin/categories')} submitLabel={t('acat.create')} />
       </Card>
     </div>
   );

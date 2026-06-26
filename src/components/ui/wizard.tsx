@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from '@/lib/motion';
+import { useT } from '@/lib/i18n/admin';
 
 export interface WizardStep {
   id: string;
@@ -36,7 +37,9 @@ export function useWizardData() {
   return ctx;
 }
 
-export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծել', defaultData = {}, renderStickySummary, submitOnly = false, hideProgress = false }: WizardProps) {
+export function Wizard({ steps, onComplete, onCancel, submitLabel, defaultData = {}, renderStickySummary, submitOnly = false, hideProgress = false }: WizardProps) {
+  const { t } = useT();
+  const finalSubmitLabel = submitLabel ?? t('cmp.create');
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Record<string, unknown>>(defaultData);
   const [submitting, setSubmitting] = useState(false);
@@ -103,11 +106,11 @@ export function Wizard({ steps, onComplete, onCancel, submitLabel = 'Ստեղծ�
       <div className="shrink-0 border-t p-4 md:p-6 flex items-center gap-3">
         {!submitOnly && (
           <Button variant="outline" onClick={step > 0 ? () => setStep((s) => s - 1) : onCancel} disabled={submitting}>
-            <ChevronLeft className="h-4 w-4 mr-1" /> {step > 0 ? 'Ետ' : 'Չեղարկել'}
+            <ChevronLeft className="h-4 w-4 mr-1" /> {step > 0 ? t('cmp.back') : t('cmp.cancel')}
           </Button>
         )}
         <Button onClick={next} disabled={!canNext || submitting} className={cn(submitOnly && 'w-full')}>
-          {submitting ? 'Պահպանվում է...' : step === steps.length - 1 || submitOnly ? submitLabel : <><span>Առաջ</span><ChevronRight className="h-4 w-4 ml-1" /></>}
+          {submitting ? t('cmp.saving') : step === steps.length - 1 || submitOnly ? finalSubmitLabel : <><span>{t('cmp.next')}</span><ChevronRight className="h-4 w-4 ml-1" /></>}
         </Button>
       </div>
     </div>

@@ -21,8 +21,10 @@ import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useAuth } from '@/store/auth';
 import { BottomTabBar, GridMenuSheet, AiMenuBanner, type TabItem, type GridMenuItem } from '@/components/shared/MobileTabBar';
+import { useT } from '@/lib/i18n/admin';
 
 export function MobileNav() {
+  const { t } = useT();
   const pathname = usePathname();
   const cartCount = useCartStore((s) => s.totalItems());
   const favCount = useFavoritesStore((s) => s.count());
@@ -36,29 +38,29 @@ export function MobileNav() {
   const accountHref = mounted && user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login';
 
   const tabs: TabItem[] = [
-    { href: '/', icon: Home, label: 'Գլխավոր', active: pathname === '/' },
-    { href: '/products', icon: List, label: 'Ցանկ', active: pathname.startsWith('/products') },
+    { href: '/', icon: Home, label: t('cmp.home'), active: pathname === '/' },
+    { href: '/products', icon: List, label: t('cmp.nav_catalog'), active: pathname.startsWith('/products') },
     {
       href: '/cart',
       icon: ShoppingCart,
-      label: 'Զամբյուղ',
+      label: t('cmp.nav_cart'),
       active: pathname.startsWith('/cart'),
       badge: mounted ? cartCount : 0,
       iconAttrs: { 'data-mobile-cart-icon': '' },
     },
-    { href: accountHref, icon: User, label: 'Հաշիվ', active: pathname.startsWith('/dashboard') || pathname.startsWith('/admin') },
+    { href: accountHref, icon: User, label: t('cmp.nav_account'), active: pathname.startsWith('/dashboard') || pathname.startsWith('/admin') },
   ];
 
   const menuItems: GridMenuItem[] = [
-    { href: '/categories', icon: LayoutGrid, label: 'Կատեգորիաներ' },
-    { href: '/car-selector', icon: Car, label: 'Ընտրել ավто' },
-    { href: '/oem', icon: Hash, label: 'OEM որոնում' },
-    { href: '/promotions', icon: Tag, label: 'Ակցիաներ' },
-    { href: '/discounts', icon: Percent, label: 'Զեղչեր' },
-    { href: '/compare', icon: ArrowLeftRight, label: 'Համեմատել' },
-    { href: '/favorites', icon: Heart, label: 'Նախընտրած', badge: mounted ? favCount : 0 },
-    { href: '/orders', icon: Package, label: 'Պատվերներ' },
-    { href: '/products', icon: Search, label: 'Որոնում' },
+    { href: '/categories', icon: LayoutGrid, label: t('cmp.nav_categories') },
+    { href: '/car-selector', icon: Car, label: t('cmp.select_car') },
+    { href: '/oem', icon: Hash, label: t('cmp.oem_search') },
+    { href: '/promotions', icon: Tag, label: t('cmp.nav_promotions') },
+    { href: '/discounts', icon: Percent, label: t('cmp.discounts') },
+    { href: '/compare', icon: ArrowLeftRight, label: t('cmp.nav_compare') },
+    { href: '/favorites', icon: Heart, label: t('cmp.favorites_short'), badge: mounted ? favCount : 0 },
+    { href: '/orders', icon: Package, label: t('cmp.orders') },
+    { href: '/products', icon: Search, label: t('cmp.search_label') },
   ];
 
   const openAiChat = () => {
@@ -68,13 +70,13 @@ export function MobileNav() {
 
   return (
     <>
-      <BottomTabBar tabs={tabs} fabIcon={LayoutGrid} fabLabel="Մենյու" onFabClick={() => setMenuOpen(true)} />
+      <BottomTabBar tabs={tabs} fabIcon={LayoutGrid} fabLabel={t('cmp.menu')} onFabClick={() => setMenuOpen(true)} />
       <GridMenuSheet
         open={menuOpen}
         onOpenChange={setMenuOpen}
-        title="Մենյու"
+        title={t('cmp.menu')}
         items={menuItems}
-        feature={<AiMenuBanner onClick={openAiChat} subtitle="Գտեք ճիշտ պահեստամասը արագ" />}
+        feature={<AiMenuBanner onClick={openAiChat} subtitle={t('cmp.find_part_fast')} />}
       />
     </>
   );

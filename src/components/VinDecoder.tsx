@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LoaderInline } from '@/components/ui/loader';
 import { Card } from '@/components/ui/card';
 import { Car, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { useT } from '@/lib/i18n/admin';
 
 interface VinResult {
   vin: string;
@@ -27,6 +28,7 @@ interface VinResult {
 }
 
 export function VinDecoder() {
+  const { t } = useT();
   const router = useRouter();
   const [vin, setVin] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,7 @@ export function VinDecoder() {
   const decode = async () => {
     const trimmed = vin.trim().toUpperCase();
     if (trimmed.length !== 17) {
-      setError('Մուտքագրեք 17 նիշանոց VIN կոդ');
+      setError(t('pg.vin.enter17'));
       return;
     }
     setLoading(true);
@@ -48,12 +50,12 @@ export function VinDecoder() {
       const res = await fetch(`/api/vin?vin=${encodeURIComponent(trimmed)}`);
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Անհայտ սխալ');
+        setError(data.error || t('pg.vin.unknownError'));
       } else {
         setResult(data);
       }
     } catch {
-      setError('Ցանցի սխալ: Փորձեք կրկին:');
+      setError(t('pg.vin.networkError'));
     } finally {
       setLoading(false);
     }
@@ -66,22 +68,22 @@ export function VinDecoder() {
   };
 
   const mainFields = [
-    { label: 'Մակնիշ', value: result?.make },
-    { label: 'Մոդել', value: result?.model },
-    { label: 'Տարի', value: result?.year },
-    { label: 'Շարժիչ', value: result?.engine },
-    { label: 'Ծավալ (L)', value: result?.displacement },
-    { label: 'Վառելիքի տեսակ', value: result?.fuelType },
+    { label: t('pg.common.brand'), value: result?.make },
+    { label: t('pg.common.model'), value: result?.model },
+    { label: t('pg.common.year'), value: result?.year },
+    { label: t('pg.vin.engine'), value: result?.engine },
+    { label: t('pg.vin.displacement'), value: result?.displacement },
+    { label: t('pg.vin.fuelType'), value: result?.fuelType },
   ].filter((f) => f.value);
 
   const extraFields = [
-    { label: 'Ձիաուժ', value: result?.engineHP },
-    { label: 'Փոխանցման տուփ', value: result?.transmission },
-    { label: 'Քարշակ', value: result?.driveType },
-    { label: 'Թափք', value: result?.bodyClass },
-    { label: 'Կոմպլեկտացիա', value: result?.trim },
-    { label: 'Արտադրող', value: result?.manufacturer },
-    { label: 'Երկիր', value: result?.plantCountry },
+    { label: t('pg.vin.hp'), value: result?.engineHP },
+    { label: t('pg.vin.transmission'), value: result?.transmission },
+    { label: t('pg.vin.driveType'), value: result?.driveType },
+    { label: t('pg.vin.bodyClass'), value: result?.bodyClass },
+    { label: t('pg.vin.trim'), value: result?.trim },
+    { label: t('pg.carsel.maker'), value: result?.manufacturer },
+    { label: t('pg.vin.country'), value: result?.plantCountry },
   ].filter((f) => f.value);
 
   return (
@@ -90,16 +92,16 @@ export function VinDecoder() {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
           <Car className="h-7 w-7 text-primary" />
         </div>
-        <h2 className="text-xl font-bold">VIN ապակոդավորում</h2>
+        <h2 className="text-xl font-bold">{t('pg.vin.title')}</h2>
         <p className="text-sm text-muted-foreground">
-          Մուտքագրեք ձեր մեքենայի 17-նիշանոց VIN կոդը՝ մեքենայի տվյալները ստանալու համար
+          {t('pg.vin.subtitle')}
         </p>
       </div>
 
       <div className="flex gap-2">
         <Input
           ref={inputRef}
-          placeholder="Օր․ JTDBE32K500000000"
+          placeholder={t('pg.vin.examplePlaceholder')}
           value={vin}
           onChange={(e) => { setVin(e.target.value.toUpperCase()); setError(''); setResult(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter') decode(); }}
@@ -108,7 +110,7 @@ export function VinDecoder() {
         />
         <Button onClick={decode} disabled={loading || vin.length !== 17} className="h-11 gap-2 shrink-0">
           {loading ? <LoaderInline /> : <Search className="h-4 w-4" />}
-          Ստուգել
+          {t('pg.vin.check')}
         </Button>
       </div>
 
@@ -139,7 +141,7 @@ export function VinDecoder() {
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showAll ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                {showAll ? 'Քիչ' : 'Ավելին'}
+                {showAll ? t('pg.vin.less') : t('pg.vin.more')}
               </button>
               {showAll && (
                 <div className="grid grid-cols-2 gap-3 border-t pt-3">
@@ -157,14 +159,14 @@ export function VinDecoder() {
           <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
             <Button variant="default" onClick={searchParts} className="flex-1 gap-2">
               <Search className="h-4 w-4" />
-              Փնտրել պահեստամասեր
+              {t('pg.vin.searchParts')}
             </Button>
           </div>
         </Card>
       )}
 
       <p className="text-xs text-muted-foreground text-center">
-        VIN կոդը գտնվում է մեքենայի տեխանզննման փաստաթղթում, դիմապակու տակ կամ վարորդի դռան շրջանակի վրա
+        {t('pg.vin.hint')}
       </p>
     </div>
   );

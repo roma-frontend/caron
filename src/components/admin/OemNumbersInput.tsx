@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X, Plus } from 'lucide-react';
+import { useT } from '@/lib/i18n/admin';
 
 interface OemEntry {
   manufacturer: string;
@@ -16,6 +17,7 @@ interface OemNumbersInputProps {
 }
 
 export function OemNumbersInput({ value, onChange }: OemNumbersInputProps) {
+  const { t } = useT();
   const [manufacturer, setManufacturer] = useState('');
   const [code, setCode] = useState('');
 
@@ -41,19 +43,19 @@ export function OemNumbersInput({ value, onChange }: OemNumbersInputProps) {
 
   return (
     <div className="space-y-2">
-      <Label>OEM համարներ (մակնիշ + կոդ)</Label>
+      <Label>{t('acmp.oem.label')}</Label>
       <div className="flex gap-2">
         <Input
           value={manufacturer}
           onChange={(e) => setManufacturer(e.target.value)}
-          placeholder="մակնիշ (Նիսան, Տոյոտա)"
+          placeholder={t('acmp.oem.mfgPlaceholder')}
           className="h-11 flex-1"
         />
         <Input
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-          placeholder="OEM կոդ (90919-01253)"
+          placeholder={t('acmp.oem.codePlaceholder')}
           className="h-11 flex-1 font-mono tracking-wider"
         />
         <button

@@ -8,18 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Warehouse, Search, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized } from '@/lib/formatters';
 import { useAuth } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
 
-const TYPE_MAP: Record<string, { label: string; color: string; icon: typeof ArrowDown }> = {
-  sale: { label: 'Վաճառք', color: 'bg-red-100 text-red-800', icon: ArrowDown },
-  cancel: { label: 'Չեղարկում', color: 'bg-green-100 text-green-800', icon: ArrowUp },
-  reopen: { label: 'Վերբացում', color: 'bg-orange-100 text-orange-800', icon: ArrowDown },
-  manual: { label: 'Ձեռքով', color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
+const TYPE_MAP: Record<string, { labelKey: string; color: string; icon: typeof ArrowDown }> = {
+  sale: { labelKey: 'acat.stockSale', color: 'bg-red-100 text-red-800', icon: ArrowDown },
+  cancel: { labelKey: 'acat.stockCancel', color: 'bg-green-100 text-green-800', icon: ArrowUp },
+  reopen: { labelKey: 'acat.stockReopen', color: 'bg-orange-100 text-orange-800', icon: ArrowDown },
+  manual: { labelKey: 'acat.stockManual', color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
 };
 
 export default function StockMovementsPage() {
   const { sessionToken } = useAuth();
+  const { t } = useAdminT();
   const movements = useQuery(api.products.listStockMovements, sessionToken ? { sessionToken, limit: 500 } : 'skip');
   const products = useQuery(api.products.listNameMap);
   const [search, setSearch] = useState('');
@@ -40,49 +42,49 @@ export default function StockMovementsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">{'Պահեստ'}</h1>
-        <p className="text-sm text-muted-foreground">{'Պահեստի շարժումների ցուցակ'}</p>
+        <h1 className="text-2xl font-bold">{t('acat.stock')}</h1>
+        <p className="text-sm text-muted-foreground">{t('acat.stockSubtitle')}</p>
       </div>
 
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={'Որոնել...'} className="h-9 pl-9 text-sm" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('acat.search')} className="h-9 pl-9 text-sm" />
         </div>
         <Select value={typeFilter} onValueChange={(v) => { if (v) setTypeFilter(v); }}>
-          <SelectTrigger className="h-9 w-full sm:w-40 text-xs"><span>{typeFilter === 'all' ? 'Բոլորը' : TYPE_MAP[typeFilter]?.label ?? typeFilter}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-40 text-xs"><span>{typeFilter === 'all' ? t('acat.all') : (TYPE_MAP[typeFilter] ? t(TYPE_MAP[typeFilter]!.labelKey) : typeFilter)}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'Բոլորը'}</SelectItem>
-            {Object.entries(TYPE_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+            <SelectItem value="all">{t('acat.all')}</SelectItem>
+            {Object.entries(TYPE_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{t(v.labelKey)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      {filtered === undefined && <p className="text-muted-foreground">{'Բացակայում է'}</p>}
+      {filtered === undefined && <p className="text-muted-foreground">{t('acat.loadingStock')}</p>}
 
       {filtered?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <Warehouse className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{'Շարժումներ չեն գտնվել'}</p>
+          <p className="text-muted-foreground">{t('acat.noMovements')}</p>
         </div>
       )}
 
       <div className="space-y-2">
         {filtered?.map((m) => {
-          const t = TYPE_MAP[m.type] ?? TYPE_MAP.manual;
-          const Icon = t.icon;
+          const tp = TYPE_MAP[m.type] ?? TYPE_MAP.manual;
+          const Icon = tp.icon;
           const productName = productMap.get(m.productId) ?? '—';
           return (
             <Card key={m._id}>
               <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${t.color}`}>
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tp.color}`}>
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-sm font-medium">{productName}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge className={`${t.color} border-0 text-[10px]`}>{t.label}</Badge>
+                      <Badge className={`${tp.color} border-0 text-[10px]`}>{t(tp.labelKey)}</Badge>
                       <span>{m.stockBefore} &rarr; {m.stockAfter}</span>
                       <span className={m.qty > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
                         {m.qty > 0 ? '+' : ''}{m.qty}
@@ -92,7 +94,7 @@ export default function StockMovementsPage() {
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   {m.adminName && <span>{m.adminName}</span>}
-                  <span>{formatDateHy(m.createdAt)}</span>
+                  <span>{formatDateLocalized(m.createdAt, t)}</span>
                 </div>
               </CardContent>
             </Card>

@@ -54,6 +54,11 @@ export default defineSchema(
     name: v.string(),
     slug: v.string(),
     description: v.optional(v.string()),
+    // Optional RU/EN translations; base name/description are the Armenian source.
+    nameRu: v.optional(v.string()),
+    nameEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()),
+    descriptionEn: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     parentId: v.optional(v.id('categories')),
     order: v.number(),
@@ -105,6 +110,12 @@ export default defineSchema(
     name: v.string(),
     slug: v.string(),
     description: v.string(),
+    // Optional RU/EN translations of name & description. The base `name`/
+    // `description` hold the Armenian source and are used as fallback.
+    nameRu: v.optional(v.string()),
+    nameEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()),
+    descriptionEn: v.optional(v.string()),
     price: v.number(),
     costPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()),

@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cart';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
+import { useT } from '@/lib/i18n/admin';
 
 const REMINDER_MS = 15 * 60 * 1000; // show the cart reminder 15 minutes after items are added
 
@@ -28,6 +29,7 @@ function playCartSound() {
 }
 
 export function CartSync() {
+  const { t } = useT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const items = useCartStore((s) => s.items);
   const router = useRouter();
@@ -79,10 +81,10 @@ export function CartSync() {
       reminderShown.current = true;
       playCartSound();
       showUndoCountdownToast({
-        message: 'Հիշեցում',
-        description: `${count} ապրանք(ներ) ձեր զամբյուղում`,
+        message: t('cmp.reminder'),
+        description: `${count} ${t('cmp.items_in_cart')}`,
         onUndo: () => router.push('/cart'),
-        undoLabel: 'Տեսնել զամբյուղը',
+        undoLabel: t('cmp.see_cart'),
         durationMs: 4000,
       });
     }, REMINDER_MS);

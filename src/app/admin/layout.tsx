@@ -4,7 +4,7 @@ import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, Package, FolderTree, ShoppingBag, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -12,30 +12,33 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { toast } from 'sonner';
 import { useOrderNotificationStore } from '@/store/orderNotifications';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { clearAuthCookie } from '@/actions/auth';
 import { IdleTimeoutModal } from '@/components/admin/IdleTimeoutModal';
+import { AdminUserMenu } from '@/components/admin/AdminUserMenu';
+import { AdminCommandPalette } from '@/components/admin/AdminCommandPalette';
+import { AdminNotificationBell } from '@/components/admin/AdminNotificationBell';
+import { useAdminT } from '@/lib/i18n/admin';
 import { Loader } from '@/components/ui/loader';
 import { BottomTabBar, GridMenuSheet, AiMenuBanner, type TabItem, type GridMenuItem } from '@/components/shared/MobileTabBar';
 
 const NAV_ITEMS = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ' },
-  { href: '/admin/products', icon: Package, label: 'Ապրանքներ' },
-  { href: '/admin/categories', icon: FolderTree, label: 'Կատեգորիաներ' },
-  { href: '/admin/filters', icon: SlidersHorizontal, label: 'Ֆիլտրեր' },
-  { href: '/admin/orders', icon: BarChart3, label: 'Պատվերներ' },
-  { href: '/admin/returns', icon: RotateCcw, label: 'Վերադարձներ' },
-  { href: '/admin/customers', icon: Users, label: 'Հաճախորդներ' },
-  { href: '/admin/stock', icon: Warehouse, label: 'Պահեստ' },
-  { href: '/admin/analytics', icon: TrendingUp, label: 'Վերլուծություն' },
+  { href: '/admin', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { href: '/admin/products', icon: Package, labelKey: 'nav.products' },
+  { href: '/admin/categories', icon: FolderTree, labelKey: 'nav.categories' },
+  { href: '/admin/filters', icon: SlidersHorizontal, labelKey: 'nav.filters' },
+  { href: '/admin/orders', icon: BarChart3, labelKey: 'nav.orders' },
+  { href: '/admin/returns', icon: RotateCcw, labelKey: 'nav.returns' },
+  { href: '/admin/customers', icon: Users, labelKey: 'nav.customers' },
+  { href: '/admin/stock', icon: Warehouse, labelKey: 'nav.stock' },
+  { href: '/admin/analytics', icon: TrendingUp, labelKey: 'nav.analytics' },
 
-  { href: '/admin/promotions', icon: Tag, label: 'Ակցիաներ' },
-  { href: '/admin/promotions/coupons', icon: Ticket, label: 'Կուպոններ' },
-  { href: '/admin/reviews', icon: Star, label: 'Կարծիքներ' },
-  { href: '/admin/qa', icon: MessageCircleQuestion, label: 'Հարցեր' },
-  { href: '/admin/pages', icon: FileText, label: 'Էջեր' },
-  { href: '/admin/delivery', icon: Truck, label: 'Առաքում' },
-  { href: '/admin/settings', icon: Settings, label: 'Կարգավորումներ' },
+  { href: '/admin/promotions', icon: Tag, labelKey: 'nav.promotions' },
+  { href: '/admin/promotions/coupons', icon: Ticket, labelKey: 'nav.coupons' },
+  { href: '/admin/reviews', icon: Star, labelKey: 'nav.reviews' },
+  { href: '/admin/qa', icon: MessageCircleQuestion, labelKey: 'nav.qa' },
+  { href: '/admin/pages', icon: FileText, labelKey: 'nav.pages' },
+  { href: '/admin/delivery', icon: Truck, labelKey: 'nav.delivery' },
+  { href: '/admin/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -50,6 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const returnsPendingCount = useOrderNotificationStore((s) => s.returnsPendingCount);
   const flash = useOrderNotificationStore((s) => s.flash);
   const storeName = useStoreName();
+  const { t } = useAdminT();
   const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
 
   const sessionStartRef = useRef<number | null>(null);
@@ -58,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (me === null && sessionStartRef.current && Date.now() - sessionStartRef.current > 3000) {
-      toast.error('Սեսիան ավարտվել է, խնդրում ենք կրկին մուտք գործել');
+      toast.error(t('shell.sessionExpiredToast'));
       logoutStore();
       router.push('/login');
     }
@@ -71,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (sessionToken) await logoutMutation({ sessionToken });
     logoutStore();
     await clearAuthCookie();
-    toast.success('Դուք դուրս եկաք համակարգից');
+    toast.success(t('shell.loggedOut'));
     router.push('/');
   };
 
@@ -82,8 +86,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
           <LogOut className="h-7 w-7 text-primary" />
         </div>
-        <h1 className="text-xl font-semibold tracking-tight">Սեսիան ավարտվել է</h1>
-        <p className="text-sm text-muted-foreground">Մինչ նոր հանդիպում</p>
+        <h1 className="text-xl font-semibold tracking-tight">{t('shell.sessionExpired')}</h1>
+        <p className="text-sm text-muted-foreground">{t('shell.untilNextTime')}</p>
       </div>
     </div>
   );
@@ -103,7 +107,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return (
             <Link key={`${item.href}-${i}`} href={item.href} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>
               <item.icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{t(item.labelKey)}</span>
               {item.href === '/admin/orders' && pendingCount > 0 && (
                 <span className={`ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-white ${flash ? 'animate-bounce' : ''}`}>{pendingCount}</span>
               )}
@@ -123,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleLogout}>
-          <LogOut className="h-4 w-4" /> Դուրս գալ
+          <LogOut className="h-4 w-4" /> {t('common.logout')}
         </Button>
       </div>
     </>
@@ -132,6 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen">
       <IdleTimeoutModal />
+      <AdminCommandPalette sessionToken={sessionToken} />
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:bg-muted/30 sticky top-0 h-screen">
         {sidebar}
@@ -159,40 +164,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Home className="h-4 w-4" />
             </Link>
           </div>
-          <div className="relative group">
-            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary transition-colors hover:bg-accent hover:text-foreground">
-              {user.name.charAt(0)}
-            </button>
-            <div className="absolute right-0 top-full mt-2 hidden w-40 flex-col rounded-xl border bg-popover p-1 shadow-lg group-focus-within:flex">
-              <span className="px-3 py-2 text-xs font-medium text-muted-foreground truncate">{user.email}</span>
-              <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs" onClick={handleLogout}>
-                <LogOut className="h-3.5 w-3.5" /> Դուրս գալ
-              </Button>
-            </div>
+          <div className="flex items-center gap-1">
+            <AdminNotificationBell sessionToken={sessionToken} />
+            <AdminUserMenu user={user} sessionToken={sessionToken} onLogout={handleLogout} compact />
           </div>
         </header>
         {/* Desktop header */}
         <header className="hidden lg:flex sticky top-0 z-40 h-14 items-center justify-between border-b bg-background/80 backdrop-blur-md px-6">
-          <div className="relative w-64 group/search">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" placeholder="Որոնել..." className="h-9 w-full rounded-lg border bg-muted/50 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary/40 focus:bg-background"   onChange={(e) => { const q = e.target.value.toLowerCase(); const el = e.currentTarget.nextElementSibling; if (el) { el.querySelectorAll('[data-nav]').forEach((n) => { (n as HTMLElement).style.display = (n as HTMLElement).dataset.nav!.includes(q) ? '' : 'none'; }); }}} />
-            <div className="absolute left-0 top-full mt-1 hidden group-focus-within/search:flex flex-col w-full rounded-xl border bg-popover p-1.5 shadow-lg z-50">
-              {NAV_ITEMS.map((item, i) => (<Link key={`search-${i}`} href={item.href} data-nav={item.label.toLowerCase()} onClick={() => { (document.activeElement as HTMLElement)?.blur(); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"><item.icon className="h-4 w-4 text-muted-foreground" />{item.label}</Link>))}
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('caron:open-command-palette'))}
+            className="group/search flex h-9 w-72 items-center gap-2 rounded-lg border bg-muted/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-background hover:border-primary/40"
+          >
+            <Search className="h-4 w-4" />
+            <span className="flex-1 text-left">{t('palette.searchPlaceholderShort')}</span>
+            <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
+          </button>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <Link href="/" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><Home className="h-4 w-4" /></Link>
-            {pendingCount > 0 && (<Link href="/admin/orders" className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><ShoppingBag className="h-4 w-4" /><span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-white">{pendingCount}</span></Link>)}
+            <AdminNotificationBell sessionToken={sessionToken} />
             <div className="h-5 w-px bg-border" />
-            <div className="relative group">
-              <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent"><div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{user.name.charAt(0)}</div><span className="text-sm font-medium">{user.name}</span></button>
-              <div className="absolute right-0 top-full mt-1 hidden w-44 flex-col rounded-xl border bg-popover p-1.5 shadow-lg group-focus-within:flex">
-                <span className="px-3 py-1.5 text-xs text-muted-foreground truncate">{user.email}</span>
-                <div className="my-1 h-px bg-border" />
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs" onClick={handleLogout}><LogOut className="h-3.5 w-3.5" /> Դուրս գալ</Button>
-              </div>
-            </div>
+            <AdminUserMenu user={user} sessionToken={sessionToken} onLogout={handleLogout} />
           </div>
         </header>
         <main className="flex-1 p-4 pb-20 md:p-8 lg:pb-8">{children}</main>
@@ -201,33 +193,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile bottom nav: 4 tabs + central FAB opening the full sections grid */}
       <BottomTabBar
         tabs={[
-          { href: '/admin', icon: LayoutDashboard, label: 'Վահանակ', active: pathname === '/admin' },
-          { href: '/admin/products', icon: Package, label: 'Ապրանքներ', active: pathname.startsWith('/admin/products') },
-          { href: '/admin/orders', icon: BarChart3, label: 'Պատվերներ', active: pathname.startsWith('/admin/orders'), badge: pendingCount },
-          { href: '/admin/analytics', icon: TrendingUp, label: 'Անալիտիկա', active: pathname.startsWith('/admin/analytics') },
+          { href: '/admin', icon: LayoutDashboard, label: t('nav.dashboard'), active: pathname === '/admin' },
+          { href: '/admin/products', icon: Package, label: t('nav.products'), active: pathname.startsWith('/admin/products') },
+          { href: '/admin/orders', icon: BarChart3, label: t('nav.orders'), active: pathname.startsWith('/admin/orders'), badge: pendingCount },
+          { href: '/admin/analytics', icon: TrendingUp, label: t('nav.analytics'), active: pathname.startsWith('/admin/analytics') },
         ] satisfies TabItem[]}
         fabIcon={Menu}
-        fabLabel="Բոլորը"
+        fabLabel={t('common.all')}
         onFabClick={() => setMenuOpen(true)}
       />
       <GridMenuSheet
         open={menuOpen}
         onOpenChange={setMenuOpen}
-        title={storeName || 'Կառավարում'}
+        title={storeName || t('common.management')}
         feature={
           <AiMenuBanner
             onClick={() => {
               setMenuOpen(false);
               window.dispatchEvent(new Event('caron:open-ai-chat'));
             }}
-            subtitle="Հարցրեք պատվերների ու վիճակագրության մասին"
+            subtitle={t('shell.aiBannerSubtitle')}
           />
         }
         items={[
           ...NAV_ITEMS.map((item) => ({
             href: item.href,
             icon: item.icon,
-            label: item.label,
+            label: t(item.labelKey),
             badge:
               item.href === '/admin/orders'
                 ? pendingCount
@@ -235,7 +227,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   ? returnsPendingCount
                   : undefined,
           })),
-          { icon: LogOut, label: 'Դուրս գալ', onClick: handleLogout, highlight: true },
+          { icon: LogOut, label: t('common.logout'), onClick: handleLogout, highlight: true },
         ] satisfies GridMenuItem[]}
       />
     </div>

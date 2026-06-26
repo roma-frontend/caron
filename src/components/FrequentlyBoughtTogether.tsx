@@ -12,6 +12,7 @@ import { flyProductToTarget } from '@/lib/flyToTarget';
 import { normalizeImageUrl } from '../../convex/lib/imageUrl';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { useT } from '@/lib/i18n/admin';
 
 interface BaseProduct {
   id: Id<'products'>;
@@ -37,6 +38,7 @@ function retailPrice(p: { price: number; retailDiscount?: number }): number {
  * the set; the combined price updates and "add all" puts everything in the cart.
  */
 export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
+  const { t } = useT();
   const related = useQuery(api.products.list, { categoryId: base.categoryId, limit: 8 });
   const addItem = useCartStore((s) => s.addItem);
   const flyRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -84,7 +86,7 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
       }, idx * 140);
     });
 
-    toast.success(`${itemCount} ապրանք ավելացվեց զամբյուղ`);
+    toast.success(`${itemCount} ${t('sp.productsAddedToCart')}`);
   };
 
   const cards: Array<{ id: string; name: string; price: number; image: string | null; locked: boolean; checked: boolean }> = [
@@ -94,7 +96,7 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
 
   return (
     <section className="mt-12">
-      <h2 className="mb-6 text-xl font-bold px-4 sm:px-0">Հաճախ գնում են միասին</h2>
+      <h2 className="mb-6 text-xl font-bold px-4 sm:px-0">{t('sp.frequentlyBought')}</h2>
       <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4 sm:p-5 shadow-sm lg:flex-row lg:items-center">
         {/* Product row */}
         <div className="flex flex-1 flex-wrap items-center gap-2 sm:gap-3">
@@ -112,7 +114,7 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
                     {c.checked && <Check className="h-3.5 w-3.5" />}
                   </span>
                   {!c.locked && (
-                    <input type="checkbox" checked={c.checked} onChange={() => toggle(c.id)} className="absolute inset-0 cursor-pointer opacity-0" aria-label={`Ընտրել ${c.name}`} />
+                    <input type="checkbox" checked={c.checked} onChange={() => toggle(c.id)} className="absolute inset-0 cursor-pointer opacity-0" aria-label={`${t('sp.select')} ${c.name}`} />
                   )}
                 </div>
                 <span className="line-clamp-2 text-[11px] leading-tight text-muted-foreground">{c.name}</span>
@@ -125,11 +127,11 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
         {/* Total + action */}
         <div className="flex shrink-0 flex-col items-stretch gap-2 border-t pt-4 lg:w-56 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
           <div>
-            <p className="text-xs text-muted-foreground">Ընդամենը {itemCount} ապրանք</p>
+            <p className="text-xs text-muted-foreground">{t('sp.totalCount')} {itemCount} {t('sp.productWord')}</p>
             <p className="text-2xl font-extrabold tracking-tight text-primary">{formatPrice(total)}</p>
           </div>
           <Button onClick={addAll} className="w-full gap-2 rounded-xl">
-            <ShoppingCart className="h-4 w-4" /> Ավելացնել ընտրվածը
+            <ShoppingCart className="h-4 w-4" /> {t('sp.addSelected')}
           </Button>
         </div>
       </div>

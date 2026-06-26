@@ -8,8 +8,10 @@ import { useCartStore } from '@/store/cart';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from '@/lib/motion';
+import { useT } from '@/lib/i18n/admin';
 
 export default function ComparePage() {
+  const { t } = useT();
   const { items, remove, clear } = useCompareStore();
   const addToCart = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
@@ -21,9 +23,9 @@ export default function ComparePage() {
         <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
           <GitCompareArrows className="h-10 w-10 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold">{'Համեմատություն'}</h1>
-        <p className="mt-2 text-muted-foreground">{'Ընտրեք ապրանքներ համեմատության համար'}</p>
-        <Link href="/products"><Button className="mt-6">{'Ապրանքներ'}</Button></Link>
+        <h1 className="text-2xl font-bold">{t('sp.comparison')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('sp.selectProductsToCompare')}</p>
+        <Link href="/products"><Button className="mt-6">{t('sp.products')}</Button></Link>
       </div>
     );
   }
@@ -33,8 +35,8 @@ export default function ComparePage() {
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">{'Համեմատություն'} <span className="text-lg font-normal text-muted-foreground">({items.length} ապրանք)</span></h1>
-        <Button variant="outline" size="sm" onClick={clear}>{'Մաքրել'}</Button>
+        <h1 className="text-3xl font-bold">{t('sp.comparison')} <span className="text-lg font-normal text-muted-foreground">({items.length} {t('sp.productWord')})</span></h1>
+        <Button variant="outline" size="sm" onClick={clear}>{t('sp.clear')}</Button>
       </div>
 
       <div className="overflow-x-auto pb-4 -mx-4 sm:-mx-0 px-4 sm:px-0">
@@ -50,7 +52,7 @@ export default function ComparePage() {
                     </button>
                     {item.price === bestPrice && items.length > 1 && (
                       <span className="absolute -left-1 -top-1 z-10 flex items-center gap-1 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
-                        <TrendingDown className="h-3 w-3" /> Լավագույն գին
+                        <TrendingDown className="h-3 w-3" /> {t('sp.bestPrice')}
                       </span>
                     )}
                     <Link href={`/products/${item.slug}`}>
@@ -66,7 +68,7 @@ export default function ComparePage() {
           </thead>
           <tbody>
             <tr className="border-t">
-              <td className="p-3 text-sm font-medium text-muted-foreground">{'Գին'}</td>
+              <td className="p-3 text-sm font-medium text-muted-foreground">{t('sp.price')}</td>
               {items.map((item) => (
                 <td key={item.id} className={`p-3 text-center text-lg font-bold ${item.price === bestPrice && items.length > 1 ? 'text-green-600' : 'text-primary'}`}>
                   <motion.span initial={{ scale: 1 }} animate={item.price === bestPrice ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.5 }}>
@@ -110,7 +112,7 @@ export default function ComparePage() {
               {items.map((item) => (
                 <td key={item.id} className="p-3 text-center">
                   <Button size="sm" className="gap-1.5 rounded-xl w-full" onClick={() => { const prevQty = cartItems.find((i) => i.id === item.id)?.quantity ?? 0; addToCart({ id: item.id, name: item.name, price: item.price, image: item.image }); }}>
-                    <ShoppingCart className="h-3.5 w-3.5" /> {'Ավելացնել'}
+                    <ShoppingCart className="h-3.5 w-3.5" /> {t('sp.add')}
                   </Button>
                 </td>
               ))}

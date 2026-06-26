@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Timer } from 'lucide-react';
+import { useT } from '@/lib/i18n/admin';
 
 function msUntilEndOfDay(): number {
   const now = new Date();
@@ -33,6 +34,7 @@ function Cell({ v }: { v: string }) {
  * hydration mismatch on the live clock.
  */
 export function FlashCountdown({ className }: { className?: string }) {
+  const { t } = useT();
   const [ms, setMs] = useState<number | null>(null);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export function FlashCountdown({ className }: { className?: string }) {
   return (
     <div className={`flex items-center gap-1.5 ${className ?? ''}`}>
       <Timer className="h-4 w-4 text-destructive" />
-      <span className="hidden text-xs font-medium text-muted-foreground sm:inline">Ավարտվում է՝</span>
+      <span className="hidden text-xs font-medium text-muted-foreground sm:inline">{t('sx.flash.endsIn')}</span>
       <div className="flex items-center gap-1">
         <Cell v={h} />
         <span className="font-bold text-destructive">:</span>

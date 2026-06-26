@@ -747,6 +747,8 @@ export const create = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(), slug: v.string(), description: v.string(), price: v.optional(v.number()),
+    nameRu: v.optional(v.string()), nameEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()), descriptionEn: v.optional(v.string()),
     costPrice: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
@@ -828,6 +830,8 @@ export const create = mutation({
     const newId = await ctx.db.insert('products', createPayload);
     await syncOemIndex(ctx, newId, data.oemNumbers);
     await recomputeCatalogStats(ctx);
+    // Auto-fill RU/EN translations in the background (no-op if already set or AI unconfigured).
+    await ctx.scheduler.runAfter(0, internal.translate.translateProduct, { id: newId });
     return newId;
   },
 });
@@ -837,6 +841,8 @@ export const update = mutation({
     sessionToken: v.string(),
     id: v.id('products'), name: v.optional(v.string()), slug: v.optional(v.string()),
     description: v.optional(v.string()), price: v.optional(v.number()),
+    nameRu: v.optional(v.string()), nameEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()), descriptionEn: v.optional(v.string()),
     costPrice: v.optional(v.number()),
     wholesalePrice: v.optional(v.number()), compareAtPrice: v.optional(v.number()),
     retailDiscount: v.optional(v.number()), wholesaleDiscount: v.optional(v.number()),
@@ -958,6 +964,11 @@ export const update = mutation({
         adminName: caller?.name ?? caller?.email ?? undefined,
         createdAt: Date.now(),
       });
+    }
+
+    // Fill missing RU/EN translations in the background when source text changed.
+    if (args.name !== undefined || args.description !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.translate.translateProduct, { id });
     }
   },
 });

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { SITE } from '@/lib/constants';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useT } from '@/lib/i18n/admin';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -32,6 +33,7 @@ function MessageContent({ content }: { content: string }) {
 }
 
 export function FloatingActions() {
+  const { t } = useT();
   const pathname = usePathname();
   const settings = useSettings();
   const { user } = useAuth();
@@ -82,7 +84,7 @@ export function FloatingActions() {
       const data = await res.json();
       setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: data.reply || data.error || 'Error' }]);
     } catch {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Ծառայությունը անհասանելի է' }]);
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: t('cmp.service_unavailable') }]);
     } finally {
       setLoading(false);
     }
@@ -95,7 +97,7 @@ export function FloatingActions() {
         <div className="fixed bottom-20 right-4 z-50 flex w-[340px] max-w-[calc(100vw-2rem)] flex-col rounded-2xl border bg-background shadow-2xl lg:right-6 lg:w-[380px] lg:bottom-20 animate-in slide-in-from-bottom-4 duration-200" style={{ height: 'min(480px, 65vh)', maxHeight: 'calc(65vh - 4rem)', marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)' }}>
           <div className="flex items-center gap-3 border-b px-4 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Bot className="h-4 w-4 text-primary" /></div>
-            <div className="flex-1"><p className="text-sm font-semibold">{SITE.name} AI</p><p className="text-[10px] text-muted-foreground">Օգնական</p></div>
+            <div className="flex-1"><p className="text-sm font-semibold">{SITE.name} AI</p><p className="text-[10px] text-muted-foreground">{t('cmp.assistant_label')}</p></div>
             <div className="flex gap-1">
               {settings?.whatsapp && (
                 <Link href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="rounded-lg p-1.5 hover:bg-muted" aria-label="WhatsApp">
@@ -114,7 +116,7 @@ export function FloatingActions() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
               <div className="space-y-3 pt-4">
-                <p className="text-center text-xs text-muted-foreground">Ինչպե՞ս կարող եմ օգնել</p>
+                <p className="text-center text-xs text-muted-foreground">{t('cmp.how_can_help')}</p>
                 <div className="grid gap-2">
                   {suggestions.map((s) => (
                     <button key={s} onClick={() => sendMessage(s)} className="rounded-xl border px-3 py-2 text-left text-xs transition-colors hover:border-primary/40 hover:bg-primary/5">{s}</button>
@@ -139,7 +141,7 @@ export function FloatingActions() {
           </div>
           <div className="border-t p-3">
             <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
-              <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Գրեք հաղորդագրություն..." className="h-9 text-sm rounded-xl" disabled={loading} />
+              <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t('cmp.write_message')} className="h-9 text-sm rounded-xl" disabled={loading} />
               <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-xl" disabled={!input.trim() || loading}><Send className="h-4 w-4" /></Button>
             </form>
           </div>

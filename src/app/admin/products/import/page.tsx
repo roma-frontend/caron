@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import type { Id } from '../../../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
+import { useAdminT, type AdminTFn } from '@/lib/i18n/admin';
 
 interface ParsedRow {
   name?: string;
@@ -110,7 +111,7 @@ function splitLine(line: string, sep: string): string[] {
   return result;
 }
 
-function parseCsv(text: string): { headers: string[]; rows: string[][] } {
+function parseCsv(text: string, t: AdminTFn): { headers: string[]; rows: string[][] } {
   const clean = text.replace(/^\uFEFF/, '');
   const lines: string[] = [];
   let cur = '';
@@ -125,7 +126,7 @@ function parseCsv(text: string): { headers: string[]; rows: string[][] } {
     } else { cur += ch; }
   }
   if (cur.trim()) lines.push(cur);
-  if (lines.length < 2) throw new Error('CSV ֆայլը պետք է ունենա վերնագրի տող և առնվազն մեկ տվյալների տող։');
+  if (lines.length < 2) throw new Error(t('apf.csvNeedsHeaderRow'));
   const sep = lines[0].includes(';') ? ';' : ',';
   const headers = splitLine(lines[0], sep).map((h) => h.trim().toLowerCase());
   const rows = lines
@@ -145,7 +146,7 @@ function normalizeAttributeKey(rawKey: string): string {
   return key;
 }
 
-function parseRow(headers: string[], values: string[], categoriesMap: Record<string, string>): ParsedRow {
+function parseRow(headers: string[], values: string[], categoriesMap: Record<string, string>, t: AdminTFn): ParsedRow {
   const get = (key: string) => {
     const h = headers.map((h) => h.toLowerCase().trim());
     const idx = h.indexOf(key.toLowerCase());
@@ -154,7 +155,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
 
   const catName = get('category') || get('կատեգորիա') || values[headers.findIndex(h => h.includes('cat'))] || '';
   const categoryId = categoriesMap[catName.toLowerCase().trim()];
-  if (!categoryId) throw new Error(`Կատեգորիա "${catName}" չի գտնվել. Հնարավոր կատեգորիաները՝ ${Object.keys(categoriesMap).join(', ')}`);
+  if (!categoryId) throw new Error(`${t('apf.category')} "${catName}" ${t('apf.notFound')}. ${t('apf.possibleCategories')} ${Object.keys(categoriesMap).join(', ')}`);
 
   const bool = (key: string): boolean => BOOL_MAP[get(key).toLowerCase().trim()] ?? true;
   const num = (key: string): number => Number(get(key)) || 0;
@@ -269,6 +270,7 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
 }
 
 export default function ImportProductsPage() {
+  const { t } = useAdminT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const categories = useQuery(api.categories.list, {});
   const filterDefs = useQuery(api.filters.listAll, {});
@@ -409,7 +411,7 @@ export default function ImportProductsPage() {
   const manualRowToBulkProduct = (row: ManualRow) => {
     const categoryId = categoriesMap[row.category.toLowerCase().trim()];
     if (!categoryId) {
-      throw new Error(`Կատեգորիա "${row.category}" չի գտնվել`);
+      throw new Error(`${t('apf.category')} "${row.category}" ${t('apf.notFound')}`);
     }
 
     const attributes: Record<string, string> = {};
@@ -433,7 +435,7 @@ export default function ImportProductsPage() {
   const fillManualRowsFromExcelGrid = (text: string) => {
     const matrix = parseTabularText(text);
     if (matrix.length < 2) {
-      toast.error('Պետք է լինի առնվազն վերնագրի տող և մեկ տվյալների տող');
+      toast.error(t('apf.needHeaderRow'));
       return;
     }
 
@@ -476,14 +478,14 @@ export default function ImportProductsPage() {
     }));
 
     if (mappedRows.length === 0) {
-      toast.error('Չհաջողվեց գտնել տվյալների տողեր');
+      toast.error(t('apf.noDataRows'));
       return;
     }
 
     setManualRows(mappedRows);
     setManualImportedRows(new Set());
     setManualImportingRow(null);
-    toast.success(`Excel-ից լրացվեց ${mappedRows.length} տող`);
+    toast.success(`${t('apf.excelFilled')} ${mappedRows.length} ${t('apf.rowsWord')}`);
   };
 
   const handleExcelManualPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -509,7 +511,7 @@ export default function ImportProductsPage() {
 
   const handleMoveParsedToManual = () => {
     if (!parsed || parsed.length === 0) {
-      toast.error('Նախ ներբեռնեք կամ պարսեք տվյալները');
+      toast.error(t('apf.loadDataFirst'));
       return;
     }
     const n = Math.max(1, Math.min(moveToManualCount || 1, parsed.length));
@@ -517,7 +519,7 @@ export default function ImportProductsPage() {
     setManualRows(nextRows.length > 0 ? nextRows : [emptyManualRow()]);
     setManualImportedRows(new Set());
     setManualImportingRow(null);
-    toast.success(`Տեղափոխվեց ${nextRows.length} տող «Ավելացնել շատ» ձևի մեջ`);
+    toast.success(`${t('apf.moved')} ${nextRows.length} ${t('apf.rowsWord')} ${t('apf.intoBulkForm')}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -525,7 +527,7 @@ export default function ImportProductsPage() {
     if (!sessionToken) return;
     const row = manualRows[rowIndex];
     if (!isManualRowReady(row)) {
-      toast.error(`Տող ${rowIndex + 1}: լրացրեք sku, name, category`);
+      toast.error(`${t('apf.row')} ${rowIndex + 1}: ${t('apf.fillSkuNameCategory')}`);
       return;
     }
     setManualImportingRow(rowIndex);
@@ -533,9 +535,9 @@ export default function ImportProductsPage() {
       const product = manualRowToBulkProduct(row);
       await bulkCreate({ sessionToken, products: [product] });
       setManualImportedRows((prev) => new Set(prev).add(rowIndex));
-      toast.success(`Տող ${rowIndex + 1} ավելացվեց`);
+      toast.success(`${t('apf.row')} ${rowIndex + 1} ${t('apf.addedRow')}`);
     } catch (e) {
-      toast.error(`Տող ${rowIndex + 1}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+      toast.error(`${t('apf.row')} ${rowIndex + 1}: ${e instanceof Error ? e.message : t('apf.errorWord')}`);
     } finally {
       setManualImportingRow(null);
     }
@@ -548,7 +550,7 @@ export default function ImportProductsPage() {
       .filter(({ row, idx }) => isManualRowReady(row) && !manualImportedRows.has(idx));
 
     if (candidates.length === 0) {
-      toast.error('Ավելացնելու պատրաստ տողեր չկան');
+      toast.error(t('apf.noReadyRows'));
       return;
     }
 
@@ -561,9 +563,9 @@ export default function ImportProductsPage() {
         for (const { idx } of candidates) next.add(idx);
         return next;
       });
-      toast.success(`Ավելացվեց ${candidates.length} ապրանք`);
+      toast.success(`${t('apf.addedCount')} ${candidates.length} ${t('apf.productWord')}`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Անհայտ սխալ');
+      toast.error(e instanceof Error ? e.message : t('apf.unknownError'));
     } finally {
       setManualImportingAll(false);
     }
@@ -582,30 +584,30 @@ export default function ImportProductsPage() {
 
   const parseText = (text: string) => {
     if (Object.keys(categoriesMap).length === 0) {
-      toast.error('Կատեգորիաները դեռ բեռնված չեն, սպասեք...');
+      toast.error(t('apf.catsNotLoaded'));
       return;
     }
-    const { headers, rows } = parseCsv(text);
+    const { headers, rows } = parseCsv(text, t);
     const mapped: ParsedRow[] = [];
     const errs: string[] = [];
     for (let i = 0; i < rows.length; i++) {
       try {
-        mapped.push(parseRow(headers, rows[i], categoriesMap));
+        mapped.push(parseRow(headers, rows[i], categoriesMap, t));
       } catch (e) {
-        errs.push(`Տող ${i + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+        errs.push(`${t('apf.row')} ${i + 2}: ${e instanceof Error ? e.message : t('apf.errorWord')}`);
       }
     }
     setParsed(mapped);
     setErrors(errs);
-    if (mapped.length === 0) { toast.error('Չհաջողվեց գտնել որևէ տող'); return; }
-    toast.success(`Հայտնաբերվել է ${mapped.length} ապրանք${errs.length > 0 ? `, ${errs.length} սխալ` : ''}`);
+    if (mapped.length === 0) { toast.error(t('apf.noRowsFound')); return; }
+    toast.success(`${t('apf.found')} ${mapped.length} ${t('apf.productWord')}${errs.length > 0 ? `, ${errs.length} ${t('apf.errLower')}` : ''}`);
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.name.endsWith('.xlsx')) {
-      toast.error('XLSX ներմուծումը ժամանակավորապես անջատված է անվտանգության պատճառով։ Պահպանեք ֆայլը CSV UTF-8 ձևաչափով։');
+      toast.error(t('apf.xlsxDisabled'));
       e.target.value = '';
       return;
     }
@@ -619,12 +621,12 @@ export default function ImportProductsPage() {
       const text = await decodeFile(file);
       parseText(text);
     } catch (e) {
-      toast.error(`Սխալ: ${e instanceof Error ? e.message : 'Նախատեսված ձևաչափ'}`);
+      toast.error(`${t('apf.errorWord')}: ${e instanceof Error ? e.message : t('apf.formatExpected')}`);
     }
   };
 
   const handlePaste = () => {
-    if (!pasteText.trim()) { toast.error('Տեղադրեք տվյալները'); return; }
+    if (!pasteText.trim()) { toast.error(t('apf.pasteData')); return; }
     setErrors([]);
     setParsed(null);
     setDone(false);
@@ -678,7 +680,7 @@ export default function ImportProductsPage() {
       setDone(true);
       setImportedRows(new Set(parsed.map((_, idx) => idx)));
     } catch (e) {
-      toast.error(`Սխալ ներմուծում: ${e instanceof Error ? e.message : 'Անհայտ սխալ'}`);
+      toast.error(`${t('apf.importError')}: ${e instanceof Error ? e.message : t('apf.unknownError')}`);
     } finally { setImporting(false); }
   };
 
@@ -716,9 +718,9 @@ export default function ImportProductsPage() {
 
       await bulkCreate({ sessionToken, products: [p] });
       setImportedRows((prev) => new Set(prev).add(rowIndex));
-      toast.success(`Տող ${rowIndex + 2}: ներմուծվեց`);
+      toast.success(`${t('apf.row')} ${rowIndex + 2}: ${t('apf.imported')}`);
     } catch (e) {
-      toast.error(`Տող ${rowIndex + 2}: ${e instanceof Error ? e.message : 'Սխալ'}`);
+      toast.error(`${t('apf.row')} ${rowIndex + 2}: ${e instanceof Error ? e.message : t('apf.errorWord')}`);
     } finally {
       setImportingRow(null);
     }
@@ -740,15 +742,15 @@ export default function ImportProductsPage() {
     <div className="mx-auto max-w-4xl">
       <div className="mb-6 flex items-center gap-3">
         <Link href="/admin/products"><Button variant="ghost" size="icon-sm"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <h1 className="text-2xl font-bold">Ներմուծել CSV ֆայլից</h1>
+        <h1 className="text-2xl font-bold">{t('apf.importFromCsv')}</h1>
       </div>
 
       <Card className="mb-6 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex flex-col items-start justify-between gap-2 text-base sm:flex-row sm:items-center">
-            <span className="flex items-center gap-2"><FileIcon className="h-5 w-5 text-primary" /> Ավելացնել շատ (ձեռքով)</span>
+            <span className="flex items-center gap-2"><FileIcon className="h-5 w-5 text-primary" /> {t('apf.bulkAddManual')}</span>
             <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-              <Button size="sm" variant="outline" className="gap-1" onClick={addManualRow}><Plus className="h-3.5 w-3.5" /> Տող</Button>
+              <Button size="sm" variant="outline" className="gap-1" onClick={addManualRow}><Plus className="h-3.5 w-3.5" /> {t('apf.row')}</Button>
               <Button
                 size="sm"
                 className="gap-1"
@@ -756,24 +758,24 @@ export default function ImportProductsPage() {
                 disabled={manualImportingAll || manualRows.filter((r, i) => isManualRowReady(r) && !manualImportedRows.has(i)).length <= 1}
               >
                 {manualImportingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                Ավելացնել բոլորը
+                {t('apf.addAll')}
               </Button>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
-            <p className="mb-2 text-xs font-medium">Excel-ից copy/paste</p>
+            <p className="mb-2 text-xs font-medium">{t('apf.excelCopyPaste')}</p>
             <textarea
               value={excelPasteText}
               onChange={(e) => setExcelPasteText(e.target.value)}
               onPaste={handleExcelManualPaste}
-              placeholder="Excel-ում ընտրեք վերնագիր + տողերը, Ctrl+C, հետո այստեղ Ctrl+V"
+              placeholder={t('apf.excelPastePlaceholder')}
               className="h-24 w-full rounded-md border bg-background p-2 text-xs"
             />
             <div className="mt-2 flex gap-2">
               <Button size="sm" variant="outline" onClick={() => fillManualRowsFromExcelGrid(excelPasteText)} disabled={!excelPasteText.trim()}>
-                Դնել ձևի մեջ
+                {t('apf.putIntoForm')}
               </Button>
             </div>
           </div>
@@ -782,15 +784,15 @@ export default function ImportProductsPage() {
             <table className="text-xs border-collapse" style={{tableLayout: 'fixed'}}>
               <thead className="bg-muted">
                 <tr className="border-b">
-                  <th className="p-2 text-left font-medium w-[70px]">Ավելացնել</th>
-                  <th className="p-2 text-left font-medium w-[90px]">Արտիկուլ</th>
-                  <th className="p-2 text-left font-medium w-[90px]">ԱՏԳԱԱ</th>
-                  <th className="p-2 text-left font-medium w-[90px]">Անվանում</th>
-                  <th className="p-2 text-left font-medium w-[130px]">Կատեգորիա</th>
-                  <th className="p-2 text-left font-medium w-[130px]">Ապրանքանիշ</th>
-                  <th className="p-2 text-left font-medium w-[130px]">Տեսակ</th>
-                  <th className="p-2 text-left font-medium w-[100px]">Չափ</th>
-                  <th className="p-2 text-left font-medium w-[50px]">Ջնջել</th>
+                  <th className="p-2 text-left font-medium w-[70px]">{t('apf.addBtn')}</th>
+                  <th className="p-2 text-left font-medium w-[90px]">{t('apf.sku')}</th>
+                  <th className="p-2 text-left font-medium w-[90px]">{t('apf.atgaa')}</th>
+                  <th className="p-2 text-left font-medium w-[90px]">{t('apf.name')}</th>
+                  <th className="p-2 text-left font-medium w-[130px]">{t('apf.category')}</th>
+                  <th className="p-2 text-left font-medium w-[130px]">{t('apf.brand')}</th>
+                  <th className="p-2 text-left font-medium w-[130px]">{t('apf.type')}</th>
+                  <th className="p-2 text-left font-medium w-[100px]">{t('apf.size')}</th>
+                  <th className="p-2 text-left font-medium w-[50px]">{t('apf.delete')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -810,19 +812,19 @@ export default function ImportProductsPage() {
                           className="h-7 px-2 text-[11px]"
                           variant={alreadyAdded ? 'outline' : 'default'}
                         >
-                          {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? 'Ավելացված' : 'Ավելացնել'}
+                          {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? t('apf.added') : t('apf.addBtn')}
                         </Button>
                       </td>
                       <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="232325" /></td>
                       <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder="8708" /></td>
-                      <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="Լամպեր" /></td>
+                      <td className="p-2 w-[90px]"><input className="h-8 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder={t('apf.namePlaceholder')} /></td>
                       <td className="p-2 w-[130px]">
                         <select
                           className="h-8 w-full rounded-md border bg-background px-2 pr-8 text-xs"
                           value={row.category}
                           onChange={(e) => updateManualRow(i, 'category', e.target.value)}
                         >
-                          <option value="">Կատեգորիա</option>
+                          <option value="">{t('apf.category')}</option>
                           {categories?.map((c) => (
                             <option key={c._id} value={c.name}>{c.name}</option>
                           ))}
@@ -834,7 +836,7 @@ export default function ImportProductsPage() {
                           value={row.brand}
                           onChange={(e) => updateManualRow(i, 'brand', e.target.value)}
                         >
-                          <option value="">{row.category ? 'Ապրանքանիշ' : 'Ընտրեք կատեգորիա'}</option>
+                          <option value="">{row.category ? t('apf.brand') : t('apf.selectCategory')}</option>
                           {brandOptions.map((opt) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -846,7 +848,7 @@ export default function ImportProductsPage() {
                           value={row.type}
                           onChange={(e) => updateManualRow(i, 'type', e.target.value)}
                         >
-                          <option value="">{row.category ? 'Տեսակ' : 'Ընտրեք կատեգորիա'}</option>
+                          <option value="">{row.category ? t('apf.type') : t('apf.selectCategory')}</option>
                           {typeOptions.map((opt) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -858,7 +860,7 @@ export default function ImportProductsPage() {
                           value={row.size}
                           onChange={(e) => updateManualRow(i, 'size', e.target.value)}
                         >
-                          <option value="">{row.category ? 'Չափ' : 'Ընտրեք կատեգորիա'}</option>
+                          <option value="">{row.category ? t('apf.size') : t('apf.selectCategory')}</option>
                           {sizeOptions.map((opt) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -884,34 +886,34 @@ export default function ImportProductsPage() {
               return (
                 <div key={i} className="rounded-lg border bg-muted/20 p-3">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">Տող {i + 1}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t('apf.row')} {i + 1}</span>
                     <Button size="icon-sm" variant="ghost" onClick={() => removeManualRow(i)} disabled={manualRows.length <= 1}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2">
-                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder="արտիկուլ" />
-                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder="ԱՏԳԱԱ" />
-                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder="անվանում" />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.sku} onChange={(e) => updateManualRow(i, 'sku', e.target.value)} placeholder={t('apf.skuLower')} />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.atgCode} onChange={(e) => updateManualRow(i, 'atgCode', e.target.value)} placeholder={t('apf.atgaa')} />
+                    <input className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={row.name} onChange={(e) => updateManualRow(i, 'name', e.target.value)} placeholder={t('apf.nameLower')} />
                     <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.category} onChange={(e) => updateManualRow(i, 'category', e.target.value)}>
-                      <option value="">Կատեգորիա</option>
+                      <option value="">{t('apf.category')}</option>
                       {categories?.map((c) => (
                         <option key={c._id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
                     <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.brand} onChange={(e) => updateManualRow(i, 'brand', e.target.value)}>
-                      <option value="">{row.category ? 'ապրանքանիշ' : 'Ընտրեք կատեգորիա'}</option>
+                      <option value="">{row.category ? t('apf.brandLower') : t('apf.selectCategory')}</option>
                       {brandOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
                     <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.type} onChange={(e) => updateManualRow(i, 'type', e.target.value)}>
-                      <option value="">{row.category ? 'տեսակ' : 'Ընտրեք կատեգորիա'}</option>
+                      <option value="">{row.category ? t('apf.typeLower') : t('apf.selectCategory')}</option>
                       {typeOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
                     <select className="h-9 w-full rounded-md border bg-background px-2 pr-8 text-xs" value={row.size} onChange={(e) => updateManualRow(i, 'size', e.target.value)}>
-                      <option value="">{row.category ? 'չափ' : 'Ընտրեք կատեգորիա'}</option>
+                      <option value="">{row.category ? t('apf.sizeLower') : t('apf.selectCategory')}</option>
                       {sizeOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
@@ -925,7 +927,7 @@ export default function ImportProductsPage() {
                     onClick={() => handleManualImportOne(i)}
                     variant={alreadyAdded ? 'outline' : 'default'}
                   >
-                    {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? 'Ավելացված' : 'Ավելացնել'}
+                    {manualImportingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : alreadyAdded ? t('apf.added') : t('apf.addBtn')}
                   </Button>
                 </div>
               );
@@ -933,35 +935,35 @@ export default function ImportProductsPage() {
           </div>
 
           <div className="mt-2 text-xs text-muted-foreground">
-            Պարտադիր դաշտեր՝ արտիկուլ, անվանում, կատեգորիա։ Այլ սյունակները կամընտրական են։
+            {t('apf.requiredFieldsNote')}
           </div>
         </CardContent>
       </Card>
 
       <Card className="mb-6">
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-5 w-5 text-primary" /> Ներբեռնել ֆայլ</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-5 w-5 text-primary" /> {t('apf.uploadFile')}</CardTitle></CardHeader>
         <CardContent>
           <div className="mb-4 rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer" onClick={() => fileRef.current?.click()}>
             <FileSpreadsheet className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-medium">Կտտացրու, որպեսզի ընտրես CSV-ֆայլ</p>
-            <p className="mt-1 text-xs text-muted-foreground">Արտահանված Excel-ից: Ֆայլ → Պահպանել որպես → CSV UTF-8</p>
+            <p className="text-sm font-medium">{t('apf.clickToSelectCsv')}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('apf.exportedFromExcel')}</p>
           </div>
           <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={handleFile} />
 
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">կամ տեղադրեք տեքստը</span>
+              <span className="text-xs text-muted-foreground">{t('apf.orPasteText')}</span>
               <div className="h-px flex-1 bg-border" />
             </div>
             <textarea
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Պարզապես պատճենեք և տեղադրեք տեքստը այստեղ։"
+              placeholder={t('apf.pastePlaceholder')}
               className="w-full h-28 rounded-lg border border-input bg-background p-3 text-xs font-mono resize-y"
             />
             <Button size="sm" variant="outline" className="mt-2 gap-1 text-xs" onClick={handlePaste} disabled={!pasteText.trim()}>
-              <Upload className="h-3 w-3" /> Պարսել
+              <Upload className="h-3 w-3" /> {t('apf.parse')}
             </Button>
           </div>
 
@@ -969,30 +971,30 @@ export default function ImportProductsPage() {
           <details className="group">
             <summary className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
               <Info className="h-3.5 w-3.5" />
-              Լրիվ ցուցակ սպասարկվող սյունակների
+              {t('apf.fullColumnList')}
             </summary>
             <div className="mt-3 space-y-4 text-xs">
               <div>
-                <p className="mb-1.5 font-semibold text-foreground">Հիմական սյունակներ</p>
+                <p className="mb-1.5 font-semibold text-foreground">{t('apf.mainColumns')}</p>
                 <div className="grid gap-1.5 sm:grid-cols-2">
                   {[
-                    ['name', 'Անվանում (պարտադիր)'],
-                    ['slug', 'URL-հասցե (եթե դատարկ է — կգոյացվի անվանումից)'],
-                    ['description', 'Ապրանքի նկարագրություն'],
-                    ['price', 'Մանրածախ գին դրամներով (պարտադիր)'],
-                    ['wholesalePrice', 'Մեծածախ գին (եթե դատարկ է — կօգտագործվի մանրածախ գինը)'],
-                    ['compareAtPrice', 'Հին գին (ցուցադրվում է որպես կտրատված)'],
-                    ['stock', 'Քանակ պահեստում (քանակ 1)'],
-                    ['sku', 'Արտիկուլ ապրանքի'],
-                    ['atgCode', 'ԱՏԳԱԱ կոդ'],
-                    ['oemNumbers / oem', 'OEM համարներ (բաժանել , ; կամ բացատ)'],
-                    ['category', 'Կատեգորիա — պետք է համապատասխանի համակարգում գրված անվանմանը'],
-                    ['isActive', 'Ակտիվ՝ yes/no/1/0 (լռելյային yes)'],
-                    ['isFeatured', 'Առաջարկված՝ yes/no/1/0 (լռելյային no)'],
-                    ['showInPromotions', 'Ցուցադրել ակցիաներում՝ yes/no/1/0 (լռելյային no)'],
-                    ['images', 'Պատկերի URL-ը ; (արդեն նեմուծվել է (cloud)'],
-                    ['seoTitle', 'SEO վերնագիր'],
-                    ['seoDescription', 'SEO նկարագրություն'],
+                    ['name', t('apf.hintName')],
+                    ['slug', t('apf.hintSlug')],
+                    ['description', t('apf.productDescription')],
+                    ['price', t('apf.hintPrice')],
+                    ['wholesalePrice', t('apf.hintWholesale')],
+                    ['compareAtPrice', t('apf.hintCompareAt')],
+                    ['stock', t('apf.hintStock')],
+                    ['sku', t('apf.hintSku')],
+                    ['atgCode', t('apf.hintAtg')],
+                    ['oemNumbers / oem', t('apf.hintOem')],
+                    ['category', t('apf.hintCategory')],
+                    ['isActive', t('apf.hintIsActive')],
+                    ['isFeatured', t('apf.hintIsFeatured')],
+                    ['showInPromotions', t('apf.hintShowPromo')],
+                    ['images', t('apf.hintImages')],
+                    ['seoTitle', t('apf.seoTitle')],
+                    ['seoDescription', t('apf.seoDescription')],
                   ].map(([col, hint]) => (
                     <div key={col} className="flex gap-2 rounded-lg border bg-muted/30 px-3 py-1.5">
                       <code className="shrink-0 font-bold text-primary">{col}</code>
@@ -1002,11 +1004,11 @@ export default function ImportProductsPage() {
                 </div>
               </div>
               <div>
-                <p className="mb-1.5 font-semibold text-foreground">Ատրիբուտներ / ֆիլտրեր</p>
-                <p className="mb-2 text-muted-foreground">Յուրաքանչյուր ֆիլտրի համար ավելացրու սյունակ <code className="text-primary">attr_ՖիլտրիԱնվանում</code></p>
-                <p className="mb-2 text-muted-foreground">Չափի համար օգտագործեք <code className="text-primary">attr_չափ</code> (նաև <code className="text-primary">attr_չափս</code> և <code className="text-primary">attr_size</code> կպահվեն որպես <code className="text-primary">չափ</code>)</p>
+                <p className="mb-1.5 font-semibold text-foreground">{t('apf.attrsFilters')}</p>
+                <p className="mb-2 text-muted-foreground">{t('apf.eachFilterAddColumn')} <code className="text-primary">attr_ՖիլտրիԱնվանում</code></p>
+                <p className="mb-2 text-muted-foreground">{t('apf.sizeUse')} <code className="text-primary">attr_չափ</code> ({t('apf.also')} <code className="text-primary">attr_չափս</code> {t('apf.and')} <code className="text-primary">attr_size</code> {t('apf.savedAs')} <code className="text-primary">չափ</code>)</p>
                 <details>
-                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Կատեգորիաների օրինակներ</summary>
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t('apf.categoryExamples')}</summary>
                    <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-muted p-3 leading-relaxed text-muted-foreground">
 {`Անիվներ:   attr_ապրանքանիշ, attr_սեզոն, attr_լայնություն, attr_պրոֆիլ, attr_չափ, attr_տրամագիծ
 Յուղեր:    attr_ապրանքանիշ, attr_մածուցիկություն, attr_յուղի_տեսակ, attr_ծավալ, attr_api_դաս
@@ -1015,8 +1017,8 @@ export default function ImportProductsPage() {
                 </details>
               </div>
               <div>
-                <p className="mb-1.5 font-semibold text-foreground">Ավտոմեքենայի համատեղություն</p>
-                <p className="text-muted-foreground">Ավելացրու սյունակներ: <code className="text-primary">vehicle_brand</code>, <code className="text-primary">vehicle_model</code>, <code className="text-primary">vehicle_yearFrom</code>, <code className="text-primary">vehicle_yearTo</code></p>
+                <p className="mb-1.5 font-semibold text-foreground">{t('apf.vehicleCompatTitle')}</p>
+                <p className="text-muted-foreground">{t('apf.addColumns')} <code className="text-primary">vehicle_brand</code>, <code className="text-primary">vehicle_model</code>, <code className="text-primary">vehicle_yearFrom</code>, <code className="text-primary">vehicle_yearTo</code></p>
               </div>
             </div>
           </details>
@@ -1028,7 +1030,7 @@ export default function ImportProductsPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-amber-600 mb-2">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">{errors.length} սխալ</span>
+              <span className="text-sm font-medium">{errors.length} {t('apf.errLower')}</span>
             </div>
             <div className="max-h-32 overflow-y-auto space-y-1">{errors.map((e, i) => <p key={i} className="text-xs text-muted-foreground">{e}</p>)}</div>
           </CardContent>
@@ -1039,11 +1041,11 @@ export default function ImportProductsPage() {
         <Card className="mb-6 overflow-visible">
           <CardHeader><CardTitle className="flex items-center gap-2 text-base">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
-            Ապրանքի ({parsed.length} Նախադիտում)
+            {t('apf.productGen')} ({parsed.length} {t('apf.preview')})
           </CardTitle></CardHeader>
           <CardContent>
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="text-xs text-muted-foreground">Ներմուծված: {importedRows.size} / {parsed.length}</div>
+              <div className="text-xs text-muted-foreground">{t('apf.imported2')}: {importedRows.size} / {parsed.length}</div>
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   {...numericInputProps(false)}
@@ -1054,11 +1056,11 @@ export default function ImportProductsPage() {
                   className="h-8 w-20 rounded-md border bg-background px-2 text-xs"
                 />
                 <Button size="sm" variant="outline" onClick={handleMoveParsedToManual}>
-                  Տեղափոխել «Ավելացնել շատ»
+                  {t('apf.moveToBulk')}
                 </Button>
                 <Button onClick={handleImport} disabled={importing || done} size="sm" className="gap-2">
                   {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {importing ? 'Ներմուծվում է...' : `Ավելացնել բոլորը (${parsed.length})`}
+                  {importing ? t('apf.importing') : `${t('apf.addAll')} (${parsed.length})`}
                 </Button>
               </div>
             </div>
@@ -1066,15 +1068,15 @@ export default function ImportProductsPage() {
               <table className="w-full text-xs">
                 <thead className="sticky top-0 z-10 bg-muted">
                   <tr className="border-b">
-                    <th className="p-2 text-left font-medium">Ավելացնել</th>
-                    <th className="p-2 text-left font-medium">Անվանում</th>
-                    <th className="p-2 text-left font-medium">Գին</th>
-                    <th className="p-2 text-left font-medium">Կատեգորիա</th>
+                    <th className="p-2 text-left font-medium">{t('apf.addBtn')}</th>
+                    <th className="p-2 text-left font-medium">{t('apf.name')}</th>
+                    <th className="p-2 text-left font-medium">{t('apf.priceCol')}</th>
+                    <th className="p-2 text-left font-medium">{t('apf.category')}</th>
                     <th className="p-2 text-left font-medium">SKU</th>
                     <th className="p-2 text-left font-medium">OEM</th>
-                    <th className="p-2 text-left font-medium">Մնացորդ</th>
-                    <th className="p-2 text-left font-medium">Նկար</th>
-                    <th className="p-2 text-left font-medium">Ակտիվ</th>
+                    <th className="p-2 text-left font-medium">{t('apf.stockCol')}</th>
+                    <th className="p-2 text-left font-medium">{t('apf.imageCol')}</th>
+                    <th className="p-2 text-left font-medium">{t('apf.activeCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1100,7 +1102,7 @@ export default function ImportProductsPage() {
                                   onClick={() => handleImportOne(i)}
                                   className="h-7 px-2 text-[11px]"
                                 >
-                                  {importingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : importedRows.has(i) ? 'Ավելացված' : 'Ավելացնել'}
+                                  {importingRow === i ? <Loader2 className="h-3 w-3 animate-spin" /> : importedRows.has(i) ? t('apf.added') : t('apf.addBtn')}
                                 </Button>
                               </td>
                               <td className="p-2 max-w-50 truncate" title={r.name || '—'}>{r.name || '—'}</td>
@@ -1124,12 +1126,12 @@ export default function ImportProductsPage() {
 
             <div className="mt-3 flex items-center gap-2 text-xs text-amber-600">
               <Info className="h-3.5 w-3.5" />
-              Ատրիբուտներ (ֆիլտրեր) և համատեղություն ավտոմեքենայի հետ պահպանվում են հետևյալ կերպ, ստուգելով ապրանքի խմբագրիչը կամայական կերպով:
+              {t('apf.attrsInfo')}
             </div>
 
             <Button onClick={handleImport} disabled={importing || done} size="lg" className="mt-4 w-full gap-2">
               {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : done ? <CheckCircle2 className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-              {importing ? 'Ներմուծվում է...' : done ? 'Ներմուծվել է' : `Ավելացնել բոլորը (${parsed.length})`}
+              {importing ? t('apf.importing') : done ? t('apf.importedDone') : `${t('apf.addAll')} (${parsed.length})`}
             </Button>
           </CardContent>
         </Card>
@@ -1137,7 +1139,7 @@ export default function ImportProductsPage() {
 
       {/* Category reference */}
       <details className="text-xs text-muted-foreground">
-        <summary className="cursor-pointer hover:text-foreground">Հայտնի կատեգորիաներ</summary>
+        <summary className="cursor-pointer hover:text-foreground">{t('apf.knownCategories')}</summary>
         <div className="mt-2 flex flex-wrap gap-1.5">{catKeys.map((k) => <Badge key={k} variant="outline" className="text-[10px]">{k}</Badge>)}</div>
       </details>
     </div>

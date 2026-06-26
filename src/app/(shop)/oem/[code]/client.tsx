@@ -5,6 +5,8 @@ import { ProductCard } from '@/components/cards/ProductCard';
 interface Product {
   _id: string;
   name: string;
+  nameRu?: string;
+  nameEn?: string;
   slug: string;
   atgCode?: string;
   price: number;
@@ -43,7 +45,7 @@ export function ProductOemResults({
             id={p._id}
             slug={p.slug}
             atgCode={p.atgCode}
-            name={p.name}
+            name={p.name} nameRu={p.nameRu} nameEn={p.nameEn}
             price={p.price}
             wholesalePrice={p.wholesalePrice}
             compareAtPrice={p.compareAtPrice}

@@ -8,8 +8,10 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { ProductCard } from '@/components/cards/ProductCard';
 import type { Doc } from '../../../../convex/_generated/dataModel';
+import { useT } from '@/lib/i18n/admin';
 
 export default function FavoritesPage() {
+  const { t } = useT();
   const items = useFavoritesStore((s) => s.items);
 
   // Load full product data for all favorites
@@ -27,9 +29,9 @@ export default function FavoritesPage() {
           <div className="flex items-center justify-center rounded-full bg-muted" style={{ height: '6rem', width: '6rem' }}>
             <Heart className="text-muted-foreground" style={{ height: '3rem', width: '3rem' }} />
           </div>
-          <h1 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>Ընտրված</h1>
-          <p className="text-muted-foreground">Ձեր ընտրված ապրանքները դատարկ են</p>
-          <Link href="/products"><Button size="lg">Դիտել ապրանքները</Button></Link>
+          <h1 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>{t('pg.fav.title')}</h1>
+          <p className="text-muted-foreground">{t('pg.fav.empty')}</p>
+          <Link href="/products"><Button size="lg">{t('pg.fav.viewProducts')}</Button></Link>
         </div>
       </div>
     );
@@ -37,7 +39,7 @@ export default function FavoritesPage() {
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <h1 className="font-bold mx-4 sm:mx-0" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>Ընտրված ({items.length})</h1>
+      <h1 className="font-bold mx-4 sm:mx-0" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{t('pg.fav.title')} ({items.length})</h1>
       <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
         {fullProducts?.map((product: Doc<"products">, i: number) => (
           <div key={product._id} className="relative group">

@@ -11,25 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Truck, Trash2, Plus, Save, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
-
-const L = {
-  "title": "Առաքման ժամանակացույց",
-  "subtitle": "խմբագրեք առաքման ժամկետները՝ ըստ վայրի",
-  "yerevan": "Երևանի համայնքներ",
-  "regions": "Մարզեր",
-  "schedule": "Ժամանակացույց",
-  "save": "Պահպանել",
-  "saved": "Պահպանվեց",
-  "del": "Ջնջել",
-  "deleted": "Ջնջվեց",
-  "add": "Ավելացնել վայր",
-  "seed": "Ստեղծել սկզբնական ցանկը",
-  "name": "Անուն",
-  "active": "Ակտիվ",
-  "empty": "Դեռ վայրեր չկան",
-  "schedulePh": "Օրինակ՝ Ամեն օր, երկուշաբթի և հինգշաբթի",
-  "confirmDel": "Ջնջե՞լ"
-};
+import { useAdminT } from '@/lib/i18n/admin';
 
 type Zone = {
   _id: Id<'deliveryZones'>;
@@ -41,6 +23,7 @@ type Zone = {
 };
 
 function ZoneRow({ zone, sessionToken }: { zone: Zone; sessionToken: string }) {
+  const { t } = useAdminT();
   const upsert = useMutation(api.delivery.upsert);
   const remove = useMutation(api.delivery.remove);
   const [name, setName] = useState(zone.name);
@@ -57,16 +40,16 @@ function ZoneRow({ zone, sessionToken }: { zone: Zone; sessionToken: string }) {
     setSaving(true);
     try {
       await upsert({ sessionToken, id: zone._id, group: zone.group, name: name.trim(), schedule, isActive });
-      toast.success(L.saved);
+      toast.success(t('as.saved'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm(`${L.confirmDel} "${zone.name}"?`)) return;
+    if (!confirm(`${t('as.confirmDel')} "${zone.name}"?`)) return;
     await remove({ sessionToken, id: zone._id });
-    toast.success(L.deleted);
+    toast.success(t('as.deleted'));
   };
 
   return (
@@ -75,22 +58,22 @@ function ZoneRow({ zone, sessionToken }: { zone: Zone; sessionToken: string }) {
         <Input value={name} onChange={(e) => setName(e.target.value)} className="font-medium" />
         <label className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
           <Switch checked={isActive} onCheckedChange={setIsActive} />
-          {L.active}
+          {t('as.active')}
         </label>
-        <Button size="icon" variant="ghost" onClick={handleDelete} aria-label={L.del}>
+        <Button size="icon" variant="ghost" onClick={handleDelete} aria-label={t('as.del')}>
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
       </div>
       <Textarea
         value={schedule}
         onChange={(e) => setSchedule(e.target.value)}
-        placeholder={L.schedulePh}
+        placeholder={t('as.schedulePh')}
         rows={3}
         className="resize-y"
       />
       <div className="flex justify-end">
         <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
-          <Save className="mr-2 h-4 w-4" /> {L.save}
+          <Save className="mr-2 h-4 w-4" /> {t('as.save')}
         </Button>
       </div>
     </div>
@@ -98,6 +81,7 @@ function ZoneRow({ zone, sessionToken }: { zone: Zone; sessionToken: string }) {
 }
 
 function GroupSection({ title, group, zones, sessionToken }: { title: string; group: 'yerevan' | 'region'; zones: Zone[]; sessionToken: string }) {
+  const { t } = useAdminT();
   const upsert = useMutation(api.delivery.upsert);
   const [newName, setNewName] = useState('');
 
@@ -106,7 +90,7 @@ function GroupSection({ title, group, zones, sessionToken }: { title: string; gr
     if (!n) return;
     await upsert({ sessionToken, group, name: n, schedule: '' });
     setNewName('');
-    toast.success(L.saved);
+    toast.success(t('as.saved'));
   };
 
   return (
@@ -122,11 +106,11 @@ function GroupSection({ title, group, zones, sessionToken }: { title: string; gr
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-          placeholder={L.name}
+          placeholder={t('as.zoneName')}
           className="max-w-xs"
         />
         <Button variant="outline" size="sm" onClick={handleAdd} disabled={!newName.trim()}>
-          <Plus className="mr-2 h-4 w-4" /> {L.add}
+          <Plus className="mr-2 h-4 w-4" /> {t('as.addZone')}
         </Button>
       </div>
     </section>
@@ -134,6 +118,7 @@ function GroupSection({ title, group, zones, sessionToken }: { title: string; gr
 }
 
 export default function AdminDeliveryPage() {
+  const { t } = useAdminT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const zones = useQuery(api.delivery.listAdmin, sessionToken ? { sessionToken } : 'skip') as Zone[] | undefined;
   const seed = useMutation(api.delivery.seed);
@@ -141,7 +126,7 @@ export default function AdminDeliveryPage() {
   const handleSeed = async () => {
     if (!sessionToken) return;
     const res = await seed({ sessionToken });
-    toast.success(res === 'already-seeded' ? L.saved : L.saved);
+    toast.success(res === 'already-seeded' ? t('as.saved') : t('as.saved'));
   };
 
   const yerevan = (zones ?? []).filter((z) => z.group === 'yerevan');
@@ -152,12 +137,12 @@ export default function AdminDeliveryPage() {
     <div>
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold">{L.title}</h1>
-          <p className="text-sm text-muted-foreground">{L.subtitle}</p>
+          <h1 className="text-3xl font-bold">{t('as.deliveryScheduleTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('as.deliverySubtitle')}</p>
         </div>
         {isEmpty && (
           <Button onClick={handleSeed}>
-            <Sparkles className="mr-2 h-4 w-4" /> {L.seed}
+            <Sparkles className="mr-2 h-4 w-4" /> {t('as.seed')}
           </Button>
         )}
       </div>
@@ -165,12 +150,12 @@ export default function AdminDeliveryPage() {
       {isEmpty ? (
         <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           <Truck className="mx-auto mb-3 h-10 w-10 opacity-50" />
-          <p>{L.empty}</p>
+          <p>{t('as.noZones')}</p>
         </div>
       ) : (
         <div className="space-y-10">
-          {sessionToken && <GroupSection title={L.yerevan} group="yerevan" zones={yerevan} sessionToken={sessionToken} />}
-          {sessionToken && <GroupSection title={L.regions} group="region" zones={regions} sessionToken={sessionToken} />}
+          {sessionToken && <GroupSection title={t('as.yerevanCommunities')} group="yerevan" zones={yerevan} sessionToken={sessionToken} />}
+          {sessionToken && <GroupSection title={t('as.regions')} group="region" zones={regions} sessionToken={sessionToken} />}
         </div>
       )}
     </div>

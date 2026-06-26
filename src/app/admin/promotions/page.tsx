@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDateHy, formatPrice } from '@/lib/formatters';
+import { formatDateLocalized, formatPrice } from '@/lib/formatters';
 
 import { useQuery, useMutation } from 'convex/react';
 import { useRouter } from 'next/navigation';
@@ -18,31 +18,33 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import Image from 'next/image';
 import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';
+import { useAdminT } from '@/lib/i18n/admin';
 
 export default function AdminPromotionsPage() {
   const promotions = useQuery(api.promotions.list, {});
   const router = useRouter();
   const remove = useMutation(api.promotions.remove);
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
 
   return (
     <div>
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold">Ակցիաներ</h1>
-          <p className="text-muted-foreground">{promotions?.length ?? 0} ակցիա</p>
+          <h1 className="text-3xl font-bold">{t('acat.promotions')}</h1>
+          <p className="text-muted-foreground">{promotions?.length ?? 0} {t('acat.promotionCountWord')}</p>
         </div>
-        <Link href="/admin/promotions/add"><Button className="gap-2"><Plus className="h-4 w-4" /> Ավելացնել</Button></Link>
+        <Link href="/admin/promotions/add"><Button className="gap-2"><Plus className="h-4 w-4" /> {t('acat.add')}</Button></Link>
       </div>
 
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {promotions?.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} onEdit={() => router.push(`/admin/promotions/${promo._id}/edit`)} onDelete={async () => { await remove({ sessionToken: sessionToken!, id: promo._id }); toast.success('Ակցիան հաջողությամբ հեռացվեց'); }} />)}
+        {promotions?.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} onEdit={() => router.push(`/admin/promotions/${promo._id}/edit`)} onDelete={async () => { await remove({ sessionToken: sessionToken!, id: promo._id }); toast.success(t('acat.promoDeleted')); }} />)}
       </div>
 
       {promotions?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <Tag className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">Ակցիաներ չեն գտնվել</p>
+          <p className="text-muted-foreground">{t('acat.noPromotions')}</p>
         </div>
       )}
 
@@ -57,13 +59,14 @@ function PromotedProductsSection() {
   const allProducts = useQuery(api.products.list, { limit: 200 });
   const updateProduct = useMutation(api.products.update);
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
   const [search, setSearch] = useState('');
 
   const togglePromotion = async (productId: Id<'products'>, current: boolean) => {
     try {
       await updateProduct({ sessionToken: sessionToken!, id: productId, showInPromotions: !current });
-      toast.success(current ? 'Հեռացված է ակցիաներից' : 'Ավելացված է ակցիաներին');
-    } catch { toast.error('Չհաջողվեց թարմացնել'); }
+      toast.success(current ? t('acat.removedFromPromos') : t('acat.addedToPromos'));
+    } catch { toast.error(t('acat.updateFailed')); }
   };
 
   const filteredAll = allProducts?.filter(
@@ -74,16 +77,16 @@ function PromotedProductsSection() {
     <div className="mt-12">
       <div className="mb-6 flex items-center gap-3">
         <ShoppingBag className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-bold">Զեղչով ապրանքներ</h2>
+        <h2 className="text-xl font-bold">{t('acat.discountedProducts')}</h2>
         <Badge variant="secondary" className="ml-auto text-xs">
-          {promoProducts?.length ?? 0} ապրանք
+          {promoProducts?.length ?? 0} {t('acat.productWord')}
         </Badge>
       </div>
 
       {/* Already promoted products */}
       <div className="mb-4 space-y-1.5">
         {promoProducts?.length === 0 && (
-          <p className="text-sm text-muted-foreground">Ակցիայի ապրանքներ չեն գտնվել</p>
+          <p className="text-sm text-muted-foreground">{t('acat.noPromoProducts')}</p>
         )}
         {promoProducts?.map((p) => {
           const discount = p.compareAtPrice && p.compareAtPrice > p.price
@@ -110,11 +113,11 @@ function PromotedProductsSection() {
 
       {/* Search & add */}
       <div className="py-4">
-        <Label className="text-xs text-muted-foreground">Ավելացնել ապրանք</Label>
+        <Label className="text-xs text-muted-foreground">{t('acat.addProduct')}</Label>
         <div className="relative mt-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Որոնել ապրանքներ..."
+            placeholder={t('acat.searchProducts')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-10 pl-9"
@@ -141,7 +144,7 @@ function PromotedProductsSection() {
                 </button>
               );
             })}
-            {filteredAll.length === 0 && <p className="p-3 text-sm text-muted-foreground">Ապրանքներ չեն գտնվել</p>}
+            {filteredAll.length === 0 && <p className="p-3 text-sm text-muted-foreground">{t('acat.noProductsFound')}</p>}
           </div>
         )}
       </div>
@@ -152,6 +155,7 @@ function PromotedProductsSection() {
 function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promotions'>; title: string; description?: string; imageUrl?: string; images?: string[]; templateJson?: string; discountPercent?: number; discountAmount?: number; productIds?: Id<'products'>[]; categoryIds?: Id<'categories'>[]; startDate: number; endDate: number; isActive: boolean }; index: number; onDelete: () => void; onEdit: () => void }) {
   const { ref, visible } = useReveal();
   const tpl = parsePromoConfig(promo.templateJson);
+  const { t } = useAdminT();
   const [now] = useState(() => Date.now());
   const isExpired = promo.endDate < now;
   const isUpcoming = promo.startDate > now;
@@ -185,14 +189,14 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
           {/* Status badge */}
           <div className="absolute right-4 top-4">
             <Badge className={`border-0 text-[10px] px-2 py-1 shadow-md ${isLive ? 'bg-green-500 text-white' : isUpcoming ? 'bg-blue-500 text-white' : 'bg-muted-foreground/60 text-white'}`}>
-              {isLive ? 'Ակտիվ' : isUpcoming ? 'Շուտով' : 'Ավարտված'}
+              {isLive ? t('acat.active') : isUpcoming ? t('acat.soon') : t('acat.ended')}
             </Badge>
           </div>
 
           {/* Days left */}
           {isLive && daysLeft <= 7 && (
             <div className="absolute right-4 bottom-4 flex items-center gap-1 rounded-lg bg-background/90 px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur-sm">
-              <Clock className="h-3 w-3" /> {daysLeft} օր
+              <Clock className="h-3 w-3" /> {daysLeft} {t('acat.daysWord')}
             </div>
           )}
 
@@ -221,7 +225,7 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Calendar className="h-3.5 w-3.5" />
-              <span>{formatDateHy(promo.startDate)} — {formatDateHy(promo.endDate)}</span>
+              <span>{formatDateLocalized(promo.startDate, t)} — {formatDateLocalized(promo.endDate, t)}</span>
             </div>
             {itemsCount > 0 && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -234,10 +238,10 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
           {/* Actions on hover */}
           <div className="mt-4 flex gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
             <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-xs" onClick={onEdit}>
-              <Edit className="h-3 w-3" /> Խմբագրել
+              <Edit className="h-3 w-3" /> {t('acat.edit')}
             </Button>
             <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-xs text-destructive hover:text-destructive" onClick={onDelete}>
-              <Trash2 className="h-3 w-3" /> Ջնջել
+              <Trash2 className="h-3 w-3" /> {t('acat.delete')}
             </Button>
           </div>
         </div>

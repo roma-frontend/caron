@@ -6,6 +6,7 @@ import { Truck, Search, MapPin, CalendarDays, X } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n/admin';
 
 type Zone = {
   _id: string;
@@ -20,13 +21,13 @@ type GroupFilter = 'all' | 'yerevan' | 'region';
 
 /** Armenian weekday labels (short) in Mon..Sun order. */
 const WEEK = [
-  { short: 'Երկ', long: ['երկուշաբթի', 'երկ'] },
-  { short: 'Երք', long: ['երեքշաբթի', 'երեք', 'երք'] },
-  { short: 'Չրք', long: ['չորեքշաբթի', 'չորեք', 'չրք'] },
-  { short: 'Հնգ', long: ['հինգշաբթի', 'հինգ', 'հնգ'] },
-  { short: 'Ուր', long: ['ուրբաթ', 'ուր'] },
-  { short: 'Շբթ', long: ['շաբաթ', 'շբթ'] },
-  { short: 'Կիր', long: ['կիրակի', 'կիր'] },
+  { short: 'pg.week.mon', long: ['երկուշաբթի', 'երկ'] },
+  { short: 'pg.week.tue', long: ['երեքշաբթի', 'երեք', 'երք'] },
+  { short: 'pg.week.wed', long: ['չորեքշաբթի', 'չորեք', 'չրք'] },
+  { short: 'pg.week.thu', long: ['հինգշաբթի', 'հինգ', 'հնգ'] },
+  { short: 'pg.week.fri', long: ['ուրբաթ', 'ուր'] },
+  { short: 'pg.week.sat', long: ['շաբաթ', 'շբթ'] },
+  { short: 'pg.week.sun', long: ['կիրակի', 'կիր'] },
 ];
 
 const EVERYDAY_HINTS = ['ամեն օր', 'ամենօր', 'բոլոր օր', 'ամեն'];
@@ -48,6 +49,7 @@ function parseDays(schedule: string): boolean[] | null {
 }
 
 function WeekStrip({ days }: { days: boolean[] }) {
+  const { t } = useT();
   return (
     <div className="flex flex-wrap gap-1">
       {WEEK.map((d, i) => (
@@ -60,7 +62,7 @@ function WeekStrip({ days }: { days: boolean[] }) {
               : 'bg-muted text-muted-foreground/50',
           )}
         >
-          {d.short}
+          {t(d.short)}
         </span>
       ))}
     </div>
@@ -68,6 +70,7 @@ function WeekStrip({ days }: { days: boolean[] }) {
 }
 
 function ZoneCard({ zone }: { zone: Zone }) {
+  const { t } = useT();
   const days = useMemo(() => parseDays(zone.schedule), [zone.schedule]);
   const hasSchedule = zone.schedule.trim().length > 0;
 
@@ -79,7 +82,7 @@ function ZoneCard({ zone }: { zone: Zone }) {
       </div>
 
       {!hasSchedule ? (
-        <p className="text-sm text-muted-foreground/60">Ճշտել հեռախոսով</p>
+        <p className="text-sm text-muted-foreground/60">{t('pg.delsch.callToConfirm')}</p>
       ) : days ? (
         <WeekStrip days={days} />
       ) : (
@@ -93,6 +96,7 @@ function ZoneCard({ zone }: { zone: Zone }) {
 }
 
 export function DeliverySchedule() {
+  const { t } = useT();
   const zones = useQuery(api.delivery.list, {}) as Zone[] | undefined;
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<GroupFilter>('all');
@@ -117,19 +121,19 @@ export function DeliverySchedule() {
   if (!zones || zones.length === 0) return null;
 
   const tabs: { key: GroupFilter; label: string; count: number }[] = [
-    { key: 'all', label: 'Բոլորը', count: counts.all },
-    { key: 'yerevan', label: 'Երևան', count: counts.yerevan },
-    { key: 'region', label: 'Մարզեր', count: counts.region },
+    { key: 'all', label: t('pg.delsch.all'), count: counts.all },
+    { key: 'yerevan', label: t('pg.common.yerevan'), count: counts.yerevan },
+    { key: 'region', label: t('pg.common.regions'), count: counts.region },
   ];
 
   return (
     <section className="mt-16">
       <div className="mb-2 flex items-center justify-center gap-2">
         <Truck className="h-5 w-5 text-primary" />
-        <h2 className="text-center text-2xl font-bold">Առաքման գրաֆիկ</h2>
+        <h2 className="text-center text-2xl font-bold">{t('pg.delsch.title')}</h2>
       </div>
       <p className="mx-auto mb-8 max-w-xl text-center text-sm text-muted-foreground">
-        Գտեք ձեր համայնքը կամ մարզը՝ տեսնելու առաքման օրերը
+        {t('pg.delsch.subtitle')}
       </p>
 
       {/* Controls */}
@@ -140,14 +144,14 @@ export function DeliverySchedule() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Փնտրել վայր..."
+            placeholder={t('pg.delsch.searchPlaceholder')}
             className="h-10 pl-9 pr-9"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              aria-label="Մաքրել"
+              aria-label={t('pg.common.clear')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -180,7 +184,7 @@ export function DeliverySchedule() {
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed py-12 text-center text-muted-foreground">
           <Search className="mx-auto mb-3 h-8 w-8 opacity-40" />
-          <p>Ոչինչ չի գտնվել «{query}» հարցմամբ</p>
+          <p>{t('pg.delsch.nothingFound')} «{query}» {t('pg.delsch.byQuery')}</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

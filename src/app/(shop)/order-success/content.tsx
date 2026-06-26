@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CheckCircle, Printer, Smartphone, Check } from 'lucide-react';
-import { formatPrice, formatDateHy } from '@/lib/formatters';
+import { formatPrice, formatDateLocalized } from '@/lib/formatters';
+import { useT } from '@/lib/i18n/admin';
 import Link from 'next/link';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useSettings } from '@/hooks/useSettings';
@@ -17,6 +18,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 
 export default function OrderSuccessContent() {
+  const { t } = useT();
   const params = useSearchParams();
   const orderId = params.get('id') as Id<'orders'> | null;
   const settings = useSettings();
@@ -48,28 +50,28 @@ export default function OrderSuccessContent() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold">Պատվերը հաջողությամբ ստեղծվել է</h1>
-          <p className="mt-2 text-muted-foreground">Ձեր պատվերը հաջողությամբ ստեղծվել է և կկարգավորվի կարճ ժամանակում</p>
+          <h1 className="text-2xl font-bold">{t('sc.orderCreated')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('sc.orderCreatedDesc')}</p>
           {o?.orderNumber ? <p className="mt-1 font-mono font-bold text-primary">{String(o.orderNumber)}</p> : null}
         </div>
 
         <Card className="print-card" style={{ boxShadow: 'var(--shadow-lg)' }}>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Հաշիվ-ապրանքագիր / Invoice</CardTitle>
+            <CardTitle>{t('sc.invoice')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {o?.orderNumber ? (
               <>
                 <div className="flex justify-between text-sm">
-                  <span><strong>Պատվեր՝</strong> {String(o.orderNumber)}</span>
-                  <span><strong>Ամսաթիվ՝</strong> {formatDateHy(Number(o.createdAt))}</span>
+                  <span><strong>{t('sc.orderLabel')}՝</strong> {String(o.orderNumber)}</span>
+                  <span><strong>{t('sc.date')}՝</strong> {formatDateLocalized(Number(o.createdAt), t)}</span>
                 </div>
                 <div className="text-sm">
-                  <p><strong>Հաճախորդ՝</strong> {String(o.customerName)}</p>
-                  <p><strong>Հեռ․՝</strong> {String(o.customerPhone)}</p>
-                  <p><strong>Էլ․ փոստ՝</strong> {String(o.customerEmail)}</p>
-                  <p><strong>Հասցե՝</strong> {String(o.shippingAddress)}</p>
-                  {o.notes ? <p className="mt-1 text-muted-foreground">Նշում՝ {String(o.notes)}</p> : null}
+                  <p><strong>{t('sc.customer')}՝</strong> {String(o.customerName)}</p>
+                  <p><strong>{t('sc.phoneShort')}՝</strong> {String(o.customerPhone)}</p>
+                  <p><strong>{t('sc.emailShort')}՝</strong> {String(o.customerEmail)}</p>
+                  <p><strong>{t('sc.address')}՝</strong> {String(o.shippingAddress)}</p>
+                  {o.notes ? <p className="mt-1 text-muted-foreground">{t('sc.note')}՝ {String(o.notes)}</p> : null}
                 </div>
               </>
             ) : null}
@@ -77,10 +79,10 @@ export default function OrderSuccessContent() {
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="pb-2 font-medium">Ապրանք</th>
-                  <th className="pb-2 font-medium text-right">Քանակ</th>
-                  <th className="pb-2 font-medium text-right">Գին</th>
-                  <th className="pb-2 font-medium text-right">Գումար</th>
+                  <th className="pb-2 font-medium">{t('sc.product')}</th>
+                  <th className="pb-2 font-medium text-right">{t('sc.quantity')}</th>
+                  <th className="pb-2 font-medium text-right">{t('sc.price')}</th>
+                  <th className="pb-2 font-medium text-right">{t('sc.amount')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,37 +99,37 @@ export default function OrderSuccessContent() {
 
             <div className="flex justify-end">
               <div className="w-48 space-y-1 text-sm">
-                <div className="flex justify-between"><span>Ենթագումար</span><span>{o?.subtotal ? formatPrice(Number(o.subtotal)) : ''}</span></div>
-                <div className="flex justify-between"><span>Առաքում</span><span>{o?.shipping !== undefined ? (Number(o.shipping) === 0 ? 'Անվճար' : formatPrice(Number(o.shipping))) : ''}</span></div>
+                <div className="flex justify-between"><span>{t('sc.subtotal')}</span><span>{o?.subtotal ? formatPrice(Number(o.subtotal)) : ''}</span></div>
+                <div className="flex justify-between"><span>{t('sc.shipping')}</span><span>{o?.shipping !== undefined ? (Number(o.shipping) === 0 ? t('sc.free') : formatPrice(Number(o.shipping))) : ''}</span></div>
                 <Separator />
-                <div className="flex justify-between font-bold text-base"><span>Ընդհանուր</span><span>{o?.total ? formatPrice(Number(o.total)) : ''}</span></div>
+                <div className="flex justify-between font-bold text-base"><span>{t('sc.grandTotal')}</span><span>{o?.total ? formatPrice(Number(o.total)) : ''}</span></div>
               </div>
             </div>
 
             {(pm === 'transfer' || pm === 'idram' || pm === 'easypay') && (
               <div className="rounded-lg border bg-muted/30 p-4 space-y-2 print-break-inside">
-                <h3 className="font-semibold text-sm">Վճարման տվյալներ</h3>
+                <h3 className="font-semibold text-sm">{t('sc.paymentDetails')}</h3>
                 {pm === 'transfer' && (
                   <div className="text-sm space-y-1">
-                    <p>Բանկ՝ <strong>{bank}</strong></p>
-                    <p>Հաշիվ՝ <strong className="font-mono">{account}</strong></p>
+                    <p>{t('sc.bank')}՝ <strong>{bank}</strong></p>
+                    <p>{t('sc.account')}՝ <strong className="font-mono">{account}</strong></p>
                     {swift && <p>SWIFT/BIC՝ <strong className="font-mono">{swift}</strong></p>}
                   </div>
                 )}
                 {(pm === 'idram' || pm === 'easypay') && card && (
-                  <p className="text-sm">{pm === 'idram' ? 'Idram' : 'EasyPay'} քարտ՝ <strong className="font-mono">{card}</strong></p>
+                  <p className="text-sm">{pm === 'idram' ? 'Idram' : 'EasyPay'} {t('sc.cardWord')}՝ <strong className="font-mono">{card}</strong></p>
                 )}
               </div>
             )}
 
             <div className="flex flex-col gap-3 sm:flex-row no-print">
               <Button variant="outline" className="min-w-38 gap-2 flex-1" onClick={() => window.print()}>
-                <Printer className="h-4 w-4" /> Տպել / Print
+                <Printer className="h-4 w-4" /> {t('sc.print')}
               </Button>
               {String(o?.orderNumber ?? '') && sessionToken && (
                 <SendTelegramReceipt orderId={orderId!} />
               )}
-              <Link href="/products" className="flex-1"><Button variant="cta" className="w-full">Շարունակել գնումը</Button></Link>
+              <Link href="/products" className="flex-1"><Button variant="cta" className="w-full">{t('sc.continueShopping2')}</Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -137,6 +139,7 @@ export default function OrderSuccessContent() {
 }
 
 function SendTelegramReceipt({ orderId }: { orderId: Id<'orders'> }) {
+  const { t } = useT();
   const [username, setUsername] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -153,17 +156,17 @@ function SendTelegramReceipt({ orderId }: { orderId: Id<'orders'> }) {
       const r = result as { ok: boolean; error?: string; botUsername?: string } | undefined;
       if (r?.ok) {
         setSent(true);
-        toast.success('Չեկը ուղարկվել է Telegram');
+        toast.success(t('sc.receiptSent'));
       } else {
         if (r?.botUsername) setBotUsername(r.botUsername);
         if (r?.error?.includes('chat not found')) {
-          toast.error('Սեղմեք Start Telegram-ում, ապա փորձեք նորից');
+          toast.error(t('sc.pressStartRetry'));
         } else {
-          toast.error(r?.error || 'Սխալ ուղարկելիս');
+          toast.error(r?.error || t('sc.sendError'));
         }
       }
     } catch {
-      toast.error('Սխալ միացման ժամանակ');
+      toast.error(t('sc.connectionError'));
     } finally {
       setSending(false);
     }
@@ -172,7 +175,7 @@ function SendTelegramReceipt({ orderId }: { orderId: Id<'orders'> }) {
   if (sent) {
     return (
       <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
-        <Check className="h-4 w-4" /> Չեկը ուղարկված է Telegram
+        <Check className="h-4 w-4" /> {t('sc.receiptSentInline')}
       </div>
     );
   }
@@ -181,9 +184,9 @@ function SendTelegramReceipt({ orderId }: { orderId: Id<'orders'> }) {
     <div className="flex flex-col gap-2 w-full">
       <p className="text-xs text-muted-foreground">
         {botUsername ? (
-          <>Բացեք բոտը՝ <a href={`https://t.me/${botUsername}`} target="_blank" rel="noopener noreferrer" className="text-primary font-medium underline">t.me/{botUsername}</a>, սեղմեք <b>Start</b>, ապա մուտքագրեք ձեր @username</>
+          <>{t('sc.openBot')} <a href={`https://t.me/${botUsername}`} target="_blank" rel="noopener noreferrer" className="text-primary font-medium underline">t.me/{botUsername}</a>{t('sc.thenPress')} <b>Start</b>{t('sc.thenEnterUsername')}</>
         ) : (
-          <>Գտեք մեր բոտը Telegram-ում, սեղմեք <b>Start</b>, ապա մուտքագրեք ձեր @username</>
+          <>{t('sc.findBot')} <b>Start</b>{t('sc.thenEnterUsername')}</>
         )}
       </p>
       <div className="flex gap-2">

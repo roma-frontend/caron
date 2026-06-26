@@ -201,6 +201,51 @@ export const logout = mutation({
   },
 });
 
+/**
+ * Change the current user's password.
+ *
+ * The DB password is what the generic email-login path verifies, so setting it
+ * gives the admin a working credential even when the bootstrap login still uses
+ * env vars (the env check just runs first). Verification of the current
+ * password:
+ *  - if a `passwordHash` already exists → it must match;
+ *  - otherwise (e.g. an env-only admin that never set a DB password) → verify
+ *    against the configured `ADMIN_PASSWORD` / `ADMIN_PASSWORD_HASH` so we never
+ *    let an authenticated session set a password without proving the old one.
+ */
+export const changePassword = mutation({
+  args: { sessionToken: v.string(), currentPassword: v.string(), newPassword: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db.query('sessions').withIndex('by_token', (q) => q.eq('token', args.sessionToken)).unique();
+    if (!session || session.expiresAt < Date.now()) throw new Error('Սեսիան ավարտվել է');
+    const user = await ctx.db.get(session.userId);
+    if (!user || !user.isActive) throw new Error('Օգտագործողը չի գտնվել');
+
+    if (args.newPassword.length < 8) throw new Error('Նոր գաղտնաբառը պետք է լինի առնվազն 8 նիշ');
+
+    let currentOk = false;
+    if (user.passwordHash) {
+      currentOk = await verifyPassword(args.currentPassword, user.passwordHash);
+    } else {
+      // Env-bootstrap admin without a DB password yet.
+      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+      if (user.role === 'admin' && adminEmail && user.email.toLowerCase() === adminEmail) {
+        currentOk = adminPasswordHash
+          ? await verifyPassword(args.currentPassword, adminPasswordHash)
+          : adminPassword
+            ? await safeEqual(args.currentPassword, adminPassword)
+            : false;
+      }
+    }
+    if (!currentOk) throw new Error('Ընթացիկ գաղտնաբառը սխալ է');
+
+    await ctx.db.patch(user._id, { passwordHash: await hashPassword(args.newPassword) });
+    return { success: true };
+  },
+});
+
 export const register = mutation({
   args: { name: v.string(), email: v.string(), phone: v.optional(v.string()), password: v.string(), referralCode: v.optional(v.string()) },
   handler: async (ctx, args) => {

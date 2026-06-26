@@ -8,7 +8,7 @@ import { ShoppingBag, Trash2, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/lib/formatters';
-import { CART } from '@/lib/constants';
+import { useT } from '@/lib/i18n/admin';
 import { useSettings } from '@/hooks/useSettings';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { flyProductAway } from '@/lib/flyToTarget';
@@ -20,6 +20,7 @@ import { ProductCard } from '@/components/cards/ProductCard';
 import { QuantityStepper } from '@/components/QuantityStepper';
 
 export default function CartPage() {
+  const { t } = useT();
   const items = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -84,9 +85,9 @@ export default function CartPage() {
     });
 
     showUndoCountdownToast({
-      message: `Զամբյուղը մաքրվեց՝ ${removedItems.length} ապրանք`,
-      description: 'Ցանկանո՞ւմ եք վերականգնել ջնջված ապրանքները',
-      undoLabel: 'Վերականգնել բոլորը',
+      message: `${t('sc.cartCleared')} ${removedItems.length} ${t('sc.itemsUnit')}`,
+      description: t('sc.restoreDeletedQuestion'),
+      undoLabel: t('sc.restoreAll'),
       onUndo: () => {
         removedItems.forEach(restoreCartItem);
       },
@@ -116,9 +117,9 @@ export default function CartPage() {
 
     if (removedItem) {
       showUndoCountdownToast({
-        message: 'Ապրանքը հեռացվեց զամբյուղից',
+        message: t('sc.itemRemoved'),
         description: name,
-        undoLabel: 'Վերադարձնել',
+        undoLabel: t('sc.undo'),
         onUndo: () => restoreCartItem(removedItem),
       });
     }
@@ -131,10 +132,10 @@ export default function CartPage() {
           <div className="flex items-center justify-center rounded-full bg-muted" style={{ height: '6rem', width: '6rem' }}>
             <ShoppingBag className="text-muted-foreground" style={{ height: '3rem', width: '3rem' }} />
           </div>
-          <h1 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>{CART.empty}</h1>
-          <p className="text-muted-foreground">{CART.emptyDesc}</p>
+          <h1 className="font-bold" style={{ fontSize: 'var(--text-2xl)' }}>{t('sc.cartEmpty')}</h1>
+          <p className="text-muted-foreground">{t('sc.cartEmptyDesc')}</p>
           <Link href="/products">
-            <Button size="lg">{CART.continueShopping}</Button>
+            <Button size="lg">{t('sc.continueShopping')}</Button>
           </Link>
         </div>
       </div>
@@ -143,7 +144,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <h1 className="font-bold mx-4 sm:mx-0" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{CART.title}</h1>
+      <h1 className="font-bold mx-4 sm:mx-0" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-8)' }}>{t('sc.cartTitle')}</h1>
       <div className="grid gap-8 lg:grid-cols-3 px-4 sm:px-0">
         <div className="space-y-3 lg:col-span-2">
           {/* Toolbar */}
@@ -151,12 +152,12 @@ export default function CartPage() {
             <label className="flex items-center gap-3 cursor-pointer select-none">
               <input type="checkbox" checked={allSelected} onChange={allSelected ? deselectAll : selectAll}
                 className="h-4.5 w-4.5 rounded-md border-2 border-muted-foreground/40 accent-primary cursor-pointer" />
-              <span className="text-sm font-medium">{allSelected ? 'Հանել նշումը' : 'Ընտրել բոլորը'}</span>
+              <span className="text-sm font-medium">{allSelected ? t('sc.deselect') : t('sc.selectAll')}</span>
               <span className="text-xs text-muted-foreground">({items.length})</span>
             </label>
             {selected.size > 0 && (
               <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleBulkRemove}>
-                <Trash2 className="h-3.5 w-3.5" /> Ջնջել ({selected.size})
+                <Trash2 className="h-3.5 w-3.5" /> {t('sc.delete')} ({selected.size})
               </Button>
             )}
           </div>
@@ -188,11 +189,11 @@ export default function CartPage() {
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <Link href={`/products/${item.id}`} className="text-sm font-medium leading-snug line-clamp-2 transition-colors hover:text-primary">{item.name}</Link>
-                  <button onClick={(e) => void handleRemove(item.id, item.name, e.currentTarget)} disabled={removingIds.has(item.id)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10 disabled:opacity-40" aria-label="Ջնջել">
+                  <button onClick={(e) => void handleRemove(item.id, item.name, e.currentTarget)} disabled={removingIds.has(item.id)} className="shrink-0 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-destructive hover:bg-destructive/10 disabled:opacity-40" aria-label={t('sc.delete')}>
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-                {item.sku && <p className="text-xs text-muted-foreground">Արտիկուլ: {item.sku}</p>}
+                {item.sku && <p className="text-xs text-muted-foreground">{t('sc.article')}: {item.sku}</p>}
 
                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
                   <QuantityStepper
@@ -205,7 +206,7 @@ export default function CartPage() {
                   />
                   <div className="text-right">
                     <p className="text-base font-bold">{formatPrice(item.price * item.quantity)}</p>
-                    {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">{formatPrice(item.price)} / հատ</p>}
+                    {item.quantity > 1 && <p className="text-[11px] text-muted-foreground">{formatPrice(item.price)} / {t('sc.perUnit')}</p>}
                   </div>
                 </div>
               </div>
@@ -214,24 +215,24 @@ export default function CartPage() {
         </div>
         <div>
           <Card style={{ boxShadow: 'var(--shadow-card)' }}>
-            <CardHeader><CardTitle>{CART.orderSummary}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('sc.orderSummary')}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {settings?.freeShippingThreshold ? (
                 totalPrice >= settings.freeShippingThreshold ? (
-                  <p className="rounded-lg bg-green-600/10 px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400">Անվճար առաքում!</p>
+                  <p className="rounded-lg bg-green-600/10 px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400">{t('sc.freeShipping')}</p>
                 ) : (
                   <div>
-                    <p className="text-xs text-muted-foreground">Ավելացրեք ևս <span className="font-semibold text-foreground">{formatPrice(settings.freeShippingThreshold - totalPrice)}</span> անվճար առաքման համար</p>
+                    <p className="text-xs text-muted-foreground">{t('sc.addMore')} <span className="font-semibold text-foreground">{formatPrice(settings.freeShippingThreshold - totalPrice)}</span> {t('sc.forFreeShipping')}</p>
                     <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                       <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${Math.min(100, (totalPrice / settings.freeShippingThreshold) * 100)}%` }} />
                     </div>
                   </div>
                 )
               ) : null}
-              <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{CART.subtotal}</span><span>{formatPrice(totalPrice)}</span></div>
-              <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{CART.shipping}</span><span className="text-muted-foreground">Հաշվարկվում է պատվիրելիս</span></div>
+              <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{t('sc.subtotal')}</span><span>{formatPrice(totalPrice)}</span></div>
+              <div className="flex justify-between" style={{ fontSize: 'var(--text-sm)' }}><span>{t('sc.shipping')}</span><span className="text-muted-foreground">{t('sc.calculatedAtCheckout')}</span></div>
               <Separator />
-              <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{CART.total}</span><span>{formatPrice(selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice)}</span></div>
+              <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{t('sc.total')}</span><span>{formatPrice(selected.size > 0 ? items.filter((i) => selected.has(i.id)).reduce((s, i) => s + i.price * i.quantity, 0) : totalPrice)}</span></div>
               {settings?.enableLoyalty && (() => {
                 const chosen = selected.size > 0 ? items.filter((i) => selected.has(i.id)) : items;
                 const orderAmount = chosen.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -239,20 +240,20 @@ export default function CartPage() {
                 const { percent: eff, points: pts } = resolveCashback(qty, orderAmount, settings.loyaltyTiers, settings.loyaltyPercent ?? 0);
                 return pts > 0 ? (
                   <div className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400">
-                    <Gift className="h-4 w-4" /> Կստանաք +{pts} բալ ({eff}%) այս պատվերից
+                    <Gift className="h-4 w-4" /> {t('sc.youWillGet')} +{pts} {t('sc.points')} ({eff}%) {t('sc.fromThisOrder')}
                   </div>
                 ) : null;
               })()}
-              {selected.size > 0 && selected.size < items.length && <p className="text-xs text-muted-foreground text-center">{selected.size} / {items.length} ընտրված</p>}
+              {selected.size > 0 && selected.size < items.length && <p className="text-xs text-muted-foreground text-center">{selected.size} / {items.length} {t('sc.selected')}</p>}
               {selected.size === 0 ? (
-                <Button variant="cta" size="xl" className="w-full" disabled> Պատվիրել </Button>
+                <Button variant="cta" size="xl" className="w-full" disabled> {t('sc.order')} </Button>
               ) : (
                 <Link href="/checkout" onClick={() => { if (typeof window !== "undefined") sessionStorage.setItem("checkout-ids", JSON.stringify([...selected])); }} className="block">
-                  <Button variant="cta" size="xl" className="w-full">{CART.checkout} ({selected.size})</Button>
+                  <Button variant="cta" size="xl" className="w-full">{t('sc.order')} ({selected.size})</Button>
                 </Link>
               )}
               <Link href="/products" className="block">
-                <Button variant="outline" size="lg" className="w-full">{CART.continueShopping}</Button>
+                <Button variant="outline" size="lg" className="w-full">{t('sc.continueShopping')}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -262,10 +263,10 @@ export default function CartPage() {
       {/* Cross-sell */}
       {featured && featured.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-xl font-bold mb-6 mx-4 sm:mx-0">Այս ապրանքի հետ գնում են</h2>
+          <h2 className="text-xl font-bold mb-6 mx-4 sm:mx-0">{t('sc.crossSell')}</h2>
           <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-4">
             {featured.slice(0, 4).map((p, i) => (
-              <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+              <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} nameRu={p.nameRu} nameEn={p.nameEn} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
             ))}
           </div>
         </section>

@@ -22,6 +22,8 @@ import { useAuth } from '@/store/auth';
 import { VehicleCompatSelector } from '@/components/admin/VehicleCompatSelector';
 import type { VehicleCompatEntry } from '@/components/admin/VehicleCompatSelector';
 import { OemNumbersInput } from '@/components/admin/OemNumbersInput';
+import { useAdminT } from '@/lib/i18n/admin';
+import { useFilterName } from '@/lib/i18n/filterNames';
 
 type OemEntry = { manufacturer: string; code: string };
 
@@ -50,6 +52,8 @@ function SmoothCollapseSection({
 }
 
 function StickyProductSummary({ data, update }: { data: Record<string, unknown>; update: (key: string, value: unknown) => void }) {
+  const { t } = useAdminT();
+  const filterName = useFilterName();
   const categories = useQuery(api.categories.list, {});
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -122,31 +126,31 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
     <div className="rounded-2xl border border-border/70 bg-gradient-to-b from-card via-card/95 to-muted/20 p-5 shadow-lg">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-bold tracking-tight">Ապրանքի լրացում</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Լրացրեք հիմնական դաշտերը, իսկ լրացուցիչ բաժինները բացեք ըստ անհրաժեշտության</p>
+          <h3 className="text-base font-bold tracking-tight">{t('apf.productFill')}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t('apf.productFillHint')}</p>
         </div>
-        <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">խելացի դաշտ</span>
+        <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">{t('apf.smartField')}</span>
       </div>
 
       <div className="grid gap-3 text-xs sm:grid-cols-2">
         <div className="rounded-xl border border-border/70 bg-background/80 p-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">1. Ապրանքի անուն</Label>
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">{t('apf.step1Name')}</Label>
           <Input
             value={name}
             onChange={(e) => {
               update('name', e.target.value);
               update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
             }}
-            placeholder="Ապրանքի անուն"
+            placeholder={t('apf.productName')}
             className="mt-1 h-11 border-border/70 bg-background/90"
           />
         </div>
         <div className="rounded-xl border border-border/70 bg-background/80 p-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">2. Արտիկուլ</Label>
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">{t('apf.step2Sku')}</Label>
           <Input value={sku} onChange={(e) => update('sku', e.target.value)} placeholder="ANI-A7F3" className="mt-1 h-11 border-border/70 bg-background/90 font-mono tracking-wider" />
         </div>
         <div className="rounded-xl border border-border/70 bg-background/80 p-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">3. Կատեգորիա</Label>
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">{t('apf.step3Category')}</Label>
           <select
             value={categoryId ?? ''}
             onChange={(e) => {
@@ -155,23 +159,23 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
             }}
             className="mt-1 flex h-11 w-full rounded-md border border-border/70 bg-background/90 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
           >
-            <option value="">Կատեգորիա</option>
+            <option value="">{t('apf.category')}</option>
             {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
-          {!categoryName && <p className="mt-1 text-[11px] text-muted-foreground">Ընտրեք կատեգորիա</p>}
+          {!categoryName && <p className="mt-1 text-[11px] text-muted-foreground">{t('apf.selectCategory')}</p>}
         </div>
         <div className="rounded-xl border border-border/70 bg-background/80 p-3">
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">4. ԱՏԳԱ կոդ</Label>
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">{t('apf.step4Atg')}</Label>
           <Input value={atgCode} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="mt-1 h-11 border-border/70 bg-background/90 font-mono" />
         </div>
       </div>
 
       <div className="mt-3 space-y-2.5">
-        <SmoothCollapseSection title="5. Նկարագրություն" open={descOpen} onToggle={() => setDescOpen((v) => !v)}>
-          <Textarea className="mt-2 border-border/70 bg-background/90" value={description} onChange={(e) => update('description', e.target.value)} placeholder="Ապրանքի նկարագրություն" rows={4} />
+        <SmoothCollapseSection title={t('apf.step5Description')} open={descOpen} onToggle={() => setDescOpen((v) => !v)}>
+          <Textarea className="mt-2 border-border/70 bg-background/90" value={description} onChange={(e) => update('description', e.target.value)} placeholder={t('apf.productDescription')} rows={4} />
         </SmoothCollapseSection>
 
-        <SmoothCollapseSection title="6. Պատկեր" open={imagesOpen} onToggle={() => setImagesOpen((v) => !v)}>
+        <SmoothCollapseSection title={t('apf.step6Image')} open={imagesOpen} onToggle={() => setImagesOpen((v) => !v)}>
           <div className="mt-2 space-y-3">
             {images.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
@@ -186,7 +190,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
                   }}
                   className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-primary hover:text-primary"
                 >
-                  {selectedImages.length === images.length ? 'Մաքրել ընտրությունը' : 'Ընտրել բոլորը'}
+                  {selectedImages.length === images.length ? t('apf.clearSelection') : t('apf.selectAll')}
                 </button>
                 {selectedImages.length > 0 && (
                   <button
@@ -197,7 +201,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
                     }}
                     className="rounded-full border border-destructive/70 bg-destructive/10 px-3 py-1 text-[11px] font-medium text-destructive transition hover:bg-destructive/20"
                   >
-                    Ջնջել ընտրվածները ({selectedImages.length})
+                    {t('apf.deleteSelected')} ({selectedImages.length})
                   </button>
                 )}
                 <button
@@ -208,7 +212,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
                   }}
                   className="rounded-full border border-border/70 bg-background/90 px-3 py-1 text-[11px] font-medium transition hover:border-destructive hover:text-destructive"
                 >
-                  Ջնջել բոլոր նկարները
+                  {t('apf.deleteAllImages')}
                 </button>
               </div>
             )}
@@ -241,47 +245,47 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
                   <ImagePlus className="h-6 w-6" />
                 </button>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">Քաշեք նկարները այստեղ կամ սեղմեք + նշանին</p>
+              <p className="mt-2 text-xs text-muted-foreground">{t('apf.dragImagesHint')}</p>
             </div>
           </div>
           <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={async (e) => { if (!e.target.files?.length) return; await appendFiles(e.target.files); e.target.value = ''; }} />
         </SmoothCollapseSection>
 
         <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-3 text-xs">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">7. Գնային Տվյալներ</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t('apf.step7Pricing')}</div>
           <div className="grid grid-cols-2 gap-2">
-            <Input {...numericInputProps(false)} value={price} onChange={(e) => update('price', e.target.value)} placeholder="Մանրածախ" className="h-11 border-border/70 bg-background/90" />
-            <Input {...numericInputProps(false)} value={wholesalePrice} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="Մեծածախ" className="h-11 border-border/70 bg-background/90" />
-            <Input {...numericInputProps(false)} value={stock} onChange={(e) => update('stock', e.target.value)} placeholder="Քանակ" className="h-11 border-border/70 bg-background/90" />
-            <Input {...numericInputProps(false)} value={qtyStep} onChange={(e) => update('qtyStep', e.target.value)} placeholder="Քայլ" className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={price} onChange={(e) => update('price', e.target.value)} placeholder={t('apf.retail')} className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={wholesalePrice} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder={t('apf.wholesale')} className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={stock} onChange={(e) => update('stock', e.target.value)} placeholder={t('apf.quantity')} className="h-11 border-border/70 bg-background/90" />
+            <Input {...numericInputProps(false)} value={qtyStep} onChange={(e) => update('qtyStep', e.target.value)} placeholder={t('apf.step')} className="h-11 border-border/70 bg-background/90" />
           </div>
         </div>
 
         <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-3 text-xs">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">8. Բնութագրեր {attrEntries.length > 0 ? `(${attrEntries.length})` : ''}</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t('apf.step8Attributes')} {attrEntries.length > 0 ? `(${attrEntries.length})` : ''}</div>
           {!categoryId ? (
-            <p className="text-muted-foreground">Նախ ընտրեք կատեգորիա</p>
+            <p className="text-muted-foreground">{t('apf.selectCategoryFirst')}</p>
           ) : !filterDefs ? (
-            <p className="text-muted-foreground">Բեռնվում է...</p>
+            <p className="text-muted-foreground">{t('apf.loading')}</p>
           ) : filterDefs.length === 0 ? (
-            <p className="text-muted-foreground">Այս կատեգորիան չունի բնութագրեր</p>
+            <p className="text-muted-foreground">{t('apf.noAttributes')}</p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
               {filterDefs.map((def) => (
                 <div key={def._id}>
-                  <Label className="text-[11px] text-muted-foreground">{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
+                  <Label className="text-[11px] text-muted-foreground">{filterName(def.name, def.slug)} {def.unit ? `(${def.unit})` : ''}</Label>
                   {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
                     <Select value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
-                      <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={def.name} /></SelectTrigger>
+                      <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={filterName(def.name, def.slug)} /></SelectTrigger>
                       <SelectContent>{def.options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : def.type === 'boolean' ? (
                     <Select value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
-                      <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={def.name} /></SelectTrigger>
-                      <SelectContent><SelectItem value="true">Այո</SelectItem><SelectItem value="false">Ոչ</SelectItem></SelectContent>
+                      <SelectTrigger className="h-11 border-border/70 bg-background/90"><SelectValue placeholder={filterName(def.name, def.slug)} /></SelectTrigger>
+                      <SelectContent><SelectItem value="true">{t('apf.yes')}</SelectItem><SelectItem value="false">{t('apf.no')}</SelectItem></SelectContent>
                     </Select>
                   ) : (
-                    <Input value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={def.name} className="h-11 border-border/70 bg-background/90" />
+                    <Input value={(attributes[def._id] ?? attributes[def.slug] ?? '') as string} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={filterName(def.name, def.slug)} className="h-11 border-border/70 bg-background/90" />
                   )}
                 </div>
               ))}
@@ -294,6 +298,7 @@ function StickyProductSummary({ data, update }: { data: Record<string, unknown>;
 }
 
 function StepBasicInfo() {
+  const { t } = useAdminT();
   const { data, update } = useWizardData();
   const attrs = ((data.attributes as Record<string, unknown>) ?? {});
   const compat = (attrs.vehicleCompat as VehicleCompatEntry[]) ?? [];
@@ -323,13 +328,13 @@ function StepBasicInfo() {
 
   return (
     <div className="space-y-3">
-      <SmoothCollapseSection title="Լրացուցիչ գնային դաշտեր" open={priceExtraOpen} onToggle={() => setPriceExtraOpen((v) => !v)}>
+      <SmoothCollapseSection title={t('apf.extraPriceFields')} open={priceExtraOpen} onToggle={() => setPriceExtraOpen((v) => !v)}>
         <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-1">
-          <div><Label className="text-[11px] text-muted-foreground">Զեղչ %</Label><Input {...numericInputProps(false)} value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} className="h-11 border-border/70 bg-background/90" min={0} max={100} /></div>
+          <div><Label className="text-[11px] text-muted-foreground">{t('apf.discountPct')}</Label><Input {...numericInputProps(false)} value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} className="h-11 border-border/70 bg-background/90" min={0} max={100} /></div>
         </div>
       </SmoothCollapseSection>
 
-      <SmoothCollapseSection title="Համապատասխանություն" open={vehicleOpen} onToggle={() => setVehicleOpen((v) => !v)}>
+      <SmoothCollapseSection title={t('apf.compatibility')} open={vehicleOpen} onToggle={() => setVehicleOpen((v) => !v)}>
         <div className="mt-2 space-y-4">
           <VehicleCompatSelector value={compat} onChange={handleCompatChange} />
           <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
@@ -346,11 +351,11 @@ function StepBasicInfo() {
           <div className="flex justify-end">
             <AiGenerateButton
               getInput={() => ({ name: (data.name as string) ?? '', brand: data.brand as string | undefined, attributes: data.attributes as Record<string, unknown> | undefined })}
-              onResult={(r) => { update('description', r.description); update('seoTitle', r.seoTitle); update('seoDescription', r.seoDescription); }}
+              onResult={(r) => { update('description', r.description); update('descriptionRu', r.descriptionRu); update('descriptionEn', r.descriptionEn); update('seoTitle', r.seoTitle); update('seoDescription', r.seoDescription); }}
             />
           </div>
-          <div><Label className="text-[11px] text-muted-foreground">SEO վերնագիր</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11 border-border/70 bg-background/90" /></div>
-          <div><Label className="text-[11px] text-muted-foreground">SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} className="border-border/70 bg-background/90" /></div>
+          <div><Label className="text-[11px] text-muted-foreground">{t('apf.seoTitle')}</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11 border-border/70 bg-background/90" /></div>
+          <div><Label className="text-[11px] text-muted-foreground">{t('apf.seoDescription')}</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} className="border-border/70 bg-background/90" /></div>
         </div>
       </SmoothCollapseSection>
     </div>
@@ -380,6 +385,7 @@ function ChevronSection({ title, children }: { title: string; children: React.Re
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepPricing() {
+  const { t } = useAdminT();
   const { data, update } = useWizardData();
 
   const price = Number(data.price) || 0;
@@ -404,24 +410,24 @@ function StepPricing() {
   };
 
   return (
-    <ChevronSection title="2. Գնային տվյալներ">
+    <ChevronSection title={t('apf.step2Pricing')}>
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Մանրածախ (֏)</Label><Input {...numericInputProps(false)} value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
-          <div><Label>Մեծածախ (֏)</Label><Input {...numericInputProps(false)} value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
+          <div><Label>{t('apf.retail')} (֏)</Label><Input {...numericInputProps(false)} value={(data.price as string) ?? ''} onChange={(e) => setPrice(e.target.value)} placeholder="10000" className="h-11" /></div>
+          <div><Label>{t('apf.wholesale')} (֏)</Label><Input {...numericInputProps(false)} value={(data.wholesalePrice as string) ?? ''} onChange={(e) => update('wholesalePrice', e.target.value)} placeholder="9000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>{'Ինքնարժեք (֏)'}</Label><Input {...numericInputProps(false)} value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
+          <div><Label>{t('apf.costPrice')} (֏)</Label><Input {...numericInputProps(false)} value={(data.costPrice as string) ?? ''} onChange={(e) => update('costPrice', e.target.value)} placeholder="7000" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>Զեղչ %</Label><Input {...numericInputProps(false)} value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
+          <div><Label>{t('apf.discountPct')}</Label><Input {...numericInputProps(false)} value={discountPct || ''} onChange={(e) => setDiscountPct(Number(e.target.value))} placeholder="20" className="h-11" min={0} max={100} /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>ԱՏԳԱ կոդ</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
-          <div><Label>Քանակ *</Label><Input {...numericInputProps(false)} value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
+          <div><Label>{t('apf.atgCode')}</Label><Input value={(data.atgCode as string) ?? ''} onChange={(e) => update('atgCode', e.target.value)} placeholder="2601" className="h-11 font-mono" /></div>
+          <div><Label>{t('apf.quantity')} *</Label><Input {...numericInputProps(false)} value={(data.stock as string) ?? ''} onChange={(e) => update('stock', e.target.value)} placeholder="100" className="h-11" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>Քանակի քայլ</Label><Input {...numericInputProps(false)} value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
+          <div><Label>{t('apf.quantityStep')}</Label><Input {...numericInputProps(false)} value={(data.qtyStep as string) ?? ''} onChange={(e) => update('qtyStep', e.target.value)} className="h-11" placeholder="1" /></div>
         </div>
       </div>
     </ChevronSection>
@@ -430,6 +436,7 @@ function StepPricing() {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepSEO() {
+  const { t } = useAdminT();
   const { data, update } = useWizardData();
   return (
     <ChevronSection title="5. SEO">
@@ -440,8 +447,8 @@ function StepSEO() {
             onResult={(r) => { update('description', r.description); update('seoTitle', r.seoTitle); update('seoDescription', r.seoDescription); }}
           />
         </div>
-        <div><Label>SEO վերնագիր</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11" /></div>
-        <div><Label>SEO նկարագրություն</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} /></div>
+        <div><Label>{t('apf.seoTitle')}</Label><Input value={(data.seoTitle as string) ?? ''} onChange={(e) => update('seoTitle', e.target.value)} className="h-11" /></div>
+        <div><Label>{t('apf.seoDescription')}</Label><Textarea value={(data.seoDescription as string) ?? ''} onChange={(e) => update('seoDescription', e.target.value)} rows={4} /></div>
       </div>
     </ChevronSection>
   );
@@ -449,6 +456,7 @@ function StepSEO() {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepVehicle() {
+  const { t } = useAdminT();
   const { data, update } = useWizardData();
   const attrs = ((data.attributes as Record<string, unknown>) ?? {});
   const compat = (attrs.vehicleCompat as VehicleCompatEntry[]) ?? [];
@@ -464,7 +472,7 @@ function StepVehicle() {
   }, [attrs, update]);
 
   return (
-    <ChevronSection title="4. Համապատասխանություն">
+    <ChevronSection title={t('apf.step4Compat')}>
       <VehicleCompatSelector value={compat} onChange={handleChange} />
     </ChevronSection>
   );
@@ -472,6 +480,8 @@ function StepVehicle() {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StepAttributes() {
+  const { t } = useAdminT();
+  const filterName = useFilterName();
   const { data, update } = useWizardData();
   const categoryId = data.categoryId as string | undefined;
   const filterDefs = useQuery(api.filters.getByCategory, categoryId ? { categoryId: categoryId as Id<'categories'> } : 'skip');
@@ -483,28 +493,28 @@ function StepAttributes() {
     update('attributes', next);
   };
 
-  if (!categoryId) return <ChevronSection title="3. Բնութագրեր"><p className="text-sm text-muted-foreground">Նախ ընտրեք կատեգորիա</p></ChevronSection>;
-  if (!filterDefs) return <ChevronSection title="3. Բնութագրեր"><p className="text-sm text-muted-foreground">Բեռնվում Է...</p></ChevronSection>;
-  if (filterDefs.length === 0) return <ChevronSection title="3. Բնութագրեր"><p className="text-sm text-muted-foreground">Այս կատեգորիան չունի բնութագրեր</p></ChevronSection>;
+  if (!categoryId) return <ChevronSection title={t('apf.step3Attributes')}><p className="text-sm text-muted-foreground">{t('apf.selectCategoryFirst')}</p></ChevronSection>;
+  if (!filterDefs) return <ChevronSection title={t('apf.step3Attributes')}><p className="text-sm text-muted-foreground">{t('apf.loadingAlt')}</p></ChevronSection>;
+  if (filterDefs.length === 0) return <ChevronSection title={t('apf.step3Attributes')}><p className="text-sm text-muted-foreground">{t('apf.noAttributes')}</p></ChevronSection>;
 
   return (
-    <ChevronSection title="3. Բնութագրեր">
+    <ChevronSection title={t('apf.step3Attributes')}>
       <div className="space-y-4">
         {filterDefs.map((def) => (
           <div key={def._id}>
-            <Label>{def.name} {def.unit ? `(${def.unit})` : ''}</Label>
+            <Label>{filterName(def.name, def.slug)} {def.unit ? `(${def.unit})` : ''}</Label>
             {(def.type === 'select' || def.type === 'multiselect') && def.options ? (
               <Select value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
-                <SelectTrigger className="h-11"><SelectValue placeholder={def.name} /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue placeholder={filterName(def.name, def.slug)} /></SelectTrigger>
                 <SelectContent>{def.options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
               </Select>
             ) : def.type === 'boolean' ? (
               <Select value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onValueChange={(v) => setAttr(def._id, v != null ? String(v) : '')}>
-                <SelectTrigger className="h-11"><SelectValue placeholder={def.name} /></SelectTrigger>
-                <SelectContent><SelectItem value="true">Այո</SelectItem><SelectItem value="false">Ոչ</SelectItem></SelectContent>
+                <SelectTrigger className="h-11"><SelectValue placeholder={filterName(def.name, def.slug)} /></SelectTrigger>
+                <SelectContent><SelectItem value="true">{t('apf.yes')}</SelectItem><SelectItem value="false">{t('apf.no')}</SelectItem></SelectContent>
               </Select>
             ) : (
-              <Input value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={def.name} className="h-11" />
+              <Input value={(attrs[def._id] ?? attrs[def.slug] ?? '') as string} onChange={(e) => setAttr(def._id, e.target.value)} placeholder={filterName(def.name, def.slug)} className="h-11" />
             )}
           </div>
         ))}
@@ -514,6 +524,7 @@ function StepAttributes() {
 }
 
 export default function AddProductPage() {
+  const { t } = useAdminT();
   const router = useRouter();
   const create = useMutation(api.products.create);
   const { sessionToken } = useAuth();
@@ -522,12 +533,12 @@ export default function AddProductPage() {
     const attrs = (d.attributes as Record<string, unknown> | undefined) ?? {};
     const missing: string[] = [];
 
-    if (!(d.sku as string | undefined)?.trim()) missing.push('Արտիկուլ');
-    if (!(d.name as string | undefined)?.trim()) missing.push('Ապրանքի անուն');
+    if (!(d.sku as string | undefined)?.trim()) missing.push(t('apf.sku'));
+    if (!(d.name as string | undefined)?.trim()) missing.push(t('apf.productName'));
     if (!(d.slug as string | undefined)?.trim()) missing.push('Slug');
-    if (!(d.categoryId as string | undefined)) missing.push('Կատեգորիա');
-    if (!(d.stock as string | undefined)) missing.push('Քանակ');
-    if (Object.keys(attrs).length === 0) missing.push('Բնութագրեր');
+    if (!(d.categoryId as string | undefined)) missing.push(t('apf.category'));
+    if (!(d.stock as string | undefined)) missing.push(t('apf.quantity'));
+    if (Object.keys(attrs).length === 0) missing.push(t('apf.attributes'));
 
     return missing;
   };
@@ -535,7 +546,7 @@ export default function AddProductPage() {
   const steps: WizardStep[] = [
     {
       id: 'product-form',
-      title: 'Ապրանքի ձև',
+      title: t('apf.productForm'),
       content: <StepBasicInfo />,
     },
   ];
@@ -543,7 +554,7 @@ export default function AddProductPage() {
   const handleComplete = async (data: Record<string, unknown>) => {
     const missing = getMissingRequiredFields(data);
     if (missing.length > 0) {
-      toast.error(`Լրացրեք պարտադիր դաշտերը: ${missing.join(', ')}`);
+      toast.error(`${t('apf.fillRequired')}: ${missing.join(', ')}`);
       return;
     }
 
@@ -552,6 +563,8 @@ export default function AddProductPage() {
       name: data.name as string,
       slug: data.slug as string,
       description: (data.description as string) || '',
+      descriptionRu: (data.descriptionRu as string) || undefined,
+      descriptionEn: (data.descriptionEn as string) || undefined,
       categoryId: data.categoryId as Id<'categories'>,
       price: data.price && String(data.price).trim() !== '' ? Number(data.price) : undefined,
       costPrice: data.costPrice ? Number(data.costPrice) : undefined,
@@ -566,7 +579,7 @@ export default function AddProductPage() {
       isFeatured: false,
       attributes: (data.attributes as Record<string, unknown>) || undefined,
     });
-    toast.success('Ապրանքը հաջողությամբ ստեղծվեց');
+    toast.success(t('apf.productCreated'));
     router.push('/admin/products');
   };
 
@@ -576,13 +589,13 @@ export default function AddProductPage() {
         <Link
           href="/admin/products"
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-          aria-label="Վերադառնալ ապրանքներին"
-          title="Վերադառնալ ապրանքներին"
+          aria-label={t('apf.backToProducts')}
+          title={t('apf.backToProducts')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Նոր ապրանք</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">{t('apf.newProduct')}</h1>
         </div>
       </div>
       <Card className="w-full overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-b from-card to-card/90" style={{ boxShadow: '0 24px 70px rgba(0,0,0,0.28)' }}>
@@ -590,7 +603,7 @@ export default function AddProductPage() {
           steps={steps}
           onComplete={handleComplete}
           onCancel={() => router.push('/admin/products')}
-          submitLabel="Ստեղծել ապրանք"
+          submitLabel={t('apf.createProduct')}
           submitOnly
           hideProgress
           renderStickySummary={({ data: wizardData, update: wizardUpdate }) => <StickyProductSummary data={wizardData} update={wizardUpdate} />}

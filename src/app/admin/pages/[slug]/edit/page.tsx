@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
 
 const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), { ssr: false });
 
@@ -23,15 +24,17 @@ export default function EditPagePage() {
   const page = useQuery(api.pages.getBySlug, isNew ? 'skip' : { slug });
   const save = useMutation(api.pages.save);
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
 
-  if (!isNew && page === undefined) return <div className="p-8 text-center text-muted-foreground">Բեռնվում է...</div>;
-  if (!isNew && page === null) return <div className="p-8 text-center text-muted-foreground">Էջը չի գտնվել</div>;
+  if (!isNew && page === undefined) return <div className="p-8 text-center text-muted-foreground">{t('acat.loading')}</div>;
+  if (!isNew && page === null) return <div className="p-8 text-center text-muted-foreground">{t('acat.pageNotFound')}</div>;
 
   return <EditForm key={page?._id ?? 'new'} page={page} isNew={isNew} save={save} router={router} sessionToken={sessionToken} />;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function EditForm({ page, isNew, save, router, sessionToken }: { page: any; isNew: boolean; save: any; router: any; sessionToken?: string | null }) {
+  const { t } = useAdminT();
   const [title, setTitle] = useState(page?.title ?? '');
   const [pageSlug, setPageSlug] = useState(page?.slug ?? '');
   const [content, setContent] = useState(page?.content ?? '');
@@ -40,7 +43,7 @@ function EditForm({ page, isNew, save, router, sessionToken }: { page: any; isNe
 
   const handleSave = async () => {
     if (!title.trim() || !pageSlug.trim()) {
-      toast.error('Լրացրեք վերնագիրը և slug-ը');
+      toast.error(t('acat.fillTitleSlug'));
       return;
     }
     setSaving(true);
@@ -53,10 +56,10 @@ function EditForm({ page, isNew, save, router, sessionToken }: { page: any; isNe
         content,
         isPublished,
       });
-      toast.success('Էջը պահպանվել է');
+      toast.success(t('acat.pageSaved'));
       if (isNew) router.push('/admin/pages');
     } catch {
-      toast.error('Սխալ');
+      toast.error(t('acat.error'));
     } finally {
       setSaving(false);
     }
@@ -68,14 +71,14 @@ function EditForm({ page, isNew, save, router, sessionToken }: { page: any; isNe
         <Link href="/admin/pages">
           <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
         </Link>
-        <h1 className="text-2xl font-bold">{isNew ? 'Նոր էջ' : 'Խմբագրել'}</h1>
+        <h1 className="text-2xl font-bold">{isNew ? t('acat.newPage') : t('acat.edit')}</h1>
       </div>
 
       <div className="space-y-4 rounded-xl border bg-background p-6">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <Label>Վերնագիր</Label>
-            <Input value={title} onChange={(e) => { setTitle(e.target.value); if (isNew && !page) setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')); }} placeholder="Էջի վերնագիրը" />
+            <Label>{t('acat.title')}</Label>
+            <Input value={title} onChange={(e) => { setTitle(e.target.value); if (isNew && !page) setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')); }} placeholder={t('acat.pageTitlePlaceholder')} />
           </div>
           <div>
             <Label>Slug</Label>
@@ -84,17 +87,17 @@ function EditForm({ page, isNew, save, router, sessionToken }: { page: any; isNe
         </div>
 
         <div>
-          <Label>Բովանդակություն</Label>
+          <Label>{t('acat.content')}</Label>
           <RichEditor value={content} onChange={setContent} />
         </div>
 
         <div className="flex items-center gap-2">
           <Switch checked={isPublished} onCheckedChange={setIsPublished} />
-          <Label>Հրապարակված</Label>
+          <Label>{t('acat.published')}</Label>
         </div>
 
         <Button onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" /> {saving ? 'Պահպանվում...' : 'Պահպանել'}
+          <Save className="mr-2 h-4 w-4" /> {saving ? t('acat.savingAlt') : t('acat.save')}
         </Button>
       </div>
     </div>

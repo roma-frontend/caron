@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useT } from '@/lib/i18n/admin';
 
 interface Props {
   value: number;
@@ -28,6 +29,7 @@ const SIZES = {
  * if it doesn't fit (e.g. exceeds stock), it reverts to the last valid value.
  */
 export function QuantityStepper({ value, onChange, step = 1, min = step, max = Infinity, size = 'md', className, onRemove, disabled, fullWidth }: Props) {
+  const { t } = useT();
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState('');
   const s = SIZES[size];
@@ -58,7 +60,7 @@ export function QuantityStepper({ value, onChange, step = 1, min = step, max = I
 
   return (
     <div className={`flex items-center rounded-lg border ${s.h} ${fullWidth ? 'w-full justify-between' : ''} ${className ?? ''}`}>
-      <button type="button" aria-label="Պակասեցնել" onClick={(e) => { e.preventDefault(); e.stopPropagation(); dec(); }}
+      <button type="button" aria-label={t('sp.decrease')} onClick={(e) => { e.preventDefault(); e.stopPropagation(); dec(); }}
         disabled={disabled || (value <= min && !onRemove)}
         className={`flex ${s.h} ${s.btn} items-center justify-center rounded-l-lg transition-colors hover:bg-muted disabled:opacity-30`}>−</button>
       <input
@@ -70,9 +72,9 @@ export function QuantityStepper({ value, onChange, step = 1, min = step, max = I
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur(); } }}
         className={`${s.h} ${fullWidth ? 'flex-1 min-w-0' : s.inp} border-x bg-transparent text-center font-semibold outline-none text-sm`}
-        aria-label="Քանակ"
+        aria-label={t('sp.quantity')}
       />
-      <button type="button" aria-label="Ավելացնել" onClick={(e) => { e.preventDefault(); e.stopPropagation(); inc(); }}
+      <button type="button" aria-label={t('sp.add')} onClick={(e) => { e.preventDefault(); e.stopPropagation(); inc(); }}
         disabled={disabled || value + step > max}
         className={`flex ${s.h} ${s.btn} items-center justify-center rounded-r-lg transition-colors hover:bg-muted disabled:opacity-30`}>+</button>
     </div>

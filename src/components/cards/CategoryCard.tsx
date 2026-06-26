@@ -5,12 +5,19 @@ import type { LucideIcon } from 'lucide-react';
 import { Disc3, CircleDot, Droplet, Filter, Lightbulb, BatteryCharging, Wrench, Gauge, Package, ChevronRight } from 'lucide-react';
 import { useMouseGlow } from '@/lib/motion';
 import Image from 'next/image';
+import { useT } from '@/lib/i18n/admin';
+import { useCategoryName } from '@/lib/i18n/filterNames';
+import { pickLocalized } from '@/lib/i18n/localize';
 
 interface CategoryCardProps {
   id: string;
   name: string;
+  nameRu?: string;
+  nameEn?: string;
   slug: string;
   description?: string;
+  descriptionRu?: string;
+  descriptionEn?: string;
   imageUrl?: string | null;
   productCount?: number;
   index?: number;
@@ -50,7 +57,11 @@ const CATEGORY_GLOW_COLORS: Record<string, string> = {
   accessories: 'oklch(0.6 0.14 300 / 0.18)',
 };
 
-export function CategoryCard({ name, slug, description, imageUrl, productCount, index: _index = 0, className }: CategoryCardProps) {
+export function CategoryCard({ name, nameRu, nameEn, slug, description, descriptionRu, descriptionEn, imageUrl, productCount, index: _index = 0, className }: CategoryCardProps) {
+  const { t, lang } = useT();
+  const categoryName = useCategoryName();
+  const displayName = categoryName({ name, slug, nameRu, nameEn });
+  const displayDesc = pickLocalized({ description, descriptionRu, descriptionEn }, 'description', lang);
   const { mousePos, isHovered, handlers } = useMouseGlow();
   const Icon = CATEGORY_ICONS[slug] ?? Package;
   const color = CATEGORY_COLORS[slug] ?? 'bg-primary/10 text-primary';
@@ -97,11 +108,11 @@ export function CategoryCard({ name, slug, description, imageUrl, productCount, 
         )}
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold leading-tight transition-colors duration-200 group-hover:text-primary">{name}</h3>
+          <h3 className="text-base font-semibold leading-tight transition-colors duration-200 group-hover:text-primary">{displayName}</h3>
           {productCount !== undefined ? (
-            <p className="mt-0.5 text-sm text-muted-foreground">{productCount} ապրանք</p>
-          ) : description ? (
-            <p className="mt-0.5 truncate text-sm text-muted-foreground">{description}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{productCount} {t('sx.itemsWord')}</p>
+          ) : displayDesc ? (
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{displayDesc}</p>
           ) : null}
         </div>
 

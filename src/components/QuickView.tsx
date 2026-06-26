@@ -13,6 +13,7 @@ import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useT } from '@/lib/i18n/admin';
 
 interface QuickViewProps {
   open: boolean;
@@ -34,6 +35,7 @@ interface QuickViewProps {
 }
 
 export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
+  const { t } = useT();
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
   const toggleFav = useFavoritesStore((s) => s.toggle);
@@ -49,7 +51,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl border-0 shadow-2xl" showCloseButton={false}>
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <span className="font-semibold text-sm">Արագ դիտում</span>
+          <span className="font-semibold text-sm">{t('sp.quickView')}</span>
           <Button variant="ghost" size="icon-sm" onClick={() => onOpenChange(false)}>
             <XIcon className="h-4 w-4" />
           </Button>
@@ -70,7 +72,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
             )}
             {!product.inStock && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
-                <Badge variant="secondary" className="text-sm">Ապահովված չէ</Badge>
+                <Badge variant="secondary" className="text-sm">{t('sp.outOfStockBadge')}</Badge>
               </div>
             )}
           </div>
@@ -108,7 +110,7 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
 
             {product.carBrand && (
               <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-600/10 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400">
-                <Check className="h-3.5 w-3.5" /> Համապատասխան է {product.carBrand}
+                <Check className="h-3.5 w-3.5" /> {t('sp.fitsBrand')} {product.carBrand}
               </span>
             )}
 
@@ -123,16 +125,16 @@ export function QuickView({ open, onOpenChange, product }: QuickViewProps) {
                   flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.image ?? null });
                 }}
               >
-                <ShoppingCart className="h-4 w-4" /> {product.inStock ? 'Ավելացնել' : 'Չկա պահանջվող քանակով'}
+                <ShoppingCart className="h-4 w-4" /> {product.inStock ? t('sp.add') : t('sp.notEnoughStock')}
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product.id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.image ?? null }); toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.image ?? null }); toast.success('Ավելացվել է'); if (adding) setTimeout(() => onOpenChange(false), 350); } else if (existing) { showUndoCountdownToast({ message: 'Հեռացվել է', onUndo: () => toggleFav(existing) }); } }}>
+                <Button variant="outline" size="lg" className={`flex-1 gap-2 ${isFav ? 'border-red-200 text-red-500' : ''}`} onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product.id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.image ?? null }); toggleFav({ id: product.id, name: product.name, price: cartPrice, image: product.image ?? null }); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.image ?? null }); toast.success(t('sp.addedSuccess')); if (adding) setTimeout(() => onOpenChange(false), 350); } else if (existing) { showUndoCountdownToast({ message: t('sp.removedSuccess'), onUndo: () => toggleFav(existing) }); } }}>
                   <Heart className={`h-4 w-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
-                  {isFav ? 'Ընտրված' : 'Ընտրել'}
+                  {isFav ? t('sp.selected') : t('sp.select')}
                 </Button>
                 {product.slug && (
                   <Link href={`/products/${product.slug}`} className="flex-1" onClick={() => onOpenChange(false)}>
-                    <Button variant="secondary" size="lg" className="w-full">Մանրամասներ</Button>
+                    <Button variant="secondary" size="lg" className="w-full">{t('sp.details')}</Button>
                   </Link>
                 )}
               </div>

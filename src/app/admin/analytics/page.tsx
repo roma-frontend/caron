@@ -9,14 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, TrendingUp } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useAuth } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
 
 type PeriodKey = 'all' | '7d' | '30d' | 'thisMonth' | 'lastMonth';
 const PERIODS: Record<PeriodKey, string> = {
-  all: 'Բոլոր',
-  '7d': '7 օր',
-  '30d': '30 օր',
-  thisMonth: 'Այս ամիս',
-  lastMonth: 'Նախորդ ամիս',
+  all: 'ac.periodAll',
+  '7d': 'ac.period7d',
+  '30d': 'ac.period30d',
+  thisMonth: 'ac.periodThisMonth',
+  lastMonth: 'ac.periodLastMonth',
 };
 
 function getPeriodFrom(period: PeriodKey): number {
@@ -39,6 +40,7 @@ function getPeriodTo(period: PeriodKey): number {
 }
 
 export default function AnalyticsPage() {
+  const { t } = useAdminT();
   const { sessionToken } = useAuth();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
   const products = useQuery(api.products.listAnalyticsMap);
@@ -123,29 +125,29 @@ export default function AnalyticsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="h-6 w-6" /> {'Վերլուծություն'}</h1>
-        <p className="text-sm text-muted-foreground">{'Պատվերների վերլուծություն և վաճառքի տվյալներ'}</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="h-6 w-6" /> {t('ac.analytics')}</h1>
+        <p className="text-sm text-muted-foreground">{t('ac.analyticsSubtitle')}</p>
       </div>
 
       {/* Filters */}
       <div className="mb-4 flex flex-wrap gap-3">
         <Select value={period} onValueChange={(v) => { if (v) setPeriod(v as PeriodKey); }}>
-          <SelectTrigger className="h-9 w-40 text-xs"><span>{PERIODS[period]}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-40 text-xs"><span>{t(PERIODS[period])}</span></SelectTrigger>
           <SelectContent>
-            {Object.entries(PERIODS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            {Object.entries(PERIODS).map(([k, v]) => <SelectItem key={k} value={k}>{t(v)}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={categoryId} onValueChange={(v) => { if (v) setCategoryId(v); }}>
-          <SelectTrigger className="h-9 w-48 text-xs"><span>{categoryId === 'all' ? 'Բոլոր կատեգորիաները' : categoryMap.get(categoryId) ?? categoryId}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-48 text-xs"><span>{categoryId === 'all' ? t('ac.allCategories') : categoryMap.get(categoryId) ?? categoryId}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'Բոլոր կատեգորիաները'}</SelectItem>
+            <SelectItem value="all">{t('ac.allCategories')}</SelectItem>
             {categories?.map((c) => <SelectItem key={c._id} value={c._id as string}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={brand} onValueChange={(v) => { if (v) setBrand(v); }}>
-          <SelectTrigger className="h-9 w-44 text-xs"><span>{brand === 'all' ? 'Բոլոր բրենդները' : brand}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-44 text-xs"><span>{brand === 'all' ? t('ac.allBrands') : brand}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{'Բոլոր բրենդները'}</SelectItem>
+            <SelectItem value="all">{t('ac.allBrands')}</SelectItem>
             {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -153,11 +155,11 @@ export default function AnalyticsPage() {
 
       {/* Totals */}
       <div className="mb-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր քանակ'}</p><p className="text-lg font-bold">{totals.qty}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր եկամուտ'}</p><p className="text-lg font-bold text-primary">{formatPrice(totals.revenue)}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր ինքնարժեք'}</p><p className="text-lg font-bold text-amber-600">{formatPrice(totals.cost)}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր շրջանակ'}</p><p className={`text-lg font-bold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatPrice(totals.profit)}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{'Ընդհանուր մարժան'}</p><p className={`text-lg font-bold ${totals.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{totals.margin.toFixed(1)}%</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{t('ac.totalQty')}</p><p className="text-lg font-bold">{totals.qty}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{t('ac.totalRevenue')}</p><p className="text-lg font-bold text-primary">{formatPrice(totals.revenue)}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{t('ac.totalCost')}</p><p className="text-lg font-bold text-amber-600">{formatPrice(totals.cost)}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{t('ac.totalProfit')}</p><p className={`text-lg font-bold ${totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatPrice(totals.profit)}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{t('ac.totalMargin')}</p><p className={`text-lg font-bold ${totals.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{totals.margin.toFixed(1)}%</p></CardContent></Card>
       </div>
 
       {/* Table */}
@@ -168,13 +170,13 @@ export default function AnalyticsPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium">{'Անուն'}</th>
-                  <th className="px-3 py-2 text-left font-medium">{'Կատեգորիա'}</th>
-                  <th className="px-3 py-2 text-left font-medium">{'Բրենդ'}</th>
-                  <th className="px-3 py-2 text-right font-medium">{'Քանակ'}</th>
-                  <th className="px-3 py-2 text-right font-medium">{'Եկամուտ'}</th>
-                  <th className="px-3 py-2 text-right font-medium">{'Ինքնարժեք'}</th>
-                  <th className="px-3 py-2 text-right font-medium">{'Միջին մարժան'}</th>
+                  <th className="px-3 py-2 text-left font-medium">{t('ac.name')}</th>
+                  <th className="px-3 py-2 text-left font-medium">{t('ac.category')}</th>
+                  <th className="px-3 py-2 text-left font-medium">{t('ac.brand')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('ac.qty')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('ac.revenueCol')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('ac.cost')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('ac.avgMargin')}</th>
                   <th className="px-3 py-2 text-right font-medium">{'%'}</th>
                 </tr>
               </thead>
@@ -183,11 +185,11 @@ export default function AnalyticsPage() {
                   <tr key={row.productId} className="border-t hover:bg-muted/30">
                     <td className="px-3 py-2 max-w-[200px] truncate">{row.name}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{row.category}</td>
-                    <td className="px-3 py-2 text-xs">{row.brand || 'Բրենդ չկա'}</td>
+                    <td className="px-3 py-2 text-xs">{row.brand || t('ac.noBrandValue')}</td>
                     <td className="px-3 py-2 text-right">{row.qty}</td>
                     <td className="px-3 py-2 text-right font-medium">{formatPrice(row.revenue)}</td>
-                    <td className="px-3 py-2 text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'Արժեք չկա'}</td>
-                    <td className={`px-3 py-2 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : 'Եկամուտ չկա'}</td>
+                    <td className="px-3 py-2 text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : t('ac.noCostValue')}</td>
+                    <td className={`px-3 py-2 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : t('ac.noRevenueValue')}</td>
                     <td className="px-3 py-2 text-right">
                       {row.cost > 0 ? <Badge variant="outline" className={`text-[10px] ${row.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{row.margin.toFixed(0)}%</Badge> : ''}
                     </td>
@@ -201,12 +203,12 @@ export default function AnalyticsPage() {
             {analytics.map((row) => (
               <div key={row.productId} className="rounded-xl border bg-card p-3">
                 <p className="text-sm font-medium truncate">{row.name}</p>
-                <p className="text-xs text-muted-foreground">{row.category} {row.brand ? `Բրենդ ${row.brand}` : ''}</p>
+                <p className="text-xs text-muted-foreground">{row.category} {row.brand ? `${t('ac.brand')} ${row.brand}` : ''}</p>
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <span className="text-muted-foreground">{'Քանակ'}:</span><span className="text-right font-medium">{row.qty}</span>
-                  <span className="text-muted-foreground">{'Եկամուտ'}:</span><span className="text-right font-medium text-primary">{formatPrice(row.revenue)}</span>
-                  <span className="text-muted-foreground">{'Ինքնարժեք'}:</span><span className="text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : 'Արժեք չկա'}</span>
-                  <span className="text-muted-foreground">{'Միջին շրջանակ'}:</span><span className={`text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : 'Եկամուտ չկա'}</span>
+                  <span className="text-muted-foreground">{t('ac.qty')}:</span><span className="text-right font-medium">{row.qty}</span>
+                  <span className="text-muted-foreground">{t('ac.revenueCol')}:</span><span className="text-right font-medium text-primary">{formatPrice(row.revenue)}</span>
+                  <span className="text-muted-foreground">{t('ac.cost')}:</span><span className="text-right text-amber-600">{row.cost > 0 ? formatPrice(row.cost) : t('ac.noCostValue')}</span>
+                  <span className="text-muted-foreground">{t('ac.avgProfit')}:</span><span className={`text-right font-medium ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{row.cost > 0 ? formatPrice(row.profit) : t('ac.noRevenueValue')}</span>
                 </div>
                 {row.cost > 0 && <Badge variant="outline" className={`mt-2 text-[10px] ${row.margin >= 20 ? 'text-emerald-600' : 'text-orange-600'}`}>{row.margin.toFixed(0)}%</Badge>}
               </div>
@@ -216,7 +218,7 @@ export default function AnalyticsPage() {
       ) : (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <TrendingUp className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{'Չկա տվյալներ ցուցադրելու համար'}</p>
+          <p className="text-muted-foreground">{t('ac.noDataToDisplay')}</p>
         </div>
       )}
     </div>

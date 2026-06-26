@@ -17,6 +17,8 @@ import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSens
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { flushSync } from 'react-dom';
+import { useAdminT } from '@/lib/i18n/admin';
+import { useFilterName, useCategoryName } from '@/lib/i18n/filterNames';
 
 function SortableFilterCard({ f, catName, onEdit, onDelete }: {
   f: { _id: Id<'filterDefinitions'>; name: string; slug: string; type: string; order: number; options?: string[] };
@@ -25,6 +27,8 @@ function SortableFilterCard({ f, catName, onEdit, onDelete }: {
   onDelete: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: f._id });
+  const { t } = useAdminT();
+  const filterName = useFilterName();
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : undefined };
 
   return (
@@ -33,11 +37,11 @@ function SortableFilterCard({ f, catName, onEdit, onDelete }: {
         <GripVertical className="h-4 w-4" />
       </button>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{f.name}</p>
+        <p className="text-sm font-medium">{filterName(f.name, f.slug)}</p>
         <div className="flex flex-wrap items-center gap-2 mt-0.5">
           <code className="text-[10px] text-muted-foreground">{f.slug}</code>
           <Badge variant="secondary" className="text-[10px]">{f.type}</Badge>
-          {f.options && f.options.length > 0 && <span className="text-[10px] text-muted-foreground">{f.options.length} {'Ցանկ'}</span>}
+          {f.options && f.options.length > 0 && <span className="text-[10px] text-muted-foreground">{f.options.length} {t('acat.list')}</span>}
         </div>
       </div>
       <div className="flex shrink-0 gap-1">
@@ -50,6 +54,8 @@ function SortableFilterCard({ f, catName, onEdit, onDelete }: {
 
 export default function AdminFiltersPage() {
   const { sessionToken } = useAuth();
+  const { t } = useAdminT();
+  const categoryName = useCategoryName();
   const filters = useQuery(api.filters.listAll, {});
   const categories = useQuery(api.categories.list, {});
   const createFilter = useMutation(api.filters.create);
@@ -79,35 +85,35 @@ export default function AdminFiltersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.slug || !form.categoryId) { toast.error('Անվանում, slug և կատեգորիա պետք է լրացվեն'); return; }
+    if (!form.name || !form.slug || !form.categoryId) { toast.error(t('acat.filterRequiredFields')); return; }
     try {
       const options = form.options.split(',').map((s) => s.trim()).filter(Boolean);
       const base = { name: form.name, slug: form.slug, type: 'multiselect' as const, categoryId: form.categoryId as Id<'categories'>, options: options.length > 0 ? options : undefined, order: form.order };
       if (editingId) {
         const { slug: _, ...updateData } = base;
         await updateFilter({ sessionToken: sessionToken ?? '', ...updateData, id: editingId });
-        toast.success('Ֆիլտրը թարմացվեց');
+        toast.success(t('acat.filterUpdated'));
       } else {
         await createFilter({ sessionToken: sessionToken ?? '', ...base });
-        toast.success('Ֆիլտրը ստեղծվեց');
+        toast.success(t('acat.filterCreated'));
       }
       setDialogOpen(false); resetForm();
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Ֆիլտրը չի ստեղծվել'); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : t('acat.filterCreateFailed')); }
   };
 
   const handleDelete = async () => {
     if (!deleteId || !sessionToken) return;
-    try { await removeFilter({ sessionToken, id: deleteId }); toast.success('Ֆիլտրը ջնջվեց'); setDeleteId(null); } catch { toast.error('Ֆիլտրը չի ջնջվել'); }
+    try { await removeFilter({ sessionToken, id: deleteId }); toast.success(t('acat.filterDeleted')); setDeleteId(null); } catch { toast.error(t('acat.filterDeleteFailed')); }
   };
 
-  const catMap: Record<string, string> = {};
-  if (categories) for (const c of categories) catMap[c._id] = c.name;
+  const catById: Record<string, NonNullable<typeof categories>[number]> = {};
+  if (categories) for (const c of categories) catById[c._id] = c;
 
   const grouped: Record<string, NonNullable<typeof filters>> = {};
   if (filters) for (const f of [...filters].sort((a, b) => (optimisticOrder.get(a._id) ?? a.order) - (optimisticOrder.get(b._id) ?? b.order))) {
-    const cat = catMap[f.categoryId] || 'Կատեգորիան չհայտնաբերվեց';
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat]!.push(f);
+    const key = catById[f.categoryId] ? f.categoryId : '__none__';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key]!.push(f);
   }
 
   const handleDragEnd = async (catItems: NonNullable<typeof filters>, event: DragEndEvent) => {
@@ -130,33 +136,33 @@ export default function AdminFiltersPage() {
 
     try {
       await reorderFilters({ sessionToken, items });
-    } catch { toast.error('Ֆիլտրերը չի ստեղծվել'); }
+    } catch { toast.error(t('acat.filtersReorderFailed')); }
   };
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{'Ֆիլտրեր'}</h1>
-          <p className="text-sm text-muted-foreground">{filters?.length ?? 0} {'Ֆիլտրեր'}</p>
+          <h1 className="text-2xl font-bold">{t('acat.filters')}</h1>
+          <p className="text-sm text-muted-foreground">{filters?.length ?? 0} {t('acat.filters')}</p>
         </div>
-        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> {'Ավելացնել ֆիլտր'}</Button>
+        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> {t('acat.addFilter')}</Button>
       </div>
 
-      {!filters || !categories ? <p className="text-muted-foreground">{'Ֆիլտրեր չեն ստեղծվել...'}</p> : Object.entries(grouped).length === 0 ? (
+      {!filters || !categories ? <p className="text-muted-foreground">{t('acat.filtersLoading')}</p> : Object.entries(grouped).length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <SlidersHorizontal className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{'Ֆիլտրեր չեն ստեղծվել'}</p>
-          <Button onClick={openCreate} variant="outline" className="gap-2"><Plus className="h-4 w-4" /> {'Ավելացնել ֆիլտր'}</Button>
+          <p className="text-muted-foreground">{t('acat.noFilters')}</p>
+          <Button onClick={openCreate} variant="outline" className="gap-2"><Plus className="h-4 w-4" /> {t('acat.addFilter')}</Button>
         </div>
-      ) : Object.entries(grouped).map(([cat, items]) => items && (
-        <div key={cat} className="mb-8">
-          <h2 className="mb-3 text-lg font-semibold">{cat}</h2>
+      ) : Object.entries(grouped).map(([catId, items]) => items && (
+        <div key={catId} className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold">{catById[catId] ? categoryName(catById[catId]!) : t('acat.catNotDetected')}</h2>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(items, e)}>
             <SortableContext items={items.map((f) => f._id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
                 {items.map((f) => (
-                  <SortableFilterCard key={f._id} f={f} catName={cat} onEdit={() => openEdit(f)} onDelete={() => setDeleteId(f._id)} />
+                  <SortableFilterCard key={f._id} f={f} catName={catById[catId] ? categoryName(catById[catId]!) : ''} onEdit={() => openEdit(f)} onDelete={() => setDeleteId(f._id)} />
                 ))}
               </div>
             </SortableContext>
@@ -166,12 +172,12 @@ export default function AdminFiltersPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); resetForm(); } }}>
         <DialogContent className="sm:max-w-lg overflow-visible" showCloseButton={false}>
-          <DialogHeader><DialogTitle>{editingId ? 'Խմբագրել ֆիլտրը' : 'Ավելացնել ֆիլտր'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? t('acat.editFilter') : t('acat.addFilter')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{'Անվանում'} *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder="Անվանում" className="h-11" />
+                <Label>{t('acat.name')} *</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_') })} placeholder={t('acat.name')} className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>Slug *</Label>
@@ -179,20 +185,20 @@ export default function AdminFiltersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{'Կատեգորիա'} *</Label>
+              <Label>{t('acat.category')} *</Label>
               <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50">
-                <option value="">{'Ընտրել կատեգորիա'}</option>
-                {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                <option value="">{t('acat.selectCategory')}</option>
+                {categories?.map((c) => <option key={c._id} value={c._id}>{categoryName(c)}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>{'Տարրեր'}</Label>
+              <Label>{t('acat.options')}</Label>
               <Textarea value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })} placeholder="Bosch, Mobil, Castrol, Shell" className="min-h-24 resize-y break-words [overflow-wrap:anywhere]" />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => { setDialogOpen(false); resetForm(); }}>{'Չեղարկել'}</Button>
-            <Button className="flex-1" onClick={handleSave}>{editingId ? 'Խմբագրել' : 'Ավելացնել'}</Button>
+            <Button variant="outline" className="flex-1" onClick={() => { setDialogOpen(false); resetForm(); }}>{t('acat.cancel')}</Button>
+            <Button className="flex-1" onClick={handleSave}>{editingId ? t('acat.edit') : t('acat.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -201,11 +207,11 @@ export default function AdminFiltersPage() {
         <DialogContent className="sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10"><AlertTriangle className="h-6 w-6 text-destructive" /></div>
-            <DialogTitle className="text-center">{'Ջնջել ֆիլտրը'}</DialogTitle>
+            <DialogTitle className="text-center">{t('acat.deleteFilter')}</DialogTitle>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setDeleteId(null)}>{'Չեղարկել'}</Button>
-            <Button variant="destructive" className="flex-1" onClick={handleDelete}>{'Ջնջել'}</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setDeleteId(null)}>{t('acat.cancel')}</Button>
+            <Button variant="destructive" className="flex-1" onClick={handleDelete}>{t('acat.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -4,8 +4,10 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/admin';
 
 export function ThemeToggle() {
+  const { t } = useT();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -16,7 +18,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      aria-label="Փոխել թեման"
+      aria-label={t('sx.themeToggle')}
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       suppressHydrationWarning
     >

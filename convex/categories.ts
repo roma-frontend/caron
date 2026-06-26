@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { internal } from './_generated/api';
 import { getAdminCaller } from './lib/auth';
 import { normalizeImageUrl } from './lib/imageUrl';
 
@@ -49,6 +50,10 @@ export const create = mutation({
     name: v.string(),
     slug: v.string(),
     description: v.optional(v.string()),
+    nameRu: v.optional(v.string()),
+    nameEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()),
+    descriptionEn: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     parentId: v.optional(v.id('categories')),
     order: v.number(),
@@ -75,6 +80,7 @@ export const create = mutation({
       categoryId: catId, name: 'Անվանում', slug: 'type',
       type: 'multiselect', options: [], order: 0,
     });
+    await ctx.scheduler.runAfter(0, internal.translate.translateCategory, { id: catId });
     return catId;
   },
 });
@@ -86,6 +92,10 @@ export const update = mutation({
     name: v.optional(v.string()),
     slug: v.optional(v.string()),
     description: v.optional(v.string()),
+    nameRu: v.optional(v.string()),
+    nameEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()),
+    descriptionEn: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     parentId: v.optional(v.id('categories')),
     order: v.optional(v.number()),
@@ -114,6 +124,9 @@ export const update = mutation({
 
     const { id, sessionToken: _, ...patch } = args;
     await ctx.db.patch(id, patch);
+    if (args.name !== undefined || args.description !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.translate.translateCategory, { id });
+    }
   },
 });
 

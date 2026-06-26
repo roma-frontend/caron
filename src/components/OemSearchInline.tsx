@@ -10,8 +10,10 @@ import { LoaderInline } from '@/components/ui/loader';
 import { Card } from '@/components/ui/card';
 import { Barcode, Search, Package, ChevronRight } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
+import { useT } from '@/lib/i18n/admin';
 
 export function OemSearchInline() {
+  const { t } = useT();
   const router = useRouter();
   const [oem, setOem] = useState('');
   const [debouncedOem, setDebouncedOem] = useState('');
@@ -49,9 +51,9 @@ export function OemSearchInline() {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
           <Barcode className="h-7 w-7 text-primary" />
         </div>
-        <h2 className="text-xl font-bold">OEM որոնում</h2>
+        <h2 className="text-xl font-bold">{t('sp.oemSearch')}</h2>
         <p className="text-sm text-muted-foreground">
-          Մուտքագրեք OEM / օրիգինալ համարը՝ համապատասխան պահեստամասերը գտնելու համար
+          {t('sp.oemSearchDesc')}
         </p>
       </div>
 
@@ -59,7 +61,7 @@ export function OemSearchInline() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Օր․ 90919-01253"
+            placeholder={t('sp.oemPlaceholder')}
             value={oem}
             onChange={(e) => { handleChange(e.target.value); setShowResults(true); }}
             onFocus={() => { if (results && results.length > 0) setShowResults(true); }}
@@ -69,7 +71,7 @@ export function OemSearchInline() {
         </div>
         <Button onClick={goToAll} disabled={oem.trim().length < 3} className="h-11 gap-2 shrink-0">
           <Search className="h-4 w-4" />
-          Որոնել
+          {t('sp.searchBtn')}
         </Button>
       </div>
 
@@ -96,7 +98,7 @@ export function OemSearchInline() {
               onClick={goToAll}
               className="w-full px-4 py-2.5 text-center text-sm text-primary hover:bg-accent transition-colors rounded-lg font-medium"
             >
-              Տեսնել {results.length} արդյունքը
+              {t('sp.see')} {results.length} {t('sp.resultsWord')}
             </button>
           )}
         </Card>
@@ -104,7 +106,7 @@ export function OemSearchInline() {
 
       {searched && results && results.length === 0 && debouncedOem.length >= 3 && (
         <p className="text-sm text-muted-foreground text-center py-3">
-          Այս OEM համարով ապրանքներ չեն գտնվել
+          {t('sp.noOemResults')}
         </p>
       )}
     </div>

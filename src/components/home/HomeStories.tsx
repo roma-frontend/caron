@@ -8,6 +8,7 @@ import { X, ArrowRight } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { PromoTemplate, parsePromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';
+import { useT } from '@/lib/i18n/admin';
 
 interface Story {
   id: string;
@@ -84,6 +85,7 @@ export function HomeStories() {
 }
 
 function StoryViewer({ stories, startIndex, onClose }: { stories: Story[]; startIndex: number; onClose: () => void }) {
+  const { t } = useT();
   const [index, setIndex] = useState(startIndex);
   const story = stories[index];
 
@@ -135,13 +137,13 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: Story[]; start
         ))}
       </div>
 
-      <button onClick={onClose} aria-label="Փակել" className="absolute right-3 top-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+      <button onClick={onClose} aria-label={t('pg.common.close')} className="absolute right-3 top-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
         <X className="h-5 w-5" />
       </button>
 
       {/* Tap zones */}
-      <button onClick={prev} aria-label="Նախորդ" className="absolute left-0 top-0 z-10 h-full w-1/3" />
-      <button onClick={next} aria-label="Հաջորդ" className="absolute right-0 top-0 z-10 h-full w-1/3" />
+      <button onClick={prev} aria-label={t('pg.common.prev')} className="absolute left-0 top-0 z-10 h-full w-1/3" />
+      <button onClick={next} aria-label={t('pg.common.next')} className="absolute right-0 top-0 z-10 h-full w-1/3" />
 
       {/* Content */}
       <div className="relative flex h-full max-h-[90vh] w-full max-w-md flex-col justify-end overflow-hidden sm:rounded-2xl">
@@ -162,7 +164,7 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: Story[]; start
             onClick={onClose}
             className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-105"
           >
-            Դիտել <ArrowRight className="h-4 w-4" />
+            {t('pg.common.view')} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

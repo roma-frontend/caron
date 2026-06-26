@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { useT } from '@/lib/i18n/admin';
 
 /** Minimal shape a product needs to render in a rail card. */
 export interface RailProduct {
@@ -55,6 +56,7 @@ export function ProductRail({
   asNew,
   skeletonCount = 6,
 }: ProductRailProps) {
+  const { t } = useT();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollBy = (dir: 1 | -1) => {
@@ -76,15 +78,15 @@ export function ProductRail({
           {viewAllHref && (
             <Link href={viewAllHref}>
               <Button variant="outline" size="sm" className="gap-1.5">
-                Դիտել բոլորը <ArrowRight className="h-4 w-4" />
+                {t('pg.common.viewAll')} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           )}
           <div className="hidden gap-1.5 sm:flex">
-            <button onClick={() => scrollBy(-1)} aria-label="Նախորդ" className="flex h-9 w-9 items-center justify-center rounded-full border bg-card transition-colors hover:border-primary/40 hover:text-primary">
+            <button onClick={() => scrollBy(-1)} aria-label={t('pg.common.prev')} className="flex h-9 w-9 items-center justify-center rounded-full border bg-card transition-colors hover:border-primary/40 hover:text-primary">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={() => scrollBy(1)} aria-label="Հաջորդ" className="flex h-9 w-9 items-center justify-center rounded-full border bg-card transition-colors hover:border-primary/40 hover:text-primary">
+            <button onClick={() => scrollBy(1)} aria-label={t('pg.common.next')} className="flex h-9 w-9 items-center justify-center rounded-full border bg-card transition-colors hover:border-primary/40 hover:text-primary">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

@@ -21,6 +21,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
 import { defaultPromoConfig, parsePromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';
+import { useAdminT } from '@/lib/i18n/admin';
 
 export default function EditPromotionPage() {
   const params = useParams();
@@ -29,6 +30,7 @@ export default function EditPromotionPage() {
   const promotions = useQuery(api.promotions.list, {});
   const update = useMutation(api.promotions.update);
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -67,7 +69,7 @@ export default function EditPromotionPage() {
       const urls: string[] = [];
       for (const f of files) { const url = await upload(f); if (url) urls.push(url); }
       setForm({ ...form, images: [...form.images, ...urls] });
-    } catch { toast.error('Չի հաջողվել պատկերները բեռնել'); }
+    } catch { toast.error(t('acat.imagesUploadFailed')); }
   };
   const removeImage = (i: number) => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
 
@@ -75,41 +77,41 @@ export default function EditPromotionPage() {
     setSaving(true);
     try {
       await update({ sessionToken: sessionToken!, id: promoId, title: form.title, description: form.description || undefined, discountPercent: form.discountPercent, templateJson: imageMode === 'template' ? JSON.stringify(templateConfig) : undefined, imageUrl: imageMode === 'upload' ? (form.images[0] || undefined) : undefined, images: imageMode === 'upload' && form.images.length > 0 ? form.images : undefined, productIds: form.productIds, startDate: new Date(form.startDate).getTime(), endDate: new Date(form.endDate).getTime(), isActive: form.isActive });
-      toast.success('Ակցիան հաջողությամբ թարմացվեց');
+      toast.success(t('acat.promoUpdated'));
       router.push('/admin/promotions');
-    } catch { toast.error('Ակցիան չի հաջողվել թարմացնել'); } finally { setSaving(false); }
+    } catch { toast.error(t('acat.promoUpdateFailed')); } finally { setSaving(false); }
   };
 
-  if (!promo) return <div className="py-16 text-center">Ակցիան չի գտնվել</div>;
+  if (!promo) return <div className="py-16 text-center">{t('acat.promoNotFound')}</div>;
 
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center gap-3">
         <Link href="/admin/promotions"><Button variant="ghost" size="icon-sm"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <h1 className="text-2xl font-bold">Խմբագրել</h1>
+        <h1 className="text-2xl font-bold">{t('acat.edit')}</h1>
       </div>
       <Card>
-        <CardHeader><CardTitle>Խմբագրել</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('acat.edit')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div><Label>Ակցիայի անուն</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-11" /></div>
-          <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
-          <div><Label>Զեղչ (%)</Label><Input {...numericInputProps(false)} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })} className="h-11" /></div>
+          <div><Label>{t('acat.promoName')}</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-11" /></div>
+          <div><Label>{t('acat.promoDescription')}</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
+          <div><Label>{t('acat.discountPercent')}</Label><Input {...numericInputProps(false)} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })} className="h-11" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Սկիզբ</Label><DatePicker value={form.startDate} onChange={(v) => setForm({ ...form, startDate: v })} /></div>
-            <div><Label>Ավարտ</Label><DatePicker value={form.endDate} onChange={(v) => setForm({ ...form, endDate: v })} /></div>
+            <div><Label>{t('acat.start')}</Label><DatePicker value={form.startDate} onChange={(v) => setForm({ ...form, startDate: v })} /></div>
+            <div><Label>{t('acat.end')}</Label><DatePicker value={form.endDate} onChange={(v) => setForm({ ...form, endDate: v })} /></div>
           </div>
           <div className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
             <div>
-              <Label className="text-sm font-medium">Ակտիվ է</Label>
-              <p className="text-xs text-muted-foreground">Ապաակտիվացրեք, որպեսզի թաքցնեք ակցիան կայքից</p>
+              <Label className="text-sm font-medium">{t('acat.activeIs')}</Label>
+              <p className="text-xs text-muted-foreground">{t('acat.deactivateHint')}</p>
             </div>
             <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} />
           </div>
           <div>
-            <Label>Քարտի պատկեր</Label>
+            <Label>{t('acat.cardImage')}</Label>
             <div className="mt-2 mb-3 inline-flex rounded-lg border p-0.5 text-sm">
-              <button type="button" onClick={() => setImageMode('template')} className={`rounded-md px-3 py-1.5 transition-colors ${imageMode === 'template' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Շաբլոն</button>
-              <button type="button" onClick={() => setImageMode('upload')} className={`rounded-md px-3 py-1.5 transition-colors ${imageMode === 'upload' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Նկարներ</button>
+              <button type="button" onClick={() => setImageMode('template')} className={`rounded-md px-3 py-1.5 transition-colors ${imageMode === 'template' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{t('acat.template')}</button>
+              <button type="button" onClick={() => setImageMode('upload')} className={`rounded-md px-3 py-1.5 transition-colors ${imageMode === 'upload' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{t('acat.images')}</button>
             </div>
             {imageMode === 'template' ? (
               <PromoTemplateBuilder value={templateConfig} onChange={setTemplateConfig} />
@@ -130,9 +132,9 @@ export default function EditPromotionPage() {
           </div>
           {/* Product selection */}
           <div>
-            <Label>Ապրանքներ ակցիայում</Label>
+            <Label>{t('acat.productsInPromo')}</Label>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {form.productIds.length === 0 && <span className="text-sm text-muted-foreground">Ապրանքներ ընտրված չեն</span>}
+              {form.productIds.length === 0 && <span className="text-sm text-muted-foreground">{t('acat.noProductsSelected')}</span>}
               {form.productIds.map((id) => {
                 const p = allProducts?.find((pr) => pr._id === id);
                 return (
@@ -148,7 +150,7 @@ export default function EditPromotionPage() {
             <div className="relative mt-2">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Որոնել ապրանք..."
+                placeholder={t('acat.searchProduct')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-10 pl-9"
@@ -177,12 +179,12 @@ export default function EditPromotionPage() {
                     </button>
                   );
                 })}
-              {allProducts && allProducts.length === 0 && <p className="p-3 text-sm text-muted-foreground">Ապրանքներ չկան</p>}
+              {allProducts && allProducts.length === 0 && <p className="p-3 text-sm text-muted-foreground">{t('acat.noProducts')}</p>}
             </div>
           </div>
 
           <Button onClick={handleSave} disabled={saving} size="lg" className="w-full gap-2">
-            <Save className="h-4 w-4" /> {saving ? 'Թարմացվում է...' : 'Թարմացնել'}
+            <Save className="h-4 w-4" /> {saving ? t('acat.updating') : t('acat.update')}
           </Button>
         </CardContent>
       </Card>

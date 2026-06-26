@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Truck, ArrowRight } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import { normalizeImageUrl } from '../../../convex/lib/imageUrl';
+import { useT } from '@/lib/i18n/admin';
 
 /** How often the 6 random images rotate. 3_600_000 = 1 hour. (10_000 = 10s for testing) */
 const ROTATE_MS = 3_600_000;
@@ -40,6 +41,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
  * (and SSR/CSR) within the same hour. Brand-blue gradient, Armenian copy.
  */
 export function DeliveryPromo() {
+  const { t } = useT();
   // Time bucket as the random seed. Rotates every ROTATE_MS.
   const [hourSeed, setHourSeed] = useState(() => Math.floor(Date.now() / ROTATE_MS));
 
@@ -98,10 +100,10 @@ export function DeliveryPromo() {
             <div className="flex flex-1 items-center justify-center gap-2 sm:gap-3 px-4 py-3 sm:py-4 text-center">
               <Truck className="h-5 w-5 sm:h-6 sm:w-6 text-white shrink-0" />
               <span className="text-sm sm:text-lg lg:text-xl font-extrabold text-white tracking-tight">
-                {'Արագ առաքում Հայաստանի պահեստից'}
+                {t('sx.delivery.fastTitle')}
               </span>
               <span className="shrink-0 rounded-md bg-yellow-400 px-2 py-0.5 text-[10px] sm:text-xs font-extrabold text-gray-900 uppercase tracking-wide shadow-md">
-                {'Մանրամասներ'}
+                {t('sx.delivery.details')}
               </span>
               <ArrowRight className="hidden sm:block h-5 w-5 text-white/80 transition-transform group-hover:translate-x-1" />
             </div>

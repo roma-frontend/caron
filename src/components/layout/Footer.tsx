@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Separator } from '@/components/ui/separator';
-import { SITE, NAV, FOOTER } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
 import { useStoreName } from '@/hooks/useStoreName';
 import { NewsletterForm } from '@/components/NewsletterForm';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useT } from '@/lib/i18n/admin';
 
 const SOCIAL_CONFIG: { key: string; label: string; href: string; icon: string; hover: string }[] = [
   { key: 'instagram', label: 'Instagram', href: 'https://instagram.com/', icon: 'instagram', hover: 'hover:text-[#E4405F] hover:border-[#E4405F]/40 hover:shadow-[#E4405F]/20' },
@@ -60,6 +60,7 @@ function SocialIcon({ icon }: { icon: string }) {
 }
 
 export function Footer() {
+  const { t } = useT();
   const storeName = useStoreName();
   const settings = useSettings();
   return (
@@ -70,7 +71,7 @@ export function Footer() {
             <Link href="/" className="flex items-center shrink-0 mb-4" aria-label={storeName}>
             <Logo size={34} />
           </Link>
-            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{SITE.heroDesc}</p>
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{storeName}{t('pg.home.brandDescSuffix')}</p>
             <div className="mt-4 flex items-center gap-3">
               {SOCIAL_CONFIG.map((s) => {
                 const val = settings ? (settings as Record<string, unknown>)[s.key] as string | undefined : undefined;
@@ -90,30 +91,30 @@ export function Footer() {
             </div>
           </div>
           <div>
-            <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{FOOTER.navigation}</h4>
+            <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{t('cmp.navigation')}</h4>
             <nav className="flex flex-col text-muted-foreground [&>a]:block [&>a]:py-1.5" style={{ gap: 'var(--space-1)', fontSize: 'var(--text-sm)' }}>
-              <Link href="/products" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{NAV.catalog}</Link>
-              <Link href="/categories" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{NAV.categories}</Link>
-              <Link href="/promotions" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{NAV.promotions}</Link>
+              <Link href="/products" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('cmp.nav_catalog')}</Link>
+              <Link href="/categories" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('cmp.nav_categories')}</Link>
+              <Link href="/promotions" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('cmp.nav_promotions')}</Link>
             </nav>
           </div>
           <div>
-            <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{FOOTER.info}</h4>
+            <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{t('sx.footer.info')}</h4>
             <nav className="flex flex-col text-muted-foreground [&>a]:block [&>a]:py-1.5" style={{ gap: 'var(--space-1)', fontSize: 'var(--text-sm)' }}>
-              <Link href="/about" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{NAV.about}</Link>
-              <Link href="/delivery" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{FOOTER.delivery}</Link>
-              <Link href="/returns" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{FOOTER.returns}</Link>
-              <Link href="/privacy" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{FOOTER.privacy}</Link>
-              <Link href="/terms" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{FOOTER.terms}</Link>
-              <Link href="/order-status" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{'Պատվերի ստուգում'}</Link>
+              <Link href="/about" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('cmp.nav_about')}</Link>
+              <Link href="/delivery" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('cmp.nav_delivery')}</Link>
+              <Link href="/returns" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('sp.return')}</Link>
+              <Link href="/privacy" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('sx.footer.privacy')}</Link>
+              <Link href="/terms" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('sx.footer.terms')}</Link>
+              <Link href="/order-status" className="hover:text-foreground" style={{ transition: 'color var(--transition-fast)' }}>{t('sx.footer.orderCheck')}</Link>
             </nav>
           </div>
           <div>
-            <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{FOOTER.contacts}</h4>
+            <h4 className="font-semibold" style={{ marginBottom: 'var(--space-3)' }}>{t('pg.contact.title')}</h4>
             <div className="flex flex-col text-muted-foreground [&>a]:py-1.5" style={{ gap: 'var(--space-1)', fontSize: 'var(--text-sm)' }}>
               <Link href={`tel:${settings?.phone || "+374 XX XXX XXX"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Phone style={{ height: '1rem', width: '1rem' }} /> {settings?.phone || "+374 XX XXX XXX"}</Link>
               <Link href={`mailto:${settings?.email || "info@caron.group"}`} className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><Mail style={{ height: '1rem', width: '1rem' }} /> {settings?.email || "info@caron.group"}</Link>
-              <Link href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || "Երևան, Հայաստան")}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><MapPin style={{ height: '1rem', width: '1rem' }} /> {settings?.address || "Երևան, Հայաստան"}</Link>
+              <Link href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || "Երևան, Հայաստան")}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-foreground transition-colors" style={{ gap: 'var(--space-2)' }}><MapPin style={{ height: '1rem', width: '1rem' }} /> {settings?.address || t('sx.footer.addressFallback')}</Link>
             </div>
           </div>
         </div>
@@ -125,7 +126,7 @@ export function Footer() {
         )}
 
         <Separator style={{ marginBlock: 'var(--space-8)' }} />
-        <p className="text-left text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>{FOOTER.rights}</p>
+        <p className="text-left text-muted-foreground" style={{ fontSize: 'var(--text-sm)' }}>© {new Date().getFullYear()} {storeName}. {t('sx.footer.rights')}</p>
       </div>
     </footer>
   );

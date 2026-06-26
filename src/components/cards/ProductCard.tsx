@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { QuantityStepper } from '@/components/QuantityStepper';
 import { ShoppingCart, Heart, Star, Check, Eye, Truck } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized, localizeDeliveryEstimate } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useVehicleStore } from '@/store/vehicle';
@@ -16,16 +16,19 @@ import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { normalizeImageUrl } from '../../../convex/lib/imageUrl';
 import dynamic from 'next/dynamic';
-import { PRODUCT } from '@/lib/constants';
 const QuickView = dynamic(() => import('@/components/QuickView').then((m) => ({ default: m.QuickView })));
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuthStore } from '@/store/auth';
+import { useT } from '@/lib/i18n/admin';
+import { pickLocalized } from '@/lib/i18n/localize';
 
 interface ProductCardProps {
   id: string;
   name: string;
+  nameRu?: string;
+  nameEn?: string;
   slug?: string;
   atgCode?: string;
   price: number;
@@ -65,7 +68,9 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact, lite }: ProductCardProps) {
+function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact, lite }: ProductCardProps) {
+  const { t, lang } = useT();
+  const name = pickLocalized({ name: rawName, nameRu, nameEn }, 'name', lang);
   const { ref, visible } = useReveal();
   const [imgError, setImgError] = useState(false);
   const onImgError = useCallback(() => setImgError(true), []);
@@ -118,14 +123,14 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
   // keeping the component pure and SSR/CSR consistent at day granularity.
   const [now] = useState(() => Date.now());
   const deliveryDate = inStock && typeof settings?.deliveryDaysYerevan === 'number' && settings.deliveryDaysYerevan > 0
-    ? formatDateHy(now + settings.deliveryDaysYerevan * 86400000)
+    ? formatDateLocalized(now + settings.deliveryDaysYerevan * 86400000, t)
     : null;
   const deliveryText = inStock
     ? (deliveryDate
-        ? `Առաքում մինչև ${deliveryDate}`
-        : `Առաքում ${settings?.deliveryEstimateYerevan?.trim() || '1-3 օր'}`)
+        ? `${t('sp.deliveryUntil')} ${deliveryDate}`
+        : `${t('sp.deliveryWord')} ${localizeDeliveryEstimate(settings?.deliveryEstimateYerevan?.trim(), lang) || t('sp.days13')}`)
     : null;
-  const btnDeliveryLabel = deliveryDate || (inStock ? (settings?.deliveryEstimateYerevan?.trim() || '1-3 օր') : null);
+  const btnDeliveryLabel = deliveryDate || (inStock ? (localizeDeliveryEstimate(settings?.deliveryEstimateYerevan?.trim(), lang) || t('sp.days13')) : null);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -146,7 +151,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
             </Link>
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
-              {atgCode && <p className="text-[10px] text-muted-foreground">ԱՏԳԱԱ: <span className="font-mono">{atgCode}</span></p>}
+              {atgCode && <p className="text-[10px] text-muted-foreground">{t('sp.atg')}: <span className="font-mono">{atgCode}</span></p>}
               <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2">
                 <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                   <span className="text-base font-extrabold tracking-tight text-primary shrink-0">{formatPrice(displayPrice)}</span>
@@ -154,13 +159,13 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                   {hasDiscount && <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white shrink-0">-{discountPct}%</span>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 ml-auto">
-                  <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = useFavoritesStore.getState().items.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }} aria-label="Նախընտրած" className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
+                  <button onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = useFavoritesStore.getState().items.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} ${t('sp.removedFromFavorites')}`, onUndo: () => toggleFav(existing) }); } }} aria-label={t('sp.favorite')} className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${isFav ? 'border-red-500 bg-red-500 text-white' : 'text-muted-foreground hover:border-red-500/60 hover:text-red-500'}`}>
                     <Heart className={`h-3 w-3 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                   {cartQty > 0 ? (
                     <QuantityStepper value={cartQty} onChange={(n) => updateQuantity(id, n)} onRemove={() => updateQuantity(id, cartQty - step)} step={step} min={step} max={stock ?? Infinity} size="xs" className="border-primary/40 bg-primary/5" />
                   ) : (
-                    <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={handleAddToCart} aria-label={`Ավելացնել ${name} զամբյուղ`}>
+                    <Button size="sm" className="h-7 gap-1 rounded-lg text-[10px] px-2" disabled={!inStock} onClick={handleAddToCart} aria-label={`${t('sp.add')} ${name} ${t('sp.cartWord')}`}>
                       <ShoppingCart className="h-3 w-3" />
                     </Button>
                   )}
@@ -214,17 +219,17 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
               ) : null}
 
               {isNew && (isWholesale || !retailDiscount) && !compareAtPrice && (
-                <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">Նոր</Badge>
+                <Badge className="absolute left-3 top-3 badge-new text-xs font-bold shadow-lg">{t('sp.new')}</Badge>
               )}
 
               {isHit && !retailDiscount && !compareAtPrice && !isNew && (
-                <Badge className="absolute left-3 top-3 badge-hit text-xs font-bold shadow-lg">Թոփ</Badge>
+                <Badge className="absolute left-3 top-3 badge-hit text-xs font-bold shadow-lg">{t('sp.topBadge')}</Badge>
               )}
 
               <button
-                aria-label="Նախընտրած"
+                aria-label={t('sp.favorite')}
                 aria-pressed={isFav}
-                onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = useFavoritesStore.getState().items.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}
+                onClick={(e) => { e.preventDefault(); const adding = !isFav; const existing = useFavoritesStore.getState().items.find((i) => i.id === id); const payload = { id, name, price, image: image ?? null }; if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: normalizedImage ?? image ?? null }); toggleFav(payload); const svg = e.currentTarget.querySelector('svg'); svg?.classList.add('heart-pulse'); setTimeout(() => svg?.classList.remove('heart-pulse'), 400); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: normalizedImage ?? image ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${name} ${t('sp.removedFromFavorites')}`, onUndo: () => toggleFav(existing) }); } }}
                 className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-lg backdrop-blur-sm transition-all duration-300 ${isFav ? 'border-red-500 bg-red-500 text-white scale-110' : 'border-border bg-card/80 text-muted-foreground hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-500 hover:scale-110'}`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
@@ -239,7 +244,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
 
               {settings !== undefined && settings?.enableQuickView !== false && (
                 <button
-                  aria-label="Արագ դիտում"
+                  aria-label={t('sp.quickView')}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickOpen(true); }}
                   className="absolute right-3 bottom-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border bg-card/80 shadow-lg backdrop-blur-sm opacity-100 transition-all duration-300 hover:bg-primary hover:text-white hover:border-primary md:opacity-0 md:group-hover:opacity-100 hover:scale-110"
                 >
@@ -249,7 +254,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
 
               {!inStock && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
-                  <Badge variant="secondary" className="text-sm">{PRODUCT.outOfStock}</Badge>
+                  <Badge variant="secondary" className="text-sm">{t('sp.outOfStockBadge')}</Badge>
                 </div>
               )}
 
@@ -261,13 +266,13 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
               <h3 className="line-clamp-3 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
                 <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
               </h3>
-              {sku && <p className="mt-1 text-[10px] text-muted-foreground">Արտիկուլ: <span className="font-mono">{sku}</span></p>}
+              {sku && <p className="mt-1 text-[10px] text-muted-foreground">{t('sp.article')}: <span className="font-mono">{sku}</span></p>}
 
               {reviewCount && reviewCount > 0 ? (
-                <div className="mt-1.5 flex items-center gap-1" aria-label={`Գնահատական: ${rating} աստղ ${reviewCount} կարծիքից`}>
+                <div className="mt-1.5 flex items-center gap-1" aria-label={`${t('sp.ratingSection')}: ${rating} ${t('sp.star')} ${reviewCount} ${t('sp.fromReviews')}`}>
                   <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
                   <span className="text-[11px] font-bold text-foreground">{(rating ?? 0).toFixed(1)}</span>
-                  <span className="text-[11px] text-muted-foreground">· {reviewCount} գնահ.</span>
+                  <span className="text-[11px] text-muted-foreground">· {reviewCount} {t('sp.reviewsAbbr')}</span>
                 </div>
               ) : null}
 
@@ -288,7 +293,7 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                 </div>
               )}
               {settings?.showStockCount && inStock && stock !== undefined && stock <= (settings.lowStockThreshold ?? 5) && (
-                <p className="mt-1.5 text-[11px] font-semibold text-orange-700 dark:text-orange-400">Մնացել է {stock} հատ</p>
+                <p className="mt-1.5 text-[11px] font-semibold text-orange-700 dark:text-orange-400">{t('sp.remaining')} {stock} {t('sp.pcs')}</p>
               )}
             </div>
 
@@ -297,9 +302,9 @@ function ProductCardImpl({ id, name, slug, atgCode, sku, price, wholesalePrice, 
                 <QuantityStepper value={cartQty} onChange={(n) => updateQuantity(id, n)} onRemove={() => updateQuantity(id, cartQty - step)} step={step} min={step} max={stock ?? Infinity} size="sm" fullWidth className="border-primary/40 bg-primary/5" />
               ) : (
                 <Button size="sm" className="w-full gap-2 rounded-xl" disabled={!inStock} onClick={handleAddToCart}
-                  aria-label={inStock ? `Ավելացնել ${name} զամբյուղ` : PRODUCT.outOfStock}>
+                  aria-label={inStock ? `${t('sp.add')} ${name} ${t('sp.cartWord')}` : t('sp.outOfStockBadge')}>
                   <ShoppingCart className="h-4 w-4" />
-                  {btnDeliveryLabel || PRODUCT.addToCart}
+                  {btnDeliveryLabel || t('sp.add')}
                 </Button>
               )}
             </div>

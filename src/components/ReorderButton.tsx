@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useCartStore, type CartItem } from '@/store/cart';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { useT } from '@/lib/i18n/admin';
 
 interface OrderItem {
   productId: Id<'products'>;
@@ -26,7 +27,7 @@ export function ReorderButton({
   size = 'sm',
   variant = 'outline',
   className,
-  label = 'Կրկնել պատվերը',
+  label,
 }: {
   items: OrderItem[];
   size?: 'sm' | 'lg' | 'default';
@@ -34,6 +35,8 @@ export function ReorderButton({
   className?: string;
   label?: string;
 }) {
+  const { t } = useT();
+  const resolvedLabel = label ?? t('sp.repeatOrder');
   const router = useRouter();
   const validateCart = useMutation(api.orders.validateCart);
   const loadItems = useCartStore((s) => s.loadItems);
@@ -48,7 +51,7 @@ export function ReorderButton({
       });
 
       if (!res.items || res.items.length === 0) {
-        toast.error('Այս պատվերի ապրանքներն այլևս հասանելի չեն');
+        toast.error(t('sp.orderItemsUnavailable'));
         return;
       }
 
@@ -75,13 +78,13 @@ export function ReorderButton({
       loadItems([...map.values()]);
 
       if (res.issues && res.issues.length > 0) {
-        toast.warning(res.issues[0], { description: 'Զամբյուղը թարմացվեց ըստ առկայության' });
+        toast.warning(res.issues[0], { description: t('sp.cartUpdatedByAvailability') });
       } else {
-        toast.success('Ապրանքներն ավելացվեցին զամբյուղ');
+        toast.success(t('sp.itemsAddedToCart'));
       }
       router.push('/cart');
     } catch {
-      toast.error('Չհաջողվեց կրկնել պատվերը');
+      toast.error(t('sp.reorderFailed'));
     } finally {
       setLoading(false);
     }
@@ -90,7 +93,7 @@ export function ReorderButton({
   return (
     <Button variant={variant} size={size} className={`gap-1.5 ${className ?? ''}`} disabled={loading} onClick={handleReorder}>
       <RotateCcw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-      {label}
+      {resolvedLabel}
     </Button>
   );
 }

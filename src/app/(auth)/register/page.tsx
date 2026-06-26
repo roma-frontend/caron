@@ -15,8 +15,10 @@ import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/layout/Logo';
 import { useSettings } from '@/hooks/useSettings';
 import { TelegramLoginButton, type TelegramAuthUser } from '@/components/TelegramLoginButton';
+import { useT } from '@/lib/i18n/admin';
 
 export default function RegisterPage() {
+  const { t } = useT();
   const router = useRouter();
   const settings = useSettings();
   const register = useMutation(api.auth.register);
@@ -43,27 +45,27 @@ export default function RegisterPage() {
       });
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone, telegramUsername: result.telegramUsername });
       await setAuthCookie(result.sessionToken);
-      toast.success(`Բարի գալուստ, ${result.name}!`);
+      toast.success(t('auth.welcomeBack') + result.name + '!');
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Telegram մուտքի սխալ');
+      toast.error(err instanceof Error ? err.message : t('auth.telegramLoginError'));
     }
   }, [loginWithTelegram, setSession, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password) { toast.error('Լրացրեք պարտադիր դաշտերը'); return; }
-    if (form.password !== form.confirm) { toast.error('Գաղտնաբառերը չեն համապատասխանում'); return; }
-    if (form.password.length < 6) { toast.error('Գաղտնաբառը պետք է պարունակի գոնե 6 նիշ'); return; }
+    if (!form.name || !form.email || !form.password) { toast.error(t('auth.fillRequiredFields')); return; }
+    if (form.password !== form.confirm) { toast.error(t('auth.passwordsMismatch')); return; }
+    if (form.password.length < 6) { toast.error(t('auth.passwordMinLength')); return; }
     setBusy(true);
     try {
       const result = await register({ name: form.name, email: form.email, phone: form.phone || undefined, password: form.password, referralCode: refCode || undefined });
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
-      toast.success('Գրանցումը հաջողվեց');
+      toast.success(t('auth.registerSuccess'));
       router.push('/dashboard');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Սխալ');
+      toast.error(e instanceof Error ? e.message : t('auth.error'));
     } finally { setBusy(false); }
   };
 
@@ -75,11 +77,11 @@ export default function RegisterPage() {
             <Link href="/" className="mb-4 flex flex-col items-center gap-3">
               <Logo size={48} />
             </Link>
-            <h1 className="text-2xl font-bold">Գրանցում</h1>
-            <p className="mt-3 text-muted-foreground">Գրանցումը ժամանակավոր անհասանելի է</p>
+            <h1 className="text-2xl font-bold">{t('auth.registerTitle')}</h1>
+            <p className="mt-3 text-muted-foreground">{t('auth.registrationDisabled')}</p>
           </div>
           <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
-            Մուտք
+            {t('auth.login')}
           </Link>
         </div>
       </div>
@@ -99,64 +101,64 @@ export default function RegisterPage() {
           <div className="mb-6 text-center">
             <Link href="/" className="mb-8 flex flex-col items-center gap-3 transition-transform hover:scale-105">
               <Logo size={48} />
-              <h1 className="text-2xl font-bold">Գրանցում</h1>
+              <h1 className="text-2xl font-bold">{t('auth.registerTitle')}</h1>
             </Link>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Անուն *</Label>
+              <Label>{t('auth.name')} *</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 pl-10" placeholder="Ձեր անունը" />
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 pl-10" placeholder={t('auth.namePlaceholder')} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Էլ. փոստ *</Label>
+              <Label>{t('auth.email')} *</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11 pl-10" placeholder="Ձեր էլ. փոստը" />
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11 pl-10" placeholder={t('auth.emailPlaceholder')} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Հեռախոս</Label>
+              <Label>{t('auth.phone')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-11 pl-10" placeholder="+374 XX XXX XXX" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Գաղտնաբառ *</Label>
+              <Label>{t('auth.password')} *</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-11 pl-10" placeholder="Մին. 6 նիշ" />
+                <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-11 pl-10" placeholder={t('auth.passwordPlaceholderMin')} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Հաստատել գաղտնաբառ *</Label>
+              <Label>{t('auth.confirmPassword')} *</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="h-11 pl-10" placeholder="Կրկնել գաղտնաբառը" />
+                <Input type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className="h-11 pl-10" placeholder={t('auth.confirmPasswordPlaceholder')} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Հրավերի կոդ (ըստ ցանկության)</Label>
+              <Label>{t('auth.referralCodeLabel')}</Label>
               <div className="relative">
                 <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={refCode} onChange={(e) => setRefCode(e.target.value.toUpperCase().trim())} className="h-11 pl-10" placeholder="Օր.՝ C1A2B3" />
+                <Input value={refCode} onChange={(e) => setRefCode(e.target.value.toUpperCase().trim())} className="h-11 pl-10" placeholder={t('auth.referralPlaceholder')} />
               </div>
             </div>
             <Button type="submit" disabled={busy} variant="cta" size="xl" className="w-full gap-2">
-              {busy ? 'Գրանցվում է...' : 'Գրանցվել'}
+              {busy ? t('auth.registering') : t('auth.register')}
             </Button>
           </form>
 
           <TelegramLoginButton onAuth={handleTelegram} />
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Արդեն ունեք հաշիվ?{' '}
+            {t('auth.haveAccount')}{' '}
             <Link href="/login" className="font-medium text-primary hover:underline">
-              Մուտք <ArrowRight className="inline h-3 w-3" />
+              {t('auth.login')} <ArrowRight className="inline h-3 w-3" />
             </Link>
           </p>
         </div>

@@ -14,8 +14,10 @@ import { useAuthStore } from '@/store/auth';
 import { setAuthCookie } from '@/actions/auth';
 import { toast } from 'sonner';
 import { TelegramLoginButton, type TelegramAuthUser } from '@/components/TelegramLoginButton';
+import { useT } from '@/lib/i18n/admin';
 
 export default function LoginPage() {
+  const { t } = useT();
   const router = useRouter();
   const login = useMutation(api.auth.login);
   const loginWithTelegram = useMutation(api.auth.loginWithTelegram);
@@ -27,16 +29,16 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!form.email || !form.password) { toast.error('Խնդրում ենք լրացնել բոլոր դաշտերը'); return; }
+    if (!form.email || !form.password) { toast.error(t('auth.fillAllFields')); return; }
     setLoading(true);
     try {
       const result = await login(form);
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
-      toast.success(`Բարի գալուստ, ${result.name}!`);
+      toast.success(t('auth.welcomeBack') + result.name + '!');
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : ''; setError(msg.includes('Uncaught Error:') ? msg.split('Uncaught Error:')[1].split(' at ')[0].trim() : msg || 'Մուտքի սխալ');
+      const msg = err instanceof Error ? err.message : ''; setError(msg.includes('Uncaught Error:') ? msg.split('Uncaught Error:')[1].split(' at ')[0].trim() : msg || t('auth.loginError'));
     } finally {
       setLoading(false);
     }
@@ -55,10 +57,10 @@ export default function LoginPage() {
       });
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone, telegramUsername: result.telegramUsername });
       await setAuthCookie(result.sessionToken);
-      toast.success(`Բարի գալուստ, ${result.name}!`);
+      toast.success(t('auth.welcomeBack') + result.name + '!');
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Telegram մուտքի սխալ');
+      toast.error(err instanceof Error ? err.message : t('auth.telegramLoginError'));
     }
   }, [loginWithTelegram, setSession, router]);
 
@@ -76,20 +78,20 @@ export default function LoginPage() {
           <div className="mb-6 text-center">
             <Link href="/" className="mb-8 flex flex-col items-center gap-3 transition-transform hover:scale-105">
               <Logo size={48} />
-              <h1 className="text-2xl font-bold">Մուտք</h1>
+              <h1 className="text-2xl font-bold">{t('auth.login')}</h1>
             </Link>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Էլ. փոստ</Label>
+              <Label>{t('auth.email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Ձեր էլ. փոստը" className="h-11 pl-10" />
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('auth.emailPlaceholder')} className="h-11 pl-10" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Գաղտնաբառ</Label>
+              <Label>{t('auth.password')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className="h-11 pl-10" />
@@ -97,16 +99,16 @@ export default function LoginPage() {
             </div>
             {error && <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{error}</div>}
             <Button type="submit" variant="cta" size="xl" className="w-full" disabled={loading}>
-              {loading ? 'Մուտք...' : 'Մուտք'}
+              {loading ? t('auth.loggingIn') : t('auth.login')}
             </Button>
           </form>
 
           <TelegramLoginButton onAuth={handleTelegram} />
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            {'Չունեք հաշիվ? '}
+            {t('auth.noAccount')}
             <Link href="/register" className="font-medium text-primary hover:underline">
-              Գրանցվել
+              {t('auth.register')}
             </Link>
           </p>
         </div>

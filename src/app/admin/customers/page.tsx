@@ -11,9 +11,10 @@ import { Loader } from '@/components/ui/loader';
 import { LayoutGrid, List, Search, Percent, Phone, Mail, Pencil, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized } from '@/lib/formatters';
 import { Id, Doc } from '../../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { useAdminT } from '@/lib/i18n/admin';
 
 type Customer = Doc<'users'>;
 import { Label } from '@/components/ui/label';
@@ -22,14 +23,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 type ConfirmState = { userId: Id<'users'>; name: string } | null;
 
 function ConfirmDeleteDialog({ state, onConfirm, onClose }: { state: NonNullable<ConfirmState>; onConfirm: () => void; onClose: () => void }) {
+  const { t } = useAdminT();
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-sm">
-        <DialogHeader><DialogTitle>Հաստատե՞լ ջնջումը</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">«{state.name}» հաճախորդը կջնջվի</p>
+        <DialogHeader><DialogTitle>{t('ac.confirmDelete')}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">«{state.name}» {t('ac.customerWillBeDeleted')}</p>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Չեղարկել</Button>
-          <Button variant="destructive" onClick={() => { onConfirm(); onClose(); }}>Ջնջել</Button>
+          <Button variant="outline" onClick={onClose}>{t('ac.cancel')}</Button>
+          <Button variant="destructive" onClick={() => { onConfirm(); onClose(); }}>{t('ac.delete')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -37,6 +39,7 @@ function ConfirmDeleteDialog({ state, onConfirm, onClose }: { state: NonNullable
 }
 
 function EditDialog({ customer, sessionToken, onClose }: { customer: Customer; sessionToken: string; onClose: () => void }) {
+  const { t } = useAdminT();
   const updateCustomer = useMutation(api.customers.updateCustomer);
   const [form, setForm] = useState({ name: customer.name, phone: customer.phone ?? '', address: customer.address ?? '' });
   const [saving, setSaving] = useState(false);
@@ -45,24 +48,24 @@ function EditDialog({ customer, sessionToken, onClose }: { customer: Customer; s
     setSaving(true);
     try {
       await updateCustomer({ sessionToken, userId: customer._id, name: form.name, phone: form.phone || undefined, address: form.address || undefined });
-      toast.success('Պահպանվեց');
+      toast.success(t('ac.saved'));
       onClose();
-    } catch { toast.error('Սխալ'); } finally { setSaving(false); }
+    } catch { toast.error(t('ac.error')); } finally { setSaving(false); }
   };
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Խմբագրել հաճախորդի տվյալները</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t('ac.editCustomer')}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
-          <div><Label>Անուն</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-10 mt-1" /></div>
-          <div><Label>Էլ. փոստ</Label><Input value={customer.email} disabled className="h-10 mt-1 opacity-60" /></div>
-          <div><Label>Տեղեկատու</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374 XX XXX XXX" className="h-10 mt-1" /></div>
-          <div><Label>Հասցե</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Երևան, ..." className="h-10 mt-1" /></div>
+          <div><Label>{t('ac.name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-10 mt-1" /></div>
+          <div><Label>{t('ac.email')}</Label><Input value={customer.email} disabled className="h-10 mt-1 opacity-60" /></div>
+          <div><Label>{t('ac.phoneLabel')}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374 XX XXX XXX" className="h-10 mt-1" /></div>
+          <div><Label>{t('ac.address')}</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('ac.addressPlaceholder')} className="h-10 mt-1" /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Չեղարկել</Button>
-          <Button onClick={save} disabled={saving}>{saving ? 'Պահպանում...' : 'Պահպանել'}</Button>
+          <Button variant="outline" onClick={onClose}>{t('ac.cancel')}</Button>
+          <Button onClick={save} disabled={saving}>{saving ? t('ac.saving') : t('ac.save')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -70,8 +73,12 @@ function EditDialog({ customer, sessionToken, onClose }: { customer: Customer; s
 }
 
 export default function AdminCustomersPage() {
+  const { t } = useAdminT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('q') ?? '';
+  });
   const [typeFilter, setTypeFilter] = useState<'all' | 'retail' | 'wholesale'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -93,19 +100,19 @@ export default function AdminCustomersPage() {
     try {
       const newType = current === 'wholesale' ? 'retail' : 'wholesale';
       await updateCustomer({ sessionToken, userId, customerType: newType as 'retail' | 'wholesale' });
-      toast.success(`Հաճախորդը տեղապոխվել է ${newType === 'wholesale' ? 'Մեծածախ' : 'Մանրածախ'}`);
-    } catch { toast.error('Սխալ'); }
+      toast.success(`${t('ac.customerMovedTo')} ${newType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')}`);
+    } catch { toast.error(t('ac.error')); }
   };
 
   const setDiscount = async (userId: Id<'users'>, discountPercent: number) => {
     if (!sessionToken) return;
-    try { await updateCustomer({ sessionToken, userId, discountPercent }); toast.success('Զեղչը պահպանվեց'); } catch { toast.error('Սխալ'); }
+    try { await updateCustomer({ sessionToken, userId, discountPercent }); toast.success(t('ac.discountSaved')); } catch { toast.error(t('ac.error')); }
   };
 
   const toggleBlock = async (userId: Id<'users'>, isActive: boolean) => {
     if (!sessionToken) return;
-    try { await updateCustomer({ sessionToken, userId, isActive: !isActive }); toast.success(!isActive ? 'Ակտիվացվել է' : 'Բլոկավորվել է'); }
-    catch { toast.error('Սխալ'); }
+    try { await updateCustomer({ sessionToken, userId, isActive: !isActive }); toast.success(!isActive ? t('ac.activated') : t('ac.blockedToast')); }
+    catch { toast.error(t('ac.error')); }
   };
 
   const handleDelete = (userId: Id<'users'>, name: string) => {
@@ -121,13 +128,13 @@ export default function AdminCustomersPage() {
         <EditDialog customer={editingCustomer} sessionToken={sessionToken!} onClose={() => setEditingCustomer(null)} />
       )}
       {confirmDelete && (
-        <ConfirmDeleteDialog state={confirmDelete} onConfirm={async () => { if (sessionToken) { try { await deleteCustomer({ sessionToken, userId: confirmDelete.userId }); toast.success('Հաճախորդը հեռացվել է'); } catch { toast.error('Սխալ'); } } }} onClose={() => setConfirmDelete(null)} />
+        <ConfirmDeleteDialog state={confirmDelete} onConfirm={async () => { if (sessionToken) { try { await deleteCustomer({ sessionToken, userId: confirmDelete.userId }); toast.success(t('ac.customerRemoved')); } catch { toast.error(t('ac.error')); } } }} onClose={() => setConfirmDelete(null)} />
       )}
 
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Հաճախորդներ</h1>
-          <p className="text-sm text-muted-foreground">{customers.total} հաճախորդ</p>
+          <h1 className="text-2xl font-bold">{t('ac.customers')}</h1>
+          <p className="text-sm text-muted-foreground">{customers.total} {t('ac.customersCountSuffix')}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setViewMode('grid')} className={`rounded-lg p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}><LayoutGrid className="h-4 w-4" /></button>
@@ -138,12 +145,12 @@ export default function AdminCustomersPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Որոնել..." className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={t('ac.search')} className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | 'retail' | 'wholesale')} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
-          <option value="all">Բոլորը</option>
-          <option value="retail">Մանրածախ</option>
-          <option value="wholesale">Մեծածախ</option>
+          <option value="all">{t('ac.all')}</option>
+          <option value="retail">{t('ac.retail')}</option>
+          <option value="wholesale">{t('ac.wholesale')}</option>
         </select>
       </div>
 
@@ -158,14 +165,14 @@ export default function AdminCustomersPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr className="border-b">
-                <th className="p-3 text-left font-medium">Անուն</th>
-                <th className="p-3 text-left font-medium hidden sm:table-cell">Էլ. փոստ</th>
-                <th className="p-3 text-left font-medium hidden md:table-cell">Հեռ․</th>
-                <th className="p-3 text-left font-medium hidden lg:table-cell">Հասցե</th>
-                <th className="p-3 text-left font-medium">Տիպ</th>
-                <th className="p-3 text-left font-medium hidden sm:table-cell">Զեղչ</th>
-                <th className="p-3 text-left font-medium hidden md:table-cell">Ստատուս</th>
-                <th className="p-3 text-left font-medium hidden lg:table-cell">Ամսաթիվ</th>
+                <th className="p-3 text-left font-medium">{t('ac.name')}</th>
+                <th className="p-3 text-left font-medium hidden sm:table-cell">{t('ac.email')}</th>
+                <th className="p-3 text-left font-medium hidden md:table-cell">{t('ac.phoneShort')}</th>
+                <th className="p-3 text-left font-medium hidden lg:table-cell">{t('ac.address')}</th>
+                <th className="p-3 text-left font-medium">{t('ac.type')}</th>
+                <th className="p-3 text-left font-medium hidden sm:table-cell">{t('ac.discount')}</th>
+                <th className="p-3 text-left font-medium hidden md:table-cell">{t('ac.statusCol')}</th>
+                <th className="p-3 text-left font-medium hidden lg:table-cell">{t('ac.date')}</th>
                 <th className="p-3" />
               </tr>
             </thead>
@@ -181,15 +188,15 @@ export default function AdminCustomersPage() {
                   <td className="p-3 text-muted-foreground max-w-[140px] truncate hidden lg:table-cell">{c.address || '—'}</td>
                   <td className="p-3">
                     <Badge variant={c.customerType === 'wholesale' ? 'default' : 'secondary'} className="text-[10px] cursor-pointer" onClick={() => toggleType(c._id, c.customerType)}>
-                      {c.customerType === 'wholesale' ? 'Մեծ.' : 'Ման.'}
+                      {c.customerType === 'wholesale' ? t('ac.wholesaleShort') : t('ac.retailShort')}
                     </Badge>
                   </td>
                   <td className="p-3 hidden sm:table-cell">
                     <input {...numericInputProps(false)} className="h-7 w-16 rounded border border-input bg-background px-2 text-xs" defaultValue={c.discountPercent ?? 0} onBlur={(e) => setDiscount(c._id, Number(e.target.value))} />
                     <span className="text-xs text-muted-foreground ml-1">%</span>
                   </td>
-                  <td className="p-3 hidden md:table-cell">{c.isActive ? <Badge className="text-[10px] bg-green-500">Ակտ.</Badge> : <Badge variant="secondary" className="text-[10px]">Բլոկ.</Badge>}</td>
-                  <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{formatDateHy(c.createdAt)}</td>
+                  <td className="p-3 hidden md:table-cell">{c.isActive ? <Badge className="text-[10px] bg-green-500">{t('ac.activeShort')}</Badge> : <Badge variant="secondary" className="text-[10px]">{t('ac.blockedShort')}</Badge>}</td>
+                  <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{formatDateLocalized(c.createdAt, t)}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditingCustomer(c)} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
@@ -205,7 +212,7 @@ export default function AdminCustomersPage() {
       )}
 
       {customers.page.length === 0 && (
-        <div className="py-16 text-center text-muted-foreground">Հաճախորդներ չեն գտնվել</div>
+        <div className="py-16 text-center text-muted-foreground">{t('ac.noCustomersFound')}</div>
       )}
     </div>
   );
@@ -215,6 +222,7 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
   customer: Customer;
   sessionToken: string; onToggleType: () => void; onSetDiscount: (d: number) => void; onEdit: () => void; onToggleBlock: () => void; onDelete: () => void;
 }) {
+  const { t } = useAdminT();
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -224,7 +232,7 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
           </div>
           <div className="flex items-center gap-1.5">
             <Badge variant={customer.customerType === 'wholesale' ? 'default' : 'secondary'} className="cursor-pointer text-[10px]" onClick={onToggleType}>
-              {customer.customerType === 'wholesale' ? 'Մեծածախ' : 'Մանրածախ'}
+              {customer.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')}
             </Badge>
             <button onClick={onEdit} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
             <button onClick={onToggleBlock} className={`rounded p-1 transition-colors ${customer.isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-green-500 hover:bg-green-500/10'}`}><Ban className="h-3.5 w-3.5" /></button>
@@ -244,7 +252,7 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
             <span className="text-xs text-muted-foreground">%</span>
           </div>
           <Badge variant={customer.isActive ? 'default' : 'secondary'} className="text-[10px]">
-            {customer.isActive ? 'Ակտիվ' : 'Բլոկավորված'}
+            {customer.isActive ? t('ac.active') : t('ac.blockedFull')}
           </Badge>
         </div>
       </CardContent>

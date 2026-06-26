@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/formatters';
+import { useT } from '@/lib/i18n/admin';
 
 function playNotificationSound() {
   try {
@@ -39,6 +40,7 @@ function playNotificationSound() {
 }
 
 export function AdminOrderWatcher() {
+  const { t } = useT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin';
@@ -76,17 +78,17 @@ export function AdminOrderWatcher() {
 
       if (order) {
         toast.custom(
-          (t) => (
+          (tp) => (
             <Link
               href="/admin/orders"
-              onClick={() => toast.dismiss(t)}
+              onClick={() => toast.dismiss(tp)}
               className="flex w-full items-start gap-4 rounded-xl border bg-card p-4 shadow-xl ring-1 ring-primary/20"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15">
                 <ShoppingBag className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-primary">Նոր պատվեր</p>
+                <p className="text-sm font-bold text-primary">{t('sx.order.new')}</p>
                 <p className="mt-0.5 text-sm font-semibold truncate">
                   #{order.orderNumber}
                 </p>

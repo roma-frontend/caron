@@ -21,6 +21,9 @@ import { ProductCard } from "@/components/cards/ProductCard";
 import { ProductFilters, SortBar } from "@/components/ProductFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useSettings } from "@/hooks/useSettings";
+import { useT } from "@/lib/i18n/admin";
+import { useCategoryName } from "@/lib/i18n/filterNames";
+import { pickLocalized } from "@/lib/i18n/localize";
 
 type CategoryFilters = {
   brand?: string;
@@ -34,6 +37,8 @@ type CategoryFilters = {
 };
 
 export default function CategoryPage() {
+  const { t, lang } = useT();
+  const categoryName = useCategoryName();
   const params = useParams();
   const slug = params.slug as string;
   const category = useQuery(api.categories.getBySlug, { slug });
@@ -120,7 +125,7 @@ export default function CategoryPage() {
   if (filters.onSale)
     fchips.push({
       key: "sale",
-      label: "Զեղչված",
+      label: t('sp.discounted'),
       clear: () => setFilters({ ...filters, onSale: undefined }),
     });
   if (filters.minRating)
@@ -132,19 +137,19 @@ export default function CategoryPage() {
   if (filters.minPrice)
     fchips.push({
       key: "min",
-      label: `Գին ≥ ${filters.minPrice}`,
+      label: `${t('sp.priceMin')} ${filters.minPrice}`,
       clear: () => setFilters({ ...filters, minPrice: undefined }),
     });
   if (filters.maxPrice)
     fchips.push({
       key: "max",
-      label: `Գին ≤ ${filters.maxPrice}`,
+      label: `${t('sp.priceMax')} ${filters.maxPrice}`,
       clear: () => setFilters({ ...filters, maxPrice: undefined }),
     });
   if (filters.inStockOnly)
     fchips.push({
       key: "stock",
-      label: "Միայն առկա",
+      label: t('sp.inStockOnly'),
       clear: () => setFilters({ ...filters, inStockOnly: undefined }),
     });
   for (const [k, v] of Object.entries(filters.attributes ?? {})) {
@@ -170,8 +175,8 @@ export default function CategoryPage() {
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <Breadcrumbs
         items={[
-          { label: "Կատեգորիաներ", href: "/categories" },
-          { label: category.name },
+          { label: t('sp.categories'), href: "/categories" },
+          { label: categoryName(category) },
         ]}
       />
 
@@ -201,17 +206,17 @@ export default function CategoryPage() {
             )}
             <div>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                {category.name}
+                {categoryName(category)}
               </h1>
-              {category.description && (
+              {pickLocalized(category, 'description', lang) && (
                 <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                  {category.description}
+                  {pickLocalized(category, 'description', lang)}
                 </p>
               )}
               {productCount !== undefined && (
                 <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                   <Package className="h-3.5 w-3.5" />
-                  {productCount} ապրանք
+                  {productCount} {t('sp.productWord')}
                 </span>
               )}
             </div>
@@ -220,7 +225,7 @@ export default function CategoryPage() {
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={"Որոնել կատեգորիայում..."}
+              placeholder={t('sp.searchInCategory')}
               className="h-11 rounded-xl pl-9 shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -229,7 +234,7 @@ export default function CategoryPage() {
               <button
                 onClick={() => setSearch("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Մաքրել"
+                aria-label={t('sp.clear')}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -283,7 +288,7 @@ export default function CategoryPage() {
                 onClick={() => setFilters({ sort: filters.sort })}
                 className="text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
-                {"Մաքրել ֆիլտրերը"}
+                {t('sp.clearFilters')}
               </button>
             </div>
           )}
@@ -303,7 +308,7 @@ export default function CategoryPage() {
                 slug={p.slug}
                 atgCode={p.atgCode}
                 sku={p.sku}
-                name={p.name}
+                name={p.name} nameRu={p.nameRu} nameEn={p.nameEn}
                 price={p.price}
                 wholesalePrice={p.wholesalePrice}
                 compareAtPrice={p.compareAtPrice}
@@ -330,7 +335,7 @@ export default function CategoryPage() {
                 <Package className="h-7 w-7 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">
-                {"Ոչ մի ապրանք չի գտնվել"}
+                {t('sp.noProductsFound')}
               </p>
               {(hasActiveFilters || search) && (
                 <Button
@@ -342,7 +347,7 @@ export default function CategoryPage() {
                     setSearch("");
                   }}
                 >
-                  Մաքրել ֆիլտրերը <ChevronRight className="h-3.5 w-3.5" />
+                  {t('sp.clearFilters')} <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>

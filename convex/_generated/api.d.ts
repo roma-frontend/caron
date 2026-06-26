@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as atg from "../atg.js";
 import type * as auth from "../auth.js";
 import type * as backInStock from "../backInStock.js";
@@ -23,6 +24,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_emailTemplates from "../lib/emailTemplates.js";
 import type * as lib_imageUrl from "../lib/imageUrl.js";
 import type * as lib_loyalty from "../lib/loyalty.js";
+import type * as lib_translateDict from "../lib/translateDict.js";
 import type * as loyalty from "../loyalty.js";
 import type * as maintenance from "../maintenance.js";
 import type * as migrations from "../migrations.js";
@@ -43,6 +45,7 @@ import type * as reviews from "../reviews.js";
 import type * as seed from "../seed.js";
 import type * as seedFilters from "../seedFilters.js";
 import type * as settings from "../settings.js";
+import type * as translate from "../translate.js";
 
 import type {
   ApiFromModules,
@@ -51,6 +54,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   atg: typeof atg;
   auth: typeof auth;
   backInStock: typeof backInStock;
@@ -66,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "lib/emailTemplates": typeof lib_emailTemplates;
   "lib/imageUrl": typeof lib_imageUrl;
   "lib/loyalty": typeof lib_loyalty;
+  "lib/translateDict": typeof lib_translateDict;
   loyalty: typeof loyalty;
   maintenance: typeof maintenance;
   migrations: typeof migrations;
@@ -86,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   seedFilters: typeof seedFilters;
   settings: typeof settings;
+  translate: typeof translate;
 }>;
 
 /**

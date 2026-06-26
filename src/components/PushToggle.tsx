@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { api } from '../../convex/_generated/api';
 import { useAuthStore } from '@/store/auth';
+import { useT } from '@/lib/i18n/admin';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
@@ -21,6 +22,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 /** Enable/disable browser push notifications (order status, etc.). */
 export function PushToggle() {
+  const { t } = useT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const subscribeMut = useMutation(api.push.subscribe);
   const unsubscribeMut = useMutation(api.push.unsubscribe);
@@ -44,7 +46,7 @@ export function PushToggle() {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') { toast.error('Ծանուցումները արգելափակված են'); return; }
+      if (permission !== 'granted') { toast.error(t('cmp.push_blocked')); return; }
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!) as BufferSource,
@@ -57,8 +59,8 @@ export function PushToggle() {
         auth: json.keys?.auth ?? '',
       });
       setSubscribed(true);
-      toast.success('Ծանուցումները միացված են');
-    } catch { toast.error('Չհաջողվեց միացնել ծանուցումները'); } finally { setBusy(false); }
+      toast.success(t('cmp.push_enabled'));
+    } catch { toast.error(t('cmp.push_enable_fail')); } finally { setBusy(false); }
   };
 
   const disable = async () => {
@@ -68,14 +70,14 @@ export function PushToggle() {
       const sub = await reg?.pushManager.getSubscription();
       if (sub) { await unsubscribeMut({ endpoint: sub.endpoint }); await sub.unsubscribe(); }
       setSubscribed(false);
-      toast.success('Ծանուցումներն անջատված են');
+      toast.success(t('cmp.push_disabled'));
     } catch { /* ignore */ } finally { setBusy(false); }
   };
 
   return (
     <Button variant="outline" size="sm" className="gap-2" disabled={busy} onClick={subscribed ? disable : enable}>
       {subscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-      {subscribed ? 'Անջատել ծանուցումները' : 'Միացնել push ծանուցումները'}
+      {subscribed ? t('cmp.push_turn_off') : t('cmp.push_turn_on')}
     </Button>
   );
 }

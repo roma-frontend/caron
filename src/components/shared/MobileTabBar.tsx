@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Sparkles, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { useT } from '@/lib/i18n/admin';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -118,6 +119,7 @@ export function GridMenuSheet({
   /** Optional highlighted element rendered above the grid (e.g. AI assistant). */
   feature?: ReactNode;
 }) {
+  const { t } = useT();
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -130,7 +132,7 @@ export function GridMenuSheet({
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          aria-label="Փակել"
+          aria-label={t('cmp.close')}
           className="mx-auto mb-3 mt-1 block h-1.5 w-10 rounded-full bg-muted-foreground/30 transition-colors hover:bg-muted-foreground/50"
         />
         <SheetTitle className="sr-only">{title}</SheetTitle>
@@ -154,13 +156,16 @@ export function GridMenuSheet({
  */
 export function AiMenuBanner({
   onClick,
-  title = 'AI օգնական',
-  subtitle = 'Հարցրեք ձեր հարցը',
+  title,
+  subtitle,
 }: {
   onClick: () => void;
   title?: string;
   subtitle?: string;
 }) {
+  const { t } = useT();
+  const resolvedTitle = title ?? t('cmp.ai_assistant');
+  const resolvedSubtitle = subtitle ?? t('cmp.ai_ask');
   return (
     <button
       type="button"
@@ -181,12 +186,12 @@ export function AiMenuBanner({
       </span>
       <span className="relative min-w-0 flex-1">
         <span className="flex items-center gap-1.5 text-sm font-semibold">
-          {title}
+          {resolvedTitle}
           <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
             AI
           </span>
         </span>
-        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{subtitle}</span>
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{resolvedSubtitle}</span>
       </span>
       <ChevronRight className="relative h-4 w-4 shrink-0 text-primary" />
     </button>

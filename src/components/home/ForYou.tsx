@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { useRecentlyViewedStore } from '@/store/recentlyViewed';
 import { ProductRail, type RailProduct } from './ProductRail';
+import { useT } from '@/lib/i18n/admin';
 
 /**
  * "Ձեզ համար" — personalized recommendations based on the shopper's recently
@@ -13,6 +14,7 @@ import { ProductRail, type RailProduct } from './ProductRail';
  * genuinely personal (discovery is covered by featured / new arrivals).
  */
 export function ForYou() {
+  const { t } = useT();
   const items = useRecentlyViewedStore((s) => s.items);
   const viewedIds = items.map((i) => i.id) as Id<'products'>[];
 
@@ -28,7 +30,7 @@ export function ForYou() {
 
   return (
     <ProductRail
-      title="Ձեզ համար"
+      title={t('sx.rail.forYou')}
       icon={<Sparkles className="h-5 w-5 text-primary" />}
       products={recommended as RailProduct[] | undefined}
       viewAllHref="/products"

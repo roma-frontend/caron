@@ -9,14 +9,16 @@ import { ProductCard } from '@/components/cards/ProductCard';
 import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS } from '@/components/PromoTemplate';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Clock, Percent, Calendar, ArrowLeft, Tag, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized } from '@/lib/formatters';
 import { Id } from '../../../../../convex/_generated/dataModel';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { useT } from '@/lib/i18n/admin';
 
 function Countdown({ endDate }: { endDate: number }) {
+  const { t } = useT();
   const [now] = useState(() => Date.now());
   const diff = Math.max(0, endDate - now);
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -25,7 +27,7 @@ function Countdown({ endDate }: { endDate: number }) {
 
   return (
     <div className="flex gap-2">
-      {[{ v: days, l: 'օր' }, { v: hours, l: 'ժ' }, { v: mins, l: 'ր' }].map((item) => (
+      {[{ v: days, l: t('sx.promo.unitDays') }, { v: hours, l: t('sx.promo.unitHours') }, { v: mins, l: t('sx.promo.unitMins') }].map((item) => (
         <div key={item.l} className="flex min-w-[56px] flex-col items-center rounded-xl bg-background/80 px-3 py-2 backdrop-blur-sm">
           <span className="text-xl font-black tabular-nums">{String(item.v).padStart(2, '0')}</span>
           <span className="text-[9px] uppercase tracking-widest text-muted-foreground">{item.l}</span>
@@ -52,6 +54,7 @@ function ProgressBar({ start, end }: { start: number; end: number }) {
 }
 
 export default function PromotionDetailPage() {
+  const { t } = useT();
   const { id } = useParams();
   const promotions = useQuery(api.promotions.active, {});
   const products = useQuery(api.products.list, { limit: 500 });
@@ -73,7 +76,7 @@ export default function PromotionDetailPage() {
   }, [emblaApi, onSelect]);
 
   if (promotions === undefined) return <Loader />;
-  if (!promo) return <div className="py-20 text-center text-muted-foreground">{'Ակցիան չի գտնվել'}</div>;
+  if (!promo) return <div className="py-20 text-center text-muted-foreground">{t('sx.promo.notFound')}</div>;
 
   const daysLeft = Math.max(0, Math.ceil((promo.endDate - now) / 86400000));
   const isExpired = promo.endDate < now;
@@ -91,7 +94,7 @@ export default function PromotionDetailPage() {
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <Breadcrumbs items={[{ label: 'Ակցիաներ', href: '/promotions' }, { label: promo.title }]} />
+      <Breadcrumbs items={[{ label: t('sx.promo.breadcrumb'), href: '/promotions' }, { label: promo.title }]} />
 
       {/* Hero with image carousel */}
       <div className="relative mt-4 overflow-hidden rounded-2xl border bg-gradient-to-b from-muted/30 to-muted/10">
@@ -168,7 +171,7 @@ export default function PromotionDetailPage() {
             <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur-sm ${
               isExpired ? 'bg-muted/80 text-muted-foreground' : isUpcoming ? 'bg-blue-500/80 text-white' : 'bg-green-500/80 text-white'
             }`}>
-              {isExpired ? 'Ավարտված' : isUpcoming ? 'Շուտով' : 'Ակտիվ'}
+              {isExpired ? t('sx.promo.expired') : isUpcoming ? t('sx.promo.upcoming') : t('sx.promo.active')}
             </span>
           </div>
         </div>
@@ -182,9 +185,9 @@ export default function PromotionDetailPage() {
                 <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{promo.description}</p>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDateHy(promo.startDate)} — {formatDateHy(promo.endDate)}</span>
+                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDateLocalized(promo.startDate, t)} — {formatDateLocalized(promo.endDate, t)}</span>
                 {isLive && daysLeft <= 14 && (
-                  <span className="flex items-center gap-1 font-medium text-amber-600"><Clock className="h-3.5 w-3.5" />Մնաց {daysLeft} օր</span>
+                  <span className="flex items-center gap-1 font-medium text-amber-600"><Clock className="h-3.5 w-3.5" />{t('sx.promo.remaining')} {daysLeft} {t('sx.promo.daysWord')}</span>
                 )}
               </div>
             </div>
@@ -202,20 +205,20 @@ export default function PromotionDetailPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                 <Zap className="h-4 w-4 text-primary" />
               </div>
-              <h2 className="text-xl font-bold">{'Ակցիայի ապրանքներ'}</h2>
+              <h2 className="text-xl font-bold">{t('sx.promo.products')}</h2>
             </div>
-            <Badge variant="secondary" className="text-xs">{promoProducts.length} ապրանք</Badge>
+            <Badge variant="secondary" className="text-xs">{promoProducts.length} {t('sx.itemsWord')}</Badge>
           </div>
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {promoProducts.map((p, i) => (
-              <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+              <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} nameRu={p.nameRu} nameEn={p.nameEn} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
             ))}
           </div>
         </div>
       )}
 
       {promoProducts.length === 0 && (
-        <div className="mt-12 text-center py-12 text-muted-foreground">Այս ակցիային կցված ապրանքներ չկան</div>
+        <div className="mt-12 text-center py-12 text-muted-foreground">{t('sx.promo.noProducts')}</div>
       )}
     </div>
   );

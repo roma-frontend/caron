@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SlidersHorizontal, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { Id } from '../../convex/_generated/dataModel';
-import { PRODUCT } from '@/lib/constants';
 import { useSettings } from '@/hooks/useSettings';
+import { useT } from '@/lib/i18n/admin';
+import { useFilterName, useCategoryName } from '@/lib/i18n/filterNames';
 
 type FilterValues = Record<string, unknown>;
 type Filters = { categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
@@ -24,6 +25,7 @@ interface Props {
 
 
 export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Props) {
+  const { t } = useT();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const activeCount = (activeFilters.categoryId ? 1 : 0) + (activeFilters.minPrice ? 1 : 0) + (activeFilters.maxPrice ? 1 : 0) + (activeFilters.inStockOnly ? 1 : 0) + (activeFilters.onSale ? 1 : 0) + (activeFilters.minRating ? 1 : 0) + Object.keys(activeFilters.attributes || {}).length;
@@ -41,7 +43,7 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
       <div className="fixed left-1/2 -translate-x-1/2 z-40 lg:hidden" style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <Button onClick={() => setMobileOpen(true)} size="lg" className="rounded-full shadow-xl shadow-primary/25 gap-2 px-6">
           <SlidersHorizontal className="h-4 w-4" />
-          {PRODUCT.filters}
+          {t('sp.filters')}
           {activeCount > 0 && <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full p-0 text-xs flex items-center justify-center">{activeCount}</Badge>}
         </Button>
       </div>
@@ -50,14 +52,14 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto px-5 pb-8 pt-0" showCloseButton={false}>
           <div className="flex items-center justify-between sticky top-0 bg-popover z-10 pt-4 pb-3 border-b mb-4">
-            <h3 className="font-semibold text-base">{PRODUCT.filters}</h3>
+            <h3 className="font-semibold text-base">{t('sp.filters')}</h3>
             <Button variant="ghost" size="icon-sm" onClick={() => setMobileOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
           <FilterContent categoryId={categoryId} onFilterChange={onFilterChange} activeFilters={activeFilters} />
           <div className="mt-6">
-            <Button className="w-full rounded-xl" onClick={() => setMobileOpen(false)}>Կիռառել</Button>
+            <Button className="w-full rounded-xl" onClick={() => setMobileOpen(false)}>{t('sp.apply')}</Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -68,13 +70,14 @@ export function ProductFilters({ categoryId, onFilterChange, activeFilters }: Pr
 
 
 export function SortBar({ activeFilters, onFilterChange }: { activeFilters: Filters; onFilterChange: (f: Filters) => void }) {
+  const { t } = useT();
   return (
     <div className="flex gap-1.5 flex-wrap">
       {[
-        { key: 'newest', label: PRODUCT.sortNewest },
-        { key: 'priceAsc', label: PRODUCT.sortPriceAsc },
-        { key: 'priceDesc', label: PRODUCT.sortPriceDesc },
-        { key: 'popular', label: PRODUCT.sortPopular },
+        { key: 'newest', label: t('sp.sortNewest') },
+        { key: 'priceAsc', label: t('sp.sortPriceAsc') },
+        { key: 'priceDesc', label: t('sp.sortPriceDesc') },
+        { key: 'popular', label: t('sp.sortPopular') },
       ].map((s) => (
         <Button key={s.key} variant={activeFilters.sort === s.key ? 'default' : 'ghost'} size="sm" className="rounded-full text-xs"
           onClick={() => onFilterChange({ ...activeFilters, sort: activeFilters.sort === s.key ? undefined : s.key })}
@@ -86,6 +89,9 @@ export function SortBar({ activeFilters, onFilterChange }: { activeFilters: Filt
 
 
 function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
+  const { t } = useT();
+  const filterName = useFilterName();
+  const categoryName = useCategoryName();
   const settings = useSettings();
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['category', 'price', 'sale', 'rating']));
   const selectedCat = activeFilters.categoryId ?? categoryId;
@@ -113,34 +119,34 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
     <div className="space-y-5">
       {activeCount > 0 && (
         <Button variant="ghost" size="sm" onClick={() => onFilterChange({ sort: activeFilters.sort })} className="gap-1.5 text-xs w-full justify-start text-muted-foreground hover:text-foreground">
-          <RotateCcw className="h-3 w-3" /> Չեղարկել
+          <RotateCcw className="h-3 w-3" /> {t('sp.reset')}
         </Button>
       )}
 
       {/* Category */}
       {!categoryId && categories && (
-        <Section title="Կատեգորիա" k="category" expanded={expanded} toggle={toggle}>
+        <Section title={t('sp.category')} k="category" expanded={expanded} toggle={toggle}>
           <div className="flex flex-wrap gap-2">
             {categories.filter((c) => c.count > 0).map((c) => (
               <Badge key={c._id} variant={activeFilters.categoryId === c._id ? 'default' : 'outline'}
                 className="cursor-pointer text-xs transition-all hover:scale-105 px-3 py-1.5"
                 onClick={() => onFilterChange({ ...activeFilters, categoryId: activeFilters.categoryId === c._id ? undefined : c._id, attributes: undefined })}
-              >{c.name}</Badge>
+              >{categoryName(c)}</Badge>
             ))}
           </div>
         </Section>
       )}
 
       {/* Price - Dual Range Slider */}
-      {settings !== undefined && settings?.enablePriceFilter !== false && <Section title="Գին" k="price" expanded={expanded} toggle={toggle}>
+      {settings !== undefined && settings?.enablePriceFilter !== false && <Section title={t('sp.price')} k="price" expanded={expanded} toggle={toggle}>
         <div className="flex gap-2 mb-3">
           <div className="flex-1">
-            <label className="text-[10px] text-muted-foreground mb-1 block">Սկսած</label>
+            <label className="text-[10px] text-muted-foreground mb-1 block">{t('sp.from')}</label>
             <Input {...numericInputProps(false)} placeholder="0" className="h-8 text-xs" value={activeFilters.minPrice ?? ''}
               onChange={(e) => onFilterChange({ ...activeFilters, minPrice: e.target.value ? Number(e.target.value) : undefined })} />
           </div>
           <div className="flex-1">
-            <label className="text-[10px] text-muted-foreground mb-1 block">Մինչև</label>
+            <label className="text-[10px] text-muted-foreground mb-1 block">{t('sp.to')}</label>
             <Input {...numericInputProps(false)} placeholder="100000" className="h-8 text-xs" value={activeFilters.maxPrice ?? ''}
               onChange={(e) => onFilterChange({ ...activeFilters, maxPrice: e.target.value ? Number(e.target.value) : undefined })} />
           </div>
@@ -153,30 +159,30 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
           }} />
           <input type="range" min={0} max={100000} step={1000} value={activeFilters.minPrice ?? 0}
             onChange={(e) => onFilterChange({ ...activeFilters, minPrice: Number(e.target.value) || undefined })}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label="Նվազագույն գին" />
+            className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label={t('sp.minPriceAria')} />
           <input type="range" min={0} max={100000} step={1000} value={activeFilters.maxPrice ?? 100000}
             onChange={(e) => onFilterChange({ ...activeFilters, maxPrice: Number(e.target.value) < 100000 ? Number(e.target.value) : undefined })}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label="Առավելագույն գին" />
+            className="absolute inset-0 w-full opacity-0 cursor-pointer" aria-label={t('sp.maxPriceAria')} />
         </div>
       </Section>
       }
 
       {/* Stock + Sale */}
-      <Section title="Մնացորդ" k="stock" expanded={expanded} toggle={toggle}>
+      <Section title={t('sp.stockSection')} k="stock" expanded={expanded} toggle={toggle}>
         <label className="flex items-center gap-2 cursor-pointer text-sm">
           <input type="checkbox" className="rounded border-input accent-primary" checked={!!activeFilters.inStockOnly}
             onChange={(e) => onFilterChange({ ...activeFilters, inStockOnly: e.target.checked || undefined })} />
-          Միայն առկա
+          {t('sp.inStockOnly')}
         </label>
         <label className="flex items-center gap-2 cursor-pointer text-sm mt-2">
           <input type="checkbox" className="rounded border-input accent-primary" checked={!!activeFilters.onSale}
             onChange={(e) => onFilterChange({ ...activeFilters, onSale: e.target.checked || undefined })} />
-          Միայն զեղճված
+          {t('sp.onSaleOnly')}
         </label>
       </Section>
 
       {/* Rating */}
-      <Section title="Գնահատական" k="rating" expanded={expanded} toggle={toggle}>
+      <Section title={t('sp.ratingSection')} k="rating" expanded={expanded} toggle={toggle}>
         <div className="flex flex-wrap gap-2">
           {[4, 3, 2, 1].map((r) => (
             <Badge key={r} variant={activeFilters.minRating === r ? 'default' : 'outline'}
@@ -188,7 +194,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
 
       {/* Dynamic filters */}
       {filterDefs?.map((def) => (
-        <Section key={def._id} title={def.name} k={def._id} expanded={expanded} toggle={toggle}>
+        <Section key={def._id} title={filterName(def.name, def.slug)} k={def._id} expanded={expanded} toggle={toggle}>
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
             <div className="flex flex-wrap gap-2">
               {def.options.map((opt) => {
@@ -221,12 +227,12 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
               <input type="checkbox" className="rounded border-input accent-primary"
                 checked={!!(activeFilters.attributes?.[def._id])}
                 onChange={(e) => updateAttr(def._id, e.target.checked || undefined)} />
-              {def.name}
+              {filterName(def.name, def.slug)}
             </label>
           )}
           {def.type === 'range' && (
             <div className="flex gap-2 items-center">
-              <Input {...numericInputProps(false)} placeholder="Նվազագույն" className="h-8 text-xs"
+              <Input {...numericInputProps(false)} placeholder={t('sp.minWord')} className="h-8 text-xs"
                 onChange={(e) => updateAttr(def._id, e.target.value ? Number(e.target.value) : null)} />
               {def.unit && <span className="text-xs text-muted-foreground">{def.unit}</span>}
             </div>

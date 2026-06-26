@@ -18,9 +18,11 @@ import Image from 'next/image';
 import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
 import { defaultPromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';
 import { useAuthStore } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
 
 function StepInfo() {
   const { data, update } = useWizardData();
+  const { t } = useAdminT();
   const { upload, uploading } = useUpload();
   const fileRef = useRef<HTMLInputElement>(null);
   const images = (data.images as string[]) ?? [];
@@ -38,15 +40,15 @@ function StepInfo() {
   const config = (data.templateConfig as PromoTemplateConfig) ?? defaultPromoConfig();
   return (
     <div className="space-y-5">
-      <div><Label>Ակցիայի անուն *</Label><Input value={(data.title as string) ?? ''} onChange={(e) => update('title', e.target.value)} placeholder="Ակցիայի անուն" className="h-11" /></div>
-      <div><Label>Ակցիայի նկարագրություն</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder="Ակցիայի նկարագրություն..." rows={3} /></div>
-      <div><Label>Զեղչ (%)</Label><Input {...numericInputProps(false)} value={(data.discountPercent as number) ?? 10} onChange={(e) => update('discountPercent', Number(e.target.value))} className="h-11" /></div>
+      <div><Label>{t('acat.promoName')} *</Label><Input value={(data.title as string) ?? ''} onChange={(e) => update('title', e.target.value)} placeholder={t('acat.promoName')} className="h-11" /></div>
+      <div><Label>{t('acat.promoDescription')}</Label><Textarea value={(data.description as string) ?? ''} onChange={(e) => update('description', e.target.value)} placeholder={t('acat.promoDescPlaceholder')} rows={3} /></div>
+      <div><Label>{t('acat.discountPercent')}</Label><Input {...numericInputProps(false)} value={(data.discountPercent as number) ?? 10} onChange={(e) => update('discountPercent', Number(e.target.value))} className="h-11" /></div>
 
       <div>
-        <Label>Քարտի պատկեր</Label>
+        <Label>{t('acat.cardImage')}</Label>
         <div className="mt-2 mb-3 inline-flex rounded-lg border p-0.5 text-sm">
-          <button type="button" onClick={() => update('imageMode', 'template')} className={`rounded-md px-3 py-1.5 transition-colors ${mode === 'template' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Շաբլոն</button>
-          <button type="button" onClick={() => update('imageMode', 'upload')} className={`rounded-md px-3 py-1.5 transition-colors ${mode === 'upload' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Նկարներ</button>
+          <button type="button" onClick={() => update('imageMode', 'template')} className={`rounded-md px-3 py-1.5 transition-colors ${mode === 'template' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{t('acat.template')}</button>
+          <button type="button" onClick={() => update('imageMode', 'upload')} className={`rounded-md px-3 py-1.5 transition-colors ${mode === 'upload' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{t('acat.images')}</button>
         </div>
 
         {mode === 'template' ? (
@@ -72,10 +74,11 @@ function StepInfo() {
 
 function StepDates() {
   const { data, update } = useWizardData();
+  const { t } = useAdminT();
   return (
     <div className="space-y-5">
-      <div><Label>Սկիզբ *</Label><DatePicker value={(data.startDate as string) ?? ''} onChange={(v) => update('startDate', v)} /></div>
-      <div><Label>Ավարտ *</Label><DatePicker value={(data.endDate as string) ?? ''} onChange={(v) => update('endDate', v)} /></div>
+      <div><Label>{t('acat.start')} *</Label><DatePicker value={(data.startDate as string) ?? ''} onChange={(v) => update('startDate', v)} /></div>
+      <div><Label>{t('acat.end')} *</Label><DatePicker value={(data.endDate as string) ?? ''} onChange={(v) => update('endDate', v)} /></div>
     </div>
   );
 }
@@ -84,10 +87,11 @@ export default function AddPromotionPage() {
   const router = useRouter();
   const create = useMutation(api.promotions.create);
   const sessionToken = useAuthStore((s) => s.sessionToken);
+  const { t } = useAdminT();
 
   const steps: WizardStep[] = [
-    { id: 'info', title: 'Ակցիայի տվյալներ', content: <StepInfo />, validation: (d) => !!(d.title) },
-    { id: 'dates', title: 'Ամսաթիվներ', content: <StepDates />, validation: (d) => !!(d.startDate && d.endDate) },
+    { id: 'info', title: t('acat.promoInfo'), content: <StepInfo />, validation: (d) => !!(d.title) },
+    { id: 'dates', title: t('acat.dates'), content: <StepDates />, validation: (d) => !!(d.startDate && d.endDate) },
   ];
 
   const handleComplete = async (data: Record<string, unknown>) => {
@@ -106,14 +110,14 @@ export default function AddPromotionPage() {
       endDate: new Date(data.endDate as string).getTime(),
       isActive: true,
     });
-    toast.success('Ակցիան հաջողությամբ ստեղծվեց');
+    toast.success(t('acat.promoCreated'));
     router.push('/admin/promotions');
   };
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center">
       <Card className="w-full max-w-2xl overflow-hidden rounded-2xl border-0" style={{ boxShadow: 'var(--shadow-xl)' }}>
-        <Wizard steps={steps} onComplete={handleComplete} onCancel={() => router.push('/admin/promotions')} submitLabel="Ավելացնել" />
+        <Wizard steps={steps} onComplete={handleComplete} onCancel={() => router.push('/admin/promotions')} submitLabel={t('acat.add')} />
       </Card>
     </div>
   );

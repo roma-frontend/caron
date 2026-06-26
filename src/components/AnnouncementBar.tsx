@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { X, ArrowRight, Sparkles, Zap, Truck, Clock, Gift, Percent, Bell, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useT } from '@/lib/i18n/admin';
 
 const ANNOUNCEMENT_DISMISS_EVENT = 'announcement-dismiss';
 
@@ -29,9 +30,13 @@ function hashStr(s: string): string {
 
 interface AnnouncementConfig {
   text?: string;
+  textRu?: string;
+  textEn?: string;
   type?: AnnouncementStyle;
   link?: string;
   linkText?: string;
+  linkTextRu?: string;
+  linkTextEn?: string;
   dismissible?: boolean;
   icon?: 'sparkles' | 'zap' | 'truck' | 'clock' | 'gift' | 'percent' | 'bell' | 'star';
   gradient?: string;
@@ -79,6 +84,7 @@ const ICONS = {
 };
 
 export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: string | null }) {
+  const { t, lang } = useT();
   const dismissKey = raw ? `announcement_dismissed_${hashStr(raw)}` : null;
   const dismissed = useSyncExternalStore(
     subscribe,
@@ -91,6 +97,8 @@ export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: s
   const config = parseAnnouncement(raw);
   const styleClass = STYLES[config.type ?? 'info'].className;
   const Icon = config.icon ? ICONS[config.icon] : null;
+  const text = (lang === 'ru' ? config.textRu : lang === 'en' ? config.textEn : undefined)?.trim() || config.text;
+  const linkText = (lang === 'ru' ? config.linkTextRu : lang === 'en' ? config.linkTextEn : undefined)?.trim() || config.linkText;
 
   const dismiss = () => {
     let hash = 0;
@@ -107,13 +115,13 @@ export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: s
       >
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />}
 
-        <span className="line-clamp-1 sm:line-clamp-none">{config.text}</span>
+        <span className="line-clamp-1 sm:line-clamp-none">{text}</span>
 
         {config.link && (
           <>
             <span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-30" />
             <Link href={config.link} className="inline-flex items-center gap-1 font-semibold whitespace-nowrap underline-offset-2 hover:underline" onClick={(e) => e.stopPropagation()}>
-              {config.linkText || 'Իմանալ ավելին'} <ArrowRight className="h-3 w-3" />
+              {linkText || t('sx.announce.learnMore')} <ArrowRight className="h-3 w-3" />
             </Link>
           </>
         )}
@@ -126,7 +134,7 @@ export function AnnouncementBar({ raw, phone }: { raw?: string | null; phone?: s
         )}
 
         {config.dismissible !== false && (
-          <button onClick={dismiss} className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full opacity-50 transition-opacity hover:opacity-100 hover:bg-black/10" aria-label="Close">
+          <button onClick={dismiss} className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full opacity-50 transition-opacity hover:opacity-100 hover:bg-black/10" aria-label={t('sx.close')}>
             <X className="h-3 w-3" />
           </button>
         )}

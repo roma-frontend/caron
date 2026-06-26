@@ -18,34 +18,35 @@ import {
 } from 'lucide-react';
 import { DeliverySchedule } from '@/components/DeliverySchedule';
 import { useReveal, revealStyle } from '@/lib/motion';
+import { useT } from '@/lib/i18n/admin';
 
 const STEPS = [
   {
     icon: CheckCircle,
-    title: 'Պատվեր',
-    text: 'Կատարեք պատվերը կայքում',
+    title: 'pg.delivery.step1.title',
+    text: 'pg.delivery.step1.text',
   },
   {
     icon: Clock,
-    title: 'Հաստատում',
-    text: 'Մենք կհաստատենք պատվերը',
+    title: 'pg.delivery.step2.title',
+    text: 'pg.delivery.step2.text',
   },
   {
     icon: Package,
-    title: 'Փաթեթավորում',
-    text: 'Պատվերը կպատրաստվի առաքման',
+    title: 'pg.delivery.step3.title',
+    text: 'pg.delivery.step3.text',
   },
   {
     icon: Truck,
-    title: 'Առաքում',
-    text: 'Ստացեք պատվերը նշված հասցեով',
+    title: 'pg.delivery.step4.title',
+    text: 'pg.delivery.step4.text',
   },
 ];
 
 const FEATURES = [
-  { icon: ShieldCheck, title: 'Անվտանգ փաթեթավորում', desc: 'Ապրանքները հասնում են անվնաս և ապահով' },
-  { icon: Clock, title: 'Արագ առաքում', desc: 'Հաստատումից հետո՝ կարճ ժամկետներում' },
-  { icon: MapPin, title: 'Ամբողջ Հայաստանով', desc: 'Առաքում Երևան և բոլոր մարզեր' },
+  { icon: ShieldCheck, title: 'pg.delivery.feat.safe.title', desc: 'pg.delivery.feat.safe.desc' },
+  { icon: Clock, title: 'pg.delivery.feat.fast.title', desc: 'pg.delivery.feat.fast.desc' },
+  { icon: MapPin, title: 'pg.delivery.feat.allArmenia.title', desc: 'pg.delivery.feat.allArmenia.desc' },
 ];
 
 function MethodCard({
@@ -106,6 +107,7 @@ function FeatureItem({
   feature: typeof FEATURES[number];
   index: number;
 }) {
+  const { t } = useT();
   const { ref, visible } = useReveal();
   const Icon = feature.icon;
   return (
@@ -117,13 +119,14 @@ function FeatureItem({
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
         <Icon className="h-6 w-6 text-primary" />
       </div>
-      <h3 className="mt-3 font-semibold">{feature.title}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{feature.desc}</p>
+      <h3 className="mt-3 font-semibold">{t(feature.title)}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{t(feature.desc)}</p>
     </div>
   );
 }
 
 export default function DeliveryPage() {
+  const { t } = useT();
   const settings = useSettings();
 
   const yerevanFree = (settings?.deliveryYerevan ?? 0) === 0;
@@ -133,19 +136,19 @@ export default function DeliveryPage() {
   const METHODS = [
     {
       icon: Truck,
-      title: 'Առաքում Երևանում',
-      time: '1-3 աշխատանքային օր',
-      price: yerevanFree ? 'Անվճար' : formatPrice(settings?.deliveryYerevan ?? 0),
+      title: t('pg.delivery.method.yerevan.title'),
+      time: t('pg.delivery.method.yerevan.time'),
+      price: yerevanFree ? t('pg.delivery.free') : formatPrice(settings?.deliveryYerevan ?? 0),
       isFree: yerevanFree,
-      desc: 'Արագ և անվտանգ առաքում Երևանի ողջ տարածքում',
+      desc: t('pg.delivery.method.yerevan.desc'),
     },
     {
       icon: Package,
-      title: 'Առաքում մարզեր',
-      time: '2-5 աշխատանքային օր',
-      price: regionsFree ? 'Անվճար' : formatPrice(settings?.deliveryRegions ?? 0),
+      title: t('pg.delivery.method.regions.title'),
+      time: t('pg.delivery.method.regions.time'),
+      price: regionsFree ? t('pg.delivery.free') : formatPrice(settings?.deliveryRegions ?? 0),
       isFree: regionsFree,
-      desc: 'Առաքում Հայաստանի բոլոր մարզեր՝ վստահելի գործընկերներով',
+      desc: t('pg.delivery.method.regions.desc'),
     },
   ];
 
@@ -160,13 +163,13 @@ export default function DeliveryPage() {
           <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)]">
             <Badge variant="default" className="mb-4 gap-1.5">
               <Truck className="h-3.5 w-3.5" />
-              Առաքում
+              {t('pg.delivery.badge')}
             </Badge>
             <h1 className="text-3xl font-bold md:text-4xl">
-              Արագ և հարմար առաքում
+              {t('pg.delivery.heroTitle')}
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-              Առաքում ենք ամբողջ Հայաստանի տարածքում՝ արագ, ապահով և քո հարմարության համար։
+              {t('pg.delivery.heroDesc')}
             </p>
           </div>
         </section>
@@ -189,8 +192,8 @@ export default function DeliveryPage() {
                 <Gift className="h-6 w-6 text-primary" />
               </div>
               <p className="text-sm sm:text-base">
-                <span className="font-semibold">Անվճար առաքում</span>{' '}
-                {formatPrice(freeThreshold)}-ից բարձր պատվերների դեպքում
+                <span className="font-semibold">{t('pg.delivery.freeShipping')}</span>{' '}
+                {formatPrice(freeThreshold)}{t('pg.delivery.aboveOrders')}
               </p>
             </div>
           )}
@@ -205,7 +208,7 @@ export default function DeliveryPage() {
           {/* Steps timeline */}
           <section className="mt-16">
             <h2 className="mb-10 text-center text-2xl font-bold">
-              Առաքման փուլերը
+              {t('pg.delivery.stepsTitle')}
             </h2>
 
             <div className="relative grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -225,8 +228,8 @@ export default function DeliveryPage() {
                         {i + 1}
                       </span>
                     </div>
-                    <h3 className="mt-4 font-semibold">{s.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{s.text}</p>
+                    <h3 className="mt-4 font-semibold">{t(s.title)}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{t(s.text)}</p>
                   </div>
                 );
               })}
@@ -242,12 +245,12 @@ export default function DeliveryPage() {
               <MapPin className="h-6 w-6 text-primary" />
             </div>
             <p className="text-lg font-semibold">
-              Առաքում ամբողջ Հայաստանի տարածքում
+              {t('pg.delivery.deliveryAllArmenia')}
             </p>
             <div className="mt-4 flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground sm:flex-row sm:gap-6">
               <span className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
-                {settings?.address ?? 'Երևան, Հայաստան'}
+                {settings?.address ?? t('pg.contact.mapCity')}
               </span>
               <span className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />

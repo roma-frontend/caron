@@ -14,24 +14,25 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet, XCircle, History } from 'lucide-react';
-import { formatPrice, formatDateHy } from '@/lib/formatters';
+import { formatPrice, formatDateLocalized } from '@/lib/formatters';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { useSettings } from '@/hooks/useSettings';
+import { useAdminT } from '@/lib/i18n/admin';
 import Link from 'next/link';
 
 type PeriodKey = 'today' | 'yesterday' | '7d' | '30d' | 'thisMonth' | 'lastMonth' | 'custom';
 type CancelReasonKey = 'changed_mind' | 'no_answer' | 'out_of_stock' | 'expensive' | 'slow_delivery' | 'order_error' | 'duplicate' | 'other';
 
 const PERIOD_LABELS: Record<PeriodKey, string> = {
-  today: 'Այսօր',
-  yesterday: 'Երեկ',
-  '7d': '7 օր',
-  '30d': '30 օր',
-  thisMonth: 'Այս ամիս',
-  lastMonth: 'Անցած ամիս',
-  custom: 'Ընտրել օրերը',
+  today: 'ao.period.today',
+  yesterday: 'ao.period.yesterday',
+  '7d': 'ao.period.7d',
+  '30d': 'ao.period.30d',
+  thisMonth: 'ao.period.thisMonth',
+  lastMonth: 'ao.period.lastMonth',
+  custom: 'ao.period.custom',
 };
 
 function startOfDay(date: Date) {
@@ -93,39 +94,39 @@ function getPeriodRange(period: PeriodKey, customFrom: string, customTo: string)
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Սպասում', color: 'bg-yellow-100 text-yellow-800' },
-  confirmed: { label: 'Հաստատվել է', color: 'bg-blue-100 text-blue-800' },
-  processing: { label: 'Կատարվում է', color: 'bg-purple-100 text-purple-800' },
-  shipped: { label: 'Ուղարկվել է', color: 'bg-indigo-100 text-indigo-800' },
-  delivered: { label: 'Առաքված', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Չեղյալ', color: 'bg-red-100 text-red-800' },
+  pending: { label: 'ao.status.pending', color: 'bg-yellow-100 text-yellow-800' },
+  confirmed: { label: 'ao.status.confirmed', color: 'bg-blue-100 text-blue-800' },
+  processing: { label: 'ao.status.processing', color: 'bg-purple-100 text-purple-800' },
+  shipped: { label: 'ao.status.shipped', color: 'bg-indigo-100 text-indigo-800' },
+  delivered: { label: 'ao.status.delivered', color: 'bg-green-100 text-green-800' },
+  cancelled: { label: 'ao.status.cancelled', color: 'bg-red-100 text-red-800' },
 };
 
 const PAYMENT_MAP: Record<string, { label: string; color: string }> = {
-  awaiting: { label: 'Սպասում', color: 'bg-orange-100 text-orange-800' },
-  paid: { label: 'Վճարվել է', color: 'bg-green-100 text-green-800' },
-  refunded: { label: 'Վերադարձվել է', color: 'bg-red-100 text-red-800' },
+  awaiting: { label: 'ao.status.pending', color: 'bg-orange-100 text-orange-800' },
+  paid: { label: 'ao.pay.paid', color: 'bg-green-100 text-green-800' },
+  refunded: { label: 'ao.pay.refunded', color: 'bg-red-100 text-red-800' },
 };
 
-const PAYMENT_LABELS: Record<string, string> = { cash: 'Կանխիկ', card: 'Քարտով', idram: 'Idram', easypay: 'EasyPay', transfer: 'Բանկային փոխանցում' };
+const PAYMENT_LABELS: Record<string, string> = { cash: 'ao.method.cash', card: 'ao.method.cardWith', idram: 'Idram', easypay: 'EasyPay', transfer: 'ao.method.transfer' };
 
 const PAYMENT_METHODS = [
-  { key: 'cash', label: 'Կանխիկ' },
-  { key: 'transfer', label: 'Բանկային փոխանցում' },
+  { key: 'cash', label: 'ao.method.cash' },
+  { key: 'transfer', label: 'ao.method.transfer' },
   { key: 'idram', label: 'Idram' },
   { key: 'easypay', label: 'EasyPay' },
-  { key: 'card', label: 'Քարտ' },
+  { key: 'card', label: 'ao.method.card' },
 ] as const;
 
 const CANCEL_REASONS: Array<{ key: CancelReasonKey; label: string }> = [
-  { key: 'changed_mind', label: 'Հաճախորդը մտափոխվել է' },
-  { key: 'no_answer', label: 'Չհաջողվեց կապվել' },
-  { key: 'out_of_stock', label: 'Ապրանքը չկա' },
-  { key: 'expensive', label: 'Թանկ է' },
-  { key: 'slow_delivery', label: 'Երկար առաքում' },
-  { key: 'order_error', label: 'Սխալ պատվերում' },
-  { key: 'duplicate', label: 'Կրկնվող պատվեր' },
-  { key: 'other', label: 'Այլ' },
+  { key: 'changed_mind', label: 'ao.reason.changed_mind' },
+  { key: 'no_answer', label: 'ao.reason.no_answer' },
+  { key: 'out_of_stock', label: 'ao.reason.out_of_stock' },
+  { key: 'expensive', label: 'ao.reason.expensive' },
+  { key: 'slow_delivery', label: 'ao.reason.slow_delivery' },
+  { key: 'order_error', label: 'ao.reason.order_error' },
+  { key: 'duplicate', label: 'ao.reason.duplicate' },
+  { key: 'other', label: 'ao.reason.other' },
 ];
 
 const CANCEL_REASON_LABELS = Object.fromEntries(CANCEL_REASONS.map((reason) => [reason.key, reason.label]));
@@ -166,6 +167,7 @@ function exportPDF(o: Record<string, unknown>) {
 
 function OrderCard({ order, sessionToken, index, settings }: { order: Record<string, unknown>; sessionToken: string; index: number; settings: ReturnType<typeof useSettings> }) {
   const { ref, visible } = useReveal();
+  const { t } = useAdminT();
   const updateStatus = useMutation(api.orders.updateStatus);
   // Best-effort: email the customer when their order status changes. Never
   // blocks the admin action; silently skipped if email isn't configured or the
@@ -194,7 +196,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
 
   async function submitCancellation() {
     if (!cancelReason) {
-      toast.error('Ընտրեք չեղարկման պատճառը');
+      toast.error(t('ao.toast.selectCancelReason'));
       return;
     }
 
@@ -207,13 +209,13 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
         cancelReason,
         cancelComment,
       });
-      toast.success('Պատվերը չեղարկվեց');
+      toast.success(t('ao.toast.orderCancelled'));
       notifyStatusEmail('cancelled');
       setCancelOpen(false);
       setCancelReason('');
       setCancelComment('');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Չեղարկումը չհաջողվեց');
+      toast.error(error instanceof Error ? error.message : t('ao.toast.cancelFailed'));
     } finally {
       setSavingCancel(false);
     }
@@ -226,13 +228,13 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
         <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-muted/40 px-4 py-2 border-b gap-2">
           <div className="flex items-center flex-wrap gap-1.5">
             <span className="font-mono text-xs font-bold tracking-wider text-muted-foreground whitespace-nowrap">{String(order.orderNumber)}</span>
-            <Badge className={`${s.color} border-0 text-[10px]`}>{s.label}</Badge>
-            <Badge className={`${p.color} border-0 text-[10px]`}>{p.label}</Badge>
-            {order.paymentMethod != null ? <Badge variant="outline" className="text-[10px] text-muted-foreground">{PAYMENT_LABELS[String(order.paymentMethod)] ?? String(order.paymentMethod)}</Badge> : null}
+            <Badge className={`${s.color} border-0 text-[10px]`}>{t(s.label)}</Badge>
+            <Badge className={`${p.color} border-0 text-[10px]`}>{t(p.label)}</Badge>
+            {order.paymentMethod != null ? <Badge variant="outline" className="text-[10px] text-muted-foreground">{t(PAYMENT_LABELS[String(order.paymentMethod)] ?? String(order.paymentMethod))}</Badge> : null}
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <span className="text-lg font-bold text-primary">{formatPrice(Number(order.total))}</span>
-            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{formatDateHy(Number(order.createdAt))}</span>
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{formatDateLocalized(Number(order.createdAt), t)}</span>
           </div>
         </div>
         {/* Content row — customer + actions */}
@@ -255,15 +257,15 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
               }
               void updateStatus({ sessionToken, id: order._id as Id<'orders'>, status: v as 'pending' }).then(() => notifyStatusEmail(v));
             }}>
-              <SelectTrigger className="h-8 w-full sm:w-[110px] text-xs min-w-0"><span>{s.label}</span></SelectTrigger>
-              <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="h-8 w-full sm:w-[110px] text-xs min-w-0"><span>{t(s.label)}</span></SelectTrigger>
+              <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{t(v.label)}</SelectItem>)}</SelectContent>
             </Select>
             <button onClick={() => updateStatus({ sessionToken, id: order._id as Id<'orders'>, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' as const : 'paid' as const })}
               className={`flex h-8 items-center gap-1.5 rounded-lg border px-2 sm:px-3 text-[11px] sm:text-xs font-medium transition-colors ${order.paymentStatus === 'paid' ? 'bg-green-50 border-green-200 text-green-700' : 'text-muted-foreground hover:bg-accent'}`}>
-              {order.paymentStatus === 'paid' ? '✓' : '○'} {order.paymentStatus === 'paid' ? 'Վճարված' : 'Նշել վճարած'}
+              {order.paymentStatus === 'paid' ? '✓' : '○'} {order.paymentStatus === 'paid' ? t('ao.paid') : t('ao.btn.markPaid')}
             </button>
             <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
-            <Link href={`tel:${String(order.customerPhone)}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title="Զանգել">
+            <Link href={`tel:${String(order.customerPhone)}`} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title={t('ao.action.call')}>
               <Phone className="h-3.5 w-3.5" />
             </Link>
             {settings?.whatsapp && (
@@ -275,36 +277,36 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
             <button onClick={() => exportPDF(order)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors" title="PDF">
               <FileDown className="h-3.5 w-3.5" />
             </button>
-            <button onClick={() => setHistoryOpen((v) => !v)} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${historyOpen ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent'}`} title="Պատմություն">
+            <button onClick={() => setHistoryOpen((v) => !v)} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${historyOpen ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent'}`} title={t('ao.action.history')}>
               <History className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
         {order.status === 'cancelled' && (cancelReasonLabel != null || order.cancelComment != null) && (
           <div className="border-t bg-red-50/60 px-4 py-2 text-xs text-red-800">
-            {cancelReasonLabel && <p><span className="font-medium">Չեղարկման պատճառը:</span> {String(cancelReasonLabel)}</p>}
+            {cancelReasonLabel && <p><span className="font-medium">{t('ao.cancel.reasonLabel')}</span> {t(cancelReasonLabel)}</p>}
             {order.cancelComment ? <p className="mt-1 text-red-700/80">{String(order.cancelComment)}</p> : null}
           </div>
         )}
         {historyOpen && (
           <div className="border-t bg-muted/20 px-4 py-3">
-            <p className="mb-2 text-xs font-medium text-muted-foreground flex items-center gap-1.5"><History className="h-3 w-3" /> Գործողությունների պատմություն</p>
-            {events === undefined && <p className="text-xs text-muted-foreground">Բեռնվում է...</p>}
-            {events?.length === 0 && <p className="text-xs text-muted-foreground">Գրառումներ չկան</p>}
+            <p className="mb-2 text-xs font-medium text-muted-foreground flex items-center gap-1.5"><History className="h-3 w-3" /> {t('ao.history.title')}</p>
+            {events === undefined && <p className="text-xs text-muted-foreground">{t('ao.loading')}</p>}
+            {events?.length === 0 && <p className="text-xs text-muted-foreground">{t('ao.history.empty')}</p>}
             {events && events.length > 0 && (
               <div className="space-y-1.5">
                 {events.map((e) => {
-                  const st = (v: string | null | undefined) => ({ pending: "Սպասում", confirmed: "Հաստատվել է", processing: "Կատարվում է", shipped: "Ուղարկվել է", delivered: "Առաքված", cancelled: "Չեղյալ", awaiting: "Սպասում", paid: "Վճարվել է", refunded: "Վերադառնվել է" })[v as string] || v || "";
+                  const st = (v: string | null | undefined) => ({ pending: t('ao.status.pending'), confirmed: t('ao.status.confirmed'), processing: t('ao.status.processing'), shipped: t('ao.status.shipped'), delivered: t('ao.status.delivered'), cancelled: t('ao.status.cancelled'), awaiting: t('ao.status.pending'), paid: t('ao.pay.paid'), refunded: t('ao.pay.refundedAlt') })[v as string] || v || "";
                   const label: string =
-                    e.type === 'created' ? 'Պատվերը ստեղծվեց' :
-                    e.type === 'status_changed' ? `Կարգավիճակ: ${st(e.prevValue)} → ${st(e.nextValue)}` :
-                    e.type === 'cancelled' ? `Չեղարկվեց: ${st(e.prevValue)} → Չեղյալ` :
-                    e.type === 'reopened' ? `Վերաբացվեց: Չեղյալ → ${st(e.nextValue)}` :
-                    e.type === 'payment_changed' ? `Վճարում: ${st(e.prevValue)} → ${st(e.nextValue)}` :
+                    e.type === 'created' ? t('ao.evt.created') :
+                    e.type === 'status_changed' ? `${t('ao.evt.status')}: ${st(e.prevValue)} → ${st(e.nextValue)}` :
+                    e.type === 'cancelled' ? `${t('ao.evt.cancelled')}: ${st(e.prevValue)} → ${t('ao.status.cancelled')}` :
+                    e.type === 'reopened' ? `${t('ao.evt.reopened')}: ${t('ao.status.cancelled')} → ${st(e.nextValue)}` :
+                    e.type === 'payment_changed' ? `${t('ao.evt.payment')}: ${st(e.prevValue)} → ${st(e.nextValue)}` :
                     e.comment ?? '';
                   return (
                     <div key={e._id} className="flex flex-wrap items-start gap-x-2 gap-y-0.5 text-xs">
-                      <span className="shrink-0 text-muted-foreground/70 whitespace-nowrap">{formatDateHy(e.createdAt)}</span>
+                      <span className="shrink-0 text-muted-foreground/70 whitespace-nowrap">{formatDateLocalized(e.createdAt, t)}</span>
                       {e.adminName && <span className="shrink-0 font-medium">{e.adminName}</span>}
                       <span className="text-foreground/80">{label}</span>
                       {e.comment && e.type !== 'comment' && <span className="text-muted-foreground/60 italic">— {String(e.comment ?? "")}</span>}
@@ -319,27 +321,27 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="overflow-visible">
           <DialogHeader>
-            <DialogTitle>Չեղարկել պատվերը</DialogTitle>
-            <DialogDescription>Ընտրեք պատճառը, որպեսզի հետագայում տեսանելի լինի՝ ինչու է վաճառքը կորել։</DialogDescription>
+            <DialogTitle>{t('ao.dialog.cancelTitle')}</DialogTitle>
+            <DialogDescription>{t('ao.dialog.cancelDesc')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Պատճառ</Label>
+              <Label>{t('ao.label.reason')}</Label>
               <Select value={cancelReason} onValueChange={(v) => setCancelReason(v as CancelReasonKey)}>
-                <SelectTrigger className="h-9 w-full text-sm"><span>{cancelReason ? CANCEL_REASON_LABELS[cancelReason] : 'Ընտրեք պատճառը'}</span></SelectTrigger>
+                <SelectTrigger className="h-9 w-full text-sm"><span>{cancelReason ? t(CANCEL_REASON_LABELS[cancelReason]) : t('ao.cancel.selectReason')}</span></SelectTrigger>
                 <SelectContent>
-                  {CANCEL_REASONS.map((reason) => <SelectItem key={reason.key} value={reason.key}>{reason.label}</SelectItem>)}
+                  {CANCEL_REASONS.map((reason) => <SelectItem key={reason.key} value={reason.key}>{t(reason.label)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor={`cancel-comment-${String(order._id)}`}>Մեկնաբանություն</Label>
-              <Textarea id={`cancel-comment-${String(order._id)}`} value={cancelComment} onChange={(e) => setCancelComment(e.target.value)} placeholder="Լրացուցիչ մանրամասներ" />
+              <Label htmlFor={`cancel-comment-${String(order._id)}`}>{t('ao.label.comment')}</Label>
+              <Textarea id={`cancel-comment-${String(order._id)}`} value={cancelComment} onChange={(e) => setCancelComment(e.target.value)} placeholder={t('ao.placeholder.comment')} />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setCancelOpen(false)} disabled={savingCancel}>Փակել</Button>
-            <Button type="button" variant="destructive" onClick={submitCancellation} disabled={!cancelReason || savingCancel}>{savingCancel ? 'Չեղարկվում է...' : 'Չեղարկել պատվերը'}</Button>
+            <Button type="button" variant="outline" onClick={() => setCancelOpen(false)} disabled={savingCancel}>{t('ao.btn.close')}</Button>
+            <Button type="button" variant="destructive" onClick={submitCancellation} disabled={!cancelReason || savingCancel}>{savingCancel ? t('ao.btn.cancelling') : t('ao.dialog.cancelTitle')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -349,10 +351,14 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
 
 export default function AdminDashboardPage() {
   const { sessionToken } = useAuth();
+  const { t } = useAdminT();
   const orders = useQuery(api.orders.listAdmin, sessionToken ? { sessionToken } : 'skip');
   const allProducts = useQuery(api.products.listCostMap);
   const settings = useSettings();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('q') ?? '';
+  });
   const [statusFilter, setStatusFilter] = useState('all');
   const [period, setPeriod] = useState<PeriodKey>('30d');
   const [customFrom, setCustomFrom] = useState(() => formatDateInput(new Date()));
@@ -396,24 +402,24 @@ export default function AdminDashboardPage() {
   });
 
   const statCards = [
-    { label: 'Ընդհանուր', value: periodOrders.length, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Վճարված', value: paidOrders, description: formatPrice(totalRevenue), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: 'Վճարման սպասող', value: awaitingPaymentOrders, description: formatPrice(awaitingPaymentRevenue), icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-    { label: 'Չեղարկված', value: cancelledOrders.length, description: formatPrice(cancelledRevenue), icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
-    { label: 'Եկամուտ', value: formatPrice(totalRevenue), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), icon: DollarSign, color: 'text-cyan-600', bg: 'bg-cyan-100' },
+    { label: 'ao.stat.total', value: periodOrders.length, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'ao.paid', value: paidOrders, description: formatPrice(totalRevenue), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'ao.awaitingPayment', value: awaitingPaymentOrders, description: formatPrice(awaitingPaymentRevenue), icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+    { label: 'ao.cancelled', value: cancelledOrders.length, description: formatPrice(cancelledRevenue), icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
+    { label: 'ao.revenue', value: formatPrice(totalRevenue), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'ao.avgOrder', value: formatPrice(averageOrderValue), icon: DollarSign, color: 'text-cyan-600', bg: 'bg-cyan-100' },
   ];
 
   const financeRows = [
-    { label: 'Վճարված', value: formatPrice(totalRevenue), note: `${paidOrders} պատվեր`, color: 'text-green-600' },
-    { label: 'Վճարման սպասող', value: formatPrice(awaitingPaymentRevenue), note: `${awaitingPaymentOrders} պատվեր`, color: 'text-yellow-600' },
-    { label: 'Չեղարկված', value: formatPrice(cancelledRevenue), note: `${cancelledOrders.length} պատվեր`, color: 'text-red-600' },
-    { label: 'Վերադարձներ', value: formatPrice(refundedRevenue), note: `${refundedOrders.length} պատվեր`, color: 'text-orange-600' },
-    { label: 'Մաքուր եկամուտ', value: formatPrice(netRevenue), note: 'վճարված - վերադարձներ', color: 'text-primary' },
-    { label: 'Միջին հաշիվ', value: formatPrice(averageOrderValue), note: 'վճարված պատվերներով', color: 'text-cyan-600' },
-    { label: 'Ինքնարժեք', value: formatPrice(totalCost), note: 'պատվերների ինքնարժեք', color: 'text-amber-600' },
-    { label: 'Ընդհանուր շահույթ', value: formatPrice(grossProfit), note: 'վճարված - վերադարձներ', color: grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600' },
-    { label: 'Մարժան', value: `${margin.toFixed(1)}%`, note: 'մարժան / վճարված', color: margin >= 20 ? 'text-emerald-600' : 'text-orange-600' },
+    { label: 'ao.paid', value: formatPrice(totalRevenue), note: `${paidOrders} ${t('ao.orderCountWord')}`, color: 'text-green-600' },
+    { label: 'ao.awaitingPayment', value: formatPrice(awaitingPaymentRevenue), note: `${awaitingPaymentOrders} ${t('ao.orderCountWord')}`, color: 'text-yellow-600' },
+    { label: 'ao.cancelled', value: formatPrice(cancelledRevenue), note: `${cancelledOrders.length} ${t('ao.orderCountWord')}`, color: 'text-red-600' },
+    { label: 'ao.refunds', value: formatPrice(refundedRevenue), note: `${refundedOrders.length} ${t('ao.orderCountWord')}`, color: 'text-orange-600' },
+    { label: 'ao.netRevenue', value: formatPrice(netRevenue), note: t('ao.note.paidMinusRefunds'), color: 'text-primary' },
+    { label: 'ao.avgOrder', value: formatPrice(averageOrderValue), note: t('ao.note.byPaidOrders'), color: 'text-cyan-600' },
+    { label: 'ao.cost', value: formatPrice(totalCost), note: t('ao.note.ordersCost'), color: 'text-amber-600' },
+    { label: 'ao.grossProfit', value: formatPrice(grossProfit), note: t('ao.note.paidMinusRefunds'), color: grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600' },
+    { label: 'ao.margin', value: `${margin.toFixed(1)}%`, note: t('ao.note.marginOverPaid'), color: margin >= 20 ? 'text-emerald-600' : 'text-orange-600' },
 
   ];
   const cancelReasonRows = [
@@ -428,7 +434,7 @@ export default function AdminDashboardPage() {
     }),
     {
       key: 'unknown',
-      label: 'Պատճառը նշված չէ',
+      label: 'ao.reason.unknown',
       count: cancelledOrders.filter((o) => !o.cancelReason).length,
       amount: cancelledOrders.filter((o) => !o.cancelReason).reduce((s, o) => s + o.total, 0),
     },
@@ -437,7 +443,7 @@ export default function AdminDashboardPage() {
   return (
     <div>
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Պատվերների վահանակ</h1>
+        <h1 className="text-2xl font-bold">{t('ao.title')}</h1>
         <Link href={`/api/export/orders?from=${periodRange.from}&to=${periodRange.to}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
           <FileSpreadsheet className="h-4 w-4" /> CSV
         </Link>
@@ -447,20 +453,20 @@ export default function AdminDashboardPage() {
       <div className="mb-4 rounded-xl border bg-card p-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-medium">Ֆինանսական ժամանակահատված</p>
-            <p className="text-xs text-muted-foreground">Քարտերը հաշվարկվում են ըստ ընտրված պատվերի ամսաթվի</p>
+            <p className="text-sm font-medium">{t('ao.finance.period')}</p>
+            <p className="text-xs text-muted-foreground">{t('ao.finance.periodHint')}</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Select value={period} onValueChange={(v) => { if (v) setPeriod(v as PeriodKey); }}>
-              <SelectTrigger className="h-9 w-full sm:w-44 text-xs"><span>{PERIOD_LABELS[period]}</span></SelectTrigger>
+              <SelectTrigger className="h-9 w-full sm:w-44 text-xs"><span>{t(PERIOD_LABELS[period])}</span></SelectTrigger>
               <SelectContent>
-                {Object.entries(PERIOD_LABELS).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}
+                {Object.entries(PERIOD_LABELS).map(([key, label]) => <SelectItem key={key} value={key}>{t(label)}</SelectItem>)}
               </SelectContent>
             </Select>
             {period === 'custom' && (
               <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="w-44"><DatePicker value={customFrom} onChange={setCustomFrom} placeholder="Սկիզբ" /></div>
-                <div className="w-44"><DatePicker value={customTo} onChange={setCustomTo} placeholder="Ավարտ" /></div>
+                <div className="w-44"><DatePicker value={customFrom} onChange={setCustomFrom} placeholder={t('ao.placeholder.from')} /></div>
+                <div className="w-44"><DatePicker value={customTo} onChange={setCustomTo} placeholder={t('ao.placeholder.to')} /></div>
               </div>
             )}
           </div>
@@ -478,7 +484,7 @@ export default function AdminDashboardPage() {
                   <Icon className={`h-5 w-5 ${c.color}`} />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">{c.label}</p>
+                  <p className="text-xs text-muted-foreground">{t(c.label)}</p>
                   <p className="text-xl font-bold">{c.value}</p>
                   {'description' in c && <p className="text-xs text-muted-foreground">{c.description}</p>}
                 </div>
@@ -494,15 +500,15 @@ export default function AdminDashboardPage() {
           <CardContent className="p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium">Ֆինանսական բաժանում</p>
-                <p className="text-xs text-muted-foreground">Ըստ ընտրված ժամանակահատվածի</p>
+                <p className="text-sm font-medium">{t('ao.finance.breakdown')}</p>
+                <p className="text-xs text-muted-foreground">{t('ao.finance.byPeriod')}</p>
               </div>
-              <Badge variant="outline" className="shrink-0 text-[10px]">{PERIOD_LABELS[period]}</Badge>
+              <Badge variant="outline" className="shrink-0 text-[10px]">{t(PERIOD_LABELS[period])}</Badge>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {financeRows.map((row) => (
                 <div key={row.label} className="rounded-lg border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="text-xs text-muted-foreground">{t(row.label)}</p>
                   <p className={`text-lg font-bold ${row.color}`}>{row.value}</p>
                   <p className="text-[11px] text-muted-foreground">{row.note}</p>
                 </div>
@@ -514,13 +520,13 @@ export default function AdminDashboardPage() {
         <Card>
           <CardContent className="p-4">
             <div className="mb-3">
-              <p className="text-sm font-medium">Վճարման եղանակներ</p>
-              <p className="text-xs text-muted-foreground">Միայն վճարված և չեղարկված չհանդիսացող պատվերներ</p>
+              <p className="text-sm font-medium">{t('ao.payMethods.title')}</p>
+              <p className="text-xs text-muted-foreground">{t('ao.payMethods.hint')}</p>
             </div>
             <div className="space-y-2">
               {paymentMethodTotals.map((method) => (
                 <div key={method.key} className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2">
-                  <span className="text-sm text-muted-foreground">{method.label}</span>
+                  <span className="text-sm text-muted-foreground">{t(method.label)}</span>
                   <span className="text-sm font-semibold">{formatPrice(method.amount)}</span>
                 </div>
               ))}
@@ -532,21 +538,21 @@ export default function AdminDashboardPage() {
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="mb-3">
-            <p className="text-sm font-medium">Չեղարկումների պատճառներ</p>
-            <p className="text-xs text-muted-foreground">Վերլուծություն ըստ ընտրված ժամանակահատվածի</p>
+            <p className="text-sm font-medium">{t('ao.cancelReasons.title')}</p>
+            <p className="text-xs text-muted-foreground">{t('ao.cancelReasons.hint')}</p>
           </div>
           {cancelReasonRows.length > 0 ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {cancelReasonRows.map((row) => (
                 <div key={row.key} className="rounded-lg border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="text-xs text-muted-foreground">{t(row.label)}</p>
                   <p className="text-lg font-bold text-red-600">{row.count}</p>
                   <p className="text-[11px] text-muted-foreground">{formatPrice(row.amount)}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">Այս ժամանակահատվածում չեղարկումներ չկան</p>
+            <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">{t('ao.cancelReasons.empty')}</p>
           )}
         </CardContent>
       </Card>
@@ -555,13 +561,13 @@ export default function AdminDashboardPage() {
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Որոնել պատվեր..." className="h-9 pl-9 text-sm" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('ao.search.placeholder')} className="h-9 pl-9 text-sm" />
         </div>
         <Select value={statusFilter} onValueChange={(v) => { if (v !== null) setStatusFilter(v); }}>
-          <SelectTrigger className="h-9 w-full sm:w-32 text-xs"><span>{statusFilter === 'all' ? 'Բոլորը' : STATUS_MAP[statusFilter]?.label || statusFilter}</span></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-32 text-xs"><span>{statusFilter === 'all' ? t('ao.all') : t(STATUS_MAP[statusFilter]?.label ?? statusFilter)}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Բոլորը</SelectItem>
-            {Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+            <SelectItem value="all">{t('ao.all')}</SelectItem>
+            {Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{t(v.label)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -574,7 +580,7 @@ export default function AdminDashboardPage() {
       {filtered?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <ShoppingBag className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">Պատվերներ չեն գտնվել</p>
+          <p className="text-muted-foreground">{t('ao.empty')}</p>
         </div>
       )}
     </div>

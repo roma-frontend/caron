@@ -13,24 +13,26 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { CATEGORY_ICONS, CATEGORY_COLORS } from '@/components/cards/CategoryCard';
 import { Switch } from '@/components/ui/switch';
+import { useAdminT } from '@/lib/i18n/admin';
 
 function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categories'>; name: string; slug: string; description?: string; isActive: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
+  const { t } = useAdminT();
   const remove = useMutation(api.categories.remove);
   const updateCat = useMutation(api.categories.update);
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!confirm(`Ջնջել "${cat.name}"?`)) return;
+    if (!confirm(`${t('acat.delete')} "${cat.name}"?`)) return;
     await remove({ sessionToken, id: cat._id });
-    toast.success('Կատեգորիան ջնջվել է');
+    toast.success(t('acat.catDeleted'));
   };
 
   const toggleActive = async () => {
     try {
       await updateCat({ sessionToken, id: cat._id, isActive: !cat.isActive });
-      toast.success(cat.isActive ? 'Կատեգորիան դեակտիվացված է' : 'Կատեգորիան ակտիվացված է');
-    } catch { toast.error('Սխալ'); }
+      toast.success(cat.isActive ? t('acat.catDeactivated') : t('acat.catActivated'));
+    } catch { toast.error(t('acat.error')); }
   };
 
   const Icon = CATEGORY_ICONS[cat.slug] ?? Package;
@@ -48,7 +50,7 @@ function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categ
             <Switch checked={cat.isActive} onCheckedChange={toggleActive} size="sm" />
           </div>
           <p className="truncate font-mono text-xs text-muted-foreground">/{cat.slug}</p>
-          <Badge variant={cat.isActive ? 'default' : 'secondary'} className="mt-1.5 text-[10px]">{cat.isActive ? 'Ակտիվ' : 'Ակտիվ չէ'}</Badge>
+          <Badge variant={cat.isActive ? 'default' : 'secondary'} className="mt-1.5 text-[10px]">{cat.isActive ? t('acat.active') : t('acat.inactive')}</Badge>
         </div>
         <div className="flex shrink-0 flex-col gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <Button size="icon-sm" variant="secondary" className="h-7 w-7 shadow-md" onClick={() => router.push(`/admin/categories/${cat._id}/edit`)}><Edit className="h-3 w-3" /></Button>
@@ -61,17 +63,18 @@ function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categ
 
 export default function AdminCategoriesPage() {
   const { sessionToken } = useAuth();
+  const { t } = useAdminT();
   const categories = useQuery(api.categories.listAll, {});
 
   return (
     <div>
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold">Կատեգորիաներ</h1>
-          <p className="text-muted-foreground">{categories?.length ?? 0} կատեգորիաներ</p>
+          <h1 className="text-3xl font-bold">{t('acat.categories')}</h1>
+          <p className="text-muted-foreground">{categories?.length ?? 0} {t('acat.categoriesLower')}</p>
         </div>
         <Link href="/admin/categories/add">
-          <Button className="gap-2"><Plus className="h-4 w-4" /> Ավելացնել կատեգորիա</Button>
+          <Button className="gap-2"><Plus className="h-4 w-4" /> {t('acat.addCategory')}</Button>
         </Link>
       </div>
 
@@ -82,8 +85,8 @@ export default function AdminCategoriesPage() {
       {categories?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <FolderTree className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">Կատեգորիաներ չեն գտնվել</p>
-          <Link href="/admin/categories/add"><Button>Ավելացնել կատեգորիա</Button></Link>
+          <p className="text-muted-foreground">{t('acat.noCategories')}</p>
+          <Link href="/admin/categories/add"><Button>{t('acat.addCategory')}</Button></Link>
         </div>
       )}
     </div>

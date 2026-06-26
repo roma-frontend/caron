@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CAR_DATA, CAR_BRANDS } from '@/lib/cars';
 import { X, Car, Plus } from 'lucide-react';
+import { useT } from '@/lib/i18n/admin';
 
 export interface VehicleCompatEntry {
   brand: string;
@@ -19,6 +20,7 @@ interface VehicleCompatSelectorProps {
 }
 
 export function VehicleCompatSelector({ value, onChange }: VehicleCompatSelectorProps) {
+  const { t } = useT();
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [yearFrom, setYearFrom] = useState('');
@@ -42,7 +44,7 @@ export function VehicleCompatSelector({ value, onChange }: VehicleCompatSelector
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">Նշեք, թե ինչ ավտոմեքենաների հետ է համապատասխանում այս ապրանքը</p>
+      <p className="text-sm text-muted-foreground">{t('acmp.vehicle.intro')}</p>
 
       {/* Added entries */}
       {value.length > 0 && (
@@ -65,25 +67,25 @@ export function VehicleCompatSelector({ value, onChange }: VehicleCompatSelector
       <div className="grid grid-cols-4 gap-2">
         <div>
           <Select value={brand} onValueChange={(v) => { setBrand(v != null ? String(v) : ''); setModel(''); setYearFrom(''); setYearTo(''); }}>
-            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Մակնիշ" /></SelectTrigger>
+            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder={t('acmp.vehicle.brand')} /></SelectTrigger>
             <SelectContent>{CAR_BRANDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
           <Select value={model} onValueChange={(v) => { setModel(v != null ? String(v) : ''); setYearFrom(''); setYearTo(''); }} disabled={!brand}>
-            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Մոդել" /></SelectTrigger>
+            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder={t('acmp.vehicle.model')} /></SelectTrigger>
             <SelectContent>{models.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
           <Select value={yearFrom} onValueChange={(v) => { const y = v != null ? String(v) : ''; setYearFrom(y); if (!yearTo || Number(y) > Number(yearTo)) setYearTo(y); }} disabled={!model}>
-            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Սկսած" /></SelectTrigger>
+            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder={t('acmp.vehicle.yearFrom')} /></SelectTrigger>
             <SelectContent>{years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
           <Select value={yearTo} onValueChange={(v) => setYearTo(v != null ? String(v) : '')} disabled={!model}>
-            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Մինչև" /></SelectTrigger>
+            <SelectTrigger className="h-10 text-xs"><SelectValue placeholder={t('acmp.vehicle.yearTo')} /></SelectTrigger>
             <SelectContent>{years.filter((y) => !yearFrom || Number(y) >= Number(yearFrom)).map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -97,7 +99,7 @@ export function VehicleCompatSelector({ value, onChange }: VehicleCompatSelector
         disabled={!brand || !model || !yearFrom || !yearTo || Number(yearFrom) > Number(yearTo)}
         className="gap-1.5 text-xs"
       >
-        <Plus className="h-3.5 w-3.5" /> Ավելացնել
+        <Plus className="h-3.5 w-3.5" /> {t('acmp.vehicle.add')}
       </Button>
     </div>
   );

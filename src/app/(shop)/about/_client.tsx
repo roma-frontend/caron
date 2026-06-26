@@ -8,32 +8,35 @@ import { Button } from '@/components/ui/button';
 import { Shield, Truck, Award, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { useReveal, revealStyle } from '@/lib/motion';
+import { useT } from '@/lib/i18n/admin';
 
 const STATS = [
-  { value: '2000+', label: 'Ապրանքներ' },
-  { value: '5+', label: 'Տարածքներ' },
-  { value: '10,000+', label: 'Հաճախորդներ' },
-  { value: '24/7', label: 'Աջակցություն' },
+  { value: '2000+', label: 'pg.common.products' },
+  { value: '5+', label: 'pg.about.stat.regions' },
+  { value: '10,000+', label: 'pg.about.customers' },
+  { value: '24/7', label: 'pg.about.stat.support' },
 ];
 
 const VALUES = [
-  { icon: Shield, title: 'Անվավեր ապրանքներ', desc: 'Մենք պատասխանատու ենք անվավեր ապրանքների համար' },
-  { icon: Award, title: 'Առաջարկներ', desc: 'Մենք առաջարկում ենք ամենալավ գները և ծառայությունը' },
-  { icon: Truck, title: 'Առաքում', desc: 'Մենք առաքում ենք ապրանքները ամեն օր' },
-  { icon: Heart, title: 'Հաճախորդներ', desc: 'Մենք հաճախորդների հետ կապվում ենք և օգտագործում ենք դրանց հետ' },
+  { icon: Shield, title: 'pg.about.value.genuine.title', desc: 'pg.about.value.genuine.desc' },
+  { icon: Award, title: 'pg.about.value.offers.title', desc: 'pg.about.value.offers.desc' },
+  { icon: Truck, title: 'pg.about.value.delivery.title', desc: 'pg.about.value.delivery.desc' },
+  { icon: Heart, title: 'pg.about.customers', desc: 'pg.about.value.customers.desc' },
 ];
 
 function StatItem({ stat, index }: { stat: typeof STATS[number]; index: number }) {
+  const { t } = useT();
   const { ref, visible } = useReveal();
   return (
     <div ref={ref} style={revealStyle(visible, index * 0.1)} className="text-center">
       <p className="text-3xl font-black text-primary md:text-4xl">{stat.value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{t(stat.label)}</p>
     </div>
   );
 }
 
 function ValueCard({ value, index }: { value: typeof VALUES[number]; index: number }) {
+  const { t } = useT();
   const { ref, visible } = useReveal();
   const Icon = value.icon;
   return (
@@ -44,8 +47,8 @@ function ValueCard({ value, index }: { value: typeof VALUES[number]; index: numb
             <Icon className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h3 className="font-bold">{value.title}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{value.desc}</p>
+            <h3 className="font-bold">{t(value.title)}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{t(value.desc)}</p>
           </div>
         </CardContent>
       </Card>
@@ -54,14 +57,15 @@ function ValueCard({ value, index }: { value: typeof VALUES[number]; index: numb
 }
 
 export default function AboutPage() {
+  const { t } = useT();
   return (
     <CmsPageWrapper slug="about">
     <div>
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5" style={{ paddingBlock: 'var(--space-20)' }}>
         <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)]">
-          <Badge variant="default" className="mb-4">Մեր մասին</Badge>
+          <Badge variant="default" className="mb-4">{t('pg.about.badge')}</Badge>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-            Բարի գալուստ մեր կայք։ Մենք ուրախ ենք տրամադրել բարձրորակ ավտոպահեստամասեր և գերազանց ծառայություն մեր հաճախորդներին Հայաստանում։ Մեր առաքելությունն է ապահովել, որ ձեր մեքենան միշտ պատրաստ լինի ճանապարհին լինելու համար՝ առաջարկելով լայն տեսականի ապրանքներ և անհատականացված աջակցություն։
+            {t('pg.about.intro')}
           </p>
         </div>
       </section>
@@ -73,7 +77,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-section)]">
-        <h2 className="mb-10 text-center text-2xl font-bold">Մեր արժեքներ</h2>
+        <h2 className="mb-10 text-center text-2xl font-bold">{t('pg.about.valuesTitle')}</h2>
         <div className="grid gap-6 md:grid-cols-2 px-4 sm:px-0">
           {VALUES.map((v, i) => <ValueCard key={v.title} value={v} index={i} />)}
         </div>
@@ -81,11 +85,11 @@ export default function AboutPage() {
 
       <section className="border-y bg-muted/40" style={{ paddingBlock: 'var(--space-16)' }}>
         <div className="mx-auto text-center max-w-[var(--container-max)] px-[var(--space-container)]">
-          <h2 className="text-3xl font-bold">Ունե ՞ք հարցեր</h2>
-          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">Հարցերի և առաջարկների դեպքում կարող եք կապ հաստատել մեզ հետ</p>
+          <h2 className="text-3xl font-bold">{t('pg.about.questionsTitle')}</h2>
+          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">{t('pg.about.questionsDesc')}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link href="/products"><Button size="lg" className="gap-2">Ապրանքներ</Button></Link>
-            <Link href="/contact"><Button size="lg" variant="outline">Կապ հաստատել</Button></Link>
+            <Link href="/products"><Button size="lg" className="gap-2">{t('pg.common.products')}</Button></Link>
+            <Link href="/contact"><Button size="lg" variant="outline">{t('pg.about.ctaContact')}</Button></Link>
           </div>
         </div>
       </section>

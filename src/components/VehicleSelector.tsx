@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Car, Search, Check, X, Plus } from 'lucide-react';
 import { CAR_DATA, CAR_BRANDS } from '@/lib/cars';
 import { useVehicleStore, vehicleKey, type Vehicle } from '@/store/vehicle';
+import { useT } from '@/lib/i18n/admin';
 
 export function VehicleSelector({ className }: { className?: string }) {
+  const { t } = useT();
   const router = useRouter();
   const setVehicle = useVehicleStore((s) => s.setVehicle);
   const addVehicle = useVehicleStore((s) => s.addVehicle);
@@ -50,30 +52,30 @@ export function VehicleSelector({ className }: { className?: string }) {
       style={{ borderColor: 'var(--landing-card-border)', boxShadow: 'var(--shadow-lg)' }}
     >
       <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <Car className="h-4 w-4 text-primary" /> Ընտրեք ձեր ավտոմեքենան
+        <Car className="h-4 w-4 text-primary" /> {t('pg.vehsel.title')}
       </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
         <Select value={brand} onValueChange={(v) => { setBrand(v ?? ''); setModel(''); setYear(''); }}>
-          <SelectTrigger className="h-11" aria-label="Մակնիշ"><SelectValue placeholder="Մակնիշ" /></SelectTrigger>
+          <SelectTrigger className="h-11" aria-label={t('pg.common.brand')}><SelectValue placeholder={t('pg.common.brand')} /></SelectTrigger>
           <SelectContent>{CAR_BRANDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={model} onValueChange={(v) => { setModel(v ?? ''); setYear(''); }} disabled={!brand}>
-          <SelectTrigger className="h-11" aria-label="Մոդել"><SelectValue placeholder="Մոդել" /></SelectTrigger>
+          <SelectTrigger className="h-11" aria-label={t('pg.common.model')}><SelectValue placeholder={t('pg.common.model')} /></SelectTrigger>
           <SelectContent>{models.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={year} onValueChange={(v) => setYear(v ?? '')} disabled={!model}>
-          <SelectTrigger className="h-11" aria-label="Տարի"><SelectValue placeholder="Տարի" /></SelectTrigger>
+          <SelectTrigger className="h-11" aria-label={t('pg.common.year')}><SelectValue placeholder={t('pg.common.year')} /></SelectTrigger>
           <SelectContent>{years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
         </Select>
         <Button onClick={go} disabled={!brand} size="lg" className="h-11 gap-2">
-          <Search className="h-4 w-4" /> Գտնել
+          <Search className="h-4 w-4" /> {t('pg.vehsel.find')}
         </Button>
       </div>
 
       {/* Save current selection to garage */}
       {brand && (
         <button onClick={saveToGarage} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80">
-          <Plus className="h-3.5 w-3.5" /> Ավելացնել իմ ավտոտնակ
+          <Plus className="h-3.5 w-3.5" /> {t('pg.vehsel.addToGarage')}
         </button>
       )}
 
@@ -81,7 +83,7 @@ export function VehicleSelector({ className }: { className?: string }) {
       {garage.length > 0 && (
         <div className="mt-4 border-t pt-3">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-            <Car className="h-3.5 w-3.5" /> Իմ ավտոտնակ
+            <Car className="h-3.5 w-3.5" /> {t('pg.vehsel.myGarage')}
           </p>
           <div className="flex flex-wrap gap-2">
             {garage.map((v) => {
@@ -93,7 +95,7 @@ export function VehicleSelector({ className }: { className?: string }) {
                     {isActive && <Check className="h-3 w-3" />}
                     <span className="font-medium">{label(v)}</span>
                   </button>
-                  <button onClick={() => removeVehicle(v)} aria-label="Հեռացնել" className="text-muted-foreground/60 transition-colors hover:text-destructive">
+                  <button onClick={() => removeVehicle(v)} aria-label={t('pg.common.remove')} className="text-muted-foreground/60 transition-colors hover:text-destructive">
                     <X className="h-3 w-3" />
                   </button>
                 </div>

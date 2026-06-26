@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import { useT } from '@/lib/i18n/admin';
 
 export type TelegramAuthUser = {
   id: number;
@@ -33,6 +34,7 @@ const SCRIPT_ID = 'telegram-widget-js';
  * domain must still be set in BotFather. Renders nothing until the bot id loads.
  */
 export function TelegramLoginButton({ onAuth }: { onAuth: (user: TelegramAuthUser) => void }) {
+  const { t } = useT();
   const cbRef = useRef(onAuth);
   useEffect(() => {
     cbRef.current = onAuth;
@@ -75,7 +77,7 @@ export function TelegramLoginButton({ onAuth }: { onAuth: (user: TelegramAuthUse
     <>
       <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
-        կամ
+        {t('auth.or')}
         <span className="h-px flex-1 bg-border" />
       </div>
       <button
@@ -83,12 +85,12 @@ export function TelegramLoginButton({ onAuth }: { onAuth: (user: TelegramAuthUse
         onClick={handleClick}
         disabled={!scriptReady}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#54a9eb] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#4096d6] hover:shadow-md disabled:opacity-60"
-        aria-label="Մուտք Telegram-ով"
+        aria-label={t('auth.loginWithTelegram')}
       >
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
           <path d="M21.94 4.6 18.7 19.86c-.24 1.08-.88 1.35-1.79.84l-4.94-3.64-2.38 2.29c-.26.26-.49.49-1 .49l.36-5.08 9.24-8.35c.4-.36-.09-.56-.62-.2L6.34 13.07l-4.92-1.54c-1.07-.34-1.09-1.07.22-1.59l19.24-7.42c.89-.33 1.67.2 1.38 1.68z" />
         </svg>
-        Մուտք Telegram-ով
+        {t('auth.loginWithTelegram')}
       </button>
     </>
   );

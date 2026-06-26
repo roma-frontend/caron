@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Truck, Shield, Clock, Star } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { HOME, FEATURES } from "@/lib/constants";
+import { FEATURES } from "@/lib/constants";
 import { ProductCard } from "@/components/cards/ProductCard";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { HomeStories } from "@/components/home/HomeStories";
@@ -25,6 +25,8 @@ import { useSettings } from "@/hooks/useSettings";
 import { useAuthStore } from "@/store/auth";
 import { toR2MediaProxyUrl } from "@/lib/r2Media";
 import Image from "next/image";
+import { useT } from "@/lib/i18n/admin";
+import { useStoreName } from "@/hooks/useStoreName";
 
 const BRAND_COLORS: Record<string, string> = {
   Mobil: "#0072C6",
@@ -199,6 +201,7 @@ function FeatureItem({
   index: number;
 }) {
   const { ref, visible } = useReveal();
+  const { t } = useT();
   const Icon = FEATURE_ICONS[feature.key as keyof typeof FEATURE_ICONS];
 
   return (
@@ -225,12 +228,12 @@ function FeatureItem({
           />
         </div>
         <div>
-          <h3 className="font-semibold">{feature.title}</h3>
+          <h3 className="font-semibold">{t(`pg.home.feature.${feature.key}.title`)}</h3>
           <p
             className="text-muted-foreground"
             style={{ fontSize: "var(--text-sm)" }}
           >
-            {feature.desc}
+            {t(`pg.home.feature.${feature.key}.desc`)}
           </p>
         </div>
       </div>
@@ -302,6 +305,8 @@ function PingPongVideo({
 }
 
 export default function HomePage() {
+  const { t } = useT();
+  const storeName = useStoreName();
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
   const brands = useQuery(api.products.getBrands, {});
@@ -399,7 +404,7 @@ export default function HomePage() {
               <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-white/20 px-6 py-4 sm:px-8">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
                   <span className="h-1.5 w-1.5 rounded-full bg-white" />{" "}
-                  {HOME.heroBadge}
+                  {t('pg.home.heroBadge')}
                 </div>
               </div>
 
@@ -414,7 +419,7 @@ export default function HomePage() {
                       textShadow: "0 2px 20px rgba(0,0,0,0.5)",
                     }}
                   >
-                    {HOME.heroTitle}
+                    {t('pg.home.heroTitle')}
                   </h1>
 
                   <p
@@ -426,7 +431,7 @@ export default function HomePage() {
                       lineHeight: "var(--line-height-relaxed)",
                     }}
                   >
-                    {HOME.heroDesc}
+                    {storeName}{t('pg.home.brandDescSuffix')}
                   </p>
 
                   <div
@@ -435,7 +440,7 @@ export default function HomePage() {
                   >
                     <Link href="/products">
                       <Button size="lg" style={{ gap: "var(--space-2)" }}>
-                        {HOME.ctaCatalog}{" "}
+                        {t('pg.home.ctaCatalog')}{" "}
                         <ArrowRight style={{ height: "1rem", width: "1rem" }} />
                       </Button>
                     </Link>
@@ -445,7 +450,7 @@ export default function HomePage() {
                         variant="outline"
                         className="border-white/50 bg-white/10 text-white hover:bg-white/20 hover:border-white/70 hover:text-white"
                       >
-                        {HOME.ctaCategories}
+                        {t('pg.home.ctaCategories')}
                       </Button>
                     </Link>
                   </div>
@@ -456,7 +461,7 @@ export default function HomePage() {
                     className="hero-fade-4 hidden lg:block w-full rounded-2xl border border-border/40 bg-card/70 p-5 shadow-xl backdrop-blur-md lg:w-[22rem]"
                   >
                     <p className="mb-3 text-sm font-semibold text-white/60 uppercase tracking-wider">
-                      Ընտրել մեքենա
+                      {t('pg.home.selectCar')}
                     </p>
                     <VehicleSelector />
                   </div>
@@ -469,10 +474,10 @@ export default function HomePage() {
                   style={{ gap: "var(--space-2) var(--space-4)" }}
                 >
                   {[
-                    { Icon: Truck, label: "Առաքում ողջ ՀՀ-ում" },
-                    { Icon: Shield, label: "Երաշխիք" },
-                    { Icon: Clock, label: "24/7 աջակցություն" },
-                    { Icon: Star, label: "Բնօրինակ որակ" },
+                    { Icon: Truck, label: t('pg.home.feat.deliveryAll') },
+                    { Icon: Shield, label: t('pg.home.feat.warranty') },
+                    { Icon: Clock, label: t('pg.home.feat.support247') },
+                    { Icon: Star, label: t('pg.home.feat.originalQuality') },
                   ].map(({ Icon, label }) => (
                     <span
                       key={label}
@@ -504,7 +509,7 @@ export default function HomePage() {
                 marginBottom: "var(--space-8)",
               }}
             >
-              {HOME.categoriesTitle}
+              {t('pg.home.categoriesTitle')}
             </h2>
             <div className="grid sm:grid-cols-2 gap-4 md:grid-cols-4">
               {categories === undefined
@@ -522,8 +527,12 @@ export default function HomePage() {
                         key={cat._id}
                         id={cat._id}
                         name={cat.name}
+                        nameRu={cat.nameRu}
+                        nameEn={cat.nameEn}
                         slug={cat.slug}
                         description={cat.description}
+                        descriptionRu={cat.descriptionRu}
+                        descriptionEn={cat.descriptionEn}
                         index={i}
                       />
                     ))}
@@ -531,7 +540,7 @@ export default function HomePage() {
             <div className="mt-8 flex justify-center">
               <Link href="/categories">
                 <Button size="lg" variant="outline" className="gap-2">
-                  Դիտել բոլորը{" "}
+                  {t('pg.common.viewAll')}{" "}
                   <ArrowRight style={{ height: "1rem", width: "1rem" }} />
                 </Button>
               </Link>
@@ -549,11 +558,11 @@ export default function HomePage() {
                     className="text-balance font-bold"
                     style={{ fontSize: "var(--text-2xl)" }}
                   >
-                    Ցանկ
+                    {t('pg.home.featuredList')}
                   </h2>
                   <Link href="/products">
                     <Button variant="outline" className="gap-2">
-                      Դիտել բոլորը{" "}
+                      {t('pg.common.viewAll')}{" "}
                       <ArrowRight style={{ height: "1rem", width: "1rem" }} />
                     </Button>
                   </Link>
@@ -576,7 +585,7 @@ export default function HomePage() {
                             slug={p.slug}
                             atgCode={p.atgCode}
                             sku={p.sku}
-                            name={p.name}
+                            name={p.name} nameRu={p.nameRu} nameEn={p.nameEn}
                             price={p.price}
                             wholesalePrice={p.wholesalePrice}
                             compareAtPrice={p.compareAtPrice}
@@ -612,7 +621,7 @@ export default function HomePage() {
                 marginBottom: "var(--space-8)",
               }}
             >
-              <span className="text-gradient">Բրենդներ</span>
+              <span className="text-gradient">{t('pg.home.brands')}</span>
             </h2>
             <div className="flex flex-wrap justify-center gap-4">
               {brands === undefined &&
@@ -686,7 +695,7 @@ export default function HomePage() {
                   <span className="text-2xl font-light leading-none transition-transform duration-500 group-hover:rotate-90">
                     +
                   </span>
-                  <span className="text-sm font-medium">Բոլոր բրենդները</span>
+                  <span className="text-sm font-medium">{t('pg.home.allBrands')}</span>
                 </Link>
               )}
             </div>
@@ -702,7 +711,7 @@ export default function HomePage() {
                   className="text-center text-balance font-bold"
                   style={{ fontSize: "var(--text-2xl)" }}
                 >
-                  Թոփ վաճառք
+                  {t('pg.home.topSales')}
                 </h2>
               </div>
               <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-1 sm:gap-3">
@@ -723,7 +732,7 @@ export default function HomePage() {
                           slug={p.slug}
                           atgCode={p.atgCode}
                           sku={p.sku}
-                          name={p.name}
+                          name={p.name} nameRu={p.nameRu} nameEn={p.nameEn}
                           price={p.price}
                           wholesalePrice={p.wholesalePrice}
                           compareAtPrice={p.compareAtPrice}
@@ -745,7 +754,7 @@ export default function HomePage() {
               <div className="mt-8 flex justify-center">
                 <Link href="/products">
                   <Button size="lg" variant="outline" className="gap-2">
-                    Դիտել բոլորը{" "}
+                    {t('pg.common.viewAll')}{" "}
                     <ArrowRight style={{ height: "1rem", width: "1rem" }} />
                   </Button>
                 </Link>
@@ -767,7 +776,7 @@ export default function HomePage() {
                       className="font-bold"
                       style={{ fontSize: "var(--text-2xl)" }}
                     >
-                      Զեղչեր
+                      {t('pg.home.discounts')}
                     </h2>
                   </div>
                   <FlashCountdown className="ml-1" />
@@ -777,7 +786,7 @@ export default function HomePage() {
                     variant="outline"
                     className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 dark:border-red-300/50 dark:text-red-200 dark:hover:bg-red-300/10"
                   >
-                    Դիտել բոլորը{" "}
+                    {t('pg.common.viewAll')}{" "}
                     <ArrowRight style={{ height: "1rem", width: "1rem" }} />
                   </Button>
                 </Link>
@@ -796,7 +805,7 @@ export default function HomePage() {
                         key={p._id}
                         id={p._id}
                         slug={p.slug}
-                        name={p.name}
+                        name={p.name} nameRu={p.nameRu} nameEn={p.nameEn}
                         price={p.price}
                         wholesalePrice={p.wholesalePrice}
                         retailDiscount={p.retailDiscount}

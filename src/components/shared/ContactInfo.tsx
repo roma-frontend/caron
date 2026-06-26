@@ -1,14 +1,16 @@
 'use client';
 
 import { useSettings } from '@/hooks/useSettings';
+import { useT } from '@/lib/i18n/admin';
 
 export function ContactInfo() {
+  const { t } = useT();
   const settings = useSettings();
   return (
     <ul>
-      <li>Էլ. փոստ՝ {settings?.email ?? 'info@caron.group'}</li>
-      <li>Հեռախոս՝ {settings?.phone ?? '+374 XX XXX XXX'}</li>
-      <li>Հասցե՝ {settings?.address ?? 'Երևան, Հայաստան'}</li>
+      <li>{t('cmp.contact_email')} {settings?.email ?? 'info@caron.group'}</li>
+      <li>{t('cmp.contact_phone')} {settings?.phone ?? '+374 XX XXX XXX'}</li>
+      <li>{t('cmp.contact_address')} {settings?.address ?? t('cmp.default_address')}</li>
     </ul>
   );
 }

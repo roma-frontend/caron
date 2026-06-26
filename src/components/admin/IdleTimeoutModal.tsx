@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Clock, LogOut, RefreshCw } from 'lucide-react';
+import { useT } from '@/lib/i18n/admin';
 
 export function IdleTimeoutModal() {
+  const { t } = useT();
   const logoutStore = useAuthStore((s) => s.logout);
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const logoutMutation = useMutation(api.auth.logout);
@@ -46,8 +48,8 @@ export function IdleTimeoutModal() {
           <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
             <Clock className="h-7 w-7 text-amber-500 animate-pulse" />
           </div>
-          <DialogTitle className="text-center">Սեսիան ավարտվել է</DialogTitle>
-          <DialogDescription className="text-center">Ձեր սեսիան ավարտվել է։ Մուտք գործեք նորից:</DialogDescription>
+          <DialogTitle className="text-center">{t('acmp.idle.title')}</DialogTitle>
+          <DialogDescription className="text-center">{t('acmp.idle.desc')}</DialogDescription>
         </DialogHeader>
         <div className="text-center text-3xl font-mono font-bold text-amber-500 py-2">
           {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -55,11 +57,11 @@ export function IdleTimeoutModal() {
         <div className="space-y-2 pt-2">
           <Button onClick={extendSession} className="w-full">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Թարմացնել
+            {t('acmp.idle.refresh')}
           </Button>
           <Button onClick={doLogout} variant="outline" className="w-full">
             <LogOut className="mr-2 h-4 w-4" />
-            Դուրս գալ
+            {t('acmp.idle.logout')}
           </Button>
         </div>
       </DialogContent>

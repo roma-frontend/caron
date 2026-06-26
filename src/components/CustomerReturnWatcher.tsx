@@ -7,13 +7,14 @@ import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { CheckCircle2, PackageCheck, XCircle, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
+import { useT } from '@/lib/i18n/admin';
 
 type Status = 'pending' | 'approved' | 'rejected' | 'completed';
 
 const STATUS_INFO: Record<Exclude<Status, 'pending'>, { title: string; Icon: typeof CheckCircle2; cls: string }> = {
-  approved: { title: 'Ձեր հայտը հաստատվել է', Icon: CheckCircle2, cls: 'text-blue-600' },
-  completed: { title: 'Ձեր հայտն ավարտված է', Icon: PackageCheck, cls: 'text-emerald-600' },
-  rejected: { title: 'Ձեր հայտը մերժվել է', Icon: XCircle, cls: 'text-destructive' },
+  approved: { title: 'cmp.return_approved', Icon: CheckCircle2, cls: 'text-blue-600' },
+  completed: { title: 'cmp.return_completed', Icon: PackageCheck, cls: 'text-emerald-600' },
+  rejected: { title: 'cmp.return_rejected', Icon: XCircle, cls: 'text-destructive' },
 };
 
 /**
@@ -22,6 +23,7 @@ const STATUS_INFO: Record<Exclude<Status, 'pending'>, { title: string; Icon: typ
  * rejected). Relies on the reactive `returns.listMine` query.
  */
 export function CustomerReturnWatcher() {
+  const { t } = useT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const user = useAuthStore((s) => s.user);
   // Admins use AdminReturnWatcher; this is for customers.
@@ -52,10 +54,10 @@ export function CustomerReturnWatcher() {
         if (info) {
           const { Icon } = info;
           toast.custom(
-            (t) => (
+            (tp) => (
               <Link
                 href="/orders"
-                onClick={() => toast.dismiss(t)}
+                onClick={() => toast.dismiss(tp)}
                 className="flex w-full items-start gap-4 rounded-xl border bg-card p-4 shadow-xl ring-1 ring-primary/20"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -63,7 +65,7 @@ export function CustomerReturnWatcher() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className={`flex items-center gap-1.5 text-sm font-bold ${info.cls}`}>
-                    <RotateCcw className="h-3.5 w-3.5" /> {info.title}
+                    <RotateCcw className="h-3.5 w-3.5" /> {t(info.title)}
                   </p>
                   <p className="mt-0.5 truncate text-sm font-semibold">#{r.orderNumber}</p>
                   {r.adminComment ? (

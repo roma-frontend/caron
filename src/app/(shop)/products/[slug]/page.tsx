@@ -28,7 +28,6 @@ import { ProductQuestions } from '@/components/ProductQuestions';
 import { RecommendedForYou } from '@/components/RecommendedForYou';
 import { FrequentlyBoughtTogether } from '@/components/FrequentlyBoughtTogether';
 import dynamic from 'next/dynamic';
-import { PRODUCT } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -44,6 +43,9 @@ import Script from 'next/script';
 import { DndContext, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useT } from '@/lib/i18n/admin';
+import { useFilterName } from '@/lib/i18n/filterNames';
+import { pickLocalized } from '@/lib/i18n/localize';
 
 function SortableVariantThumb({
   id,
@@ -101,6 +103,8 @@ function normalizeAttrText(value: string): string {
 }
 
 export default function ProductDetailPage() {
+  const { t, lang } = useT();
+  const filterName = useFilterName();
   const { slug } = useParams();
   const _baseProduct = useQuery(api.products.getBySlug, { slug: slug as string });
   const variants = useQuery(api.products.getVariantGroup, _baseProduct && (_baseProduct as Record<string, unknown>).variantGroup ? { variantGroup: (_baseProduct as Record<string, unknown>).variantGroup as string } : 'skip');
@@ -116,14 +120,17 @@ export default function ProductDetailPage() {
   const productId = product?._id;
   const filterDefs = useQuery(api.filters.getByCategory, product?.categoryId ? { categoryId: product.categoryId } : 'skip');
   const attrNames: Record<string, string> = {};
+  const attrSlugs: Record<string, string> = {};
   if (filterDefs) {
     for (const f of filterDefs) {
       attrNames[f._id] = f.name;
       attrNames[f.slug] = f.name;
+      attrSlugs[f._id] = f.slug;
+      attrSlugs[f.slug] = f.slug;
     }
   }
   const resolveAttrLabel = (key: string, val: unknown) => {
-    if (attrNames[key]) return attrNames[key];
+    if (attrNames[key]) return filterName(attrNames[key], attrSlugs[key]);
     if (filterDefs) {
       const values = Array.isArray(val) ? val : [val];
       const normalizedValues = values
@@ -138,13 +145,13 @@ export default function ProductDetailPage() {
             return normalizedValues.some((v) => v === nOpt || v.includes(nOpt) || nOpt.includes(v));
           }),
         );
-        if (matchedDef) return matchedDef.name;
+        if (matchedDef) return filterName(matchedDef.name, matchedDef.slug);
       }
     }
 
     // Hide technical Convex-like ids from storefront users.
-    if (/^j[0-9a-z]{12,}$/i.test(key)) return 'Ատրիբուտ';
-    return key;
+    if (/^j[0-9a-z]{12,}$/i.test(key)) return t('sp.attribute');
+    return filterName(key, key);
   };
   const currentUser = useAuthStore((s) => s.user);
   const sessionToken = useAuthStore((s) => s.sessionToken);
@@ -223,12 +230,14 @@ export default function ProductDetailPage() {
   if (product === undefined) return <Loader />;
   if (product === null) return (
     <div className="py-20 text-center">
-      <p className="text-lg text-muted-foreground">{'Ապրանքը չի գտնվել'}</p>
-      <Link href="/products"><Button variant="outline" className="mt-4 gap-2"><ArrowLeft className="h-4 w-4" /> {'Որոնել ապրանքներ'}</Button></Link>
+      <p className="text-lg text-muted-foreground">{t('sp.productNotFound')}</p>
+      <Link href="/products"><Button variant="outline" className="mt-4 gap-2"><ArrowLeft className="h-4 w-4" /> {t('sp.searchProducts')}</Button></Link>
     </div>
   );
 
   const attrs = (product.attributes ?? {}) as Record<string, unknown>;
+  const productName = pickLocalized(product, 'name', lang);
+  const productDesc = pickLocalized(product, 'description', lang);
   const compat = attrs.vehicleCompat as Array<{ brand: string; model: string; yearFrom: number; yearTo: number }> | undefined;
   const fitsCompat = vehicle && compat?.some((c) => c.brand === vehicle.brand && c.model === vehicle.model && Number(vehicle.year) >= c.yearFrom && Number(vehicle.year) <= c.yearTo);
   const fitsSimple = vehicle && typeof attrs.carBrand === 'string' && vehicle.brand === attrs.carBrand;
@@ -280,7 +289,7 @@ export default function ProductDetailPage() {
         items: next.map((v, i) => ({ id: v._id as Id<'products'>, order: i })),
       });
     } catch {
-      toast.error('Չհաջողվեց պահպանել տարբերակների հերթականությունը');
+      toast.error(t('sp.variantOrderSaveFailed'));
       setOrderedVariantIds(orderedVariants.map((v) => v._id));
     }
   };
@@ -288,7 +297,7 @@ export default function ProductDetailPage() {
   return (
     <div data-product-content className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-8)]">
       {settings?.enableBreadcrumbs !== false && (
-        <Breadcrumbs items={[{ label: 'Ապրանքներ', href: '/products' }, { label: product.name }]} />
+        <Breadcrumbs items={[{ label: t('sp.products'), href: '/products' }, { label: product.name }]} />
       )}
       <Script id="product-json-ld" type="application/ld+json" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
 
@@ -311,10 +320,10 @@ export default function ProductDetailPage() {
             </div>
             {imgs.length > 1 && (
               <>
-                <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Հետ">
+                <button onClick={() => emblaApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label={t('sp.back')}>
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <button onClick={() => emblaApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label="Առաջ">
+                <button onClick={() => emblaApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 shadow-lg opacity-100 md:opacity-0 md:group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm hover:bg-background" aria-label={t('sp.forward')}>
                   <ChevronRight className="h-5 w-5" />
                 </button>
                 {/* Dots */}
@@ -341,14 +350,14 @@ export default function ProductDetailPage() {
 
         {/* Info */}
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{product.name}</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{productName}</h1>
 
           {orderedVariants && orderedVariants.length > 1 && (
             <div className="mt-3 relative">
               {(variantArrows.left || variantArrows.right) && (
                 <div className="mb-1.5 hidden items-center justify-end gap-1 sm:flex">
-                  <button type="button" aria-label="Նախորդ" disabled={!variantArrows.left} onClick={() => { variantScrollRef.current?.scrollBy({ left: -160, behavior: 'smooth' }); }} className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 transition-all hover:bg-background hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-30 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:hover:bg-muted"><ChevronLeft className="h-4 w-4" strokeWidth={2.5} /></button>
-                  <button type="button" aria-label="Հաջորդ" disabled={!variantArrows.right} onClick={() => { variantScrollRef.current?.scrollBy({ left: 160, behavior: 'smooth' }); }} className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 transition-all hover:bg-background hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-30 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:hover:bg-muted"><ChevronRight className="h-4 w-4" strokeWidth={2.5} /></button>
+                  <button type="button" aria-label={t('sp.prevVariant')} disabled={!variantArrows.left} onClick={() => { variantScrollRef.current?.scrollBy({ left: -160, behavior: 'smooth' }); }} className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 transition-all hover:bg-background hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-30 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:hover:bg-muted"><ChevronLeft className="h-4 w-4" strokeWidth={2.5} /></button>
+                  <button type="button" aria-label={t('sp.nextVariant')} disabled={!variantArrows.right} onClick={() => { variantScrollRef.current?.scrollBy({ left: 160, behavior: 'smooth' }); }} className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 transition-all hover:bg-background hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-30 dark:border-white/20 dark:bg-secondary dark:ring-white/10 dark:hover:bg-muted"><ChevronRight className="h-4 w-4" strokeWidth={2.5} /></button>
                 </div>
               )}
               <div ref={variantScrollRef} id="variant-scroll" className="overflow-x-auto scrollbar-none py-1">
@@ -407,12 +416,12 @@ export default function ProductDetailPage() {
             <div className="mt-1 flex flex-wrap gap-1.5">
               {product.sku && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-primary">Արտիկուլ։ {product.sku}</span>
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-primary">{t('sp.article')}։ {product.sku}</span>
                 </div>
               )}
               {product.atgCode && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border bg-primary/5 px-2.5 py-1">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">ԱՏԳԱԱ {product.atgCode}</span>
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground">{t('sp.atg')} {product.atgCode}</span>
                 </div>
               )}
               {product.oemNumbers?.map((oem) => {
@@ -447,18 +456,18 @@ export default function ProductDetailPage() {
             const { percent: eff, points: pts } = resolveCashback(qty, cartPrice * qty, settings.loyaltyTiers, settings.loyaltyPercent ?? 0);
             return pts > 0 ? (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                <Gift className="h-3.5 w-3.5" /> +{pts} բալ ({eff}%) այս գնումից
+                <Gift className="h-3.5 w-3.5" /> +{pts} {t('sp.points')} ({eff}%) {t('sp.fromThisPurchase')}
               </div>
             ) : null;
           })()}
 
           <div className="mt-3">
             {product.stock > 0 && product.stock <= 10 ? (
-              <span className="inline-flex items-center gap-1 text-sm font-medium text-orange-600"><Check className="h-4 w-4" /> Միայն {product.stock} հատ պահեստում</span>
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-orange-600"><Check className="h-4 w-4" /> {t('sp.only')} {product.stock} {t('sp.pcsInStock')}</span>
             ) : product.stock > 0 ? (
-              <span className="inline-flex items-center gap-1 text-sm text-green-600"><Check className="h-4 w-4" /> {'Առկա է'}</span>
+              <span className="inline-flex items-center gap-1 text-sm text-green-600"><Check className="h-4 w-4" /> {t('sp.available')}</span>
             ) : (
-              <span className="text-sm text-destructive">{PRODUCT.outOfStock}</span>
+              <span className="text-sm text-destructive">{t('sp.outOfStockBadge')}</span>
             )}
           </div>
 
@@ -488,17 +497,17 @@ export default function ProductDetailPage() {
 
           <Separator className="my-5" />
 
-          <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+          <p className="text-muted-foreground leading-relaxed">{productDesc}</p>
 
           {/* Attributes */}
           {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').length > 0 && (
             <div className="mt-6">
-              <h3 className="mb-3 font-semibold">{'Ատրիբուտներ'}</h3>
+              <h3 className="mb-3 font-semibold">{t('sp.attributes')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').map(([key, val]) => (
                   <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">{resolveAttrLabel(key, val)}</span>
-                    <span className="font-medium text-right">{typeof val === 'boolean' ? (val ? 'Այո' : 'Ոչ') : Array.isArray(val) ? val.join(', ') : String(val)}</span>
+                    <span className="font-medium text-right">{typeof val === 'boolean' ? (val ? t('sp.yes') : t('sp.no')) : Array.isArray(val) ? val.join(', ') : String(val)}</span>
                   </div>
                 ))}
               </div>
@@ -509,7 +518,7 @@ export default function ProductDetailPage() {
 
           {/* Quantity */}
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">{'Քանակ'}</span>
+            <span className="text-sm font-medium">{t('sp.quantity')}</span>
             <QuantityStepper value={qty} onChange={setQty} step={step} min={step} max={maxQty} size="md" />
           </div>
 
@@ -519,17 +528,17 @@ export default function ProductDetailPage() {
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0 || maxQty <= 0}
               onClick={(e) => { const prevQty = cartQty; const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.images?.[0] ?? null }); }}>
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {PRODUCT.addToCart}
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {t('sp.add')}
             </Button>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button size="icon" variant="outline" title={isFav ? 'Հեռացնել նախընտրածներից' : 'Ավելացնել նախընտրածներին'}
+            <Button size="icon" variant="outline" title={isFav ? t('sp.removeFromFavorites') : t('sp.addToFavorites')}
               className={isFav ? 'text-red-500 border-red-200 h-10 w-10 sm:h-11 sm:w-11' : 'h-10 w-10 sm:h-11 sm:w-11 hover:text-red-500 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20'}
-              onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product._id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.images?.[0] ?? null }); toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.images?.[0] ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${product.name} հեռացվեց ընտրյալներից`, onUndo: () => toggleFav(existing) }); } }}>
+              onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product._id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.images?.[0] ?? null }); toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.images?.[0] ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${product.name} ${t('sp.removedFromFavorites')}`, onUndo: () => toggleFav(existing) }); } }}>
               <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
             </Button>
-            <Button variant="outline" size="icon" title={inCompare ? 'Համեմատման մեջ' : 'Համեմատել'}
+            <Button variant="outline" size="icon" title={inCompare ? t('sp.inComparison') : t('sp.compare')}
               className={`h-10 w-10 sm:h-11 sm:w-11 ${inCompare ? 'border-primary text-primary' : 'hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20'}`}
-              onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success('Ավելացվեց համեմատման'); } }}>
+              onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success(t('sp.addedToComparison')); } }}>
               <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             {settings?.enableShareButtons !== false && (
@@ -546,8 +555,8 @@ export default function ProductDetailPage() {
 
           {/* Trust */}
           <div className="mt-6 flex flex-wrap gap-3 sm:gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Truck className="h-4 w-4" /> {'Առաքման վճար'}</span>
-            <span className="flex items-center gap-1"><Shield className="h-4 w-4" /> {'Անվտանգ գնումներ'}</span>
+            <span className="flex items-center gap-1"><Truck className="h-4 w-4" /> {t('sp.deliveryFee')}</span>
+            <span className="flex items-center gap-1"><Shield className="h-4 w-4" /> {t('sp.safeShopping')}</span>
           </div>
         </div>
       </div>
@@ -562,11 +571,11 @@ export default function ProductDetailPage() {
 
       <RecentlyViewed />
 
-      <RecommendedForYou title="Ձեզ համար" />
+      <RecommendedForYou title={t('sp.forYou')} />
 
       {/* Related Products */}
       <div className="mt-12">
-        <h2 className="mb-6 text-xl font-bold px-4 s,:px-0">{'Նմանատիպ ապրանքներ'}</h2>
+        <h2 className="mb-6 text-xl font-bold px-4 s,:px-0">{t('sp.relatedProducts')}</h2>
         <RelatedProducts categoryId={product.categoryId} currentId={product._id} />
       </div>
 
@@ -576,6 +585,7 @@ export default function ProductDetailPage() {
 }
 
 function BackInStockButton({ productId }: { productId: string }) {
+  const { t } = useT();
   const [contact, setContact] = useState('');
   const subscribe = useMutation(api.backInStock.subscribe);
   const [sent, setSent] = useState(false);
@@ -583,18 +593,19 @@ function BackInStockButton({ productId }: { productId: string }) {
     if (!contact) return;
     await subscribe({ productId: productId as Id<'products'>, contact });
     setSent(true);
-    toast.success('Կծանուցենք Telegram-ով երբ ապրանքը հայտնվի');
+    toast.success(t('sp.notifyBackInStock'));
   };
-  if (sent) return <p className="text-sm text-green-600">✅ Կծանուցենք Telegram-ով</p>;
+  if (sent) return <p className="text-sm text-green-600">✅ {t('sp.willNotifyTelegram')}</p>;
   return (
     <div className="flex flex-col sm:flex-row gap-2">
-      <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username կամ հեռախոս" className="h-10 flex-1" />
+      <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder={t('sp.usernameOrPhone')} className="h-10 flex-1" />
       <Button size="sm" onClick={handleSubmit} disabled={!contact} className="gap-2 shrink-0 w-full sm:w-auto"><Smartphone className="h-4 w-4" /> Telegram</Button>
     </div>
   );
 }
 
 function SubscribePriceButton({ productId, currentPrice }: { productId: string; currentPrice: number }) {
+  const { t } = useT();
   const subscribe = useMutation(api.priceAlerts.subscribe);
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -609,7 +620,7 @@ function SubscribePriceButton({ productId, currentPrice }: { productId: string; 
 
   if (sent) {
     return (
-      <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-600" title="Դուք հետևում եք գնին">
+      <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-600" title={t('sp.youFollowPrice')}>
         <Bell className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
       </div>
     );
@@ -617,20 +628,20 @@ function SubscribePriceButton({ productId, currentPrice }: { productId: string; 
 
   return (
     <div className="relative" ref={ref}>
-      <Button variant="outline" size="icon" title="Հետևել գնին" aria-label="Հետևել գնին" className="h-10 w-10 sm:h-11 sm:w-11 hover:text-amber-500 hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20" onClick={() => setOpen(true)}>
+      <Button variant="outline" size="icon" title={t('sp.followPrice')} aria-label={t('sp.followPrice')} className="h-10 w-10 sm:h-11 sm:w-11 hover:text-amber-500 hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20" onClick={() => setOpen(true)}>
         <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
       </Button>
       {open && (
         <>
           <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setOpen(false)} />
           <div className="absolute bottom-full sm:bottom-auto sm:top-full right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 mb-2 sm:mt-2 z-50 min-w-[240px] rounded-2xl border bg-popover p-3 shadow-xl animate-in zoom-in-95 duration-150 origin-bottom-right sm:origin-top">
-            <p className="text-sm font-semibold mb-1">Հետևել գնին</p>
-            <p className="text-xs text-muted-foreground mb-3">Կծանուցենք երբ գինը նվազի</p>
+            <p className="text-sm font-semibold mb-1">{t('sp.followPrice')}</p>
+            <p className="text-xs text-muted-foreground mb-3">{t('sp.notifyPriceDrop')}</p>
             <div className="flex gap-2">
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ձեր էլ. հասցեն" className="h-9 text-xs flex-1" />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('sp.yourEmail')} className="h-9 text-xs flex-1" />
               <Button size="sm" className="h-9 gap-1 text-xs" disabled={!email} onClick={async () => {
                 await subscribe({ productId: productId as Id<'products'>, email, priceAtSubscribe: currentPrice });
-                setSent(true); setOpen(false); toast.success('Կծանուցենք երբ գինը նվազի');
+                setSent(true); setOpen(false); toast.success(t('sp.notifyPriceDrop'));
               }}><Bell className="h-3 w-3" /> OK</Button>
             </div>
           </div>
@@ -641,6 +652,7 @@ function SubscribePriceButton({ productId, currentPrice }: { productId: string; 
 }
 
 function ShareButton({ productName }: { productName: string }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -660,14 +672,14 @@ function ShareButton({ productName }: { productName: string }) {
 
   return (
     <div className="relative" ref={ref}>
-      <Button variant="outline" size="icon" title="Կիսվել" className="h-10 w-10 sm:h-11 sm:w-11 hover:text-sky-500 hover:border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/20" onClick={share}>
+      <Button variant="outline" size="icon" title={t('sp.share')} className="h-10 w-10 sm:h-11 sm:w-11 hover:text-sky-500 hover:border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/20" onClick={share}>
         <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
       </Button>
       {open && (
         <>
           <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setOpen(false)} />
           <div className="absolute bottom-full sm:bottom-auto sm:top-full right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 mb-2 sm:mt-2 z-50 min-w-[200px] rounded-2xl border bg-popover p-2 shadow-xl animate-in zoom-in-95 duration-150 origin-bottom-right sm:origin-top">
-            <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Կիսվել</p>
+            <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('sp.share')}</p>
             <Link href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(productName)}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-accent"
               onClick={() => setOpen(false)}>
@@ -680,10 +692,10 @@ function ShareButton({ productName }: { productName: string }) {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></div>
               Facebook
             </Link>
-            <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Հղումը պատճենվեց'); setOpen(false); }}
+            <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success(t('sp.linkCopied')); setOpen(false); }}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-accent">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-              Պատճենել հղումը
+              {t('sp.copyLink')}
             </button>
           </div>
         </>
@@ -699,7 +711,7 @@ function RelatedProducts({ categoryId, currentId }: { categoryId: string; curren
   return (
     <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:4] gap-4">
       {filtered.map((p, i) => (
-        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} nameRu={p.nameRu} nameEn={p.nameEn} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
       ))}
     </div>
   );

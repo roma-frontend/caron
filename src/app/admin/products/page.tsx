@@ -18,6 +18,8 @@ import { useSearchParams } from 'next/navigation';
 import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
+import { useAdminT } from '@/lib/i18n/admin';
+import { useFilterName } from '@/lib/i18n/filterNames';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DndContext, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -26,13 +28,13 @@ import { CSS } from '@dnd-kit/utilities';
 const ADMIN_PRODUCTS_VIEW_KEY = 'admin-products-view-mode';
 
 const HEALTH_LABELS: Record<string, string> = {
-  noImage: 'Առանց նկարի',
-  noDescription: 'Առանց նկարագրության',
-  zeroStock: '0 մնացորդ (ակտիվ)',
-  lowStock: 'Քիչ մնացորդ (≤5)',
-  noSeo: 'Առանց SEO',
-  noBrand: 'Առանց բրենդի',
-  dupSku: 'Կրկնվող SKU',
+  noImage: 'ap.health.noImage',
+  noDescription: 'ap.health.noDescription',
+  zeroStock: 'ap.health.zeroStock',
+  lowStock: 'ap.health.lowStock',
+  noSeo: 'ap.health.noSeo',
+  noBrand: 'ap.health.noBrand',
+  dupSku: 'ap.health.dupSku',
 };
 const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
@@ -41,15 +43,15 @@ function toArmenianUploadError(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error ?? '');
   const msg = raw.toLowerCase();
 
-  if (msg.includes('unauthorized')) return 'Չկա մուտքի իրավունք։ Մուտք գործեք ադմինի հաշվով։';
-  if (msg.includes('too many requests')) return 'Չափազանց շատ հարցումներ են եղել։ Փորձեք մի փոքր ուշ։';
-  if (msg.includes('r2 not configured')) return 'Սերվերում նկարի պահեստավորումը կարգավորված չէ։';
-  if (msg.includes('file type not allowed')) return 'Ֆայլի այս տեսակը չի թույլատրվում։';
-  if (msg.includes('file too large')) return 'Ֆայլը չափազանց մեծ է (առավելագույնը 10MB)։';
-  if (msg.includes('no file provided')) return 'Ֆայլ չի ընտրվել։';
-  if (msg.includes('upload url missing')) return 'Վերբեռնման հղումը չի գտնվել։';
+  if (msg.includes('unauthorized')) return 'ap.uploadError.unauthorized';
+  if (msg.includes('too many requests')) return 'ap.uploadError.tooManyRequests';
+  if (msg.includes('r2 not configured')) return 'ap.uploadError.notConfigured';
+  if (msg.includes('file type not allowed')) return 'ap.uploadError.fileType';
+  if (msg.includes('file too large')) return 'ap.uploadError.fileTooLarge';
+  if (msg.includes('no file provided')) return 'ap.uploadError.noFile';
+  if (msg.includes('upload url missing')) return 'ap.uploadError.urlMissing';
 
-  return 'Պատկերի վերբեռնումը ձախողվեց։';
+  return 'ap.uploadError.generic';
 }
 
 function toArmenianUpdateError(error: unknown): string {
@@ -57,10 +59,10 @@ function toArmenianUpdateError(error: unknown): string {
   const msg = raw.toLowerCase();
 
   if (msg.includes('not authenticated') || msg.includes('session expired') || msg.includes('unauthorized')) {
-    return 'Մուտքի սեսիան ավարտվել է։ Կրկին մուտք գործեք։';
+    return 'ap.updateError.session';
   }
 
-  return 'Թարմացումը ձախողվեց։';
+  return 'ap.updateError.generic';
 }
 
 function InlineField({ value, onSave, prefix, className, plain }: { value: number; onSave: (v: number) => void; prefix?: string; className?: string; plain?: boolean }) {
@@ -173,6 +175,7 @@ function parseAttributeValue(raw: string, prev: unknown): unknown | undefined {
 
 
 function AdminProductCard({ product, sessionToken, index }: { product: AdminProductItem; sessionToken: string; index: number }) {
+  const { t } = useAdminT();
   const { ref, visible } = useReveal();
   const update = useMutation(api.products.update);
   const imgRef = useRef<HTMLInputElement>(null);
@@ -184,10 +187,10 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
     setDeleting(true);
     try {
       await remove({ sessionToken, id: product._id });
-      toast.success('Ապրանքը ջնջվել է');
+      toast.success(t('ap.productDeleted'));
       setDeleteOpen(false);
     } catch {
-      toast.error('Սխալ ջնջելու ժամանակ');
+      toast.error(t('ap.deleteError'));
     } finally { setDeleting(false); }
   };
 
@@ -212,9 +215,9 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
               const uploadedUrl = data.publicUrl ?? data.url;
               if (!uploadedUrl) throw new Error('Upload URL missing');
               await update({ sessionToken, id: product._id, images: [...(product.images ?? []), uploadedUrl] });
-              toast.success('Նկարը ավելացվեց');
+              toast.success(t('ap.imageAdded'));
             } catch (error) {
-              toast.error(toArmenianUploadError(error));
+              toast.error(t(toArmenianUploadError(error)));
             }
             e.target.value = '';
           }}
@@ -238,22 +241,22 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
                     <AlertTriangle className="h-6 w-6 text-destructive" />
                   </div>
-                  <DialogTitle className="text-center">Ջնջել ապրանքը</DialogTitle>
+                  <DialogTitle className="text-center">{t('ap.deleteProduct')}</DialogTitle>
                   <DialogDescription className="text-center">
-                    Համոզվա՞ծ եք, որ ցանկանում եք ջնջել<br />
+                    {t('ap.confirmDeleteQuestion')}<br />
                     <strong>{product.name}</strong>
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">
-                  <Button variant="outline" className="flex-1" disabled={deleting} onClick={() => setDeleteOpen(false)}>Չեղարկել</Button>
+                  <Button variant="outline" className="flex-1" disabled={deleting} onClick={() => setDeleteOpen(false)}>{t('ap.cancel')}</Button>
                   <Button variant="destructive" className="flex-1" disabled={deleting} onClick={handleDelete}>
-                    {deleting ? 'Ջնջվում է...' : 'Ջնջել'}
+                    {deleting ? t('ap.deleting') : t('ap.delete')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
-          {!product.isActive && <Badge className="absolute left-2 top-2" variant="secondary">Ակտիվ</Badge>}
+          {!product.isActive && <Badge className="absolute left-2 top-2" variant="secondary">{t('ap.active')}</Badge>}
           {product.isFeatured && <Badge className="absolute left-2 bottom-2 bg-primary">★</Badge>}
         </div>
 
@@ -269,17 +272,17 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
                 placeholder="-"
                 className="text-xs text-muted-foreground"
                 onSave={(v) =>
-                  update({ sessionToken, id: product._id, variantGroup: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))
+                  update({ sessionToken, id: product._id, variantGroup: v }).then(() => toast.success(t('ap.updated'))).catch((error) => toast.error(t(toArmenianUpdateError(error))))
                 }
               />
             </div>
-            <InlineField value={product.price} className="text-sm font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
-            <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).then(() => toast.success('Թարմացվեց')).catch((error) => toast.error(toArmenianUpdateError(error)))} />
+            <InlineField value={product.price} className="text-sm font-bold text-primary" prefix={t('ap.retailPrice')} onSave={(v) => update({ sessionToken, id: product._id, price: v }).then(() => toast.success(t('ap.updated'))).catch((error) => toast.error(t(toArmenianUpdateError(error))))} />
+            <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix={t('ap.wholesalePrice')} onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).then(() => toast.success(t('ap.updated'))).catch((error) => toast.error(t(toArmenianUpdateError(error))))} />
           </div>
           <div className="mt-3 flex flex-col justify-between gap-2">
-            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='text'; input.inputMode='numeric'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success('Թարմացվեց')).catch((error)=>toast.error(toArmenianUpdateError(error))); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter'){input.blur();return;} if(ev.key==='Escape'){el.style.display='';input.remove();return;} const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End']; if(allowed.includes(ev.key))return; if(!/^\d$/.test(ev.key))ev.preventDefault();}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>Պահեստ: {product.stock}</span>
+            <span className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); const el = e.currentTarget; const input = document.createElement('input'); input.type='text'; input.inputMode='numeric'; input.defaultValue=String(product.stock); input.className='w-16 rounded border bg-background px-1 py-0.5 text-xs outline-none'; input.onblur = () => { const v = Number(input.value); if (v !== product.stock) update({ sessionToken, id: product._id, stock: v }).then(()=>toast.success(t('ap.updated'))).catch((error)=>toast.error(t(toArmenianUpdateError(error)))); el.style.display=''; input.remove(); }; input.onkeydown=(ev)=>{ if(ev.key==='Enter'){input.blur();return;} if(ev.key==='Escape'){el.style.display='';input.remove();return;} const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End']; if(allowed.includes(ev.key))return; if(!/^\d$/.test(ev.key))ev.preventDefault();}; el.style.display='none'; el.parentElement?.insertBefore(input,el); input.focus(); }}>{t('ap.stockPrefix')}{product.stock}</span>
             <Badge variant={product.stock > 0 ? 'default' : 'destructive'} className="text-[10px]">
-              {product.stock > 0 ? 'Պահեստում է' : 'Անհասանելի'}
+              {product.stock > 0 ? t('ap.inStockBadge') : t('ap.unavailable')}
             </Badge>
           </div>
         </div>
@@ -298,6 +301,8 @@ type AttrDefMeta = {
 };
 
 function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDefsByCategoryMap }: { product: AdminProductItem; sessionToken: string; index: number; attrMetaMap: Map<string, AttrDefMeta>; attrDefsByCategoryMap: Map<string, AttrDefMeta[]> }) {
+  const { t } = useAdminT();
+  const filterName = useFilterName();
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
   const update = useMutation(api.products.update);
@@ -342,10 +347,10 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
 
   const attrEntries = [...entries, ...Array.from(extraByCanonical.values())];
   const getAttrLabel = (key: string) => {
-    const mapped = getAttrMeta(key)?.name;
-    if (mapped) return mapped;
-    if (/^j[0-9a-z]{12,}$/i.test(key)) return 'Ատրիբուտ';
-    return key;
+    const meta = getAttrMeta(key);
+    if (meta?.name) return filterName(meta.name, meta.slugKey);
+    if (/^j[0-9a-z]{12,}$/i.test(key)) return t('ap.attribute');
+    return filterName(key, key);
   };
 
   const saveAttributeValue = async (key: string, nextValue: unknown | undefined) => {
@@ -370,15 +375,15 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
         id: product._id,
         attributes: Object.keys(nextAttrs).length ? nextAttrs : undefined,
       });
-      toast.success('Ատրիբուտը թարմացվեց');
+      toast.success(t('ap.attributeUpdated'));
     } catch (error) {
-      toast.error(toArmenianUpdateError(error));
+      toast.error(t(toArmenianUpdateError(error)));
     }
   };
 
   const editAttribute = async (key: string, prev: unknown) => {
     const current = formatAttributeValue(prev);
-    const nextRaw = window.prompt(`Թարմացնել ատրիբուտը՝ ${key}`, current);
+    const nextRaw = window.prompt(t('ap.updateAttributePrompt') + key, current);
     if (nextRaw === null) return;
 
     const nextValue = parseAttributeValue(nextRaw, prev);
@@ -389,10 +394,10 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
     setDeleting(true);
     try {
       await remove({ sessionToken, id: product._id });
-      toast.success('Ապրանքը ջնջվել է');
+      toast.success(t('ap.productDeleted'));
       setDeleteOpen(false);
     } catch {
-      toast.error('Սխալ ջնջելու ժամանակ');
+      toast.error(t('ap.deleteError'));
     } finally { setDeleting(false); }
   };
 
@@ -415,9 +420,9 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
             const uploadedUrl = data.publicUrl ?? data.url;
             if (!uploadedUrl) throw new Error('Upload URL missing');
             await update({ sessionToken, id: product._id, images: [...(product.images ?? []), uploadedUrl] });
-            toast.success('Պատկերը վերբեռնվել է');
+            toast.success(t('ap.imageUploaded'));
           } catch (error) {
-            toast.error(toArmenianUploadError(error));
+            toast.error(t(toArmenianUploadError(error)));
           }
           e.target.value = '';
         }}
@@ -440,13 +445,13 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
             prefix="Variant group: "
             placeholder="-"
             className="text-[11px] text-muted-foreground"
-            onSave={(v) => update({ sessionToken, id: product._id, variantGroup: v }).catch((error) => toast.error(toArmenianUpdateError(error)))}
+            onSave={(v) => update({ sessionToken, id: product._id, variantGroup: v }).catch((error) => toast.error(t(toArmenianUpdateError(error))))}
           />
           <div className="mt-1 flex items-center gap-2">
-            <InlineField value={product.price} className="text-sm font-bold text-primary" prefix="Մանրածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
-            <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix="Մեծածախ գին: " onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
-            <InlineField value={product.stock} className="text-[10px]" plain prefix="Պահեստ: " onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch((error) => toast.error(toArmenianUpdateError(error)))} />
-            {!product.isActive && <Badge variant="secondary" className="text-[10px]">Ակտիվ չէ</Badge>}
+            <InlineField value={product.price} className="text-sm font-bold text-primary" prefix={t('ap.retailPrice')} onSave={(v) => update({ sessionToken, id: product._id, price: v }).catch((error) => toast.error(t(toArmenianUpdateError(error))))} />
+            <InlineField value={product.wholesalePrice ?? product.price} className="text-xs text-muted-foreground" prefix={t('ap.wholesalePrice')} onSave={(v) => update({ sessionToken, id: product._id, wholesalePrice: v }).catch((error) => toast.error(t(toArmenianUpdateError(error))))} />
+            <InlineField value={product.stock} className="text-[10px]" plain prefix={t('ap.stockPrefix')} onSave={(v) => update({ sessionToken, id: product._id, stock: v }).catch((error) => toast.error(t(toArmenianUpdateError(error))))} />
+            {!product.isActive && <Badge variant="secondary" className="text-[10px]">{t('ap.inactive')}</Badge>}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {attrEntries.length > 0 ? attrEntries.map(({ key, val }) => {
@@ -461,10 +466,10 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
                     ? []
                     : [String(val)];
                 const summary = selected.length === 0
-                  ? 'Ընտրել'
+                  ? t('ap.select')
                   : selected.length <= 2
                     ? selected.join(', ')
-                    : `${selected.length} ընտրված`;
+                    : `${selected.length} ${t('ap.selected')}`;
 
                 return (
                   <div key={key} className="flex items-center gap-1 rounded-md border bg-muted/30 px-2 py-1">
@@ -527,10 +532,10 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
                       }}
                     >
                       <SelectTrigger className="h-6 min-w-28 border-0 bg-transparent px-1 text-[10px] focus:ring-0">
-                        <SelectValue placeholder="Ընտրել" />
+                        <SelectValue placeholder={t('ap.select')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__empty__">Չընտրված</SelectItem>
+                        <SelectItem value="__empty__">{t('ap.notSelected')}</SelectItem>
                         {options.map((opt) => (
                           <SelectItem key={opt} value={String(opt)}>{String(opt)}</SelectItem>
                         ))}
@@ -546,13 +551,13 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
                   type="button"
                   onClick={() => editAttribute(key, val)}
                   className="rounded-md border bg-muted/40 px-2 py-1 text-[10px] text-left hover:border-primary hover:text-primary"
-                  title="Սեղմեք՝ խմբագրելու համար"
+                  title={t('ap.clickToEdit')}
                 >
                   {getAttrLabel(key)}: {formatAttributeValue(val)}
                 </button>
               );
             }) : (
-              <span className="text-[10px] text-muted-foreground">Ատրիբուտներ չկան</span>
+              <span className="text-[10px] text-muted-foreground">{t('ap.noAttributes')}</span>
             )}
           </div>
         </div>
@@ -568,15 +573,15 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
-                <DialogTitle className="text-center">Ջնջել ապրանքը</DialogTitle>
+                <DialogTitle className="text-center">{t('ap.deleteProduct')}</DialogTitle>
                 <DialogDescription className="text-center">
-                  Համոզվա՞ծ եք, որ ցանկանում եք ջնջել<br />
+                  {t('ap.confirmDeleteQuestion')}<br />
                   <strong>{product.name}</strong>
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="gap-2">
-                <Button variant="outline" className="flex-1" disabled={deleting} onClick={() => setDeleteOpen(false)}>Չեղարկել</Button>
-                <Button variant="destructive" className="flex-1" disabled={deleting} onClick={handleDelete}>{deleting ? 'Ջնջվում է...' : 'Ջնջել'}</Button>
+                <Button variant="outline" className="flex-1" disabled={deleting} onClick={() => setDeleteOpen(false)}>{t('ap.cancel')}</Button>
+                <Button variant="destructive" className="flex-1" disabled={deleting} onClick={handleDelete}>{deleting ? t('ap.deleting') : t('ap.delete')}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -588,6 +593,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
 
 export default function AdminProductsPage() {
   const { sessionToken } = useAuth();
+  const { t } = useAdminT();
   const reorderVariantGroup = useMutation(api.products.reorderVariantGroup);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ADMIN_PRODUCTS_PAGE_SIZE);
@@ -747,10 +753,10 @@ export default function AdminProductsPage() {
         discount: extra?.discount,
         categoryId: extra?.categoryId as Id<'categories'> | undefined,
       });
-      toast.success(`${r.affected} ապրանք թարմացվեց`);
+      toast.success(`${r.affected} ${t('ap.productsUpdated')}`);
       setSelectedIds(new Set());
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Սխալ');
+      toast.error(e instanceof Error ? e.message : t('ap.error'));
     } finally {
       setBulkBusy(false);
     }
@@ -768,7 +774,7 @@ export default function AdminProductsPage() {
 
     const group = activeProduct.variantGroup;
     if (!group || group !== overProduct.variantGroup) {
-      toast.error('Կարելի է տեղափոխել միայն նույն variant group-ի ներսում');
+      toast.error(t('ap.sameVariantGroupOnly'));
       return;
     }
 
@@ -784,7 +790,7 @@ export default function AdminProductsPage() {
     setGroupOrders((prev) => ({ ...prev, [group]: nextGroupIds }));
 
     if (!sessionToken) {
-      toast.error('Սեսիան բացակայում է');
+      toast.error(t('ap.sessionMissing'));
       return;
     }
 
@@ -794,10 +800,10 @@ export default function AdminProductsPage() {
         variantGroup: group,
         items: nextGroupIds.map((id, order) => ({ id: id as Id<'products'>, order })),
       });
-      toast.success('Հերթականությունը պահպանվեց');
+      toast.success(t('ap.orderSaved'));
     } catch (error) {
       setGroupOrders((prev) => ({ ...prev, [group]: prevOrder ?? currentGroupIds }));
-      toast.error(toArmenianUpdateError(error));
+      toast.error(t(toArmenianUpdateError(error)));
     }
   };
 
@@ -805,27 +811,27 @@ export default function AdminProductsPage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold">Ապրանքներ</h1>
-          <p className="text-muted-foreground">{products?.length ?? 0} ապրանք</p>
+          <h1 className="text-3xl font-bold">{t('ap.products')}</h1>
+          <p className="text-muted-foreground">{products?.length ?? 0} {t('ap.productsCountSuffix')}</p>
         </div>
         <div className="relative flex gap-2">
           <Button size="sm" className="gap-2" onClick={() => setAddMenuOpen((v) => !v)}>
-            <Plus className="h-3.5 w-3.5" /> Ավելացնել
+            <Plus className="h-3.5 w-3.5" /> {t('ap.add')}
           </Button>
           {addMenuOpen && (
             <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl border bg-popover p-2 shadow-lg">
               <Link href="/admin/products/add" onClick={() => setAddMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start">
-                  <Plus className="h-3.5 w-3.5" /> Ավելացնել</Button>
+                  <Plus className="h-3.5 w-3.5" /> {t('ap.add')}</Button>
               </Link>
               <Link href="/admin/products/import" onClick={() => setAddMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Upload className="h-3.5 w-3.5" /> Ավելացնել շատ
+                  <Upload className="h-3.5 w-3.5" /> {t('ap.addMany')}
                 </Button>
               </Link>
               <a href="/api/export/products" download onClick={() => setAddMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Download className="h-3.5 w-3.5" /> Ներբեռնել CSV
+                  <Download className="h-3.5 w-3.5" /> {t('ap.downloadCsv')}
                 </Button>
               </a>
             </div>
@@ -837,47 +843,47 @@ export default function AdminProductsPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[140px] sm:min-w-[180px] max-w-full sm:max-w-xs w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Որոնել..." className="h-9 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={t('ap.search')} className="h-9 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
         <Select value={catFilter} onValueChange={(v) => setCatFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-full sm:w-40 min-w-0"><SelectValue>{catFilter === "all" ? "Բոլոր" : categories?.find(c => c._id === catFilter)?.name ?? "Կատեգորիա"}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-40 min-w-0"><SelectValue>{catFilter === "all" ? t('ap.allShort') : categories?.find(c => c._id === catFilter)?.name ?? t('ap.category')}</SelectValue></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Բոլոր</SelectItem>
+            <SelectItem value="all">{t('ap.allShort')}</SelectItem>
             {categories?.map((cat) => <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={stockFilter} onValueChange={(v) => setStockFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Պահեստ", instock: "Առկա", low: "Ցածր (≤5)", out: "Սպառված" }[stockFilter]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: t('ap.stock'), instock: t('ap.available'), low: t('ap.lowStock5'), out: t('ap.outOfStock') }[stockFilter]}</SelectValue></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Պահեստ</SelectItem>
-            <SelectItem value="instock">Առկա</SelectItem>
-            <SelectItem value="low">Ցածր (≤5)</SelectItem>
-            <SelectItem value="out">Սպառված</SelectItem>
+            <SelectItem value="all">{t('ap.stock')}</SelectItem>
+            <SelectItem value="instock">{t('ap.available')}</SelectItem>
+            <SelectItem value="low">{t('ap.lowStock5')}</SelectItem>
+            <SelectItem value="out">{t('ap.outOfStock')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: "Կարգավիճակ", active: "Ակտիվ", inactive: "Ակտիվ չէ", featured: "Առաջարկված" }[statusFilter]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ all: t('ap.status'), active: t('ap.active'), inactive: t('ap.inactive'), featured: t('ap.featured') }[statusFilter]}</SelectValue></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Կարգավիճակ</SelectItem>
-            <SelectItem value="active">Ակտիվ</SelectItem>
-            <SelectItem value="inactive">Ակտիվ չէ</SelectItem>
-            <SelectItem value="featured">Առաջարկված</SelectItem>
+            <SelectItem value="all">{t('ap.status')}</SelectItem>
+            <SelectItem value="active">{t('ap.active')}</SelectItem>
+            <SelectItem value="inactive">{t('ap.inactive')}</SelectItem>
+            <SelectItem value="featured">{t('ap.featured')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v ?? 'newest')}>
-          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ newest: "Նորագույն", name: "Անուն", priceAsc: "Գին ↑", priceDesc: "Գին ↓", stockAsc: "Պահեստ ↑" }[sortBy]}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-36 min-w-0"><SelectValue>{{ newest: t('ap.newest'), name: t('ap.name'), priceAsc: t('ap.priceAsc'), priceDesc: t('ap.priceDesc'), stockAsc: t('ap.stockAsc') }[sortBy]}</SelectValue></SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Նորագույն</SelectItem>
-            <SelectItem value="name">Անուն</SelectItem>
-            <SelectItem value="priceAsc">Գին ↑</SelectItem>
-            <SelectItem value="priceDesc">Գին ↓</SelectItem>
-            <SelectItem value="stockAsc">Պահեստ ↑</SelectItem>
+            <SelectItem value="newest">{t('ap.newest')}</SelectItem>
+            <SelectItem value="name">{t('ap.name')}</SelectItem>
+            <SelectItem value="priceAsc">{t('ap.priceAsc')}</SelectItem>
+            <SelectItem value="priceDesc">{t('ap.priceDesc')}</SelectItem>
+            <SelectItem value="stockAsc">{t('ap.stockAsc')}</SelectItem>
           </SelectContent>
         </Select>
         <div className="ml-auto flex items-center gap-1 rounded-lg border bg-background p-1">
           <button onClick={() => setSelectMode((v) => !v)} className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${selectMode ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`} aria-label="Select mode">
-            <CheckSquare className="h-4 w-4" /> Ընտրել
+            <CheckSquare className="h-4 w-4" /> {t('ap.select')}
           </button>
           <button onClick={() => setViewMode('grid')} className={`rounded-md p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`} aria-label="Grid view">
             <LayoutGrid className="h-4 w-4" />
@@ -889,10 +895,10 @@ export default function AdminProductsPage() {
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <p className="text-sm text-muted-foreground">{filtered?.length ?? 0} ապրանք</p>
+        <p className="text-sm text-muted-foreground">{filtered?.length ?? 0} {t('ap.productsCountSuffix')}</p>
         {healthFilter && HEALTH_LABELS[healthFilter] && (
           <Link href="/admin/products" className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20">
-            {HEALTH_LABELS[healthFilter]}
+            {t(HEALTH_LABELS[healthFilter])}
             <span className="text-sm leading-none">×</span>
           </Link>
         )}
@@ -900,27 +906,27 @@ export default function AdminProductsPage() {
 
       {selectMode && (
         <div className="sticky top-2 z-30 mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-3 shadow-md backdrop-blur">
-          <span className="text-sm font-medium">{selectedIds.size} ընտրված</span>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set(visibleProducts?.map((p) => String(p._id)) ?? []))}>Բոլորը</Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Մաքրել</Button>
+          <span className="text-sm font-medium">{selectedIds.size} {t('ap.selected')}</span>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set(visibleProducts?.map((p) => String(p._id)) ?? []))}>{t('ap.allPlural')}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>{t('ap.clear')}</Button>
           <span className="mx-1 h-5 w-px bg-border" />
-          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('activate')}>Ակտիվացնել</Button>
-          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('deactivate')}>Ապաակտիվ</Button>
+          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('activate')}>{t('ap.activate')}</Button>
+          <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('deactivate')}>{t('ap.deactivate')}</Button>
           <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => {
-            const v = window.prompt('Զեղչ % (0 = հեռացնել զեղչը)');
+            const v = window.prompt(t('ap.discountPrompt'));
             if (v === null) return;
             const d = Number(v);
-            if (!Number.isFinite(d) || d < 0 || d > 99) { toast.error('Սխալ արժեք'); return; }
+            if (!Number.isFinite(d) || d < 0 || d > 99) { toast.error(t('ap.invalidValue')); return; }
             runBulk('setDiscount', { discount: d });
-          }}>Զեղչ %</Button>
+          }}>{t('ap.discountPercent')}</Button>
           <Select value="" onValueChange={(v) => { if (v) runBulk('setCategory', { categoryId: v }); }}>
-            <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder="Կատեգորիա →" /></SelectTrigger>
+            <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder={t('ap.categoryArrow')} /></SelectTrigger>
             <SelectContent>{categories?.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           <Button size="sm" variant="destructive" disabled={!selectedIds.size || bulkBusy} onClick={() => {
-            if (window.confirm(`Ջնջե՞լ ${selectedIds.size} ապրանք։ Գործողությունն անվերադարձ է։`)) runBulk('delete');
-          }}>Ջնջել</Button>
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={exitSelect}>Փակել</Button>
+            if (window.confirm(t('ap.confirmDeletePrefix') + selectedIds.size + t('ap.confirmDeleteSuffix'))) runBulk('delete');
+          }}>{t('ap.delete')}</Button>
+          <Button size="sm" variant="ghost" className="ml-auto" onClick={exitSelect}>{t('ap.close')}</Button>
         </div>
       )}
 
@@ -979,8 +985,8 @@ export default function AdminProductsPage() {
       {filtered?.length === 0 && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <Package className="h-16 w-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">Ապրանքներ չեն գտնվել</p>
-          <Link href="/admin/products/add"><Button>Ավելացնել ապրանք</Button></Link>
+          <p className="text-muted-foreground">{t('ap.noProductsFound')}</p>
+          <Link href="/admin/products/add"><Button>{t('ap.addProduct')}</Button></Link>
         </div>
       )}
 
@@ -990,7 +996,7 @@ export default function AdminProductsPage() {
             variant="outline"
             onClick={() => setVisibleCount((v) => Math.min(v + ADMIN_PRODUCTS_PAGE_SIZE, ADMIN_PRODUCTS_FETCH_LIMIT))}
           >
-            Բեռնել ավելին
+            {t('ap.loadMore')}
           </Button>
         </div>
       )}

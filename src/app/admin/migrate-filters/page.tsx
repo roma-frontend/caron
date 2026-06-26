@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAdminT } from '@/lib/i18n/admin';
 
 export default function MigrateFiltersPage() {
+  const { t } = useAdminT();
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<{ error?: string; message?: string; updated?: number } | null>(null);
 
   const handleMigrate = async () => {
-    if (!confirm('Սա կգծանցի բոլոր ապրանքների ֆիլտր հատկանիշները նոր համակարգին:\n\nԱյս գործողությունը կարևոր է և կատարվում է միայն մեկ անգամ!')) {
+    if (!confirm(t('acat.migrateConfirm'))) {
       return;
     }
 
@@ -28,7 +30,7 @@ export default function MigrateFiltersPage() {
       toast.success(`${data.message} ✅`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Գծանցում ձախողվեց։ ${msg}`);
+      toast.error(`${t('acat.migrateFailed')} ${msg}`);
       setResult({ error: msg });
     } finally {
       setRunning(false);
@@ -42,19 +44,19 @@ export default function MigrateFiltersPage() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-2xl">
               <Zap className="h-6 w-6 text-warning" />
-              Ֆիլտրի համակարգ միգրացիա
+              {t('acat.migrateTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <h3 className="font-semibold">Ինչ է տեղի ունենում?</h3>
+              <h3 className="font-semibold">{t('acat.whatHappens')}</h3>
               <p className="text-sm text-muted-foreground">
-                Այս գործողությունը թարմացնում է բոլոր ապրանքների ֆիլտր հատկանիշները:
+                {t('acat.migrateDesc')}
               </p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4 mt-2">
-                <li>✓ Բոլոր ֆիլտր կանշում կվերանվանվի UUID-ից</li>
-                <li>✓ Կապը չի խախտվի անունը փոխելիս</li>
-                <li>✓ Բոլոր ապրանքներ ստանում են նոր հատկանիշ բանալիներ</li>
+                <li>✓ {t('acat.migrateLi1')}</li>
+                <li>✓ {t('acat.migrateLi2')}</li>
+                <li>✓ {t('acat.migrateLi3')}</li>
               </ul>
             </div>
 
@@ -62,8 +64,8 @@ export default function MigrateFiltersPage() {
               <div className="flex gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold text-destructive">Կարևոր</p>
-                  <p className="text-destructive/80">Միգրացիան չի շրջելի: Համոզվեք, որ սա ճիշտ ժամանակն է:</p>
+                  <p className="font-semibold text-destructive">{t('acat.important')}</p>
+                  <p className="text-destructive/80">{t('acat.migrateWarning')}</p>
                 </div>
               </div>
             </div>
@@ -75,21 +77,21 @@ export default function MigrateFiltersPage() {
               className="w-full gap-2"
             >
               <Zap className="h-5 w-5" />
-              {running ? 'Գծանցվում է...' : 'Գործարկել միգրացիա'}
+              {running ? t('acat.migrating') : t('acat.runMigration')}
             </Button>
 
             {result && (
               <div className={`p-4 rounded-lg ${result.error ? 'bg-destructive/10 border border-destructive/20' : 'bg-green-500/10 border border-green-500/20'}`}>
                 {result.error ? (
                   <div className="text-sm text-destructive">
-                    <p className="font-semibold">Սխալ</p>
+                    <p className="font-semibold">{t('acat.error')}</p>
                     <p>{result.error}</p>
                   </div>
                 ) : (
                   <div className="text-sm text-green-700 dark:text-green-400">
-                    <p className="font-semibold">✅ Հաջողված</p>
+                    <p className="font-semibold">✅ {t('acat.success')}</p>
                     <p>{result.message}</p>
-                    <p className="text-xs mt-1 opacity-75">Թարմացվել է: {result.updated} ապրանք</p>
+                    <p className="text-xs mt-1 opacity-75">{t('acat.updatedColon')} {result.updated} {t('acat.productWord')}</p>
                   </div>
                 )}
               </div>

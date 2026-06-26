@@ -14,6 +14,7 @@ import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS } from '@/components
 import { Loader } from '@/components/ui/loader';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { useT } from '@/lib/i18n/admin';
 
 function useCountdown(endDate: number) {
   const [now, setNow] = useState(() => Date.now());
@@ -33,12 +34,13 @@ function useCountdown(endDate: number) {
 }
 
 function CountdownBlock({ endDate }: { endDate: number }) {
+  const { t } = useT();
   const { days, hours, mins, secs, ended } = useCountdown(endDate);
   if (ended) return null;
 
   return (
     <div className="flex gap-3">
-      {[{ v: days, l: 'Օր' }, { v: hours, l: 'ժ' }, { v: mins, l: 'ր' }, { v: secs, l: 'վ' }].map((item) => (
+      {[{ v: days, l: t('pg.promo.cd.day') }, { v: hours, l: t('pg.promo.cd.hour') }, { v: mins, l: t('pg.promo.cd.min') }, { v: secs, l: t('pg.promo.cd.sec') }].map((item) => (
         <div key={item.l} className="flex flex-col items-center rounded-xl border bg-card px-4 py-3 tabular-nums">
           <span className="text-2xl font-black">{String(item.v).padStart(2, '0')}</span>
           <span className="text-[10px] uppercase tracking-wider opacity-70">{item.l}</span>
@@ -50,6 +52,7 @@ function CountdownBlock({ endDate }: { endDate: number }) {
 
 /** Compact live countdown pill for promo cards. Renders nothing once ended. */
 function CountdownPill({ endDate }: { endDate: number }) {
+  const { t } = useT();
   const { days, hours, mins, secs, ended } = useCountdown(endDate);
   if (ended) return null;
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -57,7 +60,7 @@ function CountdownPill({ endDate }: { endDate: number }) {
     <div className="mt-2 flex justify-center">
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-bold tabular-nums text-destructive">
         <Clock className="h-3 w-3" />
-        {days > 0 ? `${days}օր ` : ''}{pad(hours)}:{pad(mins)}:{pad(secs)}
+        {days > 0 ? `${days}${t('pg.promo.dayAbbr')} ` : ''}{pad(hours)}:{pad(mins)}:{pad(secs)}
       </span>
     </div>
   );
@@ -145,13 +148,14 @@ function PromoProducts({ promo }: { promo: { categoryIds?: string[]; productIds?
   return (
     <div className="mt-4 grid grid-cols-2 gap-2">
       {filtered.map((p, i) => (
-        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
+        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} nameRu={p.nameRu} nameEn={p.nameEn} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} attributes={p.attributes} index={i} />
       ))}
     </div>
   );
 }
 
 function PromoSubscribe() {
+  const { t } = useT();
   const [contact, setContact] = useState('');
   const [savedContact, setSavedContact] = useState(() => localStorage.getItem('promo_sub_contact') ?? '');
   const subscribe = useMutation(api.promotionSubscribers.subscribe);
@@ -168,8 +172,8 @@ function PromoSubscribe() {
       localStorage.setItem('promo_sub_contact', raw);
       setSavedContact(raw);
       setContact('');
-      toast.success('Դուք բաժանորդագրվել եք ակցիաների թարմացումներին');
-    } catch { toast.error('Չհաջողվեց բաժանորդագրվել'); }
+      toast.success(t('pg.promo.subscribed'));
+    } catch { toast.error(t('pg.promo.subscribeFailed')); }
     setBusy(false);
   };
 
@@ -179,8 +183,8 @@ function PromoSubscribe() {
       await unsubscribe({ contact: savedContact });
       localStorage.removeItem('promo_sub_contact');
       setSavedContact('');
-      toast.success('Դուք ապաբաժանորդագրվել եք');
-    } catch { toast.error('Չհաջողվեց ապաբաժանորդագրվել'); }
+      toast.success(t('pg.promo.unsubscribed'));
+    } catch { toast.error(t('pg.promo.unsubscribeFailed')); }
     setBusy(false);
   };
 
@@ -194,7 +198,7 @@ function PromoSubscribe() {
           @{savedContact}
         </span>
         <button onClick={handleUnsubscribe} disabled={busy} className="text-xs text-muted-foreground underline-offset-2 hover:text-destructive hover:underline">
-          Ապաբաժանորդագրվել
+          {t('pg.promo.unsubscribe')}
         </button>
       </div>
     );
@@ -203,7 +207,7 @@ function PromoSubscribe() {
   return (
     <div className="flex items-center justify-center gap-3 flex-wrap">
       <Bell className="h-4 w-4 text-primary shrink-0" />
-      <span className="text-sm text-muted-foreground whitespace-nowrap">Telegram-ի ծանուցում</span>
+      <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pg.promo.telegramNotif')}</span>
       <div className="flex gap-1.5">
         <Input
           placeholder="@username"
@@ -213,7 +217,7 @@ function PromoSubscribe() {
           onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
         />
         <Button onClick={handleSubscribe} disabled={busy || !contact.trim()} size="sm" className="h-8 gap-1 text-xs">
-          <Bell className="h-3 w-3" /> Բաժանորդագրվել
+          <Bell className="h-3 w-3" /> {t('pg.promo.subscribe')}
         </Button>
       </div>
     </div>
@@ -221,6 +225,7 @@ function PromoSubscribe() {
 }
 
 export default function PromotionsPage() {
+  const { t } = useT();
   const promotions = useQuery(api.promotions.active, {});
   const promoProducts = useQuery(api.promotions.getPromoProducts, {});
 
@@ -241,15 +246,15 @@ export default function PromotionsPage() {
         <div className="relative mx-auto flex flex-col items-center text-center max-w-[var(--container-max)] px-[var(--space-container)] py-[5rem]">
           <div className="hero-fade-1 mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-5 py-2">
             <Flame className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold">Ակցիա</span>
+            <span className="text-sm font-semibold">{t('pg.promo.badge')}</span>
           </div>
 
           <h1 className="hero-fade-2 text-4xl font-black tracking-tight md:text-6xl" style={{ lineHeight: 1.1 }}>
-            Ակցիաներ
+            {t('pg.promo.title')}
           </h1>
 
           <p className="hero-fade-3 mt-6 max-w-xl text-lg text-muted-foreground">
-              Գտեք լավագույն առաջարկները և զեղչերը մեր հատուկ ակցիաների բաժնում: Միացեք մեզ և խնայեք ձեր ժամանակն ու գումարը:
+              {t('pg.promo.heroDesc')}
           </p>
 
           {mainPromo && (
@@ -261,16 +266,16 @@ export default function PromotionsPage() {
           <div className="hero-fade-4 mt-8 flex flex-wrap justify-center gap-4">
             <Link href="/products">
               <Button size="lg" className="gap-2">
-                <Zap className="h-5 w-5" /> Ապրանքներ
+                <Zap className="h-5 w-5" /> {t('pg.common.products')}
               </Button>
             </Link>
           </div>
 
           {/* Trust badges */}
           <div className="hero-fade-4 mt-12 flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2"><Gift className="h-4 w-4 text-primary" /> Նվերներ</span>
-            <span className="flex items-center gap-2"><Percent className="h-4 w-4 text-primary" /> Ակցիա -50%</span>
-            <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" />Խնայում</span>
+            <span className="flex items-center gap-2"><Gift className="h-4 w-4 text-primary" /> {t('pg.promo.gifts')}</span>
+            <span className="flex items-center gap-2"><Percent className="h-4 w-4 text-primary" /> {t('pg.promo.upTo50')}</span>
+            <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" />{t('pg.promo.saving')}</span>
           </div>
         </div>
       </section>
@@ -278,7 +283,7 @@ export default function PromotionsPage() {
       {/* Promo cards */}
       {promotions.length > 0 && (
         <section className="mx-auto max-w-[var(--container-max)] px-[var(--space-container)] pt-[var(--space-section)] pb-0">
-          <h2 className="mb-8 text-center text-2xl font-bold">Ակցիաներ</h2>
+          <h2 className="mb-8 text-center text-2xl font-bold">{t('pg.promo.title')}</h2>
           <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
             {promotions.map((promo, i) => <PromoCard key={promo._id} promo={promo} index={i} />)}
           </div>
@@ -293,14 +298,14 @@ export default function PromotionsPage() {
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
             <div className="flex items-center gap-2.5 rounded-full border bg-card px-5 py-1.5">
               <Percent className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-semibold">Ապրանքներ զեղչով</span>
+              <span className="text-sm font-semibold">{t('pg.promo.productsOnSale')}</span>
               <Badge variant="secondary" className="text-[10px] px-1.5">{promoProducts.length}</Badge>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
           </div>
           <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] md:[--grid-cols:3] lg:[--grid-cols:4] gap-1 sm:gap-4">
             {promoProducts.map((p, i) => (
-              <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} index={i} />
+              <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} nameRu={p.nameRu} nameEn={p.nameEn} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} qtyStep={p.qtyStep} rating={p.rating} reviewCount={p.reviewCount} index={i} />
             ))}
           </div>
         </section>
@@ -308,7 +313,7 @@ export default function PromotionsPage() {
 
       {promotions.length === 0 && (!promoProducts || promoProducts.length === 0) && (
         <section className="py-16 text-center">
-          <p className="text-lg text-muted-foreground">Ակցիաներ չեն հայտնաբերվել</p>
+          <p className="text-lg text-muted-foreground">{t('pg.promo.empty')}</p>
         </section>
       )}
 

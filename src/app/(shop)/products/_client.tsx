@@ -14,17 +14,18 @@ import { LoaderInline } from '@/components/ui/loader';
 import { ProductGridSkeleton } from '@/components/ProductSkeleton';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ProductFilters, SortBar } from '@/components/ProductFilters';
-import { NAV } from '@/lib/constants';
 import { useVehicleStore } from '@/store/vehicle';
+import { useT } from '@/lib/i18n/admin';
+import { useFilterName } from '@/lib/i18n/filterNames';
 
 const subscribe = () => () => {};
 const getSnapshot = () => true;
 const getServerSnapshot = () => false;
 
 export default function ProductsPage() {
+  const { t } = useT();
   const params = useSearchParams();
-  const settings = useSettings();
-  const PAGE_SIZE = settings?.productsPerPage || 20;
+  const settings = useSettings();  const PAGE_SIZE = settings?.productsPerPage || 20;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings?.defaultViewMode || 'grid');
   const vehicle = useVehicleStore((s) => s.vehicle);
   const [search, setSearch] = useState(() => {
@@ -142,12 +143,12 @@ export default function ProductsPage() {
 
   const fchips: { key: string; label: string; clear: () => void }[] = [];
   if (activeBrand) fchips.push({ key: 'brand', label: activeBrand, clear: () => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); } });
-  if (filters.categoryId) fchips.push({ key: 'cat', label: cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա', clear: () => setFilters({ ...filters, categoryId: undefined, attributes: undefined }) });
-  if (filters.onSale) fchips.push({ key: 'sale', label: 'Զեղչված', clear: () => setFilters({ ...filters, onSale: undefined }) });
+  if (filters.categoryId) fchips.push({ key: 'cat', label: cats?.find((c) => c._id === filters.categoryId)?.name ?? t('sp.category'), clear: () => setFilters({ ...filters, categoryId: undefined, attributes: undefined }) });
+  if (filters.onSale) fchips.push({ key: 'sale', label: t('sp.discounted'), clear: () => setFilters({ ...filters, onSale: undefined }) });
   if (filters.minRating) fchips.push({ key: 'rating', label: `${filters.minRating}★+`, clear: () => setFilters({ ...filters, minRating: undefined }) });
-  if (filters.minPrice) fchips.push({ key: 'min', label: `Գին ≥ ${filters.minPrice}`, clear: () => setFilters({ ...filters, minPrice: undefined }) });
-  if (filters.maxPrice) fchips.push({ key: 'max', label: `Գին ≤ ${filters.maxPrice}`, clear: () => setFilters({ ...filters, maxPrice: undefined }) });
-  if (filters.inStockOnly) fchips.push({ key: 'stock', label: 'Միայն առկա', clear: () => setFilters({ ...filters, inStockOnly: undefined }) });
+  if (filters.minPrice) fchips.push({ key: 'min', label: `${t('sp.priceMin')} ${filters.minPrice}`, clear: () => setFilters({ ...filters, minPrice: undefined }) });
+  if (filters.maxPrice) fchips.push({ key: 'max', label: `${t('sp.priceMax')} ${filters.maxPrice}`, clear: () => setFilters({ ...filters, maxPrice: undefined }) });
+  if (filters.inStockOnly) fchips.push({ key: 'stock', label: t('sp.inStockOnly'), clear: () => setFilters({ ...filters, inStockOnly: undefined }) });
   for (const [k, v] of Object.entries(filters.attributes ?? {})) {
     if (k === 'brand') continue;
     const val = Array.isArray(v) ? v.join(', ') : String(v);
@@ -210,10 +211,10 @@ export default function ProductsPage() {
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
       <div className="sticky z-30 -mx-1 flex flex-col justify-between bg-background/95 px-4 sm:px-0 py-3 backdrop-blur md:flex-row md:items-center" style={{ gap: 'var(--space-4)', top: 'var(--header-height)', marginBottom: 'var(--space-4)' }}>
-        <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)' }}>{NAV.catalog}</h1>
+        <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)' }}>{t('cmp.nav_catalog')}</h1>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder={NAV.search} className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={t('cmp.nav_search')} className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
 
@@ -232,8 +233,8 @@ export default function ProductsPage() {
               <SortBar activeFilters={filters} onFilterChange={setFilters} />
               <span className="mx-0.5 hidden h-4 w-px bg-border sm:inline-block" />
               {[
-                { key: 'stock', label: 'Առկա', active: !!filters.inStockOnly, toggle: () => setFilters({ ...filters, inStockOnly: filters.inStockOnly ? undefined : true }) },
-                { key: 'sale', label: 'Զեղչ', active: !!filters.onSale, toggle: () => setFilters({ ...filters, onSale: filters.onSale ? undefined : true }) },
+                { key: 'stock', label: t('sp.inStockShort'), active: !!filters.inStockOnly, toggle: () => setFilters({ ...filters, inStockOnly: filters.inStockOnly ? undefined : true }) },
+                { key: 'sale', label: t('sp.saleShort'), active: !!filters.onSale, toggle: () => setFilters({ ...filters, onSale: filters.onSale ? undefined : true }) },
                 { key: 'rating', label: '4★+', active: filters.minRating === 4, toggle: () => setFilters({ ...filters, minRating: filters.minRating === 4 ? undefined : 4 }) },
               ].map((chip) => (
                 <button key={chip.key} onClick={chip.toggle}
@@ -281,7 +282,7 @@ export default function ProductsPage() {
             <div className="mb-5 flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2.5 text-sm">
               <Car className="h-4 w-4 text-primary" />
               <span className="font-medium">{[vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' ')}</span>
-              <button onClick={() => { clearVehicle(); setSearch(''); }} className="ml-auto text-muted-foreground transition-colors hover:text-foreground">{'Մաքրել'}</button>
+              <button onClick={() => { clearVehicle(); setSearch(''); }} className="ml-auto text-muted-foreground transition-colors hover:text-foreground">{t('sp.clear')}</button>
             </div>
           )}
 
@@ -289,7 +290,7 @@ export default function ProductsPage() {
             <div className="mb-5 space-y-3">
               {filters.categoryId && (
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold tracking-tight">{cats?.find((c) => c._id === filters.categoryId)?.name ?? 'Կատեգորիա'}</h2>
+                  <h2 className="text-lg font-bold tracking-tight">{cats?.find((c) => c._id === filters.categoryId)?.name ?? t('sp.category')}</h2>
                   <button onClick={() => setFilters({ ...filters, categoryId: undefined, attributes: undefined })} className="text-xs text-muted-foreground hover:text-primary transition-colors">
                     <X className="h-3.5 w-3.5 inline" />
                   </button>
@@ -301,7 +302,7 @@ export default function ProductsPage() {
                     {c.label} <X className="h-3 w-3" />
                   </button>
                 ))}
-                <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{'Մաքրել ֆիլտրերը'}</button>
+                <button onClick={() => { setFilters({ sort: filters.sort }); clearUrlBrand(); }} className="text-xs text-muted-foreground underline-offset-2 hover:underline">{t('sp.clearFilters')}</button>
               </div>
             </div>
           ) : null}
@@ -334,7 +335,7 @@ export default function ProductsPage() {
                       style={{ '--grid-cols': cols } as React.CSSProperties}
                     >
                       {rowItems.map((p, j) => (
-                        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} lite />
+                        <ProductCard key={p._id} id={p._id} slug={p.slug} atgCode={p.atgCode} sku={p.sku} name={p.name} nameRu={p.nameRu} nameEn={p.nameEn} price={p.price} wholesalePrice={p.wholesalePrice} compareAtPrice={p.compareAtPrice} retailDiscount={p.retailDiscount} wholesaleDiscount={p.wholesaleDiscount} image={p.images?.[0]} inStock={p.stock > 0} stock={p.stock} rating={p.rating} reviewCount={p.reviewCount} carBrand={p.attributes?.carBrand} qtyStep={p.qtyStep} attributes={p.attributes} index={j} compact={isList} lite />
                       ))}
                     </div>
                   </div>
@@ -344,7 +345,7 @@ export default function ProductsPage() {
           )}
 
           {!brandLoading && results.length === 0 && status !== 'LoadingFirstPage' && (
-            <div className="py-16 text-center text-muted-foreground">{'Ոչ մի ապրանք չի գտնվել'}</div>
+            <div className="py-16 text-center text-muted-foreground">{t('sp.noProductsFound')}</div>
           )}
 
           {(status === 'LoadingFirstPage' || brandLoading) && <ProductGridSkeleton count={PAGE_SIZE} />}
@@ -353,7 +354,7 @@ export default function ProductsPage() {
             <>
               <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
               <div className="mt-8 flex justify-center">
-                <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{'Տեսնել ավելի'}</Button>
+                <Button variant="outline" size="lg" onClick={() => loadMore(PAGE_SIZE)}>{t('sp.loadMore')}</Button>
               </div>
             </>
           )}
@@ -382,6 +383,7 @@ function TypeFilterRow({
   onToggle: (option: string, isActive: boolean) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const filterName = useFilterName();
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -418,7 +420,7 @@ function TypeFilterRow({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">{def.name}:</span>
+        <span className="text-xs font-medium text-muted-foreground">{filterName(def.name, def.slug)}:</span>
         <div className="flex items-center gap-1">
           <button type="button" disabled={!canScrollLeft} onClick={() => scrollBy(-220)}
             className={`rounded-full border p-1 transition ${canScrollLeft ? 'opacity-100 hover:bg-accent' : 'pointer-events-none opacity-0'}`}>

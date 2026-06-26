@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/formatters';
 import { Package, Clock, TrendingUp, Mic, ImageIcon, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { normalizeImageUrl } from '../../convex/lib/imageUrl';
+import { useT } from '@/lib/i18n/admin';
 
 /** Small product thumbnail for search results (falls back to an icon). */
 function ResultThumb({ src, alt }: { src?: string | null; alt: string }) {
@@ -102,6 +103,7 @@ function pickAudioMime(): string | undefined {
 }
 
 export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { t } = useT();
   const router = useRouter();
   const [q, setQ] = useState('');
   const [history, setHistory] = useState(getHistory);
@@ -158,12 +160,12 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
       if (!res.ok) throw new Error(data?.error || 'failed');
       if (data.query) {
         setQ(data.query);
-        if (!data.found) setImgErr('Ճշգրիտ համընկնում չգտնվեց — ճշտեք որոնումը');
+        if (!data.found) setImgErr(t('cmp.img_no_exact'));
       } else {
-        setImgErr('Չհաջողվեց ճանաչել ապրանքը նկարից');
+        setImgErr(t('cmp.img_no_recognize'));
       }
     } catch {
-      setImgErr('Չհաջողվեց վերլուծել նկարը։ Փորձեք կրկին');
+      setImgErr(t('cmp.img_analyze_fail'));
     } finally {
       setAnalyzing(false);
     }
@@ -216,7 +218,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
     setVoiceErr(null);
 
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setVoiceErr('Ձեր բրաուզերը չի աջակցում ձայնագրությունը');
+      setVoiceErr(t('cmp.voice_unsupported'));
       return;
     }
 
@@ -224,7 +226,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      setVoiceErr('Թույլատրեք միկրոֆոնի օգտագործումը');
+      setVoiceErr(t('cmp.voice_permission'));
       return;
     }
     streamRef.current = stream;
@@ -252,7 +254,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
       mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
     } catch {
       releaseAudio();
-      setVoiceErr('Չհաջողվեց սկսել ձայնագրությունը');
+      setVoiceErr(t('cmp.voice_start_fail'));
       return;
     }
     chunksRef.current = [];
@@ -275,9 +277,9 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
         if (!res.ok) throw new Error(data?.error || 'failed');
         const text = String(data.text ?? '').trim();
         if (text) setQ(text);
-        else setVoiceErr('Ձայնը չհաջողվեց ճանաչել, փորձեք կրկին');
+        else setVoiceErr(t('cmp.voice_recognize_retry'));
       } catch {
-        setVoiceErr('Չհաջողվեց ճանաչել ձայնը');
+        setVoiceErr(t('cmp.voice_recognize_fail'));
       } finally {
         setTranscribing(false);
       }
@@ -287,7 +289,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
       mr.start();
     } catch {
       releaseAudio();
-      setVoiceErr('Չհաջողվեց սկսել ձայնագրությունը');
+      setVoiceErr(t('cmp.voice_start_fail'));
       return;
     }
     setListening(true);
@@ -343,21 +345,21 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={handleOpenChange} title="Որոնել">
+    <CommandDialog open={open} onOpenChange={handleOpenChange} title={t('cmp.search_title')}>
       <Command shouldFilter={false} className="relative">
-        <CommandInput value={q} onValueChange={setQ} placeholder="Որոնել ապրանքներ..." className="pr-20" />
+        <CommandInput value={q} onValueChange={setQ} placeholder={t('cmp.search_products_placeholder')} className="pr-20" />
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onImageSelected} />
-        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={analyzing} aria-label="Որոնում նկարով" title="Որոնում նկարով"
+        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={analyzing} aria-label={t('cmp.image_search')} title={t('cmp.image_search')}
           className={`absolute right-12 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${analyzing ? 'text-primary' : 'text-muted-foreground hover:bg-accent hover:text-primary'}`}>
           {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
         </button>
-        <button type="button" onClick={startVoice} disabled={transcribing} aria-label="Ձայնային որոնում" title="Ձայնային որոնում"
+        <button type="button" onClick={startVoice} disabled={transcribing} aria-label={t('cmp.voice_search')} title={t('cmp.voice_search')}
           className={`absolute right-4 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90 ${listening ? 'scale-110 bg-destructive text-white shadow-[0_0_0_4px_rgba(239,68,68,0.25)]' : 'text-muted-foreground hover:bg-accent hover:text-primary'}`}>
           {transcribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" />}
         </button>
         {(analyzing || imgErr || voiceErr) && (
           <div className={`px-4 pb-1 text-xs ${imgErr || voiceErr ? 'text-destructive' : 'text-muted-foreground'}`}>
-            {analyzing ? 'Վերլուծում ենք նկարը…' : (imgErr ?? voiceErr)}
+            {analyzing ? t('cmp.analyzing_image') : (imgErr ?? voiceErr)}
           </div>
         )}
         {(listening || transcribing) && (
@@ -372,15 +374,15 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
                   </span>
                 </div>
                 <VoiceVisualizer analyserRef={analyserRef} active={listening} />
-                <p className="text-center text-sm font-medium text-foreground">{q ? `«${q}»` : 'Խոսեք հիմա…'}</p>
+                <p className="text-center text-sm font-medium text-foreground">{q ? `«${q}»` : t('cmp.speak_now')}</p>
                 <button type="button" onClick={stopRecording}
                   className="rounded-full border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                  Կանգնեցնել
+                  {t('cmp.stop')}
                 </button>
               </>
             ) : (
               <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Ճանաչում ենք ձայնը…
+                <Loader2 className="h-4 w-4 animate-spin" /> {t('cmp.recognizing_voice')}
               </div>
             )}
           </div>
@@ -389,7 +391,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
           {term.length < 2 ? (
             <>
               {history.length > 0 && (
-                <CommandGroup heading="Վերջին որոնումներ">
+                <CommandGroup heading={t('cmp.recent_searches')}>
                   {history.map((h) => (
                     <CommandItem key={h} value={h} onSelect={() => searchAll(h)} className="gap-3">
                       <Clock className="h-4 w-4 text-muted-foreground" />
@@ -399,7 +401,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
                 </CommandGroup>
               )}
               <CommandSeparator />
-              <CommandGroup heading="Հայտնի ապրանքներ">
+              <CommandGroup heading={t('cmp.popular_products')}>
                 {POPULAR.map((p) => (
                   <CommandItem key={p} value={p} onSelect={() => searchAll(p)} className="gap-3">
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -409,11 +411,11 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
               </CommandGroup>
             </>
           ) : results === undefined ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Որոնում...</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">{t('cmp.searching')}</div>
           ) : results.length === 0 ? (
-            <CommandEmpty>Ոչ մի ապրանք չի գտնվել</CommandEmpty>
+            <CommandEmpty>{t('cmp.no_products_found')}</CommandEmpty>
           ) : (
-            <CommandGroup heading="Ապրանքներ">
+            <CommandGroup heading={t('cmp.products')}>
               {results.map((p) => (
                 <CommandItem key={p._id} value={p._id} onSelect={() => go(p.slug, term)} className="gap-3">
                   <ResultThumb src={p.images?.[0]} alt={p.name} />

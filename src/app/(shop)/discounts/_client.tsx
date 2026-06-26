@@ -8,17 +8,19 @@ import { Flame, SlidersHorizontal, TrendingDown, Clock, Percent } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
+import { useT } from '@/lib/i18n/admin';
 
 type SortKey = 'discount' | 'price_asc' | 'price_desc' | 'newest';
 
 const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'discount', label: 'Մեծ զեղչ' },
-  { key: 'price_asc', label: 'Էժան' },
-  { key: 'price_desc', label: 'Թանկ' },
-  { key: 'newest', label: 'Նոր' },
+  { key: 'discount', label: 'pg.disc.sort.discount' },
+  { key: 'price_asc', label: 'pg.disc.sort.cheap' },
+  { key: 'price_desc', label: 'pg.disc.sort.expensive' },
+  { key: 'newest', label: 'pg.disc.sort.new' },
 ];
 
 export default function DiscountsClient() {
+  const { t } = useT();
   const currentUser = useAuthStore((s) => s.user);
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
 
@@ -54,11 +56,11 @@ export default function DiscountsClient() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm">
-                <Flame className="h-3.5 w-3.5 animate-pulse" /> Հատուկ առաջարկ
+                <Flame className="h-3.5 w-3.5 animate-pulse" /> {t('pg.disc.specialOffer')}
               </div>
-              <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Զեղ&shy;չեր</h1>
+              <h1 className="text-4xl font-black tracking-tight sm:text-5xl">{t('pg.disc.title')}</h1>
               <p className="mt-2 max-w-sm text-white/70 text-sm">
-                Ավտոպահեստամասեր՝ հատուկ գներով։ Բաց մի թողեք հնարավորությունը։
+                {t('pg.disc.subtitle')}
               </p>
             </div>
 
@@ -67,22 +69,22 @@ export default function DiscountsClient() {
               <div className="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2.5 backdrop-blur-sm">
                 <TrendingDown className="h-5 w-5" />
                 <div>
-                  <div className="text-xs text-white/70">Ընդհանուր</div>
+                  <div className="text-xs text-white/70">{t('pg.disc.total')}</div>
                   <div className="text-xl font-black">{products?.length ?? '—'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2.5 backdrop-blur-sm">
                 <Percent className="h-5 w-5" />
                 <div>
-                  <div className="text-xs text-white/70">Մաքս. զեղչ</div>
+                  <div className="text-xs text-white/70">{t('pg.disc.maxDiscount')}</div>
                   <div className="text-xl font-black">{maxDiscount > 0 ? `${maxDiscount}%` : '—'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2.5 backdrop-blur-sm">
                 <Clock className="h-5 w-5" />
                 <div>
-                  <div className="text-xs text-white/70">Կարգավիճակ</div>
-                  <div className="text-sm font-bold">Ակտիվ</div>
+                  <div className="text-xs text-white/70">{t('pg.disc.status')}</div>
+                  <div className="text-sm font-bold">{t('pg.disc.active')}</div>
                 </div>
               </div>
             </div>
@@ -94,7 +96,7 @@ export default function DiscountsClient() {
       <div className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-[var(--container-max)] items-center gap-2 overflow-x-auto px-[var(--space-container)] py-3 scrollbar-none">
           <SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="shrink-0 text-xs text-muted-foreground mr-1">Դասավորել՝</span>
+          <span className="shrink-0 text-xs text-muted-foreground mr-1">{t('pg.disc.sortBy')}</span>
           {SORTS.map((s) => (
             <Button
               key={s.key}
@@ -103,7 +105,7 @@ export default function DiscountsClient() {
               className={cn('shrink-0 rounded-full text-xs h-8', sort === s.key && 'bg-destructive hover:bg-destructive/90 border-destructive')}
               onClick={() => setSort(s.key)}
             >
-              {s.label}
+              {t(s.label)}
             </Button>
           ))}
         </div>
@@ -122,8 +124,8 @@ export default function DiscountsClient() {
             <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10">
               <Flame className="h-10 w-10 text-destructive/40" />
             </div>
-            <p className="text-xl font-bold">Ակտիվ զեղչեր չկան</p>
-            <p className="mt-2 text-sm text-muted-foreground">Ստուգեք ավելի ուշ — շուտով կլինեն</p>
+            <p className="text-xl font-bold">{t('pg.disc.empty')}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{t('pg.disc.emptyHint')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-[repeat(var(--grid-cols),minmax(0,1fr))] [--grid-cols:2] sm:[--grid-cols:3] md:[--grid-cols:4] lg:[--grid-cols:5] gap-3">

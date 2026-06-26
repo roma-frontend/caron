@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useT } from '@/lib/i18n/admin';
 import {
   PromoTemplate, PROMO_TEMPLATES, PROMO_COLOR_LIST, PROMO_COLORS,
   PROMO_RATIOS, PROMO_RATIO_CLASS,
@@ -13,6 +14,7 @@ export function PromoTemplateBuilder({ value, onChange }: {
   value: PromoTemplateConfig;
   onChange: (next: PromoTemplateConfig) => void;
 }) {
+  const { t } = useT();
   const set = (patch: Partial<PromoTemplateConfig>) => onChange({ ...value, ...patch });
   const cardRatio = value.cardRatio ?? '1/1';
   const bannerRatio = value.bannerRatio ?? '16/5';
@@ -22,13 +24,13 @@ export function PromoTemplateBuilder({ value, onChange }: {
       {/* Dual preview: /promotions card + homepage banner */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label className="text-xs">Նախադիտում՝ /promotions (քարտ)</Label>
+          <Label className="text-xs">{t('acmp.promo.previewCard')}</Label>
           <div className={`mt-2 mx-auto w-44 overflow-hidden rounded-2xl border shadow-sm ${PROMO_RATIO_CLASS[cardRatio]}`}>
             <PromoTemplate config={value} ratio={cardRatio} />
           </div>
         </div>
         <div>
-          <Label className="text-xs">Նախադիտում՝ Գլխավոր (բաններ)</Label>
+          <Label className="text-xs">{t('acmp.promo.previewBanner')}</Label>
           <div className={`mt-2 w-full overflow-hidden rounded-2xl border shadow-sm ${PROMO_RATIO_CLASS[bannerRatio]}`}>
             <PromoTemplate config={value} ratio={bannerRatio} />
           </div>
@@ -38,28 +40,28 @@ export function PromoTemplateBuilder({ value, onChange }: {
       {/* Text fields */}
       <div className="space-y-3">
         <div>
-          <Label className="text-xs">Մեծ տեքստ (օր.՝ -30%, 2+1)</Label>
+          <Label className="text-xs">{t('acmp.promo.bigText')}</Label>
           <Input value={value.headline} onChange={(e) => set({ headline: e.target.value })} placeholder="-30%" className="h-10" />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <Label className="text-xs">Վերնագիր</Label>
-            <Input value={value.title} onChange={(e) => set({ title: e.target.value })} placeholder="Կոճակների զեղչ" className="h-10" />
+            <Label className="text-xs">{t('acmp.promo.title')}</Label>
+            <Input value={value.title} onChange={(e) => set({ title: e.target.value })} placeholder={t('acmp.promo.titlePlaceholder')} className="h-10" />
           </div>
           <div>
-            <Label className="text-xs">Ենթավերնագիր</Label>
+            <Label className="text-xs">{t('acmp.promo.subtitle')}</Label>
             <Input value={value.subtitle ?? ''} onChange={(e) => set({ subtitle: e.target.value })} placeholder="Brembo, TRW, ATE" className="h-10" />
           </div>
         </div>
         <div>
-          <Label className="text-xs">Ստորին նշում</Label>
-          <Input value={value.footnote ?? ''} onChange={(e) => set({ footnote: e.target.value })} placeholder="Սահմանափակ առաջարկ" className="h-10" />
+          <Label className="text-xs">{t('acmp.promo.footnote')}</Label>
+          <Input value={value.footnote ?? ''} onChange={(e) => set({ footnote: e.target.value })} placeholder={t('acmp.promo.footnotePlaceholder')} className="h-10" />
         </div>
       </div>
 
       {/* Card ratio (for /promotions) */}
       <div>
-        <Label className="text-xs">Ձև՝ /promotions-ի համար</Label>
+        <Label className="text-xs">{t('acmp.promo.cardShape')}</Label>
         <div className="mt-2 flex flex-wrap gap-2">
           {PROMO_RATIOS.map((r) => (
             <button key={r.value} type="button" onClick={() => set({ cardRatio: r.value })}
@@ -72,7 +74,7 @@ export function PromoTemplateBuilder({ value, onChange }: {
 
       {/* Banner ratio (for homepage) */}
       <div>
-        <Label className="text-xs">Ձև՝ Գլխավոր էջի բաններ</Label>
+        <Label className="text-xs">{t('acmp.promo.bannerShape')}</Label>
         <div className="mt-2 flex flex-wrap gap-2">
           {PROMO_RATIOS.map((r) => (
             <button key={r.value} type="button" onClick={() => set({ bannerRatio: r.value })}
@@ -82,20 +84,20 @@ export function PromoTemplateBuilder({ value, onChange }: {
           ))}
         </div>
         <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-          /promotions-ի համար սովորաբար՝ 1:1 (քառակուսի)։ Գլխավորի լայն բաններների համար՝ 16:5, 21:9 և այլն։
+          {t('acmp.promo.shapeHint')}
         </p>
       </div>
 
       {/* Template picker (square thumbnails) */}
       <div>
-        <Label className="text-xs">Շաբլոն</Label>
+        <Label className="text-xs">{t('acmp.promo.template')}</Label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {PROMO_TEMPLATES.map((t) => (
-            <button key={t.id} type="button" onClick={() => set({ id: t.id })}
-              className={`overflow-hidden rounded-lg border-2 transition-colors ${value.id === t.id ? 'border-primary' : 'border-transparent hover:border-primary/40'}`}
-              title={t.label}>
+          {PROMO_TEMPLATES.map((tpl) => (
+            <button key={tpl.id} type="button" onClick={() => set({ id: tpl.id })}
+              className={`overflow-hidden rounded-lg border-2 transition-colors ${value.id === tpl.id ? 'border-primary' : 'border-transparent hover:border-primary/40'}`}
+              title={tpl.label}>
               <div className="h-16 w-16">
-                <PromoTemplate config={{ ...value, id: t.id }} ratio="1/1" />
+                <PromoTemplate config={{ ...value, id: tpl.id }} ratio="1/1" />
               </div>
             </button>
           ))}
@@ -104,7 +106,7 @@ export function PromoTemplateBuilder({ value, onChange }: {
 
       {/* Color picker */}
       <div>
-        <Label className="text-xs">Գույն</Label>
+        <Label className="text-xs">{t('acmp.promo.color')}</Label>
         <div className="mt-2 flex flex-wrap gap-2">
           {PROMO_COLOR_LIST.map((color) => {
             const p = PROMO_COLORS[color];

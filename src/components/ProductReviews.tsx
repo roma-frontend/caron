@@ -12,18 +12,20 @@ import { Star, Send, ShieldCheck, ThumbsUp, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Id } from '../../convex/_generated/dataModel';
-import { formatDateHy } from '@/lib/formatters';
+import { formatDateLocalized } from '@/lib/formatters';
 import { useUpload } from '@/hooks/useUpload';
 import { useAuthStore } from '@/store/auth';
+import { useT } from '@/lib/i18n/admin';
 
 function Stars({ rating, interactive, onChange }: { rating: number; interactive?: boolean; onChange?: (r: number) => void }) {
+  const { t } = useT();
   return (
-    <div className="flex gap-0.5" role={interactive ? 'radiogroup' : 'img'} aria-label={`${rating} 5 աստղից`}>
+    <div className="flex gap-0.5" role={interactive ? 'radiogroup' : 'img'} aria-label={`${rating} 5 ${t('sp.starsOf')}`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star key={i}
           role={interactive ? 'radio' : undefined}
           aria-checked={interactive ? i === rating : undefined}
-          aria-label={interactive ? `${i} աստղ` : undefined}
+          aria-label={interactive ? `${i} ${t('sp.star')}` : undefined}
           tabIndex={interactive ? 0 : undefined}
           className={`h-4 w-4 ${i <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'} ${interactive ? 'cursor-pointer hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm' : ''}`}
           onClick={() => interactive && onChange?.(i)}
@@ -40,6 +42,7 @@ function getVoted(): string[] {
 }
 
 export function ProductReviews({ productId }: { productId: Id<'products'> }) {
+  const { t } = useT();
   const reviews = useQuery(api.reviews.getByProduct, { productId });
   const stats = useQuery(api.reviews.getStats, { productId });
   const addReview = useMutation(api.reviews.create);
@@ -62,7 +65,7 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = '';
     if (files.length === 0) return;
-    if (photos.length + files.length > 5) { toast.error('Առավելագույնը 5 լուսանկար'); return; }
+    if (photos.length + files.length > 5) { toast.error(t('sp.maxPhotos')); return; }
     for (const file of files) {
       const url = await upload(file);
       if (url) setPhotos((prev) => [...prev, url]);
@@ -70,13 +73,13 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
   };
 
   const handleSubmit = async () => {
-    if (!name) { toast.error('Լրացրեք ձեր անունը'); return; }
+    if (!name) { toast.error(t('sp.fillYourName')); return; }
     setSending(true);
     try {
       await addReview({ productId, authorName: name, rating, text: text || undefined, photos: photos.length > 0 ? photos : undefined, sessionToken: sessionToken || undefined });
-      toast.success('Մեկնաբանությունը հաջողությամբ ուղարկվեց և սպասում է հաստատման');
+      toast.success(t('sp.reviewSubmitted'));
       setShowForm(false); setName(''); setText(''); setRating(5); setPhotos([]);
-    } catch { toast.error('Մեկնաբանությունը չի ավելացվել'); } finally { setSending(false); }
+    } catch { toast.error(t('sp.reviewFailed')); } finally { setSending(false); }
   };
 
   const handleHelpful = async (id: string) => {
@@ -99,7 +102,7 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
     <div className="mt-10">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold">{'Ապրանքի գնահատում'}</h2>
+          <h2 className="text-xl font-bold">{t('sp.productRating')}</h2>
           {stats && stats.count > 0 && (
             <div className="flex items-center gap-1.5">
               <Stars rating={Math.round(stats.avg)} />
@@ -108,7 +111,7 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
           )}
         </div>
         <Button variant="outline" size="sm" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Փակել' : 'Ավելացնել'}
+          {showForm ? t('sp.close') : t('sp.add')}
         </Button>
       </div>
 
@@ -135,11 +138,11 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
         <Card className="mb-6">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm">{'Ապրանքի գնահատում:'}</span>
+              <span className="text-sm">{t('sp.productRatingColon')}</span>
               <Stars rating={rating} interactive onChange={setRating} />
             </div>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={'Անուն'} className="h-10" />
-            <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={'Ապրանք...'} rows={3} />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('sp.name')} className="h-10" />
+            <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t('sp.reviewTextPlaceholder')} rows={3} />
 
             {/* Photo upload */}
             <div className="flex flex-wrap items-center gap-2">
@@ -147,7 +150,7 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
                 <div key={url} className="relative h-16 w-16 overflow-hidden rounded-lg border">
                   <Image src={normalizeImageUrl(url) ?? url} alt="" fill sizes="64px" className="object-cover" />
                   <button type="button" onClick={() => setPhotos((prev) => prev.filter((p) => p !== url))}
-                    className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/60 text-white" aria-label="Հեռացնել">
+                    className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/60 text-white" aria-label={t('sp.remove')}>
                     <X className="h-2.5 w-2.5" />
                   </button>
                 </div>
@@ -155,14 +158,14 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
               {photos.length < 5 && (
                 <label className="flex h-16 w-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">
                   <ImagePlus className="h-4 w-4" />
-                  <span className="text-[9px]">{uploading ? '...' : 'Լուսանկար'}</span>
+                  <span className="text-[9px]">{uploading ? '...' : t('sp.photo')}</span>
                   <input type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoSelect} disabled={uploading} />
                 </label>
               )}
             </div>
 
             <Button onClick={handleSubmit} disabled={sending || uploading} className="gap-2">
-              <Send className="h-4 w-4" /> {sending ? 'Ուղղարկվում է․․․' : 'Ուղղարկել'}
+              <Send className="h-4 w-4" /> {sending ? t('sp.sendingDots') : t('sp.sendBtn')}
             </Button>
           </CardContent>
         </Card>
@@ -171,11 +174,11 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
       {/* Filter / sort toolbar */}
       {reviews && reviews.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <button onClick={() => setSortBy('helpful')} className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${sortBy === 'helpful' ? 'border-transparent bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}>Օգտակար</button>
-          <button onClick={() => setSortBy('newest')} className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${sortBy === 'newest' ? 'border-transparent bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}>Նոր</button>
+          <button onClick={() => setSortBy('helpful')} className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${sortBy === 'helpful' ? 'border-transparent bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}>{t('sp.helpful')}</button>
+          <button onClick={() => setSortBy('newest')} className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${sortBy === 'newest' ? 'border-transparent bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}>{t('sp.new')}</button>
           {photoReviewCount > 0 && (
             <button onClick={() => setPhotosOnly((v) => !v)} className={`ml-auto rounded-full border px-3 py-1 text-xs font-medium transition-colors ${photosOnly ? 'border-transparent bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}>
-              Լուսանկարով ({photoReviewCount})
+              {t('sp.withPhoto')} ({photoReviewCount})
             </button>
           )}
         </div>
@@ -191,11 +194,11 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
                   <span className="text-sm font-medium">{r.authorName}</span>
                   {r.verified && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <ShieldCheck className="h-3 w-3" /> Ստուգված գնում
+                      <ShieldCheck className="h-3 w-3" /> {t('sp.verifiedPurchase')}
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">{formatDateHy(r.createdAt)}</span>
+                <span className="text-xs text-muted-foreground">{formatDateLocalized(r.createdAt, t)}</span>
               </div>
               <div className="mt-2"><Stars rating={r.rating} /></div>
               {r.text && <p className="mt-2 text-sm text-muted-foreground">{r.text}</p>}
@@ -204,7 +207,7 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {r.photos.map((url, i) => (
                     <a key={i} href={normalizeImageUrl(url) ?? url} target="_blank" rel="noopener noreferrer" className="relative h-16 w-16 overflow-hidden rounded-lg border transition-transform hover:scale-105">
-                      <Image src={normalizeImageUrl(url) ?? url} alt={`${r.authorName} լուսանկար ${i + 1}`} fill sizes="64px" className="object-cover" />
+                      <Image src={normalizeImageUrl(url) ?? url} alt={`${r.authorName} ${t('sp.photoWord')} ${i + 1}`} fill sizes="64px" className="object-cover" />
                     </a>
                   ))}
                 </div>
@@ -214,17 +217,17 @@ export function ProductReviews({ productId }: { productId: Id<'products'> }) {
                 <button onClick={() => handleHelpful(r._id)} disabled={voted.includes(r._id)}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${voted.includes(r._id) ? 'border-primary/40 bg-primary/5 text-primary' : 'text-muted-foreground hover:border-primary/40 hover:text-primary'}`}>
                   <ThumbsUp className={`h-3.5 w-3.5 ${voted.includes(r._id) ? 'fill-current' : ''}`} />
-                  Օգտակար{(r.helpfulCount ?? 0) > 0 ? ` (${r.helpfulCount})` : ''}
+                  {t('sp.helpful')}{(r.helpfulCount ?? 0) > 0 ? ` (${r.helpfulCount})` : ''}
                 </button>
               </div>
             </CardContent>
           </Card>
         ))}
         {reviews?.length === 0 && !showForm && (
-          <p className="text-center text-sm text-muted-foreground py-6">{'Գնահատումներ չեն ավելացված'}</p>
+          <p className="text-center text-sm text-muted-foreground py-6">{t('sp.noReviews')}</p>
         )}
         {reviews && reviews.length > 0 && visible.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-6">Լուսանկարով գնահատումներ չկան</p>
+          <p className="text-center text-sm text-muted-foreground py-6">{t('sp.noPhotoReviews')}</p>
         )}
       </div>
     </div>

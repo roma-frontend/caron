@@ -9,6 +9,7 @@ import { api } from '../../../convex/_generated/api';
 import { useSettings } from '@/hooks/useSettings';
 import { parseBannerConfig, BANNER_RATIO_CLASS, type BannerConfig } from '@/lib/bannerConfig';
 import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS, type PromoTemplateConfig, type PromoRatio } from '@/components/PromoTemplate';
+import { useT } from '@/lib/i18n/admin';
 
 export interface Banner {
   id: string;
@@ -26,6 +27,7 @@ export interface Banner {
  * active promotions have an image.
  */
 export function HomeBanners() {
+  const { t } = useT();
   const promos = useQuery(api.promotions.active, {});
   const settings = useSettings();
   const cfg = parseBannerConfig((settings as { homeBannerConfig?: string } | null | undefined)?.homeBannerConfig);
@@ -85,10 +87,10 @@ export function HomeBanners() {
 
         {count > 1 && (
           <>
-            <button onClick={() => go(current - 1)} aria-label="Նախորդ" className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 sm:flex">
+            <button onClick={() => go(current - 1)} aria-label={t('pg.common.prev')} className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 sm:flex">
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <button onClick={() => go(current + 1)} aria-label="Հաջորդ" className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 sm:flex">
+            <button onClick={() => go(current + 1)} aria-label={t('pg.common.next')} className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 sm:flex">
               <ChevronRight className="h-5 w-5" />
             </button>
             <div className="absolute bottom-2 right-[2%] z-20 flex -translate-x-1/2 items-center">
@@ -96,7 +98,7 @@ export function HomeBanners() {
                 <button
                   key={b.id}
                   onClick={() => go(i)}
-                  aria-label={`Բաններ ${i + 1}`}
+                  aria-label={`${t('pg.banner.aria')} ${i + 1}`}
                   className="flex h-6 w-6 items-center justify-center"
                 >
                   <span
@@ -130,7 +132,7 @@ function OverlayText({ banner, cfg, centered }: { banner: Banner; cfg: BannerCon
 }
 
 /** Visual layers for a single banner, shared by the carousel and the /settings preview. */
-function slideLayers(banner: Banner, cfg: BannerConfig): { extraClass: string; content: React.ReactNode } {
+function slideLayers(banner: Banner, cfg: BannerConfig, t: (key: string) => string): { extraClass: string; content: React.ReactNode } {
   const sizes = '(max-width: 1280px) 100vw, 1280px';
   const coverImg = `h-full w-full object-cover ${cfg.kenBurns ? 'hero-video' : ''}`;
 
@@ -163,7 +165,7 @@ function slideLayers(banner: Banner, cfg: BannerConfig): { extraClass: string; c
                 <span className="w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-bold sm:text-sm">-{banner.discountPercent}%</span>
               ) : null}
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-black sm:text-sm">
-                Դիտել <ArrowRight className="h-3.5 w-3.5" />
+                {t('pg.common.view')} <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </div>
           )}
@@ -206,7 +208,7 @@ function slideLayers(banner: Banner, cfg: BannerConfig): { extraClass: string; c
             <h3 className="text-balance text-lg font-black leading-tight drop-shadow sm:text-2xl lg:text-3xl">{banner.title}</h3>
             {banner.description ? <p className="line-clamp-2 text-balance text-xs text-white/90 sm:text-sm">{banner.description}</p> : null}
             <span className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-black sm:text-sm">
-              Դիտել <ArrowRight className="h-3.5 w-3.5" />
+              {t('pg.common.view')} <ArrowRight className="h-3.5 w-3.5" />
             </span>
           </div>
         </>
@@ -267,7 +269,8 @@ function slideLayers(banner: Banner, cfg: BannerConfig): { extraClass: string; c
  * /settings editor) it renders a non-navigating div.
  */
 export function BannerSlide({ banner, cfg, aspect, preview }: { banner: Banner; cfg: BannerConfig; aspect: string; preview?: boolean }) {
-  const { extraClass, content } = slideLayers(banner, cfg);
+  const { t } = useT();
+  const { extraClass, content } = slideLayers(banner, cfg, t);
   const slideAspect = banner.template?.bannerRatio ? PROMO_RATIO_CLASS[banner.template.bannerRatio] : aspect;
   const frame = `relative block w-full shrink-0 overflow-hidden ${slideAspect} ${extraClass}`;
 

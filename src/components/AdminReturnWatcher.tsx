@@ -8,6 +8,7 @@ import { useOrderNotificationStore } from '@/store/orderNotifications';
 import { toast } from 'sonner';
 import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
+import { useT } from '@/lib/i18n/admin';
 
 function playNotificationSound() {
   try {
@@ -30,6 +31,7 @@ function playNotificationSound() {
 
 /** Live admin notifier for new return/exchange requests (toast + sound + badge). */
 export function AdminReturnWatcher() {
+  const { t } = useT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin';
@@ -64,17 +66,17 @@ export function AdminReturnWatcher() {
       const req = requests?.[0];
       if (req) {
         toast.custom(
-          (t) => (
+          (tp) => (
             <Link
               href="/admin/returns"
-              onClick={() => toast.dismiss(t)}
+              onClick={() => toast.dismiss(tp)}
               className="flex w-full items-start gap-4 rounded-xl border bg-card p-4 shadow-xl ring-1 ring-primary/20"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15">
                 <RotateCcw className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-primary">Նոր հայտ՝ {req.type === 'exchange' ? 'Փոխանակում' : 'Վերադարձ'}</p>
+                <p className="text-sm font-bold text-primary">{t('sx.return.new')} {req.type === 'exchange' ? t('sx.return.exchange') : t('sx.return.return')}</p>
                 <p className="mt-0.5 text-sm font-semibold truncate">#{req.orderNumber}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground truncate">{req.reason}</p>
               </div>
