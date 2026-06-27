@@ -74,12 +74,23 @@ const ENTRIES: Entry[] = [
   { re: rx(`խոզանակ${A}*`), ru: 'щётка стеклоочистителя', en: 'wiper blade' },
   { re: rx(`ապակեմաքրիչ${A}*`), ru: 'щётка стеклоочистителя', en: 'wiper blade' },
 
+  // ── Multi-word category phrases (must beat the bare nouns they contain) ─────
+  // Steering-wheel cover ("ղեկի պատյան[ներ]"): plural before singular.
+  { re: rx(`ղեկ${A}*\\s+պատյաններ${A}*`), ru: 'чехлы на руль', en: 'steering wheel covers' },
+  { re: rx(`ղեկ${A}*\\s+պատյան${A}*`), ru: 'чехол на руль', en: 'steering wheel cover' },
+  // Tuning parts ("տյունինգային դետալներ"): plural before singular.
+  { re: rx(`տյունինգ${A}*\\s+դետալներ${A}*`), ru: 'тюнинговые детали', en: 'tuning parts' },
+  { re: rx(`տյունինգ${A}*\\s+դետալ${A}*`), ru: 'тюнинговая деталь', en: 'tuning part' },
+
   // ── Glass / windshield (only reached once the wiper phrases are consumed) ───
   { re: rx(`դիմապակ${A}*`), ru: 'лобовое стекло', en: 'windshield' },
 
   // ── Lights ──────────────────────────────────────────────────────────────────
   { re: rx(`մշուշարձակ${A}*`), ru: 'противотуманная фара', en: 'fog light' },
   { re: rx(`լուսարձակ${A}*`), ru: 'фара', en: 'headlight' },
+  // "Շիկ․ լամպ" = incandescent bulb. The abbreviation dot + space sit between
+  // the two words, so allow any run of non-letters in the gap.
+  { re: rx(`շիկ${A}*[^\\p{L}]*լամպ${A}*`), ru: 'лампа накаливания', en: 'incandescent bulb' },
   { re: rx(`լամպիկ${A}*`), ru: 'лампа', en: 'bulb' },
   { re: rx(`լամպ${A}*`), ru: 'лампа', en: 'bulb' },
 
@@ -103,6 +114,78 @@ const ENTRIES: Entry[] = [
   { re: rx(`բուրավետիչ${A}*`), ru: 'ароматизатор', en: 'air freshener' },
   { re: rx(`ռելե${A}*`), ru: 'реле', en: 'relay' },
 
+  // ── Fluids: oils & lubricants ("յուղեր / քսուքներ") — plural before singular ─
+  { re: rx(`յուղեր${A}*`), ru: 'масла', en: 'oils' },
+  { re: rx(`յուղ${A}*`), ru: 'масло', en: 'oil' },
+  { re: rx(`քսուքներ${A}*`), ru: 'смазки', en: 'lubricants' },
+  { re: rx(`քսուք${A}*`), ru: 'смазка', en: 'lubricant' },
+  { re: rx(`ավտոքիմիա${A}*`), ru: 'автохимия', en: 'auto chemicals' },
+  { re: rx(`ակցիա${A}*`), ru: 'акция', en: 'promotion' },
+
+  // ── Wheels ("անիվներ") — distinct from "անվադող" (tire). Plural first. ──────
+  { re: rx(`անիվներ${A}*`), ru: 'колёса', en: 'wheels' },
+  { re: rx(`անիվ${A}*`), ru: 'колесо', en: 'wheel' },
+
+  // ── Fasteners / clamps ("ամրակներ") ─────────────────────────────────────────
+  { re: rx(`ամրակներ${A}*`), ru: 'крепления', en: 'clamps' },
+  { re: rx(`ամրակ${A}*`), ru: 'крепление', en: 'clamp' },
+
+  // ── Standalone stems for the multi-word phrases above (covers bare nouns) ───
+  { re: rx(`պատյաններ${A}*`), ru: 'чехлы', en: 'covers' },
+  { re: rx(`պատյան${A}*`), ru: 'чехол', en: 'cover' },
+  { re: rx(`ղեկ${A}*`), ru: 'руль', en: 'steering wheel' },
+  { re: rx(`դետալներ${A}*`), ru: 'детали', en: 'parts' },
+  { re: rx(`դետալ${A}*`), ru: 'деталь', en: 'part' },
+  { re: rx(`տյունինգ${A}*`), ru: 'тюнинг', en: 'tuning' },
+
+  // ── Body trim, fasteners & common car-slang (mostly Russian loanwords written
+  //    in Armenian letters). Compounds first so they beat the nouns they
+  //    contain (e.g. "պադկապոտնիկ" must win over "կապոտ"). ───────────────────
+  { re: rx(`պադկապոտնիկ${A}*`), ru: 'подкапотник', en: 'under-hood liner' },
+  { re: rx(`պադնոժկ${A}*`), ru: 'подножка', en: 'running board' },
+  { re: rx(`զաշիտնիկ${A}*`), ru: 'защита', en: 'skid plate' },
+  { re: rx(`նակլադկ${A}*`), ru: 'накладка', en: 'trim overlay' },
+  { re: rx(`մոլդինգ${A}*`), ru: 'молдинг', en: 'molding' },
+  { re: rx(`սպոյլեր${A}*`), ru: 'спойлер', en: 'spoiler' },
+  { re: rx(`բեռնախցիկ${A}*`), ru: 'багажник', en: 'trunk' },
+  { re: rx(`բեռնատար${A}*`), ru: 'грузовая', en: 'truck' },
+  { re: rx(`կապոտ${A}*`), ru: 'капот', en: 'hood' },
+  { re: rx(`կռիլո${A}*`), ru: 'крыло', en: 'fender' },
+  { re: rx(`ռեզին${A}*`), ru: 'резина', en: 'rubber' },
+  { re: rx(`շիտոկ${A}*`), ru: 'щиток', en: 'panel' },
+  { re: rx(`շիթ${A}*`), ru: 'щиток', en: 'panel' },
+  { re: rx(`շարժիչ${A}*`), ru: 'двигатель', en: 'engine' },
+  { re: rx(`կափարիչ${A}*`), ru: 'крышка', en: 'cover' },
+  { re: rx(`պառոգ${A}*`), ru: 'порог', en: 'sill' },
+  { re: rx(`աբիվկ${A}*`), ru: 'обивка', en: 'upholstery' },
+  { re: rx(`դամկրատ${A}*`), ru: 'домкрат', en: 'jack' },
+  { re: rx(`ստոպ${A}*`), ru: 'стоп', en: 'stop light' },
+  { re: rx(`ձող${A}*`), ru: 'стержень', en: 'rod' },
+  { re: rx(`բռնող${A}*`), ru: 'держатель', en: 'holder' },
+  { re: rx(`դռան${A}*`), ru: 'дверная', en: 'door' },
+  { re: rx(`դռն${A}*`), ru: 'дверная', en: 'door' },
+  { re: rx(`դուռ${A}*`), ru: 'дверь', en: 'door' },
+  { re: rx(`կողային${A}*`), ru: 'боковой', en: 'side' },
+  { re: rx(`ունիվերսալ${A}*`), ru: 'универсальный', en: 'universal' },
+  { re: rx(`մոխրագույն${A}*`), ru: 'серый', en: 'gray' },
+  { re: rx(`կարմիր${A}*`), ru: 'красный', en: 'red' },
+  { re: rx(`բեժ${A}*`), ru: 'бежевый', en: 'beige' },
+  { re: rx(`շեղ${A}*`), ru: 'косой', en: 'angled' },
+  { re: rx(`կարճ${A}*`), ru: 'короткий', en: 'short' },
+  { re: rx(`երկար${A}*`), ru: 'длинный', en: 'long' },
+  { re: rx(`արանք${A}*`), ru: 'зазор', en: 'gap' },
+  { re: rx(`կողք${A}*`), ru: 'боковой', en: 'side' },
+  { re: rx(`ձգվող${A}*`), ru: 'натяжной', en: 'tensioning' },
+  // "տակ" (=под/нижний) only as a word start — otherwise it eats the "տակ"
+  // inside "պտուտակ" (screw) and similar.
+  { re: rx(`(?<![\\u0531-\\u0556\\u0561-\\u0587])տակ${A}*`), ru: 'нижний', en: 'lower' },
+
+  // ── Fasteners / small parts (head nouns) ────────────────────────────────────
+  { re: rx(`կնոպկա${A}*`), ru: 'кнопка', en: 'button' },
+  { re: rx(`պտուտակ${A}*`), ru: 'винт', en: 'screw' },
+  { re: rx(`տափօղակ${A}*`), ru: 'шайба', en: 'washer' },
+  { re: rx(`տուփ${A}*`), ru: 'коробка', en: 'box' },
+
   // ── Modifiers ───────────────────────────────────────────────────────────────
   { re: rx(`հիբրիդ${A}*`), ru: 'гибридная', en: 'hybrid' },
 
@@ -116,6 +199,9 @@ const ENTRIES: Entry[] = [
   // ── Units (Armenian -> RU / EN). Numbers and the inch sign stay as-is. ───────
   { re: rx(`մմ`), ru: 'мм', en: 'mm' },
   { re: rx(`սմ`), ru: 'см', en: 'cm' },
+  // Packaging "/տուփ 10հ․/" -> "/коробка 10шт./": the "հ" (=штук) directly
+  // follows a digit, so a digit-lookbehind keeps it from matching elsewhere.
+  { re: rx(`(?<=\\d)\\s*հ`), ru: 'шт', en: 'pcs' },
 ];
 
 /** True if the string still contains any Armenian letters. */

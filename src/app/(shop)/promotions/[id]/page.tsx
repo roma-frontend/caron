@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useT } from '@/lib/i18n/admin';
+import { pickLocalized, pickPromoTemplateJson } from '@/lib/i18n/localize';
 
 function Countdown({ endDate }: { endDate: number }) {
   const { t } = useT();
@@ -54,7 +55,7 @@ function ProgressBar({ start, end }: { start: number; end: number }) {
 }
 
 export default function PromotionDetailPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { id } = useParams();
   const promotions = useQuery(api.promotions.active, {});
   const products = useQuery(api.products.list, { limit: 500 });
@@ -90,11 +91,13 @@ export default function PromotionDetailPage() {
   }) ?? [];
 
   const images = (promo.images ?? (promo.imageUrl ? [promo.imageUrl] : [])) as string[];
-  const tpl = parsePromoConfig(promo.templateJson);
+  const tpl = parsePromoConfig(pickPromoTemplateJson(promo, lang));
+  const promoTitle = pickLocalized(promo, 'title', lang);
+  const promoDescription = pickLocalized(promo, 'description', lang);
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <Breadcrumbs items={[{ label: t('sx.promo.breadcrumb'), href: '/promotions' }, { label: promo.title }]} />
+      <Breadcrumbs items={[{ label: t('sx.promo.breadcrumb'), href: '/promotions' }, { label: promoTitle }]} />
 
       {/* Hero with image carousel */}
       <div className="relative mt-4 overflow-hidden rounded-2xl border bg-gradient-to-b from-muted/30 to-muted/10">
@@ -180,9 +183,9 @@ export default function PromotionDetailPage() {
         <div className="border-t px-6 py-5 sm:px-10">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{promo.title}</h1>
-              {promo.description && (
-                <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{promo.description}</p>
+              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{promoTitle}</h1>
+              {promoDescription && (
+                <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{promoDescription}</p>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDateLocalized(promo.startDate, t)} — {formatDateLocalized(promo.endDate, t)}</span>

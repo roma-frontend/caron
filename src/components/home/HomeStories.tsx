@@ -9,6 +9,8 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { PromoTemplate, parsePromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';
 import { useT } from '@/lib/i18n/admin';
+import { pickLocalized, pickPromoTemplateJson } from '@/lib/i18n/localize';
+import { useCategoryName } from '@/lib/i18n/filterNames';
 
 interface Story {
   id: string;
@@ -26,6 +28,8 @@ const STORY_DURATION = 6000;
  * viewer. Auto-hides when there is nothing to show.
  */
 export function HomeStories() {
+  const { lang } = useT();
+  const catName = useCategoryName();
   const promos = useQuery(api.promotions.active, {});
   const categories = useQuery(api.categories.list, {});
 
@@ -33,13 +37,13 @@ export function HomeStories() {
     ...(promos ?? [])
       .map((p): Story | null => {
         const image = p.images?.[0] || p.imageUrl || null;
-        const template = parsePromoConfig(p.templateJson);
-        return { id: `promo-${p._id}`, title: p.title, image, template, href: `/promotions/${p._id}` };
+        const template = parsePromoConfig(pickPromoTemplateJson(p, lang));
+        return { id: `promo-${p._id}`, title: pickLocalized(p, 'title', lang), image, template, href: `/promotions/${p._id}` };
       })
       .filter((s): s is Story => s !== null),
     ...(categories ?? []).slice(0, 8).map((c): Story => ({
       id: `cat-${c._id}`,
-      title: c.name,
+      title: catName(c),
       image: c.imageUrl || null,
       href: `/categories/${c.slug}`,
     })),

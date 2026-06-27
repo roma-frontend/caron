@@ -19,7 +19,8 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';
-import { useFilterName } from '@/lib/i18n/filterNames';
+import { useFilterName, useCategoryName } from '@/lib/i18n/filterNames';
+import { pickLocalized } from '@/lib/i18n/localize';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DndContext, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -111,6 +112,8 @@ function InlineTextField({ value, onSave, prefix, className, placeholder }: { va
 type AdminProductItem = {
   _id: Id<'products'>;
   name: string;
+  nameRu?: string;
+  nameEn?: string;
   price: number;
   wholesalePrice?: number;
   variantGroup?: string;
@@ -175,7 +178,8 @@ function parseAttributeValue(raw: string, prev: unknown): unknown | undefined {
 
 
 function AdminProductCard({ product, sessionToken, index }: { product: AdminProductItem; sessionToken: string; index: number }) {
-  const { t } = useAdminT();
+  const { t, lang } = useAdminT();
+  const name = pickLocalized(product, 'name', lang);
   const { ref, visible } = useReveal();
   const update = useMutation(api.products.update);
   const imgRef = useRef<HTMLInputElement>(null);
@@ -224,7 +228,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
         />
         <div className="relative aspect-4/3 overflow-hidden bg-gradient-to-br from-muted/50 to-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
-            <Image src={product.images[0]} alt={product.name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <Image src={product.images[0]} alt={name} width={400} height={400} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
           ) : (
             <div className="flex h-full items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/20"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
@@ -244,7 +248,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
                   <DialogTitle className="text-center">{t('ap.deleteProduct')}</DialogTitle>
                   <DialogDescription className="text-center">
                     {t('ap.confirmDeleteQuestion')}<br />
-                    <strong>{product.name}</strong>
+                    <strong>{name}</strong>
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">
@@ -264,7 +268,7 @@ function AdminProductCard({ product, sessionToken, index }: { product: AdminProd
         <div className="p-3">
           <div className="flex flex-col justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold text-wrap">{product.name}</h3>
+              <h3 className="truncate text-sm font-semibold text-wrap">{name}</h3>
               <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
               <InlineTextField
                 value={product.variantGroup}
@@ -301,7 +305,8 @@ type AttrDefMeta = {
 };
 
 function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDefsByCategoryMap }: { product: AdminProductItem; sessionToken: string; index: number; attrMetaMap: Map<string, AttrDefMeta>; attrDefsByCategoryMap: Map<string, AttrDefMeta[]> }) {
-  const { t } = useAdminT();
+  const { t, lang } = useAdminT();
+  const name = pickLocalized(product, 'name', lang);
   const filterName = useFilterName();
   const { ref, visible } = useReveal();
   const remove = useMutation(api.products.remove);
@@ -430,7 +435,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
       <div className="relative flex flex-col items-start gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
-            <Image src={product.images[0]} alt={product.name} width={128} height={128} className="h-full w-full object-cover" />
+            <Image src={product.images[0]} alt={name} width={128} height={128} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">■</div>
           )}
@@ -438,7 +443,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.name}</p>
+          <p className="line-clamp-2 text-sm font-semibold leading-snug">{name}</p>
           <p className="text-xs text-muted-foreground">{product.sku ?? '—'}</p>
           <InlineTextField
             value={product.variantGroup}
@@ -576,7 +581,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
                 <DialogTitle className="text-center">{t('ap.deleteProduct')}</DialogTitle>
                 <DialogDescription className="text-center">
                   {t('ap.confirmDeleteQuestion')}<br />
-                  <strong>{product.name}</strong>
+                  <strong>{name}</strong>
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="gap-2">
@@ -594,6 +599,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
 export default function AdminProductsPage() {
   const { sessionToken } = useAuth();
   const { t } = useAdminT();
+  const catName = useCategoryName();
   const reorderVariantGroup = useMutation(api.products.reorderVariantGroup);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ADMIN_PRODUCTS_PAGE_SIZE);
@@ -661,7 +667,9 @@ export default function AdminProductsPage() {
 
   let filtered = products?.filter((p) => {
     if (searchTerm) {
-      const byName = p.name.toLowerCase().includes(searchTerm);
+      const byName = p.name.toLowerCase().includes(searchTerm)
+        || (p.nameRu?.toLowerCase().includes(searchTerm) ?? false)
+        || (p.nameEn?.toLowerCase().includes(searchTerm) ?? false);
       const bySku = p.sku?.toLowerCase().includes(searchTerm) ?? false;
       const byAtg = p.atgCode?.toLowerCase().includes(searchTerm) ?? false;
       if (!byName && !bySku && !byAtg) return false;
@@ -847,10 +855,10 @@ export default function AdminProductsPage() {
         </div>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
         <Select value={catFilter} onValueChange={(v) => setCatFilter(v ?? 'all')}>
-          <SelectTrigger className="h-9 w-full sm:w-40 min-w-0"><SelectValue>{catFilter === "all" ? t('ap.allShort') : categories?.find(c => c._id === catFilter)?.name ?? t('ap.category')}</SelectValue></SelectTrigger>
+          <SelectTrigger className="h-9 w-full sm:w-40 min-w-0"><SelectValue>{catFilter === "all" ? t('ap.allShort') : (() => { const c = categories?.find(c => c._id === catFilter); return c ? catName(c) : t('ap.category'); })()}</SelectValue></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('ap.allShort')}</SelectItem>
-            {categories?.map((cat) => <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>)}
+            {categories?.map((cat) => <SelectItem key={cat._id} value={cat._id}>{catName(cat)}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={stockFilter} onValueChange={(v) => setStockFilter(v ?? 'all')}>
@@ -921,7 +929,7 @@ export default function AdminProductsPage() {
           }}>{t('ap.discountPercent')}</Button>
           <Select value="" onValueChange={(v) => { if (v) runBulk('setCategory', { categoryId: v }); }}>
             <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder={t('ap.categoryArrow')} /></SelectTrigger>
-            <SelectContent>{categories?.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{categories?.map((c) => <SelectItem key={c._id} value={c._id}>{catName(c)}</SelectItem>)}</SelectContent>
           </Select>
           <Button size="sm" variant="destructive" disabled={!selectedIds.size || bulkBusy} onClick={() => {
             if (window.confirm(t('ap.confirmDeletePrefix') + selectedIds.size + t('ap.confirmDeleteSuffix'))) runBulk('delete');

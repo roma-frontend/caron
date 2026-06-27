@@ -14,16 +14,19 @@ import { useAuth } from '@/store/auth';
 import { CATEGORY_ICONS, CATEGORY_COLORS } from '@/components/cards/CategoryCard';
 import { Switch } from '@/components/ui/switch';
 import { useAdminT } from '@/lib/i18n/admin';
+import { useCategoryName } from '@/lib/i18n/filterNames';
 
-function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categories'>; name: string; slug: string; description?: string; isActive: boolean }; sessionToken: string; index: number }) {
+function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categories'>; name: string; nameRu?: string; nameEn?: string; slug: string; description?: string; isActive: boolean }; sessionToken: string; index: number }) {
   const { ref, visible } = useReveal();
   const { t } = useAdminT();
+  const catName = useCategoryName();
+  const name = catName(cat);
   const remove = useMutation(api.categories.remove);
   const updateCat = useMutation(api.categories.update);
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!confirm(`${t('acat.delete')} "${cat.name}"?`)) return;
+    if (!confirm(`${t('acat.delete')} "${name}"?`)) return;
     await remove({ sessionToken, id: cat._id });
     toast.success(t('acat.catDeleted'));
   };
@@ -46,7 +49,7 @@ function AdminCategoryCard({ cat, sessionToken, index }: { cat: { _id: Id<'categ
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate font-semibold">{cat.name}</h3>
+            <h3 className="truncate font-semibold">{name}</h3>
             <Switch checked={cat.isActive} onCheckedChange={toggleActive} size="sm" />
           </div>
           <p className="truncate font-mono text-xs text-muted-foreground">/{cat.slug}</p>

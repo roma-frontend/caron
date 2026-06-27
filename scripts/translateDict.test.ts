@@ -47,6 +47,13 @@ const cases: Case[] = [
   },
   { in: 'Մշուշարձակ', ru: 'Противотуманная фара', complete: true },
   { in: 'Դիմապակ', ru: 'Лобовое стекло', en: 'Windshield', complete: true },
+  // ── Category names (previously fell through to the LLM) ─────────────────────
+  { in: 'Ղեկի Պատյաններ', ru: 'Чехлы на руль', en: 'Steering wheel covers', complete: true },
+  { in: 'Տյունինգային դետալներ', ru: 'Тюнинговые детали', en: 'Tuning parts', complete: true },
+  { in: 'Ամրակներ', ru: 'Крепления', en: 'Clamps', complete: true },
+  { in: 'Ավտոքիմիա', ru: 'Автохимия', en: 'Auto chemicals', complete: true },
+  { in: 'Յուղեր / Քսուքներ', ru: 'Масла / смазки', en: 'Oils / lubricants', complete: true },
+  { in: 'Անիվներ', ru: 'Колёса', en: 'Wheels', complete: true },
   // A name the dictionary does NOT cover -> must be flagged incomplete so the
   // caller falls back to the LLM rather than storing half-Armenian text.
   { in: 'Ինչ-որ անհայտ բառ XYZ', ru: '', complete: false },

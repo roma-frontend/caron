@@ -562,7 +562,7 @@ export default function ProductDetailPage() {
       </div>
 
       {settings?.enableCrossSell !== false && (
-        <FrequentlyBoughtTogether base={{ id: product._id, name: product.name, price: product.price, retailDiscount: product.retailDiscount, image: product.images?.[0] ?? null, categoryId: product.categoryId, qtyStep: product.qtyStep, stock: product.stock }} />
+        <FrequentlyBoughtTogether base={{ id: product._id, name: product.name, nameRu: product.nameRu, nameEn: product.nameEn, price: product.price, retailDiscount: product.retailDiscount, image: product.images?.[0] ?? null, categoryId: product.categoryId, qtyStep: product.qtyStep, stock: product.stock }} />
       )}
 
       {settings !== undefined && settings?.enableReviews !== false && <ProductReviews productId={product._id} />}

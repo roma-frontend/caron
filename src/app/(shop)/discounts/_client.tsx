@@ -135,6 +135,8 @@ export default function DiscountsClient() {
                 id={p._id}
                 slug={p.slug}
                 name={p.name}
+                nameRu={p.nameRu}
+                nameEn={p.nameEn}
                 price={p.price}
                 wholesalePrice={p.wholesalePrice}
                 retailDiscount={p.retailDiscount}

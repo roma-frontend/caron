@@ -47,6 +47,8 @@ export default function FavoritesPage() {
               id={product._id}
               slug={product.slug}
               name={product.name}
+              nameRu={product.nameRu}
+              nameEn={product.nameEn}
               price={product.price}
               compareAtPrice={product.compareAtPrice}
               retailDiscount={product.retailDiscount}

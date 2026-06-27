@@ -23,6 +23,21 @@ export function pickLocalized(
 }
 
 /**
+ * Pick the localized promo template JSON for the current language, falling back
+ * to the base (Armenian) config. The localized variants are auto-generated and
+ * keep all visual settings — only the text fields differ.
+ */
+export function pickPromoTemplateJson(
+  promo: { templateJson?: string; templateJsonRu?: string; templateJsonEn?: string } | null | undefined,
+  lang: AdminLang,
+): string | undefined {
+  if (!promo) return undefined;
+  if (lang === 'ru') return promo.templateJsonRu?.trim() ? promo.templateJsonRu : promo.templateJson;
+  if (lang === 'en') return promo.templateJsonEn?.trim() ? promo.templateJsonEn : promo.templateJson;
+  return promo.templateJson;
+}
+
+/**
  * Hook returning a `loc(obj, base)` function bound to the current UI language.
  * Hydration-safe: relies on {@link useAdminT} which yields Armenian until mount.
  */

@@ -80,7 +80,10 @@ export const create = mutation({
     if (data.images && data.images.length > 0) {
       data.imageUrl = data.images[0];
     }
-    return await ctx.db.insert('promotions', { ...data, createdAt: Date.now() });
+    const newId = await ctx.db.insert('promotions', { ...data, createdAt: Date.now() });
+    // Auto-fill RU/EN (title, description + in-card template text) in background.
+    await ctx.scheduler.runAfter(0, internal.translate.translatePromotion, { id: newId });
+    return newId;
   },
 });
 
@@ -132,5 +135,11 @@ export const update = mutation({
       patch.imageUrl = images.length > 0 ? images[0] : undefined;
     }
     await ctx.db.patch(id, patch);
+
+    // If any translatable text changed, regenerate RU/EN (force overwrites the
+    // now-stale translations).
+    if (rest.title !== undefined || rest.description !== undefined || rest.templateJson !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.translate.translatePromotion, { id, force: true });
+    }
   },
 });

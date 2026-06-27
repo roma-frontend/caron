@@ -222,9 +222,17 @@ export default defineSchema(
   promotions: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
+    // Auto-generated RU/EN translations (title/description + the in-card
+    // template text, stored as a fully-localized templateJson variant).
+    titleRu: v.optional(v.string()),
+    titleEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()),
+    descriptionEn: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
     templateJson: v.optional(v.string()),
+    templateJsonRu: v.optional(v.string()),
+    templateJsonEn: v.optional(v.string()),
     discountPercent: v.optional(v.number()),
     discountAmount: v.optional(v.number()),
     productIds: v.optional(v.array(v.id('products'))),

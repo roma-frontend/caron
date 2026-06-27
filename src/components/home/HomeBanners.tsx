@@ -10,6 +10,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { parseBannerConfig, BANNER_RATIO_CLASS, type BannerConfig } from '@/lib/bannerConfig';
 import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS, type PromoTemplateConfig, type PromoRatio } from '@/components/PromoTemplate';
 import { useT } from '@/lib/i18n/admin';
+import { pickLocalized, pickPromoTemplateJson } from '@/lib/i18n/localize';
 
 export interface Banner {
   id: string;
@@ -27,7 +28,7 @@ export interface Banner {
  * active promotions have an image.
  */
 export function HomeBanners() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const promos = useQuery(api.promotions.active, {});
   const settings = useSettings();
   const cfg = parseBannerConfig((settings as { homeBannerConfig?: string } | null | undefined)?.homeBannerConfig);
@@ -37,9 +38,9 @@ export function HomeBanners() {
   const banners: Banner[] = (promos ?? [])
     .map((p): Banner | null => {
       const image = p.images?.[0] || p.imageUrl || '';
-      const template = parsePromoConfig(p.templateJson);
+      const template = parsePromoConfig(pickPromoTemplateJson(p, lang));
       if (!image && !template) return null;
-      return { id: p._id as string, title: p.title, description: p.description, image, discountPercent: p.discountPercent, template };
+      return { id: p._id as string, title: pickLocalized(p, 'title', lang), description: pickLocalized(p, 'description', lang), image, discountPercent: p.discountPercent, template };
     })
     .filter((b): b is Banner => b !== null);
 

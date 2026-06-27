@@ -35,7 +35,9 @@ export function RecentlyViewed() {
               slug={item.slug}
               atgCode={p?.atgCode}
               sku={p?.sku}
-              name={item.name}
+              name={p?.name ?? item.name}
+              nameRu={p?.nameRu}
+              nameEn={p?.nameEn}
               price={item.price}
               wholesalePrice={p?.wholesalePrice}
               retailDiscount={p?.retailDiscount}

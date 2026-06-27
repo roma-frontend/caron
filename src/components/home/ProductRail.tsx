@@ -12,6 +12,8 @@ export interface RailProduct {
   _id: string;
   slug?: string;
   name: string;
+  nameRu?: string;
+  nameEn?: string;
   price: number;
   images?: string[];
   stock?: number;
@@ -111,6 +113,8 @@ export function ProductRail({
                   atgCode={p.atgCode}
                   sku={p.sku}
                   name={p.name}
+                  nameRu={p.nameRu}
+                  nameEn={p.nameEn}
                   price={p.price}
                   wholesalePrice={p.wholesalePrice}
                   compareAtPrice={p.compareAtPrice}

@@ -13,10 +13,13 @@ import { normalizeImageUrl } from '../../convex/lib/imageUrl';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useT } from '@/lib/i18n/admin';
+import { pickLocalized } from '@/lib/i18n/localize';
 
 interface BaseProduct {
   id: Id<'products'>;
   name: string;
+  nameRu?: string;
+  nameEn?: string;
   price: number;
   retailDiscount?: number;
   image: string | null;
@@ -38,10 +41,15 @@ function retailPrice(p: { price: number; retailDiscount?: number }): number {
  * the set; the combined price updates and "add all" puts everything in the cart.
  */
 export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const related = useQuery(api.products.list, { categoryId: base.categoryId, limit: 8 });
   const addItem = useCartStore((s) => s.addItem);
   const flyRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  // Localized display name: base uses its own RU/EN fields, suggestions are
+  // full product docs straight from the query.
+  const baseName = pickLocalized({ name: base.name, nameRu: base.nameRu, nameEn: base.nameEn }, 'name', lang);
+  const locName = (p: { name: string; nameRu?: string; nameEn?: string }) => pickLocalized(p, 'name', lang);
 
   const suggestions = useMemo(
     () => (related ?? []).filter((p) => p._id !== base.id && p.stock > 0).slice(0, 2),
@@ -68,9 +76,9 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
   const itemCount = 1 + selectedProducts.length;
 
   const addAll = () => {
-    addItem({ id: base.id, name: base.name, price: retailPrice(base), image: base.image, maxStock: base.stock, qtyStep: base.qtyStep ?? 1 });
+    addItem({ id: base.id, name: baseName, price: retailPrice(base), image: base.image, maxStock: base.stock, qtyStep: base.qtyStep ?? 1 });
     for (const p of selectedProducts) {
-      addItem({ id: p._id, name: p.name, price: retailPrice(p), image: p.images?.[0] ?? null, maxStock: p.stock, qtyStep: p.qtyStep ?? 1 });
+      addItem({ id: p._id, name: locName(p), price: retailPrice(p), image: p.images?.[0] ?? null, maxStock: p.stock, qtyStep: p.qtyStep ?? 1 });
     }
 
     // Animate each chosen product flying to the cart, with a small stagger so
@@ -90,8 +98,8 @@ export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
   };
 
   const cards: Array<{ id: string; name: string; price: number; image: string | null; locked: boolean; checked: boolean }> = [
-    { id: base.id, name: base.name, price: retailPrice(base), image: base.image, locked: true, checked: true },
-    ...suggestions.map((p) => ({ id: p._id, name: p.name, price: retailPrice(p), image: p.images?.[0] ?? null, locked: false, checked: effectiveSelected.has(p._id) })),
+    { id: base.id, name: baseName, price: retailPrice(base), image: base.image, locked: true, checked: true },
+    ...suggestions.map((p) => ({ id: p._id, name: locName(p), price: retailPrice(p), image: p.images?.[0] ?? null, locked: false, checked: effectiveSelected.has(p._id) })),
   ];
 
   return (

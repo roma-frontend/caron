@@ -8,6 +8,39 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 type Tr = { nameRu: string; nameEn: string; descriptionRu: string; descriptionEn: string };
 
+/** True if the string still contains any Armenian letters. */
+const hasArmenian = (s: string | undefined): boolean =>
+  /[\u0531-\u0556\u0561-\u0587]/u.test(s ?? '');
+
+/**
+ * Choose the best name for an LLM-handled (dictionary-incomplete) field.
+ * Prefer the LLM answer only when it is "clean" (no Armenian letters left);
+ * otherwise fall back to the dictionary's partial translation rather than
+ * storing half-Armenian LLM garbage.
+ */
+function pickName(llm: string, dictPartial: string): string {
+  if (llm && !hasArmenian(llm)) return llm;
+  return dictPartial || llm;
+}
+
+/**
+ * Decide the value to persist for one field, honoring `force`.
+ * Critically: when forcing, never replace a clean existing translation with a
+ * fresh value that still contains Armenian (e.g. an LLM rate-limit failure).
+ */
+function pickPersist(
+  existing: string | undefined,
+  fresh: string,
+  force: boolean,
+): string | undefined {
+  const e = (existing ?? '').trim();
+  const f = (fresh ?? '').trim();
+  if (!force) return (e || f) || undefined;
+  if (f && !hasArmenian(f)) return f; // clean fresh wins
+  if (e && !hasArmenian(e)) return e; // keep clean existing over dirty fresh
+  return (f || e) || undefined;
+}
+
 /**
  * Translate Armenian name/description to Russian + English via Groq.
  * Returns empty strings on any failure so callers can skip gracefully.
@@ -160,8 +193,15 @@ async function translateFields(name: string, description: string): Promise<Tr | 
   const needGroqForDesc = Boolean(description.trim());
   const groq = needGroqForName || needGroqForDesc ? await groqTranslate(name, description) : null;
 
-  const nameRu = dictCoversName ? dict.ru : (groq?.nameRu ?? '');
-  const nameEn = dictCoversName ? dict.en : (groq?.nameEn ?? '');
+  // For names the dictionary fully covers, ALWAYS use the dictionary (instant,
+  // deterministic, identical every run). Otherwise take the LLM result, but
+  // reject an LLM name that still contains Armenian (a failed/garbage answer)
+  // and fall back to the dictionary's partial translation — which at least
+  // converts every known word — so we never store half-translated garbage.
+  const llmNameRu = (groq?.nameRu ?? '').trim();
+  const llmNameEn = (groq?.nameEn ?? '').trim();
+  const nameRu = dictCoversName ? dict.ru : pickName(llmNameRu, dict.ru);
+  const nameEn = dictCoversName ? dict.en : pickName(llmNameEn, dict.en);
   const descriptionRu = groq?.descriptionRu ?? '';
   const descriptionEn = groq?.descriptionEn ?? '';
 
@@ -208,7 +248,7 @@ export const translateProduct = internalAction({
     if (!tr) return;
 
     const keep = (existing: string | undefined, fresh: string) =>
-      (force ? (fresh || existing) : (existing?.trim() || fresh)) || undefined;
+      pickPersist(existing, fresh, Boolean(force));
 
     await ctx.runMutation(internal.translate.patchProductTranslations, {
       id,
@@ -259,7 +299,7 @@ export const translateCategory = internalAction({
     if (!tr) return;
 
     const keep = (existing: string | undefined, fresh: string) =>
-      (force ? (fresh || existing) : (existing?.trim() || fresh)) || undefined;
+      pickPersist(existing, fresh, Boolean(force));
 
     await ctx.runMutation(internal.translate.patchCategoryTranslations, {
       id,
@@ -267,6 +307,179 @@ export const translateCategory = internalAction({
       nameEn: keep(c.nameEn, tr.nameEn),
       descriptionRu: keep(c.descriptionRu, tr.descriptionRu),
       descriptionEn: keep(c.descriptionEn, tr.descriptionEn),
+    });
+  },
+});
+
+// ── Promotions ────────────────────────────────────────────────────────────────
+
+/**
+ * Translate an arbitrary set of labeled Armenian strings to RU + EN in a single
+ * Groq call. Used for promotions, whose text (title/description + the in-card
+ * template title/subtitle/footnote) is free-form marketing copy a dictionary
+ * cannot handle. Returns null on failure so callers fall back gracefully.
+ */
+async function groqTranslateBatch(
+  items: { key: string; text: string }[],
+): Promise<Record<string, { ru: string; en: string }> | null> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key || items.length === 0) return null;
+  const system = [
+    'You are a professional translator for an auto-parts online store in Armenia.',
+    'Translate each Armenian value into natural Russian and English.',
+    'RULES:',
+    '- Translate the MEANING. NEVER transliterate Armenian into Cyrillic or Latin letters.',
+    '- Keep brand names, model codes, numbers, percentages and units unchanged (e.g. "Hito", "Dep Sun", "-30%", "2+1", "5W-30").',
+    '- Keep the marketing tone and roughly the same length as the source.',
+    '- If a value is empty, return empty strings for it.',
+    'Respond with ONLY valid JSON: an object mapping each given key to an object {"ru":"","en":""}.',
+  ].join('\n');
+  const userMsg = `Translate these fields (hy) to ru/en: ${JSON.stringify(
+    Object.fromEntries(items.map((i) => [i.key, i.text])),
+  )}`;
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.1,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: userMsg },
+          ],
+        }),
+      });
+      if (res.status === 429 || res.status >= 500) {
+        if (attempt < 3) { await sleep(attempt * 5000); continue; }
+        return null;
+      }
+      if (!res.ok) return null;
+      const data = await res.json();
+      const text: string = data?.choices?.[0]?.message?.content ?? '';
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) { if (attempt < 3) { await sleep(1500); continue; } return null; }
+      const parsed = JSON.parse(match[0]) as Record<string, { ru?: string; en?: string }>;
+      const out: Record<string, { ru: string; en: string }> = {};
+      for (const it of items) {
+        const v = parsed[it.key] ?? {};
+        out[it.key] = { ru: String(v.ru ?? '').trim(), en: String(v.en ?? '').trim() };
+      }
+      return out;
+    } catch {
+      if (attempt < 3) { await sleep(1500); continue; }
+      return null;
+    }
+  }
+  return null;
+}
+
+export const getPromotionForTranslate = internalQuery({
+  args: { id: v.id('promotions') },
+  handler: async (ctx, { id }) => {
+    const p = await ctx.db.get(id);
+    if (!p) return null;
+    return {
+      title: p.title, description: p.description, templateJson: p.templateJson,
+      titleRu: p.titleRu, titleEn: p.titleEn,
+      descriptionRu: p.descriptionRu, descriptionEn: p.descriptionEn,
+      templateJsonRu: p.templateJsonRu, templateJsonEn: p.templateJsonEn,
+    };
+  },
+});
+
+export const patchPromotionTranslations = internalMutation({
+  args: {
+    id: v.id('promotions'),
+    titleRu: v.optional(v.string()), titleEn: v.optional(v.string()),
+    descriptionRu: v.optional(v.string()), descriptionEn: v.optional(v.string()),
+    templateJsonRu: v.optional(v.string()), templateJsonEn: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...patch }) => {
+    await ctx.db.patch(id, patch);
+  },
+});
+
+/** Localized text fields of the promo template config (free marketing copy). */
+const PROMO_TPL_TEXT_KEYS = ['title', 'subtitle', 'footnote'] as const;
+
+export const translatePromotion = internalAction({
+  args: { id: v.id('promotions'), force: v.optional(v.boolean()) },
+  handler: async (ctx, { id, force }) => {
+    const p = await ctx.runQuery(internal.translate.getPromotionForTranslate, { id });
+    if (!p) return;
+
+    const needTitle = force ? Boolean(p.title?.trim()) : (!p.titleRu?.trim() || !p.titleEn?.trim());
+    const needDesc = Boolean(p.description?.trim()) && (force || !p.descriptionRu?.trim() || !p.descriptionEn?.trim());
+    const needTpl = Boolean(p.templateJson?.trim()) && (force || !p.templateJsonRu?.trim() || !p.templateJsonEn?.trim());
+    if (!needTitle && !needDesc && !needTpl) return;
+
+    // Parse the base template config (plain JSON; the visual settings are kept
+    // verbatim, only the text fields get translated).
+    let baseCfg: Record<string, unknown> | null = null;
+    if (p.templateJson?.trim()) {
+      try { baseCfg = JSON.parse(p.templateJson) as Record<string, unknown>; } catch { baseCfg = null; }
+    }
+
+    // Collect every source text → dictionary first, LLM for the rest in one batch.
+    const dictByKey: Record<string, { ru: string; en: string; complete: boolean }> = {};
+    const llmItems: { key: string; text: string }[] = [];
+    const addField = (key: string, text: string | undefined) => {
+      const t = (text ?? '').trim();
+      if (!t) { dictByKey[key] = { ru: '', en: '', complete: true }; return; }
+      const d = dictTranslateName(t);
+      dictByKey[key] = { ru: d.ru, en: d.en, complete: d.complete };
+      if (!d.complete) llmItems.push({ key, text: t });
+    };
+
+    addField('title', p.title);
+    addField('description', p.description);
+    if (baseCfg) {
+      for (const k of PROMO_TPL_TEXT_KEYS) addField(`tpl_${k}`, baseCfg[k] as string | undefined);
+    }
+
+    const batch = llmItems.length ? await groqTranslateBatch(llmItems) : null;
+    const pick = (key: string): { ru: string; en: string } => {
+      const d = dictByKey[key];
+      if (!d) return { ru: '', en: '' };
+      if (d.complete) return { ru: d.ru, en: d.en };
+      const b = batch?.[key];
+      return { ru: pickName(b?.ru ?? '', d.ru), en: pickName(b?.en ?? '', d.en) };
+    };
+
+    const title = pick('title');
+    const desc = pick('description');
+
+    // Rebuild localized template configs, keeping visual settings + headline.
+    let templateJsonRu: string | undefined;
+    let templateJsonEn: string | undefined;
+    if (baseCfg) {
+      const ruCfg: Record<string, unknown> = { ...baseCfg };
+      const enCfg: Record<string, unknown> = { ...baseCfg };
+      for (const k of PROMO_TPL_TEXT_KEYS) {
+        const tr = pick(`tpl_${k}`);
+        ruCfg[k] = tr.ru;
+        enCfg[k] = tr.en;
+      }
+      templateJsonRu = JSON.stringify(ruCfg);
+      templateJsonEn = JSON.stringify(enCfg);
+    }
+
+    const keep = (existing: string | undefined, fresh: string | undefined) =>
+      pickPersist(existing, fresh ?? '', Boolean(force));
+
+    await ctx.runMutation(internal.translate.patchPromotionTranslations, {
+      id,
+      titleRu: keep(p.titleRu, title.ru),
+      titleEn: keep(p.titleEn, title.en),
+      descriptionRu: keep(p.descriptionRu, desc.ru),
+      descriptionEn: keep(p.descriptionEn, desc.en),
+      templateJsonRu: keep(p.templateJsonRu, templateJsonRu),
+      templateJsonEn: keep(p.templateJsonEn, templateJsonEn),
     });
   },
 });
@@ -301,6 +514,16 @@ export const backfillAll = mutation({
       const needDesc = Boolean(p.description?.trim()) && (force || !p.descriptionRu?.trim() || !p.descriptionEn?.trim());
       if (!needName && !needDesc) continue;
       await ctx.scheduler.runAfter(scheduled * SPACING_MS, internal.translate.translateProduct, { id: p._id, force });
+      scheduled++;
+    }
+
+    const promotions = await ctx.db.query('promotions').take(200);
+    for (const p of promotions) {
+      const needTitle = force ? Boolean(p.title?.trim()) : (!p.titleRu?.trim() || !p.titleEn?.trim());
+      const needDesc = Boolean(p.description?.trim()) && (force || !p.descriptionRu?.trim() || !p.descriptionEn?.trim());
+      const needTpl = Boolean(p.templateJson?.trim()) && (force || !p.templateJsonRu?.trim() || !p.templateJsonEn?.trim());
+      if (!needTitle && !needDesc && !needTpl) continue;
+      await ctx.scheduler.runAfter(scheduled * SPACING_MS, internal.translate.translatePromotion, { id: p._id, force });
       scheduled++;
     }
 

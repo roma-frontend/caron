@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { ProductRail, type RailProduct } from './ProductRail';
+import { useCategoryName } from '@/lib/i18n/filterNames';
 
 /** One category's product shelf. Auto-hides when it has too few products. */
 function CategoryShelf({ categoryId, name, slug }: { categoryId: Id<'categories'>; name: string; slug: string }) {
@@ -30,12 +31,13 @@ function CategoryShelf({ categoryId, name, slug }: { categoryId: Id<'categories'
  */
 export function CategoryShelves({ limit = 4 }: { limit?: number }) {
   const categories = useQuery(api.categories.list, {});
+  const catName = useCategoryName();
   if (!categories) return null;
 
   return (
     <>
       {categories.slice(0, limit).map((c) => (
-        <CategoryShelf key={c._id} categoryId={c._id} name={c.name} slug={c.slug} />
+        <CategoryShelf key={c._id} categoryId={c._id} name={catName(c)} slug={c.slug} />
       ))}
     </>
   );

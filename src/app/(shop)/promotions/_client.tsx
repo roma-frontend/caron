@@ -15,6 +15,7 @@ import { Loader } from '@/components/ui/loader';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useT } from '@/lib/i18n/admin';
+import { pickLocalized, pickPromoTemplateJson } from '@/lib/i18n/localize';
 
 function useCountdown(endDate: number) {
   const [now, setNow] = useState(() => Date.now());
@@ -66,9 +67,12 @@ function CountdownPill({ endDate }: { endDate: number }) {
   );
 }
 
-function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; imageUrl?: string; images?: string[]; templateJson?: string; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
+function PromoCard({ promo, index }: { promo: { _id: string; title: string; description?: string; titleRu?: string; titleEn?: string; descriptionRu?: string; descriptionEn?: string; imageUrl?: string; images?: string[]; templateJson?: string; templateJsonRu?: string; templateJsonEn?: string; discountPercent?: number; endDate: number; categoryIds?: string[]; productIds?: string[] }; index: number }) {
+  const { lang } = useT();
   const { ref, visible } = useReveal();
-  const tpl = parsePromoConfig(promo.templateJson);
+  const tpl = parsePromoConfig(pickPromoTemplateJson(promo, lang));
+  const title = pickLocalized(promo, 'title', lang);
+  const description = pickLocalized(promo, 'description', lang);
 
   return (
     <Link href={`/promotions/${promo._id}`} className="group block mx-auto w-full max-w-[420px]">
@@ -118,11 +122,11 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
         {/* Content */}
         <div className="px-5 pb-5 pt-3">
           <h3 className="text-sm font-bold leading-snug text-center transition-colors group-hover:text-primary">
-            {promo.title}
+            {title}
           </h3>
-          {promo.description && (
+          {description && (
             <p className="mt-1 text-xs text-muted-foreground text-center line-clamp-2">
-              {promo.description}
+              {description}
             </p>
           )}
           <CountdownPill endDate={promo.endDate} />
