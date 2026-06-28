@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Truck, Shield, Clock, Star } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { FEATURES } from "@/lib/constants";
 import { ProductCard } from "@/components/cards/ProductCard";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
@@ -860,6 +861,7 @@ export default function HomePage() {
         <DeliveryPromo />
       </div>
       <Footer />
+      <MobileNav />
     </div>
   );
 }

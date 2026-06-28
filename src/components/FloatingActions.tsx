@@ -45,7 +45,7 @@ export function FloatingActions() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const role: UserRole = user?.role === 'admin' ? 'admin' : user ? 'customer' : 'guest';
   const suggestions = getRoleSuggestions(role);
-  const noMobileNav = pathname === '/';
+  const noMobileNav = pathname.startsWith('/login') || pathname.startsWith('/register');
   const mobileBottom = noMobileNav ? '1.5rem' : '5rem';
 
   useEffect(() => {
