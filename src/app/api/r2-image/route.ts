@@ -36,26 +36,36 @@ function extractObjectKey(urlStr: string, bucketName: string): string | null {
   }
 }
 
+// Error responses must never be cached — otherwise a transient failure (e.g.
+// a 402/404 during a misconfiguration window) sticks in the browser/CDN and
+// the image stays "broken" long after the underlying issue is fixed.
+function imageError(error: string, status: number): NextResponse {
+  return NextResponse.json(
+    { error },
+    { status, headers: { 'Cache-Control': 'no-store, max-age=0' } },
+  );
+}
+
 export async function GET(req: NextRequest) {
   const bucket = process.env.R2_BUCKET_NAME;
   if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !bucket) {
-    return NextResponse.json({ error: 'R2 not configured on server' }, { status: 500 });
+    return imageError('R2 not configured on server', 500);
   }
 
   const rawUrl = req.nextUrl.searchParams.get('url');
   if (!rawUrl) {
-    return NextResponse.json({ error: 'Missing url param' }, { status: 400 });
+    return imageError('Missing url param', 400);
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
   const { allowed } = await checkRateLimit(`r2-image:${ip}`);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return imageError('Too many requests', 429);
   }
 
   const key = extractObjectKey(rawUrl, bucket);
   if (!key) {
-    return NextResponse.json({ error: 'Unsupported or invalid R2 url' }, { status: 400 });
+    return imageError('Unsupported or invalid R2 url', 400);
   }
 
   try {
@@ -65,7 +75,7 @@ export async function GET(req: NextRequest) {
     }));
 
     if (!object.Body) {
-      return NextResponse.json({ error: 'Image body is empty' }, { status: 404 });
+      return imageError('Image body is empty', 404);
     }
 
     const bytes = await object.Body.transformToByteArray();
@@ -78,6 +88,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown R2 error';
-    return NextResponse.json({ error: msg }, { status: 404 });
+    return imageError(msg, 404);
   }
 }
