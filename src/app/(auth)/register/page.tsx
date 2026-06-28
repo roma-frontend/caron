@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useAction } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -29,11 +29,11 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [captcha, setCaptcha] = useState('');
   const [tsKey, setTsKey] = useState(0);
-  const [refCode, setRefCode] = useState('');
-  useEffect(() => {
-    const r = new URLSearchParams(window.location.search).get('ref');
-    if (r) setRefCode(r.trim());
-  }, []);
+  const [refCode, setRefCode] = useState(() =>
+    typeof window === 'undefined'
+      ? ''
+      : new URLSearchParams(window.location.search).get('ref')?.trim() ?? '',
+  );
 
   const handleTelegram = useCallback(async (u: TelegramAuthUser) => {
     try {
@@ -53,7 +53,7 @@ export default function RegisterPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('auth.telegramLoginError'));
     }
-  }, [loginWithTelegram, setSession, router]);
+  }, [loginWithTelegram, setSession, router, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
