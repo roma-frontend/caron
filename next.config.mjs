@@ -124,6 +124,30 @@ const nextConfig = {
   },
 
   async headers() {
+    // Build cache rules for storefront pages across all locale prefixes
+    // (hy = no prefix, /ru, /en). These pages carry no per-user data in their
+    // server HTML (cart/auth/favorites live in client stores + Convex), so the
+    // CDN can safely serve the rendered shell and skip a function invocation on
+    // repeat views. Interactive/personal routes (cart, checkout, favorites,
+    // dashboard, orders, login, register, compare, order-status) are omitted on
+    // purpose and stay uncached.
+    const LOCALE_PREFIXES = ['', '/ru', '/en'];
+    const cachePages = (paths, value) =>
+      LOCALE_PREFIXES.flatMap((prefix) =>
+        paths.map((p) => ({ source: `${prefix}${p}`, headers: [{ key: 'Cache-Control', value }] })),
+      );
+    // Rarely-changing informational/CMS pages — cache hard, revalidate lazily.
+    const infoCache = cachePages(
+      ['/about', '/delivery', '/terms', '/privacy', '/returns', '/contact'],
+      'public, s-maxage=3600, stale-while-revalidate=86400',
+    );
+    // Catalog pages — data changes more often, so a short edge cache + SWR keeps
+    // them fresh while still absorbing the bulk of repeat traffic for free.
+    const catalogCache = cachePages(
+      ['/products', '/products/:path*', '/categories', '/categories/:path*', '/promotions', '/discounts', '/oem/:path*'],
+      'public, s-maxage=180, stale-while-revalidate=600',
+    );
+
     return [
       // Security headers on all routes EXCEPT the auth pages (which need the
       // looser Telegram-widget CSP). Negative lookahead keeps a single CSP per
@@ -142,6 +166,8 @@ const nextConfig = {
         source: '/',
         headers: [{ key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' }],
       },
+      ...infoCache,
+      ...catalogCache,
       // API routes — no cache, EXCEPT the image/media proxies, which serve
       // public immutable assets and set their own long-lived Cache-Control.
       // Letting the CDN cache those means each image is fetched from the

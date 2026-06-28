@@ -58,7 +58,10 @@ export function proxy(request: NextRequest) {
   } else {
     response = NextResponse.next({ request: { headers: requestHeaders } });
   }
-  response.cookies.set('NEXT_LOCALE', locale, { path: '/', maxAge: 31_536_000, sameSite: 'lax' });
+  // NB: we deliberately do NOT set a NEXT_LOCALE cookie here. The locale is
+  // fully derived from the URL, nothing reads the cookie, and emitting
+  // Set-Cookie on every response makes pages uncacheable by the CDN — which
+  // would force a function invocation on every page view.
   return withSecurity(response);
 }
 

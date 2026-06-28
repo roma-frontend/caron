@@ -5,6 +5,27 @@ const LEGACY_R2_HOST_SUFFIX = '.r2.cloudflarestorage.com';
 const R2_DEV_HOST_SUFFIX = '.r2.dev';
 const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i;
 
+// Optional public R2 host (a custom domain bound to the bucket, e.g.
+// "https://img.caron.group"). When set, R2 image URLs are rewritten to be
+// served DIRECTLY from Cloudflare's CDN instead of through the Vercel proxy —
+// Cloudflare R2 egress is free/unlimited, so this takes image bandwidth and
+// function invocations off Vercel entirely. Until it is configured the proxy
+// path is used, so this is a safe, inert addition.
+const R2_PUBLIC_HOST = (process.env.R2_PUBLIC_HOST || '').replace(/\/+$/, '');
+const R2_BUCKET = process.env.R2_BUCKET_NAME || '';
+
+/** Rewrite an R2 object URL to the public custom-domain URL, or null if unset. */
+function toPublicDirectUrl(parsed: URL): string | null {
+  if (!R2_PUBLIC_HOST) return null;
+  let key = parsed.pathname.replace(/^\/+/, '');
+  // Path-style private URLs include the bucket as the first path segment.
+  if (R2_BUCKET && (key === R2_BUCKET || key.startsWith(`${R2_BUCKET}/`))) {
+    key = key.slice(R2_BUCKET.length).replace(/^\/+/, '');
+  }
+  if (!key) return null;
+  return `${R2_PUBLIC_HOST}/${key}`;
+}
+
 function normalizeLocalImagePath(raw: string): string | null {
   const value = raw.trim();
   if (!value) return null;
@@ -46,7 +67,9 @@ export function normalizeImageUrl(imageUrl?: string | null): string | null | und
     }
 
     if (!parsed.hostname.endsWith(LEGACY_R2_HOST_SUFFIX) && !parsed.hostname.endsWith(R2_DEV_HOST_SUFFIX)) return trimmed;
-    return `/api/r2-image?url=${encodeURIComponent(trimmed)}`;
+    // Prefer direct Cloudflare delivery (free egress, no Vercel) when a public
+    // host is configured; otherwise fall back to the same-origin proxy.
+    return toPublicDirectUrl(parsed) ?? `/api/r2-image?url=${encodeURIComponent(trimmed)}`;
   } catch {
     return normalizeLocalImagePath(trimmed);
   }

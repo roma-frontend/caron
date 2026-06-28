@@ -12,8 +12,10 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs' || process.env.NEXT_RUNTIME === 'edge') {
     Sentry.init({
       dsn,
-      tracesSampleRate: 0.1,
-      enableLogs: true,
+      // Tracing + logs off in production to conserve Sentry's free quota and
+      // avoid extra function load; errors are still captured.
+      tracesSampleRate: process.env.NODE_ENV === 'production' ? 0 : 0.1,
+      enableLogs: process.env.NODE_ENV !== 'production',
       environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
     });
   }

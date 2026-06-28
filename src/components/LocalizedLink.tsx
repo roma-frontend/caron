@@ -23,10 +23,15 @@ function isLocalizable(href: NextLinkProps['href']): href is string {
 }
 
 export const LocalizedLink = forwardRef<HTMLAnchorElement, NextLinkProps>(
-  function LocalizedLink({ href, ...props }, ref) {
+  function LocalizedLink({ href, prefetch = false, ...props }, ref) {
     const locale = useLocale();
     const finalHref = locale && isLocalizable(href) ? localizedPath(href, locale) : href;
-    return <NextLink ref={ref} href={finalHref} {...props} />;
+    // prefetch defaults to false: Next otherwise prefetches the RSC payload of
+    // every in-viewport link, which on a catalog full of product/category links
+    // generates a flood of `?_rsc=` Edge requests. Navigation still prefetches
+    // on hover/touch-start via the browser, and callers can opt back in with
+    // `prefetch` for high-intent links (e.g. primary CTAs).
+    return <NextLink ref={ref} href={finalHref} prefetch={prefetch} {...props} />;
   },
 );
 
