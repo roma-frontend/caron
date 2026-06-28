@@ -19,6 +19,22 @@ import { useT } from '@/lib/i18n/admin';
 export default function LoginPage() {
   const { t } = useT();
   const router = useRouter();
+
+  // Map structured ConvexError codes (delivered even in production) to friendly
+  // translated text. Falls back to a generic message for anything unexpected so
+  // raw "[CONVEX M(auth:login)] … Server Error" strings never reach the user.
+  const errorToMessage = useCallback((err: unknown): string => {
+    const data = (err as { data?: unknown })?.data;
+    const code = typeof data === 'object' && data && 'code' in data
+      ? String((data as { code: unknown }).code)
+      : undefined;
+    switch (code) {
+      case 'INVALID_CREDENTIALS': return t('auth.errInvalidCredentials');
+      case 'TOO_MANY_ATTEMPTS': return t('auth.errTooManyAttempts');
+      case 'USER_INACTIVE': return t('auth.errUserInactive');
+      default: return t('auth.loginError');
+    }
+  }, [t]);
   const login = useMutation(api.auth.login);
   const loginWithTelegram = useMutation(api.auth.loginWithTelegram);
   const setSession = useAuthStore((s) => s.setSession);
@@ -38,7 +54,7 @@ export default function LoginPage() {
       toast.success(t('auth.welcomeBack') + result.name + '!');
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : ''; setError(msg.includes('Uncaught Error:') ? msg.split('Uncaught Error:')[1].split(' at ')[0].trim() : msg || t('auth.loginError'));
+      setError(errorToMessage(err));
     } finally {
       setLoading(false);
     }
@@ -60,9 +76,9 @@ export default function LoginPage() {
       toast.success(t('auth.welcomeBack') + result.name + '!');
       router.push(result.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('auth.telegramLoginError'));
+      toast.error(errorToMessage(err));
     }
-  }, [loginWithTelegram, setSession, router]);
+  }, [loginWithTelegram, setSession, router, errorToMessage]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { ConvexError } from 'convex/values';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 
@@ -90,7 +91,7 @@ async function generateReferralCode(ctx: MutationCtx): Promise<string> {
 async function assertLoginAllowed(ctx: MutationCtx, key: string): Promise<void> {
   const attempt = await ctx.db.query('authAttempts').withIndex('by_key', (q) => q.eq('key', key)).unique();
   if (attempt?.lockedUntil && attempt.lockedUntil > Date.now()) {
-    throw new Error('Չափազանց շատ փորձեր։ Փորձեք ավելի ուշ։');
+    throw new ConvexError({ code: 'TOO_MANY_ATTEMPTS' });
   }
 }
 
@@ -145,14 +146,14 @@ export const login = mutation({
     const user = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', email)).unique();
     if (!user || !user.passwordHash) {
       await recordLoginFailure(ctx, attemptKey);
-      throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
+      throw new ConvexError({ code: 'INVALID_CREDENTIALS' });
     }
     const passMatch = await verifyPassword(args.password, user.passwordHash);
     if (!passMatch) {
       await recordLoginFailure(ctx, attemptKey);
-      throw new Error('Սխալ էլ․ հասցե կամ գաղտնաբառ');
+      throw new ConvexError({ code: 'INVALID_CREDENTIALS' });
     }
-    if (!user.isActive) throw new Error('Օգտագործողը չի գտնվել');
+    if (!user.isActive) throw new ConvexError({ code: 'USER_INACTIVE' });
     await clearLoginFailures(ctx, attemptKey);
     if (!user.passwordHash.startsWith(`${PASSWORD_HASH_PREFIX}$`)) {
       await ctx.db.patch(user._id, { passwordHash: await hashPassword(args.password) });
