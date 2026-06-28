@@ -1567,6 +1567,7 @@ export default function AdminSettingsPage() {
           <ImageCleanupCard sessionToken={sessionToken || ""} />
           <ImageReoptimizeCard />
           <TranslateAllCard sessionToken={sessionToken || ""} />
+          <DuplicateSlugsCard sessionToken={sessionToken || ""} />
         </TabsContent>
 
         <Button
@@ -1644,6 +1645,98 @@ function FilterMigrationCard({ sessionToken }: { sessionToken: string }) {
         >
           <Power className="h-4 w-4" />
           {migrating ? t('as.migrating') : t('as.runMigration')}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DuplicateSlugsCard({ sessionToken }: { sessionToken: string }) {
+  const dupes = useQuery(
+    api.products.findDuplicateSlugs,
+    sessionToken ? { sessionToken } : "skip",
+  ) as
+    | {
+        totalDuplicateSlugs: number;
+        groups: {
+          slug: string;
+          count: number;
+          products: { id: string; name: string; sku: string; isActive: boolean }[];
+        }[];
+      }
+    | undefined;
+  const dedupe = useMutation(api.products.dedupeSlugs);
+  const [running, setRunning] = useState(false);
+
+  const total = dupes?.totalDuplicateSlugs ?? 0;
+
+  return (
+    <Card className="border-warning/50 bg-warning/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base text-warning">
+          <Power className="h-5 w-5" />
+          Կրկնվող slug-եր (Duplicate slugs)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Գտնում և շտկում է ապրանքների կրկնվող slug-երը, որոնք առաջացնում են
+          getBySlug Server Error-ը։ Ամենահին ապրանքը պահում է slug-ը, մնացածներին
+          ավելացվում է եզակի վերջածանց (SKU-ից)։ Ոչ մի ապրանք չի ջնջվում։
+        </p>
+
+        {dupes === undefined ? (
+          <p className="text-xs text-muted-foreground">Բեռնվում է…</p>
+        ) : total === 0 ? (
+          <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+            Կրկնվող slug-եր չկան ✓
+          </div>
+        ) : (
+          <div className="space-y-2 rounded-lg bg-muted/50 p-3 text-xs">
+            <p className="font-medium text-warning">
+              Գտնվեց {total} կրկնվող slug
+            </p>
+            <ul className="space-y-1 font-mono text-muted-foreground">
+              {dupes.groups.slice(0, 10).map((g) => (
+                <li key={g.slug}>
+                  <span className="text-foreground">{g.slug || "(դատարկ)"}</span>{" "}
+                  × {g.count}
+                </li>
+              ))}
+              {dupes.groups.length > 10 && (
+                <li>…+{dupes.groups.length - 10}</li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        <Button
+          disabled={running || total === 0}
+          onClick={async () => {
+            if (
+              !window.confirm(
+                `Շտկե՞լ ${total} կրկնվող slug։ Որոշ ապրանքների URL-ը կփոխվի։`,
+              )
+            ) {
+              return;
+            }
+            setRunning(true);
+            try {
+              const r = (await dedupe({ sessionToken })) as {
+                renamed: number;
+                message: string;
+              };
+              toast.success(r.message);
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Error");
+            } finally {
+              setRunning(false);
+            }
+          }}
+          className="w-full gap-2"
+        >
+          <Power className="h-4 w-4" />
+          {running ? "Աշխատում է…" : "Շտկել կրկնությունները"}
         </Button>
       </CardContent>
     </Card>
