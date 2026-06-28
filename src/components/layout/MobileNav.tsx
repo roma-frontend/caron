@@ -28,6 +28,7 @@ import { useAuth } from '@/store/auth';
 import { useBuyBarStore } from '@/store/buyBar';
 import { useSettings } from '@/hooks/useSettings';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import type { NavBadgeConfig } from '@/components/NavBadge';
 import { BottomTabBar, GridMenuSheet, AiMenuBanner, type TabItem, type GridMenuItem } from '@/components/shared/MobileTabBar';
 import { useT } from '@/lib/i18n/admin';
 
@@ -70,10 +71,21 @@ export function MobileNav() {
     { href: accountHref, icon: User, label: t('cmp.nav_account'), active: pathname.startsWith('/dashboard') || pathname.startsWith('/admin') },
   ];
 
-  const menuItems: GridMenuItem[] = [
+  const navBadges = (() => {
+    try {
+      const raw = settings?.navBadges;
+      if (!raw) return {} as Record<string, NavBadgeConfig>;
+      const parsed = JSON.parse(raw) as Array<{ path: string; text: string; variant: string }>;
+      const map: Record<string, NavBadgeConfig> = {};
+      for (const it of parsed) map[it.path] = { text: it.text, variant: it.variant as NavBadgeConfig['variant'] };
+      return map;
+    } catch { return {} as Record<string, NavBadgeConfig>; }
+  })();
+
+  const baseItems: GridMenuItem[] = [
     { href: '/categories', icon: LayoutGrid, label: t('cmp.nav_categories') },
-    { href: '/car-selector', icon: Car, label: t('cmp.select_car') },
-    { href: '/oem', icon: Hash, label: t('cmp.oem_search') },
+    ...(settings !== undefined && settings?.enableCarSelector !== false ? [{ href: '/car-selector', icon: Car, label: t('cmp.select_car') }] : []),
+    ...(settings?.enableOemSearch ? [{ href: '/oem', icon: Hash, label: t('cmp.oem_search') }] : []),
     ...(settings?.enableVinDecoder ? [{ href: '/vin-decoder', icon: ScanSearch, label: t('cmp.vin_decoder') }] : []),
     { href: '/promotions', icon: Tag, label: t('cmp.nav_promotions') },
     { href: '/discounts', icon: Percent, label: t('cmp.discounts') },
@@ -87,6 +99,9 @@ export function MobileNav() {
     { href: '/products', icon: Search, label: t('cmp.search_label') },
     { href: accountHref, icon: User, label: mounted && user ? t('cmp.nav_account') : t('cmp.nav_login') },
   ];
+  const menuItems: GridMenuItem[] = baseItems.map((it) =>
+    it.href && navBadges[it.href] ? { ...it, navBadge: navBadges[it.href] } : it
+  );
 
   const openAiChat = () => {
     setMenuOpen(false);

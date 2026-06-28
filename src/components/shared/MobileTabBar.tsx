@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import Link from '@/components/LocalizedLink';
 import { Sparkles, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { NavBadge, type NavBadgeConfig } from '@/components/NavBadge';
 import { useT } from '@/lib/i18n/admin';
 
 /* -------------------------------------------------------------------------- */
@@ -26,6 +27,8 @@ export type GridMenuItem = {
   href?: string;
   onClick?: () => void;
   badge?: number;
+  /** Configurable promo label (e.g. "BOOM") shown on the card corner. */
+  navBadge?: NavBadgeConfig;
   /** Renders the card with the primary/accent highlight (e.g. logout). */
   highlight?: boolean;
 };
@@ -125,7 +128,7 @@ export function GridMenuSheet({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="flex h-[96dvh] max-h-[96dvh] flex-col rounded-t-3xl px-4 pt-2"
+        className="flex h-dvh! max-h-dvh! rounded-none! flex-col px-4 pt-2 z-[100]"
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         {/* Grab handle doubles as the close affordance (tap, or tap backdrop). */}
@@ -199,9 +202,9 @@ export function AiMenuBanner({
 }
 
 function MenuCard({ item, onClose }: { item: GridMenuItem; onClose: () => void }) {
-  const { icon: Icon, label, badge, highlight } = item;
+  const { icon: Icon, label, badge, navBadge, highlight } = item;
 
-  const className = `flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-colors active:scale-[0.97] ${
+  const className = `relative flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-colors active:scale-[0.97] ${
     highlight
       ? 'border-primary/40 bg-primary/10 text-primary'
       : 'border-border/60 bg-muted/40 text-foreground hover:bg-muted'
@@ -209,6 +212,11 @@ function MenuCard({ item, onClose }: { item: GridMenuItem; onClose: () => void }
 
   const inner = (
     <>
+      {navBadge && (
+        <span className="absolute right-1.5 top-1.5">
+          <NavBadge config={navBadge} />
+        </span>
+      )}
       <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-background/70">
         <Icon className="h-5 w-5" />
         {badge != null && badge > 0 && (
