@@ -7,6 +7,7 @@ import { api } from '../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/admin';
+import { useZoneName } from '@/lib/i18n/zoneNames';
 
 type Zone = {
   _id: string;
@@ -71,6 +72,7 @@ function WeekStrip({ days }: { days: boolean[] }) {
 
 function ZoneCard({ zone }: { zone: Zone }) {
   const { t } = useT();
+  const zoneName = useZoneName();
   const days = useMemo(() => parseDays(zone.schedule), [zone.schedule]);
   const hasSchedule = zone.schedule.trim().length > 0;
 
@@ -78,7 +80,7 @@ function ZoneCard({ zone }: { zone: Zone }) {
     <div className="group flex flex-col gap-3 rounded-xl border bg-card/40 p-4 transition-all hover:border-primary/30 hover:shadow-sm">
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 shrink-0 text-primary" />
-        <h4 className="font-semibold leading-tight">{zone.name}</h4>
+        <h4 className="font-semibold leading-tight">{zoneName(zone.name)}</h4>
       </div>
 
       {!hasSchedule ? (
