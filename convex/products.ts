@@ -434,12 +434,16 @@ export const getBySlug = query({
 
     let product = null;
     for (const candidate of candidates) {
-      product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', candidate)).unique();
+      // Use `.first()` instead of `.unique()`: the `by_slug` index is not a
+      // unique constraint, so duplicate slugs in the data would make
+      // `.unique()` throw a server error. Taking the first match keeps the
+      // page resilient to accidental duplicates.
+      product = await ctx.db.query('products').withIndex('by_slug', (q) => q.eq('slug', candidate)).first();
       if (product) break;
     }
     if (!product) {
       for (const candidate of candidates) {
-        product = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', candidate)).unique();
+        product = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', candidate)).first();
         if (product) break;
       }
     }
@@ -463,6 +467,101 @@ export const getBySlug = query({
     const cat = await ctx.db.get(product.categoryId);
     if (!cat?.isActive) return null;
     return normalizeProductImages(product);
+  },
+});
+
+/**
+ * Admin-only: find products that share the same `slug`. Returns one group per
+ * duplicated slug with the conflicting products (id, name, sku, isActive,
+ * creation time). Useful to inspect data before cleaning it up. Read-only.
+ */
+export const findDuplicateSlugs = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const all = await ctx.db.query('products').take(100000);
+    const bySlug = new Map<string, Doc<'products'>[]>();
+    for (const p of all) {
+      const key = p.slug ?? '';
+      const list = bySlug.get(key) ?? [];
+      list.push(p);
+      bySlug.set(key, list);
+    }
+    const groups = [];
+    for (const [slug, items] of bySlug) {
+      if (items.length > 1) {
+        groups.push({
+          slug,
+          count: items.length,
+          products: items
+            .sort((a, b) => a._creationTime - b._creationTime)
+            .map((p) => ({
+              id: p._id,
+              name: p.name,
+              sku: p.sku,
+              isActive: p.isActive,
+              creationTime: p._creationTime,
+            })),
+        });
+      }
+    }
+    groups.sort((a, b) => b.count - a.count);
+    return { totalDuplicateSlugs: groups.length, groups };
+  },
+});
+
+/**
+ * Admin-only: resolve duplicate slugs so every product becomes uniquely
+ * reachable. The oldest product in each group keeps the original slug; the
+ * rest get a unique suffix derived from their SKU (falling back to a numeric
+ * suffix). No products are deleted, so nothing is lost. Idempotent: re-running
+ * after a clean catalog reports 0 changes.
+ */
+export const dedupeSlugs = mutation({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const all = await ctx.db.query('products').take(100000);
+
+    const bySlug = new Map<string, Doc<'products'>[]>();
+    for (const p of all) {
+      const key = p.slug ?? '';
+      const list = bySlug.get(key) ?? [];
+      list.push(p);
+      bySlug.set(key, list);
+    }
+    // Track every slug currently in use so generated slugs stay unique.
+    const used = new Set(all.map((p) => p.slug ?? ''));
+
+    const changes: { id: Id<'products'>; from: string; to: string }[] = [];
+    for (const [slug, items] of bySlug) {
+      if (items.length <= 1) continue;
+      // Keep the oldest product on the original slug; rename the others.
+      const sorted = items.sort((a, b) => a._creationTime - b._creationTime);
+      for (let i = 1; i < sorted.length; i++) {
+        const p = sorted[i];
+        const base = p.sku
+          ? `${slug}-${normalizeSlugValue(p.sku)}`
+          : slug;
+        let candidate = base || `${slug}-${i}`;
+        let n = 1;
+        while (used.has(candidate)) {
+          n++;
+          candidate = `${base || slug}-${n}`;
+        }
+        used.add(candidate);
+        await ctx.db.patch(p._id, { slug: candidate });
+        changes.push({ id: p._id, from: slug, to: candidate });
+      }
+    }
+    return {
+      renamed: changes.length,
+      changes,
+      message:
+        changes.length === 0
+          ? 'Կրկնվող slug-եր չկան'
+          : `${changes.length} ապրանքի slug-ը թարմացվեց`,
+    };
   },
 });
 

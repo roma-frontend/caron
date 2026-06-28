@@ -39,7 +39,7 @@ export const getBySlug = query({
     const category = await ctx.db
       .query('categories')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
-      .unique();
+      .first();
     return category ? normalizeCategoryImage(category) : null;
   },
 });
