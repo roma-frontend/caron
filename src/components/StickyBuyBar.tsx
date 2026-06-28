@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
+import { useBuyBarStore } from '@/store/buyBar';
 import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
@@ -25,7 +26,8 @@ interface StickyBuyBarProps {
 
 export function StickyBuyBar({ productId, productName, productPrice, productImage, productCompareAtPrice, inStock = true, slug: _slug, qty = 1, productStock }: StickyBuyBarProps) {
   const { t } = useT();
-  const [visible, setVisible] = useState(false);
+  const visible = useBuyBarStore((s) => s.visible);
+  const setVisible = useBuyBarStore((s) => s.setVisible);
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
   const toggleFav = useFavoritesStore((s) => s.toggle);
@@ -40,8 +42,9 @@ export function StickyBuyBar({ productId, productName, productPrice, productImag
       { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
     );
     observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    // Reset on unmount (leaving the product page) so the tab bar reappears.
+    return () => { observer.disconnect(); setVisible(false); };
+  }, [setVisible]);
 
   if (!visible) return null;
 

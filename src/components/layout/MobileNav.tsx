@@ -20,6 +20,7 @@ import {
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useAuth } from '@/store/auth';
+import { useBuyBarStore } from '@/store/buyBar';
 import { BottomTabBar, GridMenuSheet, AiMenuBanner, type TabItem, type GridMenuItem } from '@/components/shared/MobileTabBar';
 import { useT } from '@/lib/i18n/admin';
 
@@ -29,6 +30,10 @@ export function MobileNav() {
   const cartCount = useCartStore((s) => s.totalItems());
   const favCount = useFavoritesStore((s) => s.count());
   const { user } = useAuth();
+  // The product-detail sticky buy-bar takes over the bottom edge when it's on
+  // screen; the rest of the time (including the top of a product page) the
+  // tab bar is shown everywhere.
+  const buyBarVisible = useBuyBarStore((s) => s.visible);
   // Real mount flag: server and first client render both see `false`, so the
   // SSR HTML matches and there is no hydration mismatch. Counts (from the
   // localStorage-backed stores) only appear after mount.
@@ -37,8 +42,9 @@ export function MobileNav() {
   useEffect(() => setMounted(true), []);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // On a product detail page the sticky buy-bar takes over the bottom.
-  if (/^\/products\/.+/.test(pathname)) return null;
+  // On a product detail page the sticky buy-bar takes over the bottom while
+  // it's on screen — step aside then to avoid two overlapping bottom bars.
+  if (buyBarVisible) return null;
 
   const accountHref = mounted && user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login';
 
