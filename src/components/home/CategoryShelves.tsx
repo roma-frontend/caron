@@ -8,7 +8,7 @@ import { useCategoryName } from '@/lib/i18n/filterNames';
 
 /** One category's product shelf. Auto-hides when it has too few products. */
 function CategoryShelf({ categoryId, name, slug }: { categoryId: Id<'categories'>; name: string; slug: string }) {
-  const products = useQuery(api.products.list, { categoryId, limit: 16 });
+  const products = useQuery(api.products.listCards, { categoryId, limit: 16 });
   const inStock = products?.filter((p) => p.stock > 0).slice(0, 12);
 
   // Loaded but not enough to justify a shelf → render nothing.

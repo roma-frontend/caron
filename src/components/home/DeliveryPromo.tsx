@@ -51,7 +51,7 @@ export function DeliveryPromo() {
   }, []);
 
   // Pull a broad pool of active products to randomize across.
-  const products = useQuery(api.products.list, { limit: 100 });
+  const products = useQuery(api.products.listCards, { limit: 100 });
 
   const images = useMemo(() => {
     const pool = (products ?? [])

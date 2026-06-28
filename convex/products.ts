@@ -426,6 +426,64 @@ export const listByIds = query({
   },
 });
 
+// Trimmed catalog listing for display shelves (home rails, etc.): same access
+// pattern as `list` but returns ONLY the fields cards render (keeps attributes
+// for the carBrand badge; drops description×3 / seo×2 / oemNumbers / costPrice /
+// extra images). Cuts the bulk of per-doc bytes for high-count shelves. Use the
+// full `list` where description/oem/all-images are needed (admin, filtering).
+export const listCards = query({
+  args: {
+    categoryId: v.optional(v.id('categories')),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    let products;
+    if (args.categoryId) {
+      products = await ctx.db
+        .query('products')
+        .withIndex('by_category', (q) => q.eq('categoryId', args.categoryId!))
+        .order('desc')
+        .take(Math.min(args.limit ?? 20, 500));
+      products = products.filter((p) => p.isActive);
+    } else {
+      products = await ctx.db
+        .query('products')
+        .withIndex('by_active', (q) => q.eq('isActive', true))
+        .order('desc')
+        .take(Math.min(args.limit ?? 20, 500));
+    }
+    const inactiveCats = await ctx.db.query('categories').withIndex('by_active', (q) => q.eq('isActive', false)).take(200);
+    if (inactiveCats.length > 0) {
+      const ids = new Set(inactiveCats.map((c) => c._id));
+      products = products.filter((p) => !ids.has(p.categoryId));
+    }
+    return products.map((p) => ({
+      _id: p._id,
+      slug: p.slug,
+      name: p.name,
+      nameRu: p.nameRu,
+      nameEn: p.nameEn,
+      price: p.price,
+      compareAtPrice: p.compareAtPrice,
+      wholesalePrice: p.wholesalePrice,
+      retailDiscount: p.retailDiscount,
+      wholesaleDiscount: p.wholesaleDiscount,
+      categoryId: p.categoryId,
+      images: (normalizeImageUrls(p.images?.slice(0, 1) ?? []) as string[]) ?? [],
+      sku: p.sku,
+      stock: p.stock,
+      brand: p.brand,
+      qtyStep: p.qtyStep,
+      atgCode: p.atgCode,
+      isActive: p.isActive,
+      isFeatured: p.isFeatured,
+      rating: p.rating,
+      reviewCount: p.reviewCount,
+      attributes: p.attributes,
+    }));
+  },
+});
+
 export const getBrands = query({
   args: {},
   handler: async (ctx) => {

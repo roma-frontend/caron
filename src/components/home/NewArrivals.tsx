@@ -8,7 +8,7 @@ import { useT } from '@/lib/i18n/admin';
 
 export function NewArrivals() {
   const { t } = useT();
-  const products = useQuery(api.products.list, { limit: 16 });
+  const products = useQuery(api.products.listCards, { limit: 16 });
   const inStock = products?.filter((p) => p.stock > 0).slice(0, 12);
 
   if (inStock && inStock.length < 3) return null;
