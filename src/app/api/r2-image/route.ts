@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { checkRateLimit } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 
@@ -57,11 +56,12 @@ export async function GET(req: NextRequest) {
     return imageError('Missing url param', 400);
   }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
-  const { allowed } = await checkRateLimit(`r2-image:${ip}`);
-  if (!allowed) {
-    return imageError('Too many requests', 429);
-  }
+  // No rate limiting here: this route serves public, immutable, CDN-cacheable
+  // images and only ever returns whitelisted R2 keys (products/ and reviews/).
+  // A single page legitimately loads dozens of images, so the generic public
+  // limiter (5/60s) would (and did) throttle normal browsing → 429 / broken
+  // images, especially now that images bypass Next's optimizer and hit this
+  // route directly. The CDN absorbs repeat loads via the immutable cache below.
 
   const key = extractObjectKey(rawUrl, bucket);
   if (!key) {
