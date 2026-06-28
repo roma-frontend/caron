@@ -723,7 +723,7 @@ function ShareButton({ productName }: { productName: string }) {
 }
 
 function RelatedProducts({ categoryId, currentId }: { categoryId: string; currentId: string }) {
-  const products = useQuery(api.products.list, { categoryId: categoryId as Id<'categories'>, limit: 4 });
+  const products = useQuery(api.products.listCards, { categoryId: categoryId as Id<'categories'>, limit: 4 });
   const filtered = products?.filter((p) => p._id !== currentId).slice(0, 4);
   if (!filtered || filtered.length === 0) return null;
   return (

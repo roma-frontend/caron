@@ -42,7 +42,7 @@ function retailPrice(p: { price: number; retailDiscount?: number }): number {
  */
 export function FrequentlyBoughtTogether({ base }: { base: BaseProduct }) {
   const { t, lang } = useT();
-  const related = useQuery(api.products.list, { categoryId: base.categoryId, limit: 8 });
+  const related = useQuery(api.products.listCards, { categoryId: base.categoryId, limit: 8 });
   const addItem = useCartStore((s) => s.addItem);
   const flyRefs = useRef<Record<string, HTMLElement | null>>({});
 

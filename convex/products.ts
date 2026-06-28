@@ -59,9 +59,10 @@ function normalizeProductImages<T extends { images?: string[] }>(product: T): T 
 // description ×3, seoTitle/seoDescription, oemNumbers, costPrice and all images
 // past the first. Used by every card-listing query so list payloads stay small
 // (the full doc is still used server-side for filtering/search before projecting).
-function toProductCard(p: Doc<'products'>) {
+export function toProductCard(p: Doc<'products'>) {
   return {
     _id: p._id,
+    _creationTime: p._creationTime,
     slug: p.slug,
     name: p.name,
     nameRu: p.nameRu,
@@ -860,7 +861,7 @@ export const getFeatured = query({
       .withIndex('by_featured', (q) => q.eq('isFeatured', true))
       .take(12)).filter(isAvailable);
 
-    if (featured.length >= 12) return featured.slice(0, 12);
+    if (featured.length >= 12) return featured.slice(0, 12).map(toProductCard);
 
     const need = 12 - featured.length;
     const recent = await ctx.db
@@ -873,7 +874,7 @@ export const getFeatured = query({
       if (featured.length >= 12) break;
       if (!seen.has(p._id) && isAvailable(p)) featured.push(p);
     }
-    return featured.map(normalizeProductImages);
+    return featured.map(toProductCard);
   },
 });
 
@@ -911,7 +912,7 @@ export const getBestsellers = query({
         if (result.length >= limit) break;
       }
     }
-    return result.map(normalizeProductImages);
+    return result.map(toProductCard);
   },
 });
 
@@ -925,7 +926,7 @@ export const getRetailDiscounted = query({
       .take(500);
     return products
       .filter((p) => p.stock > 0 && p.retailDiscount && p.retailDiscount > 0)
-      .map(normalizeProductImages);
+      .map(toProductCard);
   },
 });
 
@@ -939,7 +940,7 @@ export const getWholesaleDiscounted = query({
       .take(500);
     return products
       .filter((p) => p.stock > 0 && p.wholesaleDiscount && p.wholesaleDiscount > 0)
-      .map(normalizeProductImages);
+      .map(toProductCard);
   },
 });
 

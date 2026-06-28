@@ -3,19 +3,13 @@ import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
 import { internal } from './_generated/api';
 import { normalizeImageUrl, normalizeImageUrls } from './lib/imageUrl';
+import { toProductCard } from './products';
 
 function normalizePromotionImages<T extends { imageUrl?: string | null; images?: string[] }>(promotion: T): T {
   const imageUrl = normalizeImageUrl(promotion.imageUrl);
   const images = normalizeImageUrls(promotion.images) as string[] | undefined;
   const changed = imageUrl !== promotion.imageUrl || (images && promotion.images && images.some((img, i) => img !== promotion.images![i]));
   return changed ? { ...promotion, imageUrl, images } : promotion;
-}
-
-function normalizeProductImages<T extends { images?: string[] }>(product: T): T {
-  if (!product.images || product.images.length === 0) return product;
-  const images = normalizeImageUrls(product.images) as string[];
-  const changed = images.some((img, i) => img !== product.images![i]);
-  return changed ? { ...product, images } : product;
 }
 
 export const list = query({
@@ -56,7 +50,7 @@ export const getPromoProducts = query({
         ),
       )
       .slice(0, 50)
-      .map(normalizeProductImages);
+      .map(toProductCard);
   },
 });
 

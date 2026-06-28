@@ -58,7 +58,7 @@ export default function PromotionDetailPage() {
   const { t, lang } = useT();
   const { id } = useParams();
   const promotions = useQuery(api.promotions.active, {});
-  const products = useQuery(api.products.list, { limit: 500 });
+  const products = useQuery(api.products.listCards, { limit: 500 });
   const promo = promotions?.find((p) => p._id === id);
 
   const [now] = useState(() => Date.now());
