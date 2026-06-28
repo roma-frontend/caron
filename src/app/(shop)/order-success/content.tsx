@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useAction } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
+import { displayEmail } from '@/lib/contact';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -69,7 +70,7 @@ export default function OrderSuccessContent() {
                 <div className="text-sm">
                   <p><strong>{t('sc.customer')}՝</strong> {String(o.customerName)}</p>
                   <p><strong>{t('sc.phoneShort')}՝</strong> {String(o.customerPhone)}</p>
-                  <p><strong>{t('sc.emailShort')}՝</strong> {String(o.customerEmail)}</p>
+                  {displayEmail(String(o.customerEmail)) ? <p><strong>{t('sc.emailShort')}՝</strong> {displayEmail(String(o.customerEmail))}</p> : null}
                   <p><strong>{t('sc.address')}՝</strong> {String(o.shippingAddress)}</p>
                   {o.notes ? <p className="mt-1 text-muted-foreground">{t('sc.note')}՝ {String(o.notes)}</p> : null}
                 </div>

@@ -18,6 +18,7 @@ import { formatPrice, formatDateLocalized } from '@/lib/formatters';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
+import { displayEmail } from '@/lib/contact';
 import { useSettings } from '@/hooks/useSettings';
 import { useAdminT } from '@/lib/i18n/admin';
 import Link from '@/components/LocalizedLink';
@@ -144,7 +145,7 @@ function exportPDF(o: Record<string, unknown>) {
     '.total{font-size:1.3em;font-weight:bold;text-align:right;margin-top:20px}</style></head><body>',
     `<h1>Invoice #${escapeHtml(String(o.orderNumber))}</h1>`,
     `<p><strong>Name:</strong> ${escapeHtml(String(o.customerName))}<br>`,
-    `${escapeHtml(String(o.customerPhone))}<br>${escapeHtml(String(o.customerEmail))}<br>`,
+    `${escapeHtml(String(o.customerPhone))}<br>${displayEmail(String(o.customerEmail)) ? escapeHtml(displayEmail(String(o.customerEmail))) + '<br>' : ''}`,
     `${escapeHtml(String(o.shippingAddress))}</p>`,
     `<table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`,
     (o.items as Array<Record<string, unknown>> || []).map((i: Record<string, unknown>) =>

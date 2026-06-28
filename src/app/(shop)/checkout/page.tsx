@@ -15,6 +15,7 @@ import { useT } from '@/lib/i18n/admin';
 import { useMutation, useQuery } from 'convex/react';
 import { useSettings } from '@/hooks/useSettings';
 import { api } from '../../../../convex/_generated/api';
+import { displayEmail } from '@/lib/contact';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
 import Link from '@/components/LocalizedLink';
@@ -426,7 +427,7 @@ export default function CheckoutPage() {
                 )}
                 <div className="rounded-lg bg-muted/50 p-4 space-y-2">
                   <p className="text-sm font-medium">{t('sc.contactInfo')}</p>
-                  <p className="text-sm text-muted-foreground">{form.name} | {form.phone} | {form.email}</p>
+                  <p className="text-sm text-muted-foreground">{[form.name, form.phone, displayEmail(form.email)].filter(Boolean).join(' | ')}</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-4 space-y-2">
                   <p className="text-sm font-medium">{t('sc.shippingAddress')}</p>

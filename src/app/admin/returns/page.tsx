@@ -14,6 +14,7 @@ import { normalizeImageUrl } from '../../../../convex/lib/imageUrl';
 import Image from 'next/image';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { useAdminT } from '@/lib/i18n/admin';
+import { displayEmail } from '@/lib/contact';
 
 type Status = 'pending' | 'approved' | 'rejected' | 'completed';
 
@@ -98,7 +99,7 @@ export default function AdminReturnsPage() {
                   <Badge className={`${st.cls} border-0 text-[10px]`}>{t(st.label)}</Badge>
                   <span className="ml-auto text-xs text-muted-foreground">{formatDateLocalized(r.createdAt, t)}</span>
                 </div>
-                <p className="break-all text-xs text-muted-foreground">{r.customerEmail}</p>
+                {displayEmail(r.customerEmail) ? <p className="break-all text-xs text-muted-foreground">{displayEmail(r.customerEmail)}</p> : null}
 
                 {/* Items */}
                 <div className="space-y-2 rounded-xl border bg-muted/20 p-2.5">
