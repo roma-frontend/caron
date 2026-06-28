@@ -13,13 +13,13 @@ const isDev = process.env.NODE_ENV === 'development';
 // the auth pages where the Telegram Login Widget requires it (scoped below).
 const buildCsp = (extraScriptSrc = '') => [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://telegram.org${extraScriptSrc}${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://telegram.org https://challenges.cloudflare.com${extraScriptSrc}${isDev ? " 'unsafe-eval'" : ''}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: https:`,
   `media-src 'self' blob: https://*.r2.dev https://*.r2.cloudflarestorage.com https://img.caron.group`,
   `font-src 'self' data:`,
-  `connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://*.r2.dev https://*.r2.cloudflarestorage.com https://img.caron.group https://vitals.vercel-insights.com`,
-  `frame-src 'self' https://www.google.com https://maps.google.com https://oauth.telegram.org`,
+  `connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://*.r2.dev https://*.r2.cloudflarestorage.com https://img.caron.group https://challenges.cloudflare.com https://vitals.vercel-insights.com`,
+  `frame-src 'self' https://www.google.com https://maps.google.com https://oauth.telegram.org https://challenges.cloudflare.com`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,

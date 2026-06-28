@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useT } from '@/lib/i18n/admin';
+import { Turnstile, turnstileEnabled } from '@/components/shared/Turnstile';
 
 
 
@@ -26,6 +27,8 @@ export default function ContactPage() {
 ];
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' });
   const [sending, setSending] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [tsKey, setTsKey] = useState(0);
   const { ref, visible } = useReveal();
 
 
@@ -34,9 +37,11 @@ export default function ContactPage() {
     if (!form.name || !form.phone || !form.message) { toast.error(t('pg.contact.allRequired')); return; }
     setSending(true);
     try {
-      await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, turnstileToken: captcha }) });
+      if (!res.ok) throw new Error('failed');
       toast.success(t('pg.contact.sent'));
       setForm({ name: '', phone: '', email: '', message: '' });
+      setCaptcha(''); setTsKey((k) => k + 1);
     } catch { toast.error(t('pg.contact.error')); } finally { setSending(false); }
   };
 
@@ -97,7 +102,8 @@ export default function ContactPage() {
                 </div>
                 <div><Label>{t('pg.contact.email')}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('pg.contact.emailPlaceholder')} className="h-11" /></div>
                 <div><Label>{t('pg.contact.message')} *</Label><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('pg.contact.messagePlaceholder')} rows={5} /></div>
-                <Button type="submit" variant="cta" size="xl" className="w-full gap-2" disabled={sending}>
+                <Turnstile key={tsKey} onVerify={setCaptcha} className="flex justify-center" />
+                <Button type="submit" variant="cta" size="xl" className="w-full gap-2" disabled={sending || (turnstileEnabled() && !captcha)}>
                   <Send className="h-5 w-5" /> {sending ? t('pg.contact.sending') : t('pg.contact.send')}
                 </Button>
               </form>

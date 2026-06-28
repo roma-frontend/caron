@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/ratelimit';
+import { verifyTurnstile } from '@/lib/turnstile';
 
 // Escape special chars for Telegram MarkdownV2
 function escapeMd(str: string): string {
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
 
   if (!name || !phone || !message) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  }
+
+  // Bot check (no-op until TURNSTILE_SECRET_KEY is configured).
+  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json({ error: 'Verification failed' }, { status: 403 });
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
