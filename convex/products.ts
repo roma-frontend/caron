@@ -392,6 +392,40 @@ export const list = query({
   },
 });
 
+// Trimmed "card" projection for id-list lookups (e.g. recently-viewed):
+// point-reads the given ids and returns ONLY fields product cards render — not
+// descriptions/specs/attributes/oemNumbers/extra images. Replaces fetching the
+// whole catalog client-side just to show a few cards.
+export const listByIds = query({
+  args: { ids: v.array(v.id('products')) },
+  handler: async (ctx, args) => {
+    const docs = await Promise.all(args.ids.slice(0, 50).map((id) => ctx.db.get(id)));
+    return docs
+      .filter((p): p is NonNullable<typeof p> => !!p && p.isActive)
+      .map((p) => ({
+        _id: p._id,
+        slug: p.slug,
+        name: p.name,
+        nameRu: p.nameRu,
+        nameEn: p.nameEn,
+        price: p.price,
+        compareAtPrice: p.compareAtPrice,
+        wholesalePrice: p.wholesalePrice,
+        retailDiscount: p.retailDiscount,
+        wholesaleDiscount: p.wholesaleDiscount,
+        images: (normalizeImageUrls(p.images?.slice(0, 1) ?? []) as string[]) ?? [],
+        stock: p.stock,
+        brand: p.brand,
+        atgCode: p.atgCode,
+        sku: p.sku,
+        qtyStep: p.qtyStep,
+        rating: p.rating,
+        reviewCount: p.reviewCount,
+        isActive: p.isActive,
+      }));
+  },
+});
+
 export const getBrands = query({
   args: {},
   handler: async (ctx) => {

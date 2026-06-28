@@ -3,13 +3,17 @@
 import { useRecentlyViewedStore } from '@/store/recentlyViewed';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import type { Id } from '../../convex/_generated/dataModel';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { useT } from '@/lib/i18n/admin';
 
 export function RecentlyViewed() {
   const { t } = useT();
   const items = useRecentlyViewedStore((s) => s.items);
-  const products = useQuery(api.products.list, {});
+  // Fetch ONLY the viewed products (trimmed card fields) instead of the whole
+  // catalog; skip the query entirely when there's no history.
+  const ids = items.map((i) => i.id as Id<'products'>);
+  const products = useQuery(api.products.listByIds, ids.length ? { ids } : 'skip');
 
   if (items.length === 0) return null;
 
