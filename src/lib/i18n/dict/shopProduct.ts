@@ -113,7 +113,7 @@ export const shopProduct: DictModule = {
   'sp.noQuestions': { hy: 'Դեռ հարցեր չկան։ Տվեք առաջին հարցը։', ru: 'Вопросов пока нет. Задайте первый вопрос.', en: 'No questions yet. Be the first to ask.' },
 
   // ── Filters sidebar ──────────────────────────────────────────────
-  'sp.apply': { hy: 'Կիռառել', ru: 'Применить', en: 'Apply' },
+  'sp.apply': { hy: 'Կիրառել', ru: 'Применить', en: 'Apply' },
   'sp.reset': { hy: 'Չեղարկել', ru: 'Сбросить', en: 'Reset' },
   'sp.from': { hy: 'Սկսած', ru: 'От', en: 'From' },
   'sp.to': { hy: 'Մինչև', ru: 'До', en: 'To' },
