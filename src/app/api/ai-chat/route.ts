@@ -96,7 +96,6 @@ async function getAdminContext(client: ConvexHttpClient, token: string): Promise
     const DAY = 86400000;
     const todayStart = new Date().setHours(0, 0, 0, 0);
     const today = orders.filter((o: Record<string, unknown>) => (o.createdAt as number) >= todayStart);
-    const week = orders.filter((o: Record<string, unknown>) => (o.createdAt as number) >= now - 7 * DAY);
     const month = orders.filter((o: Record<string, unknown>) => (o.createdAt as number) >= now - 30 * DAY);
 
     const paidMonth = month.filter((o: Record<string, unknown>) => o.paymentStatus === 'paid' && o.status !== 'cancelled');

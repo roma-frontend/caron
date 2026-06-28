@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, action } from './_generated/server';
+import { api } from './_generated/api';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
@@ -281,6 +282,59 @@ export const register = mutation({
     });
     const sessionToken = await createSession(ctx, id, 30);
     return { userId: id, sessionToken, name: args.name, email: email, role: 'customer' as const, customerType: 'retail' as const, discountPercent: undefined, phone: args.phone };
+  },
+});
+
+/**
+ * Public registration entry point with Cloudflare Turnstile bot protection.
+ * Actions can perform network I/O (mutations cannot), so the captcha token is
+ * verified here, then account creation is delegated to the `register` mutation.
+ * Inert until TURNSTILE_SECRET_KEY is set in the Convex environment — until then
+ * it behaves exactly like calling register directly.
+ */
+export const registerWithTurnstile = action({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    password: v.string(),
+    referralCode: v.optional(v.string()),
+    turnstileToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{
+    userId: Id<'users'>;
+    sessionToken: string;
+    name: string;
+    email: string;
+    role: 'customer';
+    customerType: 'retail';
+    discountPercent: undefined;
+    phone: string | undefined;
+  }> => {
+    const secret = process.env.TURNSTILE_SECRET_KEY;
+    if (secret) {
+      const token = args.turnstileToken;
+      if (!token) throw new Error('Captcha required');
+      let ok = false;
+      try {
+        const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ secret, response: token }),
+        });
+        ok = res.ok && ((await res.json()) as { success?: boolean }).success === true;
+      } catch {
+        ok = false;
+      }
+      if (!ok) throw new Error('Captcha verification failed');
+    }
+    return await ctx.runMutation(api.auth.register, {
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+      password: args.password,
+      referralCode: args.referralCode,
+    });
   },
 });
 

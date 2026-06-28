@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useMutation } from 'convex/react';
+import { useMutation, useAction } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,16 +16,19 @@ import { Logo } from '@/components/layout/Logo';
 import { useSettings } from '@/hooks/useSettings';
 import { TelegramLoginButton, type TelegramAuthUser } from '@/components/TelegramLoginButton';
 import { useT } from '@/lib/i18n/admin';
+import { Turnstile, turnstileEnabled } from '@/components/shared/Turnstile';
 
 export default function RegisterPage() {
   const { t } = useT();
   const router = useRouter();
   const settings = useSettings();
-  const register = useMutation(api.auth.register);
+  const register = useAction(api.auth.registerWithTurnstile);
   const loginWithTelegram = useMutation(api.auth.loginWithTelegram);
   const setSession = useAuthStore((s) => s.setSession);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [busy, setBusy] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [tsKey, setTsKey] = useState(0);
   const [refCode, setRefCode] = useState('');
   useEffect(() => {
     const r = new URLSearchParams(window.location.search).get('ref');
@@ -59,12 +62,13 @@ export default function RegisterPage() {
     if (form.password.length < 6) { toast.error(t('auth.passwordMinLength')); return; }
     setBusy(true);
     try {
-      const result = await register({ name: form.name, email: form.email, phone: form.phone || undefined, password: form.password, referralCode: refCode || undefined });
+      const result = await register({ name: form.name, email: form.email, phone: form.phone || undefined, password: form.password, referralCode: refCode || undefined, turnstileToken: captcha || undefined });
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
       toast.success(t('auth.registerSuccess'));
       router.push('/dashboard');
     } catch (e) {
+      setCaptcha(''); setTsKey((k) => k + 1);
       toast.error(e instanceof Error ? e.message : t('auth.error'));
     } finally { setBusy(false); }
   };
@@ -148,7 +152,8 @@ export default function RegisterPage() {
                 <Input value={refCode} onChange={(e) => setRefCode(e.target.value.toUpperCase().trim())} className="h-11 pl-10" placeholder={t('auth.referralPlaceholder')} />
               </div>
             </div>
-            <Button type="submit" disabled={busy} variant="cta" size="xl" className="w-full gap-2">
+            <Turnstile key={tsKey} onVerify={setCaptcha} className="flex justify-center" />
+            <Button type="submit" disabled={busy || (turnstileEnabled() && !captcha)} variant="cta" size="xl" className="w-full gap-2">
               {busy ? t('auth.registering') : t('auth.register')}
             </Button>
           </form>
