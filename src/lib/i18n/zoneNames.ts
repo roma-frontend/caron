@@ -40,10 +40,16 @@ const ZONE_NAME_MAP: Record<string, Tr> = {
   'Տավուշի մարզ': { ru: 'Тавушская область', en: 'Tavush Province' },
 };
 
+/** Case-insensitive lookup map (Armenian casing of letters like ձ/Ձ varies). */
+const ZONE_NAME_LC: Record<string, Tr> = Object.fromEntries(
+  Object.entries(ZONE_NAME_MAP).map(([k, v]) => [k.toLowerCase(), v]),
+);
+
 /** Localize a delivery-zone name; falls back to the Armenian source. */
 export function localizeZoneName(name: string, lang: AdminLang): string {
   if (lang === 'hy' || !name) return name;
-  return ZONE_NAME_MAP[name.trim()]?.[lang] ?? name;
+  const key = name.trim();
+  return (ZONE_NAME_MAP[key] ?? ZONE_NAME_LC[key.toLowerCase()])?.[lang] ?? name;
 }
 
 /** Hook returning a `zoneName(name)` function bound to the current UI language. */
