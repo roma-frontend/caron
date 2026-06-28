@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Home,
@@ -29,7 +29,12 @@ export function MobileNav() {
   const cartCount = useCartStore((s) => s.totalItems());
   const favCount = useFavoritesStore((s) => s.count());
   const { user } = useAuth();
-  const mounted = typeof window !== 'undefined';
+  // Real mount flag: server and first client render both see `false`, so the
+  // SSR HTML matches and there is no hydration mismatch. Counts (from the
+  // localStorage-backed stores) only appear after mount.
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // On a product detail page the sticky buy-bar takes over the bottom.
