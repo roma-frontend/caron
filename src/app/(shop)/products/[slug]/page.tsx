@@ -44,7 +44,7 @@ import { DndContext, MouseSensor, TouchSensor, closestCenter, useSensor, useSens
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useT } from '@/lib/i18n/admin';
-import { useFilterName } from '@/lib/i18n/filterNames';
+import { useFilterName, useFilterOption } from '@/lib/i18n/filterNames';
 import { pickLocalized } from '@/lib/i18n/localize';
 
 function SortableVariantThumb({
@@ -119,18 +119,36 @@ export default function ProductDetailPage() {
   const addViewed = useRecentlyViewedStore((s) => s.add);
   const productId = product?._id;
   const filterDefs = useQuery(api.filters.getByCategory, product?.categoryId ? { categoryId: product.categoryId } : 'skip');
+  const filterOption = useFilterOption();
   const attrNames: Record<string, string> = {};
   const attrSlugs: Record<string, string> = {};
+  type FilterDef = NonNullable<typeof filterDefs>[number];
+  const defByKey: Record<string, FilterDef> = {};
   if (filterDefs) {
     for (const f of filterDefs) {
       attrNames[f._id] = f.name;
       attrNames[f.slug] = f.name;
       attrSlugs[f._id] = f.slug;
       attrSlugs[f.slug] = f.slug;
+      defByKey[f._id] = f;
+      defByKey[f.slug] = f;
     }
   }
+  /** Localize a stored attribute value via its filter def's option translations. */
+  const resolveAttrValue = (key: string, val: unknown): string => {
+    const def = defByKey[key];
+    const localizeOne = (v: string): string => {
+      if (!def?.options) return v;
+      const idx = def.options.findIndex((o) => o === v);
+      return idx >= 0 ? filterOption(v, idx, def.optionsRu, def.optionsEn) : v;
+    };
+    if (Array.isArray(val)) return val.map((v) => (typeof v === 'string' ? localizeOne(v) : String(v))).join(', ');
+    if (typeof val === 'string') return localizeOne(val);
+    return String(val);
+  };
   const resolveAttrLabel = (key: string, val: unknown) => {
-    if (attrNames[key]) return filterName(attrNames[key], attrSlugs[key]);
+    const def = defByKey[key];
+    if (attrNames[key]) return filterName(attrNames[key], attrSlugs[key], def?.nameRu, def?.nameEn);
     if (filterDefs) {
       const values = Array.isArray(val) ? val : [val];
       const normalizedValues = values
@@ -145,7 +163,7 @@ export default function ProductDetailPage() {
             return normalizedValues.some((v) => v === nOpt || v.includes(nOpt) || nOpt.includes(v));
           }),
         );
-        if (matchedDef) return filterName(matchedDef.name, matchedDef.slug);
+        if (matchedDef) return filterName(matchedDef.name, matchedDef.slug, matchedDef.nameRu, matchedDef.nameEn);
       }
     }
 
@@ -507,7 +525,7 @@ export default function ProductDetailPage() {
                 {Object.entries(attrs).filter(([k]) => k !== 'vehicleCompat' && k !== 'carBrand' && k !== 'brand').map(([key, val]) => (
                   <div key={key} className="flex justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">{resolveAttrLabel(key, val)}</span>
-                    <span className="font-medium text-right">{typeof val === 'boolean' ? (val ? t('sp.yes') : t('sp.no')) : Array.isArray(val) ? val.join(', ') : String(val)}</span>
+                    <span className="font-medium text-right">{typeof val === 'boolean' ? (val ? t('sp.yes') : t('sp.no')) : resolveAttrValue(key, val)}</span>
                   </div>
                 ))}
               </div>

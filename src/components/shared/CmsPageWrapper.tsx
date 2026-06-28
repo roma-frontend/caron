@@ -3,6 +3,8 @@
 import { useQuery } from 'convex/react';
 import DOMPurify from 'dompurify';
 import { api } from '../../../convex/_generated/api';
+import { useT } from '@/lib/i18n/admin';
+import { pickLocalized } from '@/lib/i18n/localize';
 
 // Force every target="_blank" link to carry rel="noopener noreferrer" so CMS
 // content cannot be used for reverse-tabnabbing. Registered once at module load.
@@ -45,8 +47,10 @@ function sanitizeHtml(html: string): string {
 }
 
 export function CmsPageWrapper({ slug, children }: Props) {
+  const { lang } = useT();
   const page = useQuery(api.pages.getBySlug, { slug });
-  const safeHtml = page?.content ? sanitizeHtml(page.content) : '';
+  const localizedContent = page ? pickLocalized(page as Record<string, unknown>, 'content', lang) : '';
+  const safeHtml = localizedContent ? sanitizeHtml(localizedContent) : '';
 
   // Still loading
   if (page === undefined) return <>{children}</>;
@@ -54,10 +58,12 @@ export function CmsPageWrapper({ slug, children }: Props) {
   // No CMS content or not published — show default
   if (!page || !page.isPublished) return <>{children}</>;
 
+  const localizedTitle = pickLocalized(page as Record<string, unknown>, 'title', lang);
+
   // Render CMS content
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
-      <h1 className="mb-8 text-center text-3xl font-bold">{page.title}</h1>
+      <h1 className="mb-8 text-center text-3xl font-bold">{localizedTitle}</h1>
       <div className="rounded-2xl border bg-card p-6 md:p-10">
         <div
           className="prose prose-neutral dark:prose-invert max-w-none"

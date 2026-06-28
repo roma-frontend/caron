@@ -12,7 +12,7 @@ import { SlidersHorizontal, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-
 import { Id } from '../../convex/_generated/dataModel';
 import { useSettings } from '@/hooks/useSettings';
 import { useT } from '@/lib/i18n/admin';
-import { useFilterName, useCategoryName } from '@/lib/i18n/filterNames';
+import { useFilterName, useFilterOption, useCategoryName } from '@/lib/i18n/filterNames';
 
 type FilterValues = Record<string, unknown>;
 type Filters = { categoryId?: Id<'categories'>; brand?: string; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; onSale?: boolean; minRating?: number; sort?: string; attributes?: FilterValues };
@@ -91,6 +91,7 @@ export function SortBar({ activeFilters, onFilterChange }: { activeFilters: Filt
 function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
   const { t } = useT();
   const filterName = useFilterName();
+  const filterOption = useFilterOption();
   const categoryName = useCategoryName();
   const settings = useSettings();
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['category', 'price', 'sale', 'rating']));
@@ -194,10 +195,10 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
 
       {/* Dynamic filters */}
       {filterDefs?.map((def) => (
-        <Section key={def._id} title={filterName(def.name, def.slug)} k={def._id} expanded={expanded} toggle={toggle}>
+        <Section key={def._id} title={filterName(def.name, def.slug, def.nameRu, def.nameEn)} k={def._id} expanded={expanded} toggle={toggle}>
           {(def.type === 'select' || def.type === 'multiselect') && def.options && (
             <div className="flex flex-wrap gap-2">
-              {def.options.map((opt) => {
+              {def.options.map((opt, oi) => {
                 const isBrand = def.slug === 'brand';
                 const isMulti = def.type === 'multiselect';
                 const active = isBrand
@@ -217,7 +218,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
                         updateAttr(def._id, active ? null : opt);
                       }
                     }}
-                  >{opt}</Badge>
+                  >{filterOption(opt, oi, def.optionsRu, def.optionsEn)}</Badge>
                 );
               })}
             </div>
@@ -227,7 +228,7 @@ function FilterContent({ categoryId, onFilterChange, activeFilters }: Props) {
               <input type="checkbox" className="rounded border-input accent-primary"
                 checked={!!(activeFilters.attributes?.[def._id])}
                 onChange={(e) => updateAttr(def._id, e.target.checked || undefined)} />
-              {filterName(def.name, def.slug)}
+              {filterName(def.name, def.slug, def.nameRu, def.nameEn)}
             </label>
           )}
           {def.type === 'range' && (

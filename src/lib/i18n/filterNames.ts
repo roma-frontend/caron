@@ -120,13 +120,40 @@ const CATEGORY_NAME_MAP: Record<string, Tr> = {
   'Աքսեսուարներ': { ru: 'Аксессуары', en: 'Accessories' },
 };
 
-/** Localize a filter/attribute name. Prefers slug, then Armenian name, else original. */
-export function localizeFilterName(name: string, lang: AdminLang, slug?: string): string {
+/** Localize a filter/attribute name. Prefers DB nameRu/nameEn, then slug, then Armenian name. */
+export function localizeFilterName(
+  name: string,
+  lang: AdminLang,
+  slug?: string,
+  nameRu?: string,
+  nameEn?: string,
+): string {
   if (lang === 'hy') return name || slug || '';
+  const db = lang === 'ru' ? nameRu : nameEn;
+  if (db && db.trim()) return db;
   if (slug && FILTER_SLUG_MAP[slug]) return FILTER_SLUG_MAP[slug][lang];
   const byName = name ? FILTER_NAME_MAP[name.trim()] : undefined;
   if (byName) return byName[lang];
   return name || slug || '';
+}
+
+/**
+ * Localize a single filter option label for display. The base `option` value
+ * is the canonical (Armenian) value used for filtering; `optionsRu`/`optionsEn`
+ * are parallel arrays produced by the auto-translator. Falls back to the base
+ * option when no translation is present.
+ */
+export function localizeFilterOption(
+  option: string,
+  index: number,
+  lang: AdminLang,
+  optionsRu?: string[],
+  optionsEn?: string[],
+): string {
+  if (lang === 'hy') return option;
+  const arr = lang === 'ru' ? optionsRu : optionsEn;
+  const tr = arr?.[index];
+  return tr && tr.trim() ? tr : option;
 }
 
 /** Localize a category name. Prefers DB nameRu/nameEn, then slug, then Armenian name. */
@@ -146,12 +173,23 @@ export function localizeCategoryName(
 }
 
 /**
- * Hook returning a `filterName(name, slug?)` function bound to the current UI
- * language. Hydration-safe via {@link useAdminT} (Armenian until mount).
+ * Hook returning a `filterName(name, slug?, nameRu?, nameEn?)` function bound to
+ * the current UI language. Hydration-safe via {@link useAdminT} (Armenian until
+ * mount). Pass the definition's DB translations to prefer them over the static
+ * dictionary fallback.
  */
-export function useFilterName(): (name: string, slug?: string) => string {
+export function useFilterName(): (name: string, slug?: string, nameRu?: string, nameEn?: string) => string {
   const { lang } = useAdminT();
-  return (name: string, slug?: string) => localizeFilterName(name, lang, slug);
+  return (name, slug, nameRu, nameEn) => localizeFilterName(name, lang, slug, nameRu, nameEn);
+}
+
+/**
+ * Hook returning a `filterOption(option, index, optionsRu?, optionsEn?)`
+ * function bound to the current UI language.
+ */
+export function useFilterOption(): (option: string, index: number, optionsRu?: string[], optionsEn?: string[]) => string {
+  const { lang } = useAdminT();
+  return (option, index, optionsRu, optionsEn) => localizeFilterOption(option, index, lang, optionsRu, optionsEn);
 }
 
 /** Hook returning a `categoryName(cat)` function bound to the current UI language. */

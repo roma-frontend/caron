@@ -330,6 +330,7 @@ async function groqTranslateBatch(
     'RULES:',
     '- Translate the MEANING. NEVER transliterate Armenian into Cyrillic or Latin letters.',
     '- Keep brand names, model codes, numbers, percentages and units unchanged (e.g. "Hito", "Dep Sun", "-30%", "2+1", "5W-30").',
+    '- If a value contains HTML tags, keep every tag and attribute exactly as-is and translate ONLY the human-readable text between tags.',
     '- Keep the marketing tone and roughly the same length as the source.',
     '- If a value is empty, return empty strings for it.',
     'Respond with ONLY valid JSON: an object mapping each given key to an object {"ru":"","en":""}.',
@@ -484,6 +485,174 @@ export const translatePromotion = internalAction({
   },
 });
 
+// ── Filters (filterDefinitions) ─────────────────────────────────────────────
+
+export const getFilterForTranslate = internalQuery({
+  args: { id: v.id('filterDefinitions') },
+  handler: async (ctx, { id }) => {
+    const f = await ctx.db.get(id);
+    if (!f) return null;
+    return {
+      name: f.name, options: f.options ?? [],
+      nameRu: f.nameRu, nameEn: f.nameEn,
+      optionsRu: f.optionsRu, optionsEn: f.optionsEn,
+    };
+  },
+});
+
+export const patchFilterTranslations = internalMutation({
+  args: {
+    id: v.id('filterDefinitions'),
+    nameRu: v.optional(v.string()), nameEn: v.optional(v.string()),
+    optionsRu: v.optional(v.array(v.string())), optionsEn: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { id, ...patch }) => {
+    await ctx.db.patch(id, patch);
+  },
+});
+
+/**
+ * Translate a filter definition: its `name` plus every entry in `options`.
+ * `optionsRu`/`optionsEn` are kept parallel to `options` (same order/length),
+ * so the storefront can show a localized label while filtering still uses the
+ * canonical Armenian option value. Dictionary first, Groq for the remainder.
+ */
+export const translateFilter = internalAction({
+  args: { id: v.id('filterDefinitions'), force: v.optional(v.boolean()) },
+  handler: async (ctx, { id, force }) => {
+    const f = await ctx.runQuery(internal.translate.getFilterForTranslate, { id });
+    if (!f) return;
+
+    const needName = force ? Boolean(f.name?.trim()) : (!f.nameRu?.trim() || !f.nameEn?.trim());
+    const optionCount = f.options.length;
+    const needOpts = optionCount > 0 && (force
+      || (f.optionsRu?.length ?? 0) !== optionCount
+      || (f.optionsEn?.length ?? 0) !== optionCount);
+    if (!needName && !needOpts) return;
+
+    // Dictionary first, collect leftovers for one Groq batch call.
+    const dictByKey: Record<string, { ru: string; en: string; complete: boolean }> = {};
+    const llmItems: { key: string; text: string }[] = [];
+    const addField = (key: string, text: string | undefined) => {
+      const t = (text ?? '').trim();
+      if (!t) { dictByKey[key] = { ru: '', en: '', complete: true }; return; }
+      const d = dictTranslateName(t);
+      dictByKey[key] = { ru: d.ru, en: d.en, complete: d.complete };
+      if (!d.complete) llmItems.push({ key, text: t });
+    };
+
+    addField('name', f.name);
+    f.options.forEach((opt, i) => addField(`opt_${i}`, opt));
+
+    const batch = llmItems.length ? await groqTranslateBatch(llmItems) : null;
+    const pick = (key: string): { ru: string; en: string } => {
+      const d = dictByKey[key];
+      if (!d) return { ru: '', en: '' };
+      if (d.complete) return { ru: d.ru, en: d.en };
+      const b = batch?.[key];
+      return { ru: pickName(b?.ru ?? '', d.ru), en: pickName(b?.en ?? '', d.en) };
+    };
+
+    const name = pick('name');
+    const optionsRu = f.options.map((_, i) => pick(`opt_${i}`).ru);
+    const optionsEn = f.options.map((_, i) => pick(`opt_${i}`).en);
+
+    const keep = (existing: string | undefined, fresh: string) =>
+      pickPersist(existing, fresh, Boolean(force));
+
+    await ctx.runMutation(internal.translate.patchFilterTranslations, {
+      id,
+      nameRu: keep(f.nameRu, name.ru),
+      nameEn: keep(f.nameEn, name.en),
+      // Options are stored as a whole array; only persist when we have a
+      // complete, same-length translation to keep them aligned with `options`.
+      optionsRu: optionCount > 0 ? optionsRu : undefined,
+      optionsEn: optionCount > 0 ? optionsEn : undefined,
+    });
+  },
+});
+
+// ── CMS Pages ───────────────────────────────────────────────────────────────
+
+export const getPageForTranslate = internalQuery({
+  args: { id: v.id('pages') },
+  handler: async (ctx, { id }) => {
+    const p = await ctx.db.get(id);
+    if (!p) return null;
+    return {
+      title: p.title, content: p.content,
+      seoTitle: p.seoTitle, seoDescription: p.seoDescription,
+      titleRu: p.titleRu, titleEn: p.titleEn,
+      contentRu: p.contentRu, contentEn: p.contentEn,
+      seoTitleRu: p.seoTitleRu, seoTitleEn: p.seoTitleEn,
+      seoDescriptionRu: p.seoDescriptionRu, seoDescriptionEn: p.seoDescriptionEn,
+    };
+  },
+});
+
+export const patchPageTranslations = internalMutation({
+  args: {
+    id: v.id('pages'),
+    titleRu: v.optional(v.string()), titleEn: v.optional(v.string()),
+    contentRu: v.optional(v.string()), contentEn: v.optional(v.string()),
+    seoTitleRu: v.optional(v.string()), seoTitleEn: v.optional(v.string()),
+    seoDescriptionRu: v.optional(v.string()), seoDescriptionEn: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...patch }) => {
+    await ctx.db.patch(id, patch);
+  },
+});
+
+/**
+ * Translate a CMS page (title + HTML content + SEO fields) to RU/EN. Free-form
+ * marketing/legal copy, so it goes straight to the LLM (no dictionary). HTML
+ * tags are preserved per the batch translator's rules.
+ */
+export const translatePage = internalAction({
+  args: { id: v.id('pages'), force: v.optional(v.boolean()) },
+  handler: async (ctx, { id, force }) => {
+    const p = await ctx.runQuery(internal.translate.getPageForTranslate, { id });
+    if (!p) return;
+
+    const missing = (ru?: string, en?: string) => !ru?.trim() || !en?.trim();
+    const needTitle = Boolean(p.title?.trim()) && (force || missing(p.titleRu, p.titleEn));
+    const needContent = Boolean(p.content?.trim()) && (force || missing(p.contentRu, p.contentEn));
+    const needSeoTitle = Boolean(p.seoTitle?.trim()) && (force || missing(p.seoTitleRu, p.seoTitleEn));
+    const needSeoDesc = Boolean(p.seoDescription?.trim()) && (force || missing(p.seoDescriptionRu, p.seoDescriptionEn));
+    if (!needTitle && !needContent && !needSeoTitle && !needSeoDesc) return;
+
+    const items: { key: string; text: string }[] = [];
+    if (p.title?.trim()) items.push({ key: 'title', text: p.title });
+    if (p.content?.trim()) items.push({ key: 'content', text: p.content });
+    if (p.seoTitle?.trim()) items.push({ key: 'seoTitle', text: p.seoTitle });
+    if (p.seoDescription?.trim()) items.push({ key: 'seoDescription', text: p.seoDescription });
+
+    const batch = await groqTranslateBatch(items);
+    if (!batch) return;
+    const pick = (key: string) => ({ ru: batch[key]?.ru ?? '', en: batch[key]?.en ?? '' });
+
+    const title = pick('title');
+    const content = pick('content');
+    const seoTitle = pick('seoTitle');
+    const seoDesc = pick('seoDescription');
+
+    const keep = (existing: string | undefined, fresh: string) =>
+      pickPersist(existing, fresh, Boolean(force));
+
+    await ctx.runMutation(internal.translate.patchPageTranslations, {
+      id,
+      titleRu: keep(p.titleRu, title.ru),
+      titleEn: keep(p.titleEn, title.en),
+      contentRu: keep(p.contentRu, content.ru),
+      contentEn: keep(p.contentEn, content.en),
+      seoTitleRu: keep(p.seoTitleRu, seoTitle.ru),
+      seoTitleEn: keep(p.seoTitleEn, seoTitle.en),
+      seoDescriptionRu: keep(p.seoDescriptionRu, seoDesc.ru),
+      seoDescriptionEn: keep(p.seoDescriptionEn, seoDesc.en),
+    });
+  },
+});
+
 // ── Backfill (admin) ──────────────────────────────────────────────────────────
 
 /**
@@ -524,6 +693,30 @@ export const backfillAll = mutation({
       const needTpl = Boolean(p.templateJson?.trim()) && (force || !p.templateJsonRu?.trim() || !p.templateJsonEn?.trim());
       if (!needTitle && !needDesc && !needTpl) continue;
       await ctx.scheduler.runAfter(scheduled * SPACING_MS, internal.translate.translatePromotion, { id: p._id, force });
+      scheduled++;
+    }
+
+    const filters = await ctx.db.query('filterDefinitions').take(1000);
+    for (const f of filters) {
+      const optCount = f.options?.length ?? 0;
+      const needName = force ? Boolean(f.name?.trim()) : (!f.nameRu?.trim() || !f.nameEn?.trim());
+      const needOpts = optCount > 0 && (force
+        || (f.optionsRu?.length ?? 0) !== optCount
+        || (f.optionsEn?.length ?? 0) !== optCount);
+      if (!needName && !needOpts) continue;
+      await ctx.scheduler.runAfter(scheduled * SPACING_MS, internal.translate.translateFilter, { id: f._id, force });
+      scheduled++;
+    }
+
+    const pages = await ctx.db.query('pages').take(200);
+    for (const p of pages) {
+      const miss = (ru?: string, en?: string) => !ru?.trim() || !en?.trim();
+      const needTitle = Boolean(p.title?.trim()) && (force || miss(p.titleRu, p.titleEn));
+      const needContent = Boolean(p.content?.trim()) && (force || miss(p.contentRu, p.contentEn));
+      const needSeo = (Boolean(p.seoTitle?.trim()) && (force || miss(p.seoTitleRu, p.seoTitleEn)))
+        || (Boolean(p.seoDescription?.trim()) && (force || miss(p.seoDescriptionRu, p.seoDescriptionEn)));
+      if (!needTitle && !needContent && !needSeo) continue;
+      await ctx.scheduler.runAfter(scheduled * SPACING_MS, internal.translate.translatePage, { id: p._id, force });
       scheduled++;
     }
 

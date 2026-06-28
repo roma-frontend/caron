@@ -76,6 +76,12 @@ export default defineSchema(
     categoryId: v.id('categories'),
     name: v.string(),
     slug: v.string(),
+    // Optional RU/EN translations. `name`/`options` hold the Armenian source
+    // and are used as fallback. `optionsRu`/`optionsEn` are parallel to
+    // `options` (same length/order) and only affect display labels — the
+    // canonical filter value stays the base `options` entry.
+    nameRu: v.optional(v.string()),
+    nameEn: v.optional(v.string()),
     type: v.union(
       v.literal('select'),
       v.literal('multiselect'),
@@ -83,6 +89,8 @@ export default defineSchema(
       v.literal('boolean'),
     ),
     options: v.optional(v.array(v.string())),
+    optionsRu: v.optional(v.array(v.string())),
+    optionsEn: v.optional(v.array(v.string())),
     unit: v.optional(v.string()),
     order: v.number(),
   }).index('by_category', ['categoryId']),
@@ -501,6 +509,15 @@ export default defineSchema(
     isPublished: v.boolean(),
     seoTitle: v.optional(v.string()),
     seoDescription: v.optional(v.string()),
+    // Optional RU/EN translations (base fields hold the Armenian source).
+    titleRu: v.optional(v.string()),
+    titleEn: v.optional(v.string()),
+    contentRu: v.optional(v.string()),
+    contentEn: v.optional(v.string()),
+    seoTitleRu: v.optional(v.string()),
+    seoTitleEn: v.optional(v.string()),
+    seoDescriptionRu: v.optional(v.string()),
+    seoDescriptionEn: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index('by_slug', ['slug']),

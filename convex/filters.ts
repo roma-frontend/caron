@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { internal } from './_generated/api';
 import { getAdminCaller } from './lib/auth';
 
 function normalizeOptionValue(value: string): string {
@@ -59,7 +60,10 @@ export const create = mutation({
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
     const { sessionToken: _, ...data } = args;
-    return await ctx.db.insert('filterDefinitions', data);
+    const id = await ctx.db.insert('filterDefinitions', data);
+    // Auto-translate the filter name + option labels to RU/EN in the background.
+    await ctx.scheduler.runAfter(0, internal.translate.translateFilter, { id });
+    return id;
   },
 });
 
@@ -125,6 +129,8 @@ export const update = mutation({
     }
 
     await ctx.db.patch(id, patch);
+    // Re-translate after edits (name/options may have changed).
+    await ctx.scheduler.runAfter(0, internal.translate.translateFilter, { id, force: true });
   },
 });
 

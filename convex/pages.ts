@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { internal } from './_generated/api';
 import { getAdminCaller } from './lib/auth';
 
 export const list = query({
@@ -33,9 +34,13 @@ export const save = mutation({
     const now = Date.now();
     if (id) {
       await ctx.db.patch(id, { ...data, updatedAt: now });
+      // Re-translate after edits (content/title may have changed).
+      await ctx.scheduler.runAfter(0, internal.translate.translatePage, { id, force: true });
       return id;
     }
-    return await ctx.db.insert('pages', { ...data, createdAt: now, updatedAt: now });
+    const newId = await ctx.db.insert('pages', { ...data, createdAt: now, updatedAt: now });
+    await ctx.scheduler.runAfter(0, internal.translate.translatePage, { id: newId });
+    return newId;
   },
 });
 
