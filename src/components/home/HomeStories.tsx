@@ -58,7 +58,7 @@ export function HomeStories() {
     <section className="mx-auto max-w-[var(--container-max)] px-1 sm:px-[var(--space-container)] py-[var(--space-6)]">
       <div className="scrollbar-none -mx-1 flex gap-4 overflow-x-auto overscroll-x-contain px-1 pb-1">
         {stories.map((s, i) => (
-          <button key={s.id} onClick={() => setOpen(i)} className="flex w-[90px] shrink-0 flex-col items-center gap-1.5">
+          <button key={s.id} onClick={() => setOpen(i)} className="flex w-[75px] shrink-0 flex-col items-center gap-1.5">
             <span className="rounded-full bg-gradient-to-tr from-primary via-blue-400 to-orange-400 p-[2.5px]">
               <span className="block rounded-full bg-background p-[2px]">
                 <span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-muted">
