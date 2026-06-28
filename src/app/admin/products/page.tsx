@@ -37,7 +37,7 @@ const HEALTH_LABELS: Record<string, string> = {
   noBrand: 'ap.health.noBrand',
   dupSku: 'ap.health.dupSku',
 };
-const ADMIN_PRODUCTS_FETCH_LIMIT = 500;
+const ADMIN_PRODUCTS_FETCH_LIMIT = 5000;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
 function toArmenianUploadError(error: unknown): string {
@@ -432,7 +432,7 @@ function AdminProductListRow({ product, sessionToken, index, attrMetaMap, attrDe
           e.target.value = '';
         }}
       />
-      <div className="relative flex flex-col items-start gap-3">
+      <div className="relative flex flex-wrap gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-muted/30 cursor-pointer" onClick={() => imgRef.current?.click()}>
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={name} width={128} height={128} className="h-full w-full object-cover" />
@@ -604,7 +604,7 @@ export default function AdminProductsPage() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ADMIN_PRODUCTS_PAGE_SIZE);
   const [groupOrders, setGroupOrders] = useState<Record<string, string[]>>({});
-  const products = useQuery(api.products.list, { limit: ADMIN_PRODUCTS_FETCH_LIMIT });
+  const products = useQuery(api.products.listAdmin, { limit: ADMIN_PRODUCTS_FETCH_LIMIT });
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     if (typeof window === 'undefined') return 'grid';

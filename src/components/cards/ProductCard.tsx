@@ -151,6 +151,7 @@ function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku
             </Link>
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <Link href={detailHref} className="text-sm font-medium line-clamp-1 hover:text-primary transition-colors">{name}</Link>
+              {sku && <p className="text-[10px] text-muted-foreground">{t('sp.article')}: <span className="font-mono">{sku}</span></p>}
               {atgCode && <p className="text-[10px] text-muted-foreground">{t('sp.atg')}: <span className="font-mono">{atgCode}</span></p>}
               <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2">
                 <div className="flex items-center gap-1.5 min-w-0 flex-wrap">

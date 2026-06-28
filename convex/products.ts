@@ -1437,6 +1437,22 @@ export const listCostMap = query({
   },
 });
 
+/**
+ * Admin product list: ALL products (active + inactive, all categories),
+ * newest first, with normalized image URLs. Unlike the public `list` (capped
+ * at 500 active products), this returns the full catalog for management.
+ */
+export const listAdmin = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const products = await ctx.db
+      .query('products')
+      .order('desc')
+      .take(Math.min(args.limit ?? 50000, 50000));
+    return products.map(normalizeProductImages);
+  },
+});
+
 export const listNameMap = query({
   args: {},
   handler: async (ctx) => {
