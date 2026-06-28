@@ -12,7 +12,11 @@ export type LocalizedMeta = Record<Locale, { title: string; description: string 
  * Usage in a server page:
  *   export const generateMetadata = () => localizedMetadata('/about', TEXT);
  */
-export async function localizedMetadata(basePath: string, text: LocalizedMeta): Promise<Metadata> {
+export async function localizedMetadata(
+  basePath: string,
+  text: LocalizedMeta,
+  opts: { noIndex?: boolean } = {},
+): Promise<Metadata> {
   const h = await headers();
   const hl = h.get('x-locale');
   const locale: Locale = isLocale(hl) ? hl : DEFAULT_LOCALE;
@@ -20,6 +24,7 @@ export async function localizedMetadata(basePath: string, text: LocalizedMeta): 
   return {
     title: t.title,
     description: t.description,
+    ...(opts.noIndex ? { robots: { index: false, follow: false } } : {}),
     alternates: {
       canonical: localizedPath(basePath, locale),
       languages: {
