@@ -17,6 +17,18 @@ import { Button } from '@/components/ui/button';
 import { useAdminT } from '@/lib/i18n/admin';
 
 type Customer = Doc<'users'>;
+
+/** What to show as the customer's contact line: their real email, or the
+ *  Telegram @username — never the internal `tg_<id>@telegram.local` placeholder.
+ *  Returns { text, href } so Telegram users link to their t.me profile. */
+function customerContact(c: Customer): { text: string; href?: string } {
+  if (c.email?.endsWith('@telegram.local')) {
+    return c.telegramUsername
+      ? { text: `@${c.telegramUsername}`, href: `https://t.me/${c.telegramUsername}` }
+      : { text: 'Telegram' };
+  }
+  return { text: c.email };
+}
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
@@ -181,9 +193,9 @@ export default function AdminCustomersPage() {
                 <tr key={c._id} className="border-b last:border-0 hover:bg-muted/30">
                   <td className="p-3 font-medium">
                     <div>{c.name}</div>
-                    <div className="text-xs text-muted-foreground sm:hidden">{c.email}</div>
+                    <div className="text-xs text-muted-foreground sm:hidden">{customerContact(c).text}</div>
                   </td>
-                  <td className="p-3 text-muted-foreground hidden sm:table-cell">{c.email}</td>
+                  <td className="p-3 text-muted-foreground hidden sm:table-cell">{customerContact(c).text}</td>
                   <td className="p-3 text-muted-foreground hidden md:table-cell">{c.phone || '—'}</td>
                   <td className="p-3 text-muted-foreground max-w-[140px] truncate hidden lg:table-cell">{c.address || '—'}</td>
                   <td className="p-3">
@@ -241,7 +253,17 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
         </div>
         <h3 className="mt-2 font-semibold truncate">{customer.name}</h3>
         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {customer.email}</div>
+          {(() => {
+            const contact = customerContact(customer);
+            return (
+              <div className="flex items-center gap-1.5">
+                <Mail className="h-3 w-3" />
+                {contact.href
+                  ? <a href={contact.href} target="_blank" rel="noopener noreferrer" className="truncate hover:text-primary hover:underline">{contact.text}</a>
+                  : <span className="truncate">{contact.text}</span>}
+              </div>
+            );
+          })()}
           {customer.phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {customer.phone}</div>}
           {customer.address && <div className="flex items-center gap-1.5 truncate">📍 {customer.address}</div>}
         </div>
