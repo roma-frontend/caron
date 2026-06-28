@@ -77,6 +77,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '*.r2.cloudflarestorage.com', pathname: '/**' },
       { protocol: 'https', hostname: 'pub-*.r2.dev', pathname: '/**' },
+      // R2 public custom domain — images served directly from Cloudflare's CDN.
+      { protocol: 'https', hostname: 'img.caron.group', pathname: '/**' },
       { protocol: 'https', hostname: 'drive.google.com', pathname: '/uc' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com', pathname: '/**' },
     ],
