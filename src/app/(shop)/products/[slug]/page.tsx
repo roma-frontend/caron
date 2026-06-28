@@ -297,7 +297,7 @@ export default function ProductDetailPage() {
   return (
     <div data-product-content className="mx-auto max-w-[var(--container-max)] px-4 sm:px-[var(--space-container)] py-[var(--space-8)]">
       {settings?.enableBreadcrumbs !== false && (
-        <Breadcrumbs items={[{ label: t('sp.products'), href: '/products' }, { label: product.name }]} />
+        <Breadcrumbs items={[{ label: t('sp.products'), href: '/products' }, { label: productName }]} />
       )}
       <Script id="product-json-ld" type="application/ld+json" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
 
@@ -309,7 +309,7 @@ export default function ProductDetailPage() {
               <div className="flex">
                 {imgs.length > 0 ? imgs.map((img, i) => (
                   <div key={i} className="relative min-w-0 shrink-0 grow-0 basis-full aspect-square">
-                    <ProductImageZoom src={img} alt={`${product.name} ${i + 1}`} width={800} height={800} priority={i === 0} fit="cover" className="h-full w-full bg-muted/20" sizes="(max-width: 1024px) 100vw, 560px" />
+                    <ProductImageZoom src={img} alt={`${productName} ${i + 1}`} width={800} height={800} priority={i === 0} fit="cover" className="h-full w-full bg-muted/20" sizes="(max-width: 1024px) 100vw, 560px" />
                   </div>
                 )) : (
                   <div className="min-w-0 shrink-0 grow-0 basis-full aspect-square flex items-center justify-center text-muted-foreground/20">
@@ -542,7 +542,7 @@ export default function ProductDetailPage() {
               <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             {settings?.enableShareButtons !== false && (
-              <ShareButton productName={product.name} />
+              <ShareButton productName={productName} />
             )}
             {settings !== undefined && settings?.enablePriceAlert !== false && (
               <SubscribePriceButton productId={product._id} currentPrice={product.price} />
