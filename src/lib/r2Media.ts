@@ -12,21 +12,33 @@ function normalizeR2Key(raw: string): string | null {
   return null;
 }
 
+// Optional public R2 host (custom domain bound to the bucket, e.g.
+// "https://img.caron.group"). When set, media is served DIRECTLY from
+// Cloudflare's CDN — free R2 egress, native range requests, zero Vercel
+// bandwidth/compute. Until configured, the same-origin /api/r2-media proxy is
+// used, so this is a safe, inert addition.
+const PUBLIC_HOST = (process.env.NEXT_PUBLIC_R2_PUBLIC_HOST || '').replace(/\/+$/, '');
+
+/** Resolve a media source to a delivery URL (direct CDN if configured, else proxy). */
 export function toR2MediaProxyUrl(src: string): string {
-  const directKey = normalizeR2Key(src);
-  if (directKey) return `/api/r2-media?key=${encodeURIComponent(directKey)}`;
+  let key = normalizeR2Key(src);
 
-  try {
-    const parsed = new URL(src);
-    const host = parsed.hostname.toLowerCase();
-    const isR2Host = host.endsWith('.r2.dev') || host.endsWith('.r2.cloudflarestorage.com');
-    if (!isR2Host) return src;
-
-    const key = normalizeR2Key(parsed.pathname);
-    if (!key) return src;
-
-    return `/api/r2-media?key=${encodeURIComponent(key)}`;
-  } catch {
-    return src;
+  if (!key) {
+    try {
+      const parsed = new URL(src);
+      const host = parsed.hostname.toLowerCase();
+      const isR2Host = host.endsWith('.r2.dev') || host.endsWith('.r2.cloudflarestorage.com');
+      if (!isR2Host) return src;
+      key = normalizeR2Key(parsed.pathname);
+    } catch {
+      return src;
+    }
   }
+
+  if (!key) return src;
+
+  // Prefer direct delivery from the R2 custom domain (free egress + CDN cache);
+  // otherwise route through the same-origin proxy.
+  if (PUBLIC_HOST) return `${PUBLIC_HOST}/${key}`;
+  return `/api/r2-media?key=${encodeURIComponent(key)}`;
 }
