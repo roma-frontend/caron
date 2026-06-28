@@ -10,7 +10,17 @@ const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// Store context (settings/categories/promotions) changes rarely, but the chat
+// rebuilt it on EVERY message — 3 Convex queries per turn. Cache it in module
+// memory for a few minutes to cut Convex calls/bandwidth. Survives across warm
+// invocations of the same serverless instance; a cold start rebuilds it once.
+// Admin/live data (getAdminContext) is intentionally NOT cached.
+let _storeCtxCache: { value: string; expires: number } | null = null;
+const STORE_CTX_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 async function getStoreContext(client: ConvexHttpClient): Promise<string> {
+  const now = Date.now();
+  if (_storeCtxCache && _storeCtxCache.expires > now) return _storeCtxCache.value;
   try {
     const [settings, categories, promotions] = await Promise.all([
       client.query(api.settings.getPublic, {}),
@@ -24,7 +34,7 @@ async function getStoreContext(client: ConvexHttpClient): Promise<string> {
       `• ${p.title}${p.discountPercent ? ` (-${p.discountPercent}%)` : ''}`
     ).join('\n') || 'Այս պահին գործող ակցիաներ չկան';
 
-    return `
+    const ctx = `
 ─── STORE SETTINGS (live data) ───
 
 STORE INFO:
@@ -67,8 +77,11 @@ FEATURES ENABLED:
 ${settings.minOrderAmount ? `- Min order: ${settings.minOrderAmount.toLocaleString()} AMD` : ''}
 ${settings.defaultWarranty ? `- Default warranty: ${settings.defaultWarranty}` : ''}
 `;
+    _storeCtxCache = { value: ctx, expires: now + STORE_CTX_TTL_MS };
+    return ctx;
   } catch {
-    return '';
+    // Serve stale cache on transient Convex errors, if we have one.
+    return _storeCtxCache?.value ?? '';
   }
 }
 
