@@ -310,11 +310,20 @@ export default function HomePage() {
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
   const brands = useQuery(api.products.getBrands, {});
-  const discounted = useQuery(api.products.getRetailDiscounted, {});
-  const wholesaleDiscounted = useQuery(api.products.getWholesaleDiscounted, {});
   const user = useAuthStore((s) => s.user);
   const isWholesale =
     user?.customerType === "wholesale" && user?.role !== "admin";
+  // Only fetch the price tier the current visitor actually sees: retail users
+  // never use the wholesale list and vice-versa. Skipping the other halves this
+  // query for every visit (saves a Convex function call + subscription).
+  const discounted = useQuery(
+    api.products.getRetailDiscounted,
+    isWholesale ? "skip" : {},
+  );
+  const wholesaleDiscounted = useQuery(
+    api.products.getWholesaleDiscounted,
+    isWholesale ? {} : "skip",
+  );
   const discountedSample = isWholesale
     ? wholesaleDiscounted?.slice(0, 4)
     : discounted?.slice(0, 4);
