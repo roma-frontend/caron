@@ -1,7 +1,7 @@
 'use client';
 
 import Link from '@/components/LocalizedLink';
-import { ShoppingCart, Search, ActivityIcon, Menu, User, Heart, X, Grid3X3, Tag, Phone, Car, Info, Truck, BarChart3, ClipboardList, Barcode, ScanSearch } from 'lucide-react';
+import { ShoppingCart, Search, User, Heart, Car, Info, Truck, BarChart3, ClipboardList } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,6 @@ const BASE_HEADER_HEIGHT_PX = 64;
 const subscribe = () => () => {};
 const getSnapshot = () => true;
 const getServerSnapshot = () => false;
-import { useRouter } from 'next/navigation';
 import { useSettings } from '@/hooks/useSettings';
 import { useStoreName } from '@/hooks/useStoreName';
 import { useCartStore } from '@/store/cart';
@@ -43,11 +42,9 @@ const MORE_LINKS = [
 
 export function Header() {
   const { t } = useT();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const cartCount = useCartStore((s) => s.totalItems());
   const { user, hydrated: authHydrated } = useAuth();
-  const router = useRouter();
   const settings = useSettings();
   const [searchOpen, setSearchOpen] = useState(false);
   const favCount = useFavoritesStore((s) => s.count());
@@ -171,9 +168,6 @@ export function Header() {
                 <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </Link>
-            <button onClick={() => setMenuOpen(true)} className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md hover:bg-accent md:hidden" aria-label="Menu">
-              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
           </div>
         </div>
         </header>
@@ -184,88 +178,6 @@ export function Header() {
 
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
-      {/* Mobile Menu Overlay */}
-      {menuOpen && (
-        <div className="fixed inset-0" style={{ zIndex: 'var(--z-modal)' }}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] flex flex-col bg-background shadow-2xl" style={{ animation: 'slideInRight 0.3s ease' }}>
-            {/* Header */}
-            <div className="flex-1 overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b">
-              <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center" aria-label={storeName}>
-                <Logo size={30} />
-              </Link>
-              <button onClick={() => setMenuOpen(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Search */}
-            <div className="p-4 border-b">
-              <form onSubmit={(e) => { e.preventDefault(); const v = (e.currentTarget.elements.namedItem('mq') as HTMLInputElement).value; if (v) { router.push(`/products?q=${v}`); setMenuOpen(false); } }} className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input name="mq" placeholder={t('cmp.nav_search')} className="h-10 w-full rounded-xl border bg-muted/50 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background transition-colors" />
-              </form>
-            </div>
-
-            {/* Main Nav */}
-            <nav className="p-3">
-              <p className="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('cmp.navigation')}</p>
-              {[
-                { href: '/products', label: t('cmp.nav_catalog'), icon: Grid3X3 },
-                { href: '/categories', label: t('cmp.nav_categories'), icon: Tag },
-                { href: '/promotions', label: t('cmp.nav_promotions'), icon: ActivityIcon },
-                { href: '/contact', label: t('cmp.nav_contact'), icon: Phone },
-              ].map((link) => (
-                <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className="relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent">
-                  <link.icon className="h-4 w-4 text-muted-foreground" />
-                  {link.label}
-                  {navBadges[link.href] && <span className="absolute -right-1 -top-1"><NavBadge config={navBadges[link.href]} /></span>}
-                </Link>
-              ))}
-            </nav>
-
-            {/* More Links */}
-            <nav className="p-3 border-t">
-              <p className="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('cmp.more')}</p>
-              {MORE_LINKS.map((link) => (
-                <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent">
-                  <link.icon className="h-4 w-4 text-muted-foreground" />
-                  {t(link.label)}
-                </Link>
-              ))}
-              {settings?.enableVinDecoder && (
-                <Link href="/vin-decoder" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10">
-                  <ScanSearch className="h-4 w-4 text-primary" /> {t('cmp.vin_decoder')}
-                </Link>
-              )}
-              {settings?.enableOemSearch && (
-                <Link href="/oem" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10">
-                  <Barcode className="h-4 w-4 text-primary" /> {t('cmp.oem_search')}
-                </Link>
-              )}
-            </nav>
-            </div>
-
-            {/* User Actions */}
-            <div className="p-3 border-t mt-auto">
-              <div className="mb-2 flex justify-center">
-                <LanguageSwitcher />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Link href="/favorites" onClick={() => setMenuOpen(false)} className="group/fav flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-red-500/40 hover:bg-red-500/5 hover:text-red-500">
-                  <Heart className={`h-4 w-4 transition-colors ${hasFavs ? 'fill-red-500 text-red-500' : ''}`} />
-                  {t('cmp.nav_favorites')}
-                </Link>
-                <Link href={accountHref} onClick={() => setMenuOpen(false)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-green-500/40 hover:bg-green-500/5 hover:text-green-500">
-                  <User className="h-4 w-4" />
-                  {authHydrated && user ? t('cmp.nav_account') : t('cmp.nav_login')}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

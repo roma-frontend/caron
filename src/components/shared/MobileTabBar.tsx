@@ -125,7 +125,7 @@ export function GridMenuSheet({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="rounded-t-3xl px-4 pt-2"
+        className="flex h-[96dvh] max-h-[96dvh] flex-col rounded-t-3xl px-4 pt-2"
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         {/* Grab handle doubles as the close affordance (tap, or tap backdrop). */}
@@ -139,7 +139,7 @@ export function GridMenuSheet({
 
         {feature ? <div className="mb-3">{feature}</div> : null}
 
-        <div className="grid max-h-[60vh] grid-cols-3 gap-3 overflow-y-auto pb-1">
+        <div className="grid min-h-0 flex-1 grid-cols-3 content-start gap-3 overflow-y-auto pb-1">
           {items.map((item) => (
             <MenuCard key={item.label} item={item} onClose={() => onOpenChange(false)} />
           ))}

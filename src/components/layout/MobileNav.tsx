@@ -16,11 +16,18 @@ import {
   Heart,
   Package,
   Search,
+  Phone,
+  Info,
+  Truck,
+  ClipboardList,
+  ScanSearch,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { useFavoritesStore } from '@/store/favorites';
 import { useAuth } from '@/store/auth';
 import { useBuyBarStore } from '@/store/buyBar';
+import { useSettings } from '@/hooks/useSettings';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { BottomTabBar, GridMenuSheet, AiMenuBanner, type TabItem, type GridMenuItem } from '@/components/shared/MobileTabBar';
 import { useT } from '@/lib/i18n/admin';
 
@@ -30,6 +37,7 @@ export function MobileNav() {
   const cartCount = useCartStore((s) => s.totalItems());
   const favCount = useFavoritesStore((s) => s.count());
   const { user } = useAuth();
+  const settings = useSettings();
   // The product-detail sticky buy-bar takes over the bottom edge when it's on
   // screen; the rest of the time (including the top of a product page) the
   // tab bar is shown everywhere.
@@ -66,12 +74,18 @@ export function MobileNav() {
     { href: '/categories', icon: LayoutGrid, label: t('cmp.nav_categories') },
     { href: '/car-selector', icon: Car, label: t('cmp.select_car') },
     { href: '/oem', icon: Hash, label: t('cmp.oem_search') },
+    ...(settings?.enableVinDecoder ? [{ href: '/vin-decoder', icon: ScanSearch, label: t('cmp.vin_decoder') }] : []),
     { href: '/promotions', icon: Tag, label: t('cmp.nav_promotions') },
     { href: '/discounts', icon: Percent, label: t('cmp.discounts') },
     { href: '/compare', icon: ArrowLeftRight, label: t('cmp.nav_compare') },
     { href: '/favorites', icon: Heart, label: t('cmp.favorites_short'), badge: mounted ? favCount : 0 },
     { href: '/orders', icon: Package, label: t('cmp.orders') },
+    { href: '/order-status', icon: ClipboardList, label: t('cmp.nav_order_status') },
+    { href: '/delivery', icon: Truck, label: t('cmp.nav_delivery') },
+    { href: '/contact', icon: Phone, label: t('cmp.nav_contact') },
+    { href: '/about', icon: Info, label: t('cmp.nav_about') },
     { href: '/products', icon: Search, label: t('cmp.search_label') },
+    { href: accountHref, icon: User, label: mounted && user ? t('cmp.nav_account') : t('cmp.nav_login') },
   ];
 
   const openAiChat = () => {
@@ -87,7 +101,14 @@ export function MobileNav() {
         onOpenChange={setMenuOpen}
         title={t('cmp.menu')}
         items={menuItems}
-        feature={<AiMenuBanner onClick={openAiChat} subtitle={t('cmp.find_part_fast')} />}
+        feature={
+          <div className="space-y-3">
+            <AiMenuBanner onClick={openAiChat} subtitle={t('cmp.find_part_fast')} />
+            <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-muted/40 p-2">
+              <LanguageSwitcher />
+            </div>
+          </div>
+        }
       />
     </>
   );
