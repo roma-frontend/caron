@@ -6,24 +6,26 @@ const R2_DEV_HOST_SUFFIX = '.r2.dev';
 const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i;
 
 // Optional public R2 host (a custom domain bound to the bucket, e.g.
-// "https://img.caron.group"). When set, R2 image URLs are rewritten to be
-// served DIRECTLY from Cloudflare's CDN instead of through the Vercel proxy —
-// Cloudflare R2 egress is free/unlimited, so this takes image bandwidth and
-// function invocations off Vercel entirely. Until it is configured the proxy
-// path is used, so this is a safe, inert addition.
-const R2_PUBLIC_HOST = (process.env.R2_PUBLIC_HOST || '').replace(/\/+$/, '');
-const R2_BUCKET = process.env.R2_BUCKET_NAME || '';
-
-/** Rewrite an R2 object URL to the public custom-domain URL, or null if unset. */
+// "https://img.caron.group", or the bucket's public r2.dev URL). When set, R2
+// image URLs are rewritten to be served DIRECTLY from Cloudflare's CDN instead
+// of through the Vercel proxy — Cloudflare R2 egress is free/unlimited, so this
+// takes image bandwidth and function invocations off Vercel entirely. Until it
+// is configured the proxy path is used, so this is a safe, inert addition.
+//
+// NB: env vars are read INSIDE the function — in Convex `process.env` is only
+// reliably populated within a running function, not at module-load time.
+/** Rewrite an R2 object URL to the public host URL, or null if unset. */
 function toPublicDirectUrl(parsed: URL): string | null {
-  if (!R2_PUBLIC_HOST) return null;
+  const publicHost = (process.env.R2_PUBLIC_HOST || '').replace(/\/+$/, '');
+  if (!publicHost) return null;
+  const bucket = process.env.R2_BUCKET_NAME || '';
   let key = parsed.pathname.replace(/^\/+/, '');
   // Path-style private URLs include the bucket as the first path segment.
-  if (R2_BUCKET && (key === R2_BUCKET || key.startsWith(`${R2_BUCKET}/`))) {
-    key = key.slice(R2_BUCKET.length).replace(/^\/+/, '');
+  if (bucket && (key === bucket || key.startsWith(`${bucket}/`))) {
+    key = key.slice(bucket.length).replace(/^\/+/, '');
   }
   if (!key) return null;
-  return `${R2_PUBLIC_HOST}/${key}`;
+  return `${publicHost}/${key}`;
 }
 
 function normalizeLocalImagePath(raw: string): string | null {
@@ -58,6 +60,29 @@ export function normalizeImageUrl(imageUrl?: string | null): string | null | und
 
   const trimmed = imageUrl.trim();
   if (!trimmed) return null;
+
+  // Many existing images are stored as the same-origin proxy path
+  // "/api/r2-image?url=<encoded R2 url>". When a public R2 host is configured,
+  // unwrap the inner URL and serve it directly from Cloudflare (free egress,
+  // no Vercel function). Otherwise keep the proxy path untouched.
+  if (trimmed.startsWith('/api/r2-image?')) {
+    try {
+      const inner = new URL(trimmed, 'https://_').searchParams.get('url');
+      if (inner) {
+        const innerParsed = new URL(inner);
+        if (
+          innerParsed.hostname.endsWith(LEGACY_R2_HOST_SUFFIX) ||
+          innerParsed.hostname.endsWith(R2_DEV_HOST_SUFFIX)
+        ) {
+          const direct = toPublicDirectUrl(innerParsed);
+          if (direct) return direct;
+        }
+      }
+    } catch {
+      /* fall through — keep the original proxy path */
+    }
+    return trimmed;
+  }
 
   try {
     const parsed = new URL(trimmed);
