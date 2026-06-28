@@ -142,9 +142,13 @@ const nextConfig = {
         source: '/',
         headers: [{ key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' }],
       },
-      // API routes — no cache
+      // API routes — no cache, EXCEPT the image/media proxies, which serve
+      // public immutable assets and set their own long-lived Cache-Control.
+      // Letting the CDN cache those means each image is fetched from the
+      // serverless function only once (cache MISS); every repeat load is served
+      // from the edge for free — critical for staying within free-tier limits.
       {
-        source: '/api/:path*',
+        source: '/api/((?!r2-image|r2-media).*)',
         headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }],
       },
     ];

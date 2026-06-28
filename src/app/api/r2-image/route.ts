@@ -83,7 +83,11 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': object.ContentType || 'application/octet-stream',
+        // Browser cache (immutable) + explicit Vercel/CDN edge cache, so repeat
+        // loads are served from the edge and never re-invoke this function.
         'Cache-Control': 'public, max-age=31536000, immutable',
+        'CDN-Cache-Control': 'public, max-age=31536000, immutable',
+        'Vercel-CDN-Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (e) {

@@ -63,5 +63,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Exclude API/media/monitoring and static assets so the Edge Middleware does
+  // NOT run on image requests or API calls — every storefront image goes
+  // through /api/r2-image now, and running middleware on each was a pure waste
+  // of Edge invocations. Middleware only needs to run on real page navigations.
+  matcher: ['/((?!api|monitoring|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 };
