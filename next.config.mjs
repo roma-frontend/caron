@@ -60,6 +60,13 @@ const nextConfig = {
   },
 
   images: {
+    // Images are already optimized at upload time (resized to ≤1600px and
+    // converted to WebP by /api/upload → optimizeImage) and served via the
+    // cached /api/r2-image proxy. So we disable Vercel's on-the-fly image
+    // optimization entirely — this avoids the metered "Image Optimization –
+    // Transformations" quota (which was exhausted, causing 402 / broken images)
+    // and serves the pre-optimized originals directly.
+    unoptimized: true,
     // Allow the local R2 proxy route to pass dynamic encoded URLs via query string.
     localPatterns: [
       { pathname: '/api/r2-image' },
@@ -75,8 +82,11 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
-    deviceSizes: [320, 480, 640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 320, 480],
+    // Trimmed to the few widths the UI actually uses — keeps transformation
+    // count low if optimization is ever re-enabled (unoptimized → these are
+    // currently inert).
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [48, 96, 256],
   },
 
   compiler: {

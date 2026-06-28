@@ -217,7 +217,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The storefront is served with an `x-locale` header (set by middleware);
   // the admin panel is not, so it stays on the language store.
   const isStorefront = hl !== null;
-  const content = isStorefront ? <LocaleProvider locale={htmlLang}>{children}</LocaleProvider> : children;
+  const content = isStorefront ? <LocaleProvider initial={htmlLang}>{children}</LocaleProvider> : children;
   return (
     <html lang={htmlLang} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>

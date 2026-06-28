@@ -1,27 +1,28 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Check, ChevronDown, Globe } from 'lucide-react';
 import { useT, ADMIN_LANGS, adminLangLabel, adminLangName } from '@/lib/i18n/admin';
 import { localizedPath, type Locale } from '@/lib/i18n/locale';
 import { cn } from '@/lib/utils';
 
 /**
- * HY / RU / EN language dropdown for the storefront. Switching navigates to the
- * locale-prefixed URL (hy = no prefix) with a full load, so the server
- * re-renders meta/content in the chosen language.
+ * HY / RU / EN language dropdown for the storefront. Switching uses client-side
+ * navigation to the locale-prefixed URL (hy = no prefix) — no full page reload;
+ * the LocaleProvider re-derives the locale from the new path.
  */
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { lang } = useT();
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const switchTo = (l: Locale) => {
     setOpen(false);
     const target = localizedPath(pathname || '/', l);
-    if (target !== pathname) window.location.assign(target);
+    if (target !== pathname) router.push(target);
   };
 
   useEffect(() => {
