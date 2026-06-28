@@ -54,6 +54,38 @@ function normalizeProductImages<T extends { images?: string[] }>(product: T): T 
   return changed ? { ...product, images: normalized } : product;
 }
 
+// Shared "card" projection — ONLY the fields product cards render. Keeps
+// `attributes` (carBrand badge + card chips) but drops the heavy unused fields:
+// description ×3, seoTitle/seoDescription, oemNumbers, costPrice and all images
+// past the first. Used by every card-listing query so list payloads stay small
+// (the full doc is still used server-side for filtering/search before projecting).
+function toProductCard(p: Doc<'products'>) {
+  return {
+    _id: p._id,
+    slug: p.slug,
+    name: p.name,
+    nameRu: p.nameRu,
+    nameEn: p.nameEn,
+    price: p.price,
+    compareAtPrice: p.compareAtPrice,
+    wholesalePrice: p.wholesalePrice,
+    retailDiscount: p.retailDiscount,
+    wholesaleDiscount: p.wholesaleDiscount,
+    categoryId: p.categoryId,
+    images: (normalizeImageUrls(p.images?.slice(0, 1) ?? []) as string[]) ?? [],
+    sku: p.sku,
+    stock: p.stock,
+    brand: p.brand,
+    qtyStep: p.qtyStep,
+    atgCode: p.atgCode,
+    isActive: p.isActive,
+    isFeatured: p.isFeatured,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
+    attributes: p.attributes,
+  };
+}
+
 function normalizeFilterValue(value: string): string {
   return value
     .toLowerCase()
@@ -317,7 +349,7 @@ export const listPaginated = query({
     if (args.search && byPrice) filtered = [...filtered].sort((a, b) => (priceDir === 'asc' ? a.price - b.price : b.price - a.price));
     else if (args.sort === 'popular') filtered = [...filtered].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
 
-    return { ...result, page: filtered.map(normalizeProductImages) };
+    return { ...result, page: filtered.map(toProductCard) };
   },
 });
 
@@ -457,30 +489,7 @@ export const listCards = query({
       const ids = new Set(inactiveCats.map((c) => c._id));
       products = products.filter((p) => !ids.has(p.categoryId));
     }
-    return products.map((p) => ({
-      _id: p._id,
-      slug: p.slug,
-      name: p.name,
-      nameRu: p.nameRu,
-      nameEn: p.nameEn,
-      price: p.price,
-      compareAtPrice: p.compareAtPrice,
-      wholesalePrice: p.wholesalePrice,
-      retailDiscount: p.retailDiscount,
-      wholesaleDiscount: p.wholesaleDiscount,
-      categoryId: p.categoryId,
-      images: (normalizeImageUrls(p.images?.slice(0, 1) ?? []) as string[]) ?? [],
-      sku: p.sku,
-      stock: p.stock,
-      brand: p.brand,
-      qtyStep: p.qtyStep,
-      atgCode: p.atgCode,
-      isActive: p.isActive,
-      isFeatured: p.isFeatured,
-      rating: p.rating,
-      reviewCount: p.reviewCount,
-      attributes: p.attributes,
-    }));
+    return products.map(toProductCard);
   },
 });
 
