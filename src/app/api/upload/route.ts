@@ -14,7 +14,10 @@ function buildImageUrl(key: string): string {
 
   try {
     const parsed = new URL(directUrl);
-    if (parsed.hostname.endsWith('.r2.cloudflarestorage.com')) {
+    // Route both the private S3 endpoint and the public r2.dev domain through
+    // the same-origin proxy: Vercel optimizes local sources but returns 402 for
+    // remote r2.dev images.
+    if (parsed.hostname.endsWith('.r2.cloudflarestorage.com') || parsed.hostname.endsWith('.r2.dev')) {
       return `/api/r2-image?url=${encodeURIComponent(directUrl)}`;
     }
   } catch {

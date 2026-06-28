@@ -17,7 +17,9 @@ const R2 = new S3Client({
 function extractObjectKey(urlStr: string, bucketName: string): string | null {
   try {
     const parsed = new URL(urlStr);
-    if (!parsed.hostname.endsWith('.r2.cloudflarestorage.com')) return null;
+    const host = parsed.hostname.toLowerCase();
+    // Accept both the private S3 endpoint and the public r2.dev bucket domain.
+    if (!host.endsWith('.r2.cloudflarestorage.com') && !host.endsWith('.r2.dev')) return null;
 
     let key = parsed.pathname.replace(/^\/+/, '');
     if (!key) return null;
@@ -26,7 +28,7 @@ function extractObjectKey(urlStr: string, bucketName: string): string | null {
       key = key.slice(bucketName.length).replace(/^\/+/, '');
     }
 
-    if (!key.startsWith('products/')) return null;
+    if (!key.startsWith('products/') && !key.startsWith('reviews/')) return null;
 
     return key || null;
   } catch {

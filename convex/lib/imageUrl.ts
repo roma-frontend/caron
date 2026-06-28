@@ -1,4 +1,8 @@
 const LEGACY_R2_HOST_SUFFIX = '.r2.cloudflarestorage.com';
+// Public Cloudflare R2 dev/bucket domain (e.g. pub-xxxx.r2.dev). Vercel refuses
+// to optimize these as *remote* images (HTTP 402), so we route them through the
+// same-origin /api/r2-image proxy, which Vercel optimizes as a local source.
+const R2_DEV_HOST_SUFFIX = '.r2.dev';
 const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i;
 
 function normalizeLocalImagePath(raw: string): string | null {
@@ -41,7 +45,7 @@ export function normalizeImageUrl(imageUrl?: string | null): string | null | und
       return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(driveId)}`;
     }
 
-    if (!parsed.hostname.endsWith(LEGACY_R2_HOST_SUFFIX)) return trimmed;
+    if (!parsed.hostname.endsWith(LEGACY_R2_HOST_SUFFIX) && !parsed.hostname.endsWith(R2_DEV_HOST_SUFFIX)) return trimmed;
     return `/api/r2-image?url=${encodeURIComponent(trimmed)}`;
   } catch {
     return normalizeLocalImagePath(trimmed);

@@ -1514,7 +1514,8 @@ export const getVariantGroup = query({
         const bo = b.variantOrder ?? Number.MAX_SAFE_INTEGER;
         if (ao !== bo) return ao - bo;
         return a.name.localeCompare(b.name);
-      });
+      })
+      .map(normalizeProductImages);
   },
 });
 
