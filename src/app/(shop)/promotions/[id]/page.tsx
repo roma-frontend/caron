@@ -166,7 +166,7 @@ export default function PromotionDetailPage() {
 
           {/* Badges */}
           <div className="absolute right-5 top-5 z-10 flex flex-wrap gap-2">
-            {promo.discountPercent && (
+            {!!promo.discountPercent && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-4 py-1.5 text-sm font-black text-white shadow-lg">
                 <Tag className="h-3.5 w-3.5" /> -{promo.discountPercent}%
               </span>

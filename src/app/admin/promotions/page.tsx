@@ -180,7 +180,7 @@ function PromoCard({ promo, index, onDelete, onEdit }: { promo: { _id: Id<'promo
           {!tpl && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent" />}
 
           {/* Discount badge */}
-          {promo.discountPercent && (
+          {!!promo.discountPercent && (
             <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-xl bg-destructive px-3 py-1.5 text-sm font-black text-white shadow-lg">
               <Percent className="h-4 w-4" /> -{promo.discountPercent}%
             </div>

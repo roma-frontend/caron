@@ -104,7 +104,7 @@ function PromoCard({ promo, index }: { promo: { _id: string; title: string; desc
           </div>
 
           {/* Discount badge */}
-          {promo.discountPercent && (
+          {!!promo.discountPercent && (
             <div className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-white shadow-lg">
               -{promo.discountPercent}%
             </div>
