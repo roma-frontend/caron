@@ -7,7 +7,7 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Mail, Lock } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { useAuthStore } from '@/store/auth';

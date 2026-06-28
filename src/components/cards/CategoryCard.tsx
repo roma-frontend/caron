@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import type { LucideIcon } from 'lucide-react';
 import { Disc3, CircleDot, Droplet, Filter, Lightbulb, BatteryCharging, Wrench, Gauge, Package, ChevronRight } from 'lucide-react';
 import { useMouseGlow } from '@/lib/motion';

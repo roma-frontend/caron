@@ -14,7 +14,7 @@ import {
   FolderTree,
   TrendingUp,
 } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { formatPrice } from '@/lib/formatters';
 import { useAuth } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, X, Bot, Loader2 } from 'lucide-react';
 import { SITE } from '@/lib/constants';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };

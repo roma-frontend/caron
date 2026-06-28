@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdminT } from '@/lib/i18n/admin';
+import { useT } from '@/lib/i18n/admin';
 import type { AdminLang } from '@/store/adminLang';
 
 type Tr = { ru: string; en: string };
@@ -179,7 +179,7 @@ export function localizeCategoryName(
  * dictionary fallback.
  */
 export function useFilterName(): (name: string, slug?: string, nameRu?: string, nameEn?: string) => string {
-  const { lang } = useAdminT();
+  const { lang } = useT();
   return (name, slug, nameRu, nameEn) => localizeFilterName(name, lang, slug, nameRu, nameEn);
 }
 
@@ -188,12 +188,12 @@ export function useFilterName(): (name: string, slug?: string, nameRu?: string, 
  * function bound to the current UI language.
  */
 export function useFilterOption(): (option: string, index: number, optionsRu?: string[], optionsEn?: string[]) => string {
-  const { lang } = useAdminT();
+  const { lang } = useT();
   return (option, index, optionsRu, optionsEn) => localizeFilterOption(option, index, lang, optionsRu, optionsEn);
 }
 
 /** Hook returning a `categoryName(cat)` function bound to the current UI language. */
 export function useCategoryName(): (cat: { name: string; slug?: string; nameRu?: string; nameEn?: string } | string) => string {
-  const { lang } = useAdminT();
+  const { lang } = useT();
   return (cat) => localizeCategoryName(cat, lang);
 }

@@ -6,20 +6,41 @@ const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group').trim
 
 export const revalidate = 3600; // regenerate every hour
 
+/** Build a sitemap entry with hy/ru/en hreflang alternates for a base path. */
+function entry(
+  path: string,
+  opts: { lastModified?: Date; changeFrequency?: MetadataRoute.Sitemap[number]['changeFrequency']; priority?: number } = {},
+): MetadataRoute.Sitemap[number] {
+  const clean = path === '/' ? '' : path;
+  return {
+    url: `${BASE_URL}${clean || '/'}`,
+    lastModified: opts.lastModified,
+    changeFrequency: opts.changeFrequency,
+    priority: opts.priority,
+    alternates: {
+      languages: {
+        'hy-AM': `${BASE_URL}${clean || '/'}`,
+        'ru-RU': `${BASE_URL}/ru${clean}`,
+        'en-US': `${BASE_URL}/en${clean}`,
+      },
+    },
+  };
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
     const staticRoutes: MetadataRoute.Sitemap = [
-    { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${BASE_URL}/products`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE_URL}/categories`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/promotions`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/delivery`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${BASE_URL}/car-selector`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${BASE_URL}/vin-decoder`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${BASE_URL}/oem`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    entry('/', { lastModified: now, changeFrequency: 'daily', priority: 1 }),
+    entry('/products', { lastModified: now, changeFrequency: 'daily', priority: 0.9 }),
+    entry('/categories', { lastModified: now, changeFrequency: 'weekly', priority: 0.8 }),
+    entry('/promotions', { lastModified: now, changeFrequency: 'weekly', priority: 0.7 }),
+    entry('/about', { lastModified: now, changeFrequency: 'monthly', priority: 0.6 }),
+    entry('/contact', { lastModified: now, changeFrequency: 'monthly', priority: 0.6 }),
+    entry('/delivery', { lastModified: now, changeFrequency: 'monthly', priority: 0.5 }),
+    entry('/car-selector', { lastModified: now, changeFrequency: 'weekly', priority: 0.7 }),
+    entry('/vin-decoder', { lastModified: now, changeFrequency: 'weekly', priority: 0.7 }),
+    entry('/oem', { lastModified: now, changeFrequency: 'weekly', priority: 0.7 }),
   ];
 
   try {
@@ -28,21 +49,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       fetchQuery(api.categories.list, {}),
     ]);
 
-    const productRoutes: MetadataRoute.Sitemap = (products ?? []).map((p) => ({
-      url: `${BASE_URL}/products/${p.slug}`,
-      lastModified: new Date(p.updatedAt),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }));
+    const productRoutes: MetadataRoute.Sitemap = (products ?? []).map((p) =>
+      entry(`/products/${p.slug}`, { lastModified: new Date(p.updatedAt), changeFrequency: 'weekly', priority: 0.8 }),
+    );
 
     const categoryRoutes: MetadataRoute.Sitemap = (categories ?? [])
       .filter((c: { isActive: boolean }) => c.isActive)
-      .map((c: { slug: string; createdAt: number }) => ({
-        url: `${BASE_URL}/categories/${c.slug}`,
-        lastModified: new Date(c.createdAt),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }));
+      .map((c: { slug: string; createdAt: number }) =>
+        entry(`/categories/${c.slug}`, { lastModified: new Date(c.createdAt), changeFrequency: 'weekly', priority: 0.7 }),
+      );
 
     // Collect unique OEM numbers from all products
     const oemSet = new Set<string>();
@@ -54,12 +69,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
     }
-    const oemRoutes: MetadataRoute.Sitemap = Array.from(oemSet).map((oem) => ({
-      url: `${BASE_URL}/oem/${encodeURIComponent(oem)}`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    }));
+    const oemRoutes: MetadataRoute.Sitemap = Array.from(oemSet).map((oem) =>
+      entry(`/oem/${encodeURIComponent(oem)}`, { lastModified: now, changeFrequency: 'weekly', priority: 0.6 }),
+    );
 
     return [...staticRoutes, ...productRoutes, ...categoryRoutes, ...oemRoutes];
   } catch {

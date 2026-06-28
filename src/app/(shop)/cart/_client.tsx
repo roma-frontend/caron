@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ShoppingBag, Trash2, Gift } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/lib/formatters';
 import { useT } from '@/lib/i18n/admin';

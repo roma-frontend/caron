@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Truck, ArrowRight } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import { normalizeImageUrl } from '../../../convex/lib/imageUrl';

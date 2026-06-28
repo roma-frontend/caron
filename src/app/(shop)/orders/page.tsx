@@ -13,7 +13,7 @@ import { ReorderButton } from '@/components/ReorderButton';
 import { ReturnRequestButton } from '@/components/ReturnRequestButton';
 import { normalizeImageUrl } from '../../../../convex/lib/imageUrl';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-blue-100 text-blue-800',

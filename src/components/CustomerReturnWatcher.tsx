@@ -6,7 +6,7 @@ import { api } from '../../convex/_generated/api';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { CheckCircle2, PackageCheck, XCircle, RotateCcw } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 type Status = 'pending' | 'approved' | 'rejected' | 'completed';

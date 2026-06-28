@@ -1,19 +1,28 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Check, ChevronDown, Globe } from 'lucide-react';
-import { useAdminT, ADMIN_LANGS, adminLangLabel, adminLangName } from '@/lib/i18n/admin';
+import { useT, ADMIN_LANGS, adminLangLabel, adminLangName } from '@/lib/i18n/admin';
+import { localizedPath, type Locale } from '@/lib/i18n/locale';
 import { cn } from '@/lib/utils';
 
 /**
- * HY / RU / EN language dropdown for the storefront. Reads and writes the same
- * persisted language store as the admin panel. Hydration-safe because the
- * underlying hook renders the default language until mounted.
+ * HY / RU / EN language dropdown for the storefront. Switching navigates to the
+ * locale-prefixed URL (hy = no prefix) with a full load, so the server
+ * re-renders meta/content in the chosen language.
  */
 export function LanguageSwitcher({ className }: { className?: string }) {
-  const { lang, setLang } = useAdminT();
+  const { lang } = useT();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  const switchTo = (l: Locale) => {
+    setOpen(false);
+    const target = localizedPath(pathname || '/', l);
+    if (target !== pathname) window.location.assign(target);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -55,7 +64,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
               key={l}
               role="option"
               aria-selected={lang === l}
-              onClick={() => { setLang(l); setOpen(false); }}
+              onClick={() => switchTo(l)}
               className={cn(
                 'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent',
                 lang === l ? 'font-semibold text-foreground' : 'text-muted-foreground',

@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { useOrderNotificationStore } from '@/store/orderNotifications';
 import { toast } from 'sonner';
 import { RotateCcw } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 function playNotificationSound() {

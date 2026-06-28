@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/cards/ProductCard';

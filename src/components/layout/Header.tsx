@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { ShoppingCart, Search, ActivityIcon, Menu, User, Heart, X, Grid3X3, Tag, Phone, Car, Info, Truck, BarChart3, ClipboardList, Barcode, ScanSearch } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';

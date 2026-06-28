@@ -8,7 +8,7 @@ import { getRoleSuggestions, type UserRole } from '@/lib/aiAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SITE } from '@/lib/constants';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { usePathname } from 'next/navigation';
 import { useT } from '@/lib/i18n/admin';
 

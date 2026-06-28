@@ -18,7 +18,7 @@ import { normalizeImageUrl } from '../../../convex/lib/imageUrl';
 import dynamic from 'next/dynamic';
 const QuickView = dynamic(() => import('@/components/QuickView').then((m) => ({ default: m.QuickView })));
 
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import Image from 'next/image';
 import { useAuthStore } from '@/store/auth';
 import { useT } from '@/lib/i18n/admin';

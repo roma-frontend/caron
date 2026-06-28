@@ -10,7 +10,7 @@ import { User, Mail, Phone, Lock, ArrowRight, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { setAuthCookie } from '@/actions/auth';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/layout/Logo';
 import { useSettings } from '@/hooks/useSettings';

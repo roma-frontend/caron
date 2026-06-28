@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Flame, Percent, Gift, Zap, Bell, ImageIcon } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useReveal, cardRevealStyle } from '@/lib/motion';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { PromoTemplate, parsePromoConfig, PROMO_RATIO_CLASS } from '@/components/PromoTemplate';

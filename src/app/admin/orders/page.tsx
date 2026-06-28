@@ -20,7 +20,7 @@ import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { useSettings } from '@/hooks/useSettings';
 import { useAdminT } from '@/lib/i18n/admin';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 
 type PeriodKey = 'today' | 'yesterday' | '7d' | '30d' | 'thisMonth' | 'lastMonth' | 'custom';
 type CancelReasonKey = 'changed_mind' | 'no_answer' | 'out_of_stock' | 'expensive' | 'slow_delivery' | 'order_error' | 'duplicate' | 'other';

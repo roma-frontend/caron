@@ -11,7 +11,7 @@ import { ProductCard } from '@/components/cards/ProductCard';
 import { Loader } from '@/components/ui/loader';
 import { CAR_DATA, CAR_BRANDS as BRANDS } from '@/lib/cars';
 import { useSettings } from '@/hooks/useSettings';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 function Guard({ children }: { children: React.ReactNode }) {

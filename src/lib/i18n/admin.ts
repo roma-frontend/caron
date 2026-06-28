@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAdminLangStore, type AdminLang } from '@/store/adminLang';
+import { useLocale } from './LocaleProvider';
 import { DICT } from './dict';
 
 /**
@@ -48,5 +49,20 @@ export function useAdminT(): { lang: AdminLang; setLang: (l: AdminLang) => void;
   return { lang, setLang, t: (key: string) => translateAdmin(lang, key) };
 }
 
-/** Storefront-facing alias for {@link useAdminT}. */
-export const useT = useAdminT;
+/**
+ * Storefront i18n. Unlike the admin panel, the storefront language comes from
+ * the URL locale (provided by {@link LocaleProvider} from the `x-locale`
+ * middleware header), so server and client render the SAME language with no
+ * hydration flash. Falls back to the admin store only if used outside a
+ * provider (should not happen on the storefront).
+ */
+export function useT(): { lang: AdminLang; setLang: (l: AdminLang) => void; t: AdminTFn } {
+  const urlLocale = useLocale();
+  const stored = useAdminLangStore((s) => s.lang);
+  const setLang = useAdminLangStore((s) => s.setLang);
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
+  const lang: AdminLang = urlLocale ?? (mounted ? stored : 'hy');
+  return { lang, setLang, t: (key: string) => translateAdmin(lang, key) };
+}

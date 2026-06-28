@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X, GitCompareArrows, ShoppingCart, TrendingDown, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import Image from 'next/image';
 import { motion } from '@/lib/motion';
 import { useT } from '@/lib/i18n/admin';

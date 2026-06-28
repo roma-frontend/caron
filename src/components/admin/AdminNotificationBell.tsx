@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useQuery } from 'convex/react';
 import { Bell, ShoppingBag, RotateCcw, Star, MessageCircleQuestion, CheckCircle2 } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';

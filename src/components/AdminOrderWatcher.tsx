@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { useOrderNotificationStore } from '@/store/orderNotifications';
 import { toast } from 'sonner';
 import { ShoppingBag } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { formatPrice } from '@/lib/formatters';
 import { useT } from '@/lib/i18n/admin';
 

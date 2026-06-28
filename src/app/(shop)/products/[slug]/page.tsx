@@ -28,7 +28,7 @@ import { ProductQuestions } from '@/components/ProductQuestions';
 import { RecommendedForYou } from '@/components/RecommendedForYou';
 import { FrequentlyBoughtTogether } from '@/components/FrequentlyBoughtTogether';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ProductImageZoom } from '@/components/ProductImageZoom';

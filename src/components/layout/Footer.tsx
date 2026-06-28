@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Separator } from '@/components/ui/separator';

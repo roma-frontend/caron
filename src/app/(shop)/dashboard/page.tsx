@@ -15,7 +15,7 @@ import { formatDateLocalized, formatPrice } from '@/lib/formatters';
 import { ReorderButton } from '@/components/ReorderButton';
 import { PushToggle } from '@/components/PushToggle';
 import { useSettings } from '@/hooks/useSettings';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { api } from '../../../../convex/_generated/api';
 import { useT } from '@/lib/i18n/admin';
 

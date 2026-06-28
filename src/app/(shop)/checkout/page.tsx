@@ -17,7 +17,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { toast } from 'sonner';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Check, ChevronLeft, ChevronRight, ShoppingBag, User, MapPin, ClipboardList, CreditCard, Banknote, Smartphone, Building2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 

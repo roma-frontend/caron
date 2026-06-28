@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdminT } from '@/lib/i18n/admin';
+import { useT } from '@/lib/i18n/admin';
 import { formatDateLocalized } from '@/lib/formatters';
 
 /**
@@ -8,6 +8,6 @@ import { formatDateLocalized } from '@/lib/formatters';
  * language. Hydration-safe via {@link useAdminT} (Armenian until mount).
  */
 export function useFormatDate(): (timestamp: number) => string {
-  const { t } = useAdminT();
+  const { t } = useT();
   return (timestamp: number) => formatDateLocalized(timestamp, t);
 }

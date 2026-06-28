@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Sparkles, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useT } from '@/lib/i18n/admin';

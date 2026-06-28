@@ -12,7 +12,7 @@ import { flyProductAway, flyProductToTarget } from '@/lib/flyToTarget';
 import { showUndoCountdownToast } from '@/lib/undoCountdownToast';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 interface QuickViewProps {

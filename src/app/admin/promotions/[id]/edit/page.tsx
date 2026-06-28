@@ -17,7 +17,7 @@ import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
 import { DatePicker } from '@/components/ui/DatePicker';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import Image from 'next/image';
 import { PromoTemplateBuilder } from '@/components/admin/PromoTemplateBuilder';
 import { defaultPromoConfig, parsePromoConfig, type PromoTemplateConfig } from '@/components/PromoTemplate';

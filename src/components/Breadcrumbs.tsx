@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { ChevronRight, Home } from 'lucide-react';
 
 interface Crumb { label: string; href?: string }

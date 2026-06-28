@@ -3,7 +3,7 @@
 import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, X, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdminT } from '@/lib/i18n/admin';
+import { useT } from '@/lib/i18n/admin';
 import type { AdminLang } from '@/store/adminLang';
 
 const SUFFIX: Record<AdminLang, string> = { hy: '', ru: 'Ru', en: 'En' };
@@ -42,6 +42,6 @@ export function pickPromoTemplateJson(
  * Hydration-safe: relies on {@link useAdminT} which yields Armenian until mount.
  */
 export function useLocalize(): { lang: AdminLang; loc: (obj: Record<string, unknown> | null | undefined, base: string) => string } {
-  const { lang } = useAdminT();
+  const { lang } = useT();
   return { lang, loc: (obj, base) => pickLocalized(obj, base, lang) };
 }

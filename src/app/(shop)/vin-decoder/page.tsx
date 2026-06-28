@@ -2,7 +2,7 @@
 
 import { VinDecoder } from '@/components/VinDecoder';
 import { useSettings } from '@/hooks/useSettings';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 export default function VinDecoderPage() {

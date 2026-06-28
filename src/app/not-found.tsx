@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';

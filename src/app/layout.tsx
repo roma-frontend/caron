@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Noto_Sans_Armenian, Playfair_Display } from 'next/font/google';
 import React from 'react';
+import { headers } from 'next/headers';
 import './globals.css';
 import { ConvexClientProvider } from '@/lib/convex';
 import { SITE } from '@/lib/constants';
+import { isLocale, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locale';
+import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
 import { ThemeProvider } from 'next-themes';
 import { ThemedToaster } from '@/components/ThemedToaster';
 import { BrandTheme } from '@/components/BrandTheme';
@@ -50,6 +53,29 @@ const notoSansArmenian = Noto_Sans_Armenian({
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://caron.group').trim().replace(/\/+$/, '');
 
+// Locale-specific default title/description for the storefront. Per-page
+// metadata (products, categories) overrides these via their own generateMetadata.
+const META_TEXT: Record<Locale, { title: string; description: string; ogLocale: string }> = {
+  hy: {
+    title: `${SITE.fullName} | Ավտոպահեստամասերի առցանց խանութ`,
+    description: SITE.description,
+    ogLocale: 'hy_AM',
+  },
+  ru: {
+    title: `${SITE.fullName} | Интернет-магазин автозапчастей`,
+    description: 'Интернет-магазин автозапчастей в Армении. Качественные автозапчасти по доступным ценам с быстрой доставкой.',
+    ogLocale: 'ru_RU',
+  },
+  en: {
+    title: `${SITE.fullName} | Online auto parts store`,
+    description: 'Online auto parts store in Armenia. Quality car parts at affordable prices with fast delivery.',
+    ogLocale: 'en_US',
+  },
+};
+
+/** hreflang alternates for the home page (per-page metadata sets its own). */
+const HOME_LANGUAGES = { 'hy-AM': '/', 'ru-RU': '/ru', 'en-US': '/en' } as const;
+
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#F4F5F6' },
@@ -62,7 +88,7 @@ export const viewport: Viewport = {
   colorScheme: 'light dark',
 };
 
-export const metadata: Metadata = {
+const BASE_META: Metadata = {
   metadataBase: new URL(APP_URL),
 
   title: {
@@ -157,9 +183,43 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const hl = h.get('x-locale');
+  const locale: Locale = isLocale(hl) ? hl : DEFAULT_LOCALE;
+  const text = META_TEXT[locale];
+  const canonical = locale === DEFAULT_LOCALE ? '/' : `/${locale}`;
+
+  return {
+    ...BASE_META,
+    title: {
+      default: text.title,
+      template: `%s | ${SITE.fullName}`,
+    },
+    description: text.description,
+    alternates: {
+      canonical,
+      languages: HOME_LANGUAGES,
+    },
+    openGraph: {
+      ...BASE_META.openGraph,
+      locale: text.ogLocale,
+      title: text.title,
+      description: text.description,
+    },
+  };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const h = await headers();
+  const hl = h.get('x-locale');
+  const htmlLang: Locale = isLocale(hl) ? hl : DEFAULT_LOCALE;
+  // The storefront is served with an `x-locale` header (set by middleware);
+  // the admin panel is not, so it stays on the language store.
+  const isStorefront = hl !== null;
+  const content = isStorefront ? <LocaleProvider locale={htmlLang}>{children}</LocaleProvider> : children;
   return (
-    <html lang="hy" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang={htmlLang} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Safari pinned tab */}
         <link rel="mask-icon" href="/favicon.svg" color="#0066AE" />
@@ -185,7 +245,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SettingsProvider>
               <BrandTheme />
               <AnalyticsInjector />
-              <main id="main-content" className="min-h-dvh">{children}</main>
+              <main id="main-content" className="min-h-dvh">{content}</main>
               <CookieConsentWrapper />
               <CartSync />
               <ScrollToTop />

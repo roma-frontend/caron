@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { X, ArrowRight, Sparkles, Zap, Truck, Clock, Gift, Percent, Bell, Star } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 const ANNOUNCEMENT_DISMISS_EVENT = 'announcement-dismiss';

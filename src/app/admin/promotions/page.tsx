@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useAuthStore } from '@/store/auth';
 import Image from 'next/image';
 import { PromoTemplate, parsePromoConfig } from '@/components/PromoTemplate';

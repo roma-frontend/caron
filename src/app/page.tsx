@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import Link from "@/components/LocalizedLink";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Truck, Shield, Clock, Star } from "lucide-react";
 import { Header } from "@/components/layout/Header";

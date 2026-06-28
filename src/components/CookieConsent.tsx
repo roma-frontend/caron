@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Cookie, X } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useT } from '@/lib/i18n/admin';
 
 export function CookieConsent({ text }: { text: string }) {

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit, FolderTree, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Id } from '../../../../convex/_generated/dataModel';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useAuth } from '@/store/auth';
 import { CATEGORY_ICONS, CATEGORY_COLORS } from '@/components/cards/CategoryCard';

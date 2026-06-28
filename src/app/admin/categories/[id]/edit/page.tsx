@@ -14,7 +14,7 @@ import { Save, ArrowLeft, ImagePlus } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useUpload } from '@/hooks/useUpload';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import Image from 'next/image';
 import { useAuth } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';

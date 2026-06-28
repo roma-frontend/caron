@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { CheckCircle, Printer, Smartphone, Check } from 'lucide-react';
 import { formatPrice, formatDateLocalized } from '@/lib/formatters';
 import { useT } from '@/lib/i18n/admin';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useSettings } from '@/hooks/useSettings';
 import { useState } from 'react';

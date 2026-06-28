@@ -12,7 +12,7 @@ import { Clock, Percent, Calendar, ArrowLeft, Tag, Zap, ChevronLeft, ChevronRigh
 import { formatDateLocalized } from '@/lib/formatters';
 import { Id } from '../../../../../convex/_generated/dataModel';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/LocalizedLink';
 import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useT } from '@/lib/i18n/admin';
