@@ -38,7 +38,7 @@ export function Logo({ size = 32, className }: LogoProps) {
     <>
       {/* Light theme → blue wordmark */}
       <Image
-        src="/logo/caron-light.png"
+        src="/logo/caron-light.webp"
         alt="CARON GROUP"
         width={LOGO_W}
         height={LOGO_H}
@@ -48,7 +48,7 @@ export function Logo({ size = 32, className }: LogoProps) {
       />
       {/* Dark theme → white wordmark */}
       <Image
-        src="/logo/caron-dark.png"
+        src="/logo/caron-dark.webp"
         alt="CARON GROUP"
         width={LOGO_W}
         height={LOGO_H}

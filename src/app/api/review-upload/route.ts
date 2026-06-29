@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       Key: key,
       Body: buffer,
       ContentType: contentType,
+      CacheControl: 'public, max-age=31536000, immutable',
     }));
     const publicUrl = buildImageUrl(key);
     return NextResponse.json({ publicUrl, key });
