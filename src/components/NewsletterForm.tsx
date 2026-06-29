@@ -42,6 +42,9 @@ export function NewsletterForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
+            name="email"
+            autoComplete="email"
+            aria-label={t('auth.email')}
             required
             placeholder="your@email.com"
             className="h-9 flex-1 rounded-xl border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
