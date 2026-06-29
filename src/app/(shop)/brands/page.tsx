@@ -38,23 +38,33 @@ export default function BrandsPage() {
             <Link
               key={b._id}
               href={`/products?brand=${encodeURIComponent(b.name)}`}
-              className="group flex aspect-3/2 flex-col items-center justify-center gap-2 rounded-2xl border bg-white p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              className="group overflow-hidden rounded-2xl border bg-white shadow-xs transition-all duration-300 hover:shadow-lg"
             >
-              {b.logoUrl ? (
-                <div className="relative flex h-14 w-full items-center justify-center">
-                  <Image src={b.logoUrl} alt={b.name} fill sizes="200px" className="object-contain" />
-                </div>
-              ) : (
-                <span className="text-lg font-bold text-foreground/80">{b.name}</span>
-              )}
-              <span className="line-clamp-1 text-center text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
-                {b.name}
-              </span>
-              {counts?.[b.name.toLowerCase()] !== undefined && (
-                <span className="text-[11px] text-muted-foreground/70">
-                  {counts[b.name.toLowerCase()]} {t('pg.common.products')}
-                </span>
-              )}
+              <div className="relative aspect-square w-full bg-white">
+                {b.logoUrl ? (
+                  <Image
+                    src={b.logoUrl}
+                    alt={b.name}
+                    fill
+                    sizes="220px"
+                    className="object-cover transition-transform duration-300"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center px-2 text-center text-lg font-bold text-foreground/80">
+                    {b.name}
+                  </span>
+                )}
+              </div>
+              <div className="px-2 py-2 text-center">
+                <p className="line-clamp-1 text-xs font-medium text-foreground transition-colors group-hover:text-primary">
+                  {b.name}
+                </p>
+                {counts?.[b.name.toLowerCase()] !== undefined && (
+                  <p className="text-[11px] text-muted-foreground/70">
+                    {counts[b.name.toLowerCase()]} {t('pg.common.products')}
+                  </p>
+                )}
+              </div>
             </Link>
           ))}
         </div>

@@ -490,21 +490,19 @@ export default function HomePage() {
                 <Link
                   key={b._id}
                   href={`/products?brand=${encodeURIComponent(b.name)}`}
-                  className="group flex h-24 w-36 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:h-28 sm:w-44"
+                  className="group relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-white shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-lg sm:h-32 sm:w-32"
                   title={b.name}
                 >
                   {b.logoUrl ? (
-                    <div className="relative h-full w-full">
-                      <Image
-                        src={b.logoUrl}
-                        alt={b.name}
-                        fill
-                        sizes="180px"
-                        className="object-contain transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
+                    <Image
+                      src={b.logoUrl}
+                      alt={b.name}
+                      fill
+                      sizes="128px"
+                      className="object-cover transition-transform duration-300"
+                    />
                   ) : (
-                    <span className="px-2 text-center text-lg font-bold text-foreground/80">{b.name}</span>
+                    <span className="flex h-full w-full items-center justify-center px-2 text-center text-base font-bold text-foreground/80">{b.name}</span>
                   )}
                 </Link>
               ))}

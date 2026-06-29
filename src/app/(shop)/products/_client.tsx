@@ -227,8 +227,8 @@ export default function ProductsPage() {
       {activeBrand && (
         <div className="mb-4 flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-sm">
           {activeBrandInfo?.logoUrl ? (
-            <div className="relative h-14 w-28 shrink-0">
-              <Image src={activeBrandInfo.logoUrl} alt={activeBrand} fill sizes="160px" className="object-contain object-left" />
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border bg-white">
+              <Image src={activeBrandInfo.logoUrl} alt={activeBrand} fill sizes="56px" className="object-cover" />
             </div>
           ) : (
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl font-black text-primary">
