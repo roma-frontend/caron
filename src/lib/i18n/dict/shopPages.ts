@@ -37,6 +37,8 @@ export const shopPages: DictModule = {
   'pg.home.featuredList': { hy: 'Ցանկ', ru: 'Подборка', en: 'Selection' },
   'pg.home.brands': { hy: 'Բրենդներ', ru: 'Бренды', en: 'Brands' },
   'pg.home.allBrands': { hy: 'Բոլոր բրենդները', ru: 'Все бренды', en: 'All brands' },
+  'pg.brands.subtitle': { hy: 'Ընտրեք բրենդը՝ տեսնելու դրա ապրանքները', ru: 'Выберите бренд, чтобы посмотреть его товары', en: 'Pick a brand to see its products' },
+  'pg.brands.empty': { hy: 'Բրենդները դեռ ավելացված չեն', ru: 'Бренды пока не добавлены', en: 'No brands added yet' },
   'pg.home.topSales': { hy: 'Թոփ վաճառք', ru: 'Топ продаж', en: 'Top sellers' },
   'pg.home.discounts': { hy: 'Զեղչեր', ru: 'Скидки', en: 'Discounts' },
   'pg.home.feature.delivery.title': { hy: 'Առաքում', ru: 'Доставка', en: 'Delivery' },

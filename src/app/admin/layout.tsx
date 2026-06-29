@@ -4,7 +4,7 @@ import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from '@/components/LocalizedLink';
-import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck, Award } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { href: '/admin', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { href: '/admin/products', icon: Package, labelKey: 'nav.products' },
   { href: '/admin/categories', icon: FolderTree, labelKey: 'nav.categories' },
+  { href: '/admin/brands', icon: Award, labelKey: 'nav.brands' },
   { href: '/admin/filters', icon: SlidersHorizontal, labelKey: 'nav.filters' },
   { href: '/admin/orders', icon: BarChart3, labelKey: 'nav.orders' },
   { href: '/admin/returns', icon: RotateCcw, labelKey: 'nav.returns' },

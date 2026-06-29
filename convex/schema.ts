@@ -71,6 +71,22 @@ export default defineSchema(
     .index('by_parent', ['parentId'])
     .index('by_active', ['isActive']),
 
+  // ─── Brands (with logos) ───────────────────────────────────────
+  // `name` must match the product `brand` string so the storefront can filter
+  // via /products?brand=<name>. Managed in the admin; shown as a logo strip on
+  // the home page and a dedicated /brands page.
+  brands: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    logoUrl: v.optional(v.string()),
+    order: v.number(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_slug', ['slug'])
+    .index('by_active', ['isActive']),
+
   // ─── Dynamic Filter Definitions (per category) ─────────────────
   filterDefinitions: defineTable({
     categoryId: v.id('categories'),

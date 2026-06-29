@@ -29,154 +29,6 @@ import Image from "next/image";
 import { useT } from "@/lib/i18n/admin";
 import { useStoreName } from "@/hooks/useStoreName";
 
-const BRAND_COLORS: Record<string, string> = {
-  Mobil: "#0072C6",
-  Castrol: "#005EB8",
-  "Liqui Moly": "#003D7A",
-  Motul: "#005EB8",
-  Shell: "#FFD500",
-  Elf: "#E32636",
-  Total: "#003E7E",
-  Ravenol: "#003399",
-  Idemitsu: "#D42027",
-  Fuchs: "#003366",
-  Petronas: "#00A3E0",
-  LiquiMoly: "#003D7A",
-  Sinopec: "#CC0000",
-  Gazprom: "#1A5276",
-  Valvoline: "#E31B23",
-  Pennzoil: "#FFD700",
-  Quaker: "#003366",
-  Gulf: "#E31837",
-  BP: "#006633",
-  Aral: "#003399",
-  ZIC: "#003399",
-  Kixx: "#00529B",
-  Hyundai: "#002C5F",
-  Kia: "#BB162B",
-  Mann: "#003D7A",
-  "Mann-Filter": "#003D7A",
-  Mahle: "#005A8C",
-  Knecht: "#003D7A",
-  Hengst: "#003366",
-  Purflux: "#E3001B",
-  Sakura: "#CC0000",
-  Nipparts: "#003399",
-  Brembo: "#E30613",
-  TRW: "#003366",
-  ATE: "#CC0000",
-  Ferodo: "#004080",
-  Bosch: "#E60000",
-  Textar: "#003366",
-  Jurid: "#CC0000",
-  Pagid: "#004080",
-  Zimmerman: "#003399",
-  Meyle: "#005BAA",
-  Febest: "#009944",
-  Michelin: "#FFD700",
-  Bridgestone: "#E60012",
-  Goodyear: "#000000",
-  Pirelli: "#FFCC00",
-  Continental: "#FFAA00",
-  Hankook: "#004EA2",
-  Yokohama: "#001F5B",
-  Dunlop: "#005A8C",
-  Toyo: "#E60012",
-  Kumho: "#009944",
-  Nokian: "#003366",
-  Fulda: "#E60000",
-  "GT Radial": "#003399",
-  Barum: "#0066B3",
-  Lassa: "#007DB7",
-  Sava: "#00843D",
-  Firestone: "#E60000",
-  Viking: "#003399",
-  Dezent: "#CC0000",
-  Rial: "#003366",
-  AEZ: "#004080",
-  Alcar: "#003399",
-  NGK: "#00A65A",
-  Hella: "#F5A623",
-  Denso: "#E60000",
-  Valeo: "#005EB8",
-  Beru: "#CC0000",
-  Magneti: "#003366",
-  Marelli: "#003366",
-  Lucas: "#003399",
-  Facet: "#005BAA",
-  SWAG: "#009944",
-  Delphi: "#0055A5",
-  Philips: "#005CB9",
-  Osram: "#00A3E0",
-  Varta: "#1A5C1A",
-  Banner: "#004EA2",
-  Exide: "#DA291C",
-  Tudor: "#003399",
-  Moll: "#003366",
-  TAB: "#004080",
-  Monroe: "#004080",
-  Sachs: "#003366",
-  Bilstein: "#005BAA",
-  KYB: "#CC0000",
-  Kayaba: "#CC0000",
-  Lemforder: "#005A8C",
-  Moog: "#E60000",
-  Febi: "#009944",
-  Swag: "#003399",
-  CTR: "#005BAA",
-  Optimal: "#003366",
-  Gates: "#00529B",
-  Contitech: "#003366",
-  Dayco: "#E60012",
-  INA: "#003399",
-  SKF: "#003366",
-  SNR: "#E30613",
-  FAG: "#003399",
-  NTN: "#DA291C",
-  Champion: "#DA291C",
-  Wahler: "#003366",
-  Calorstat: "#CC0000",
-  Metzger: "#003399",
-  Topran: "#005BAA",
-  Mapco: "#004080",
-  Stark: "#003366",
-  Maxgear: "#00529B",
-  Patron: "#CC0000",
-  Vaico: "#003399",
-  JP: "#005BAA",
-  "JP Group": "#005BAA",
-  AJUSA: "#003366",
-  Elring: "#CC0000",
-  Victor: "#003399",
-  Reinz: "#004080",
-  Goetze: "#003366",
-  Payen: "#CC0000",
-  Hito: "#F5A629",
-  Depsun: "#00A3E0",
-};
-
-function brandColor(name: string): string {
-  const known = BRAND_COLORS[name];
-  if (known) return known;
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  const h = ((hash % 360) + 360) % 360;
-  return `hsl(${h}, 55%, 45%)`;
-}
-
-function brandTextColor(hexOrHsl: string): string {
-  // For hsl(...) generated colors, lightness is always 45% → dark enough → white text
-  if (hexOrHsl.startsWith("hsl")) return "#fff";
-  // For hex colors, compute relative luminance
-  const hex = hexOrHsl.replace("#", "");
-  const r = parseInt(hex.slice(0, 2), 16) / 255;
-  const g = parseInt(hex.slice(2, 4), 16) / 255;
-  const b = parseInt(hex.slice(4, 6), 16) / 255;
-  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance > 0.45 ? "#111" : "#fff";
-}
-
 const FEATURE_ICONS = {
   delivery: Truck,
   warranty: Shield,
@@ -310,7 +162,7 @@ export default function HomePage() {
   const storeName = useStoreName();
   const categories = useQuery(api.categories.list, {});
   const featured = useQuery(api.products.getFeatured, {});
-  const brands = useQuery(api.products.getBrands, {});
+  const brandLogos = useQuery(api.brands.list, {});
   const user = useAuthStore((s) => s.user);
   const isWholesale =
     user?.customerType === "wholesale" && user?.role !== "admin";
@@ -622,7 +474,7 @@ export default function HomePage() {
         {settings?.showBestsellers !== false && <Bestsellers />}
 
         {/* Brands — luxury showcase */}
-        {settings?.showBrands !== false && (
+        {settings?.showBrands !== false && brandLogos && brandLogos.length > 0 && (
           <section className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-section)]">
             <h2
               className="text-center text-balance font-bold tracking-tight"
@@ -633,81 +485,32 @@ export default function HomePage() {
             >
               <span className="text-gradient">{t('pg.home.brands')}</span>
             </h2>
-            <div className="flex flex-wrap justify-center gap-4">
-              {brands === undefined &&
-                Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-20 w-[190px] animate-pulse rounded-2xl bg-muted"
-                  />
-                ))}
-              {brands?.slice(0, 8).map((b) => {
-                const color = brandColor(b);
-                return (
-                  <Link
-                    key={b}
-                    href={`/products?brand=${encodeURIComponent(b)}`}
-                    className="group relative flex h-20 w-[190px] items-center justify-center rounded-2xl border border-transparent bg-gradient-to-br from-card to-muted/30 shadow-xs transition-all duration-500 hover:scale-[1.03] hover:shadow-xl overflow-hidden"
-                    style={{ "--brand-color": color } as React.CSSProperties}
-                  >
-                    {/* Shine overlay on hover */}
-                    <div
-                      className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                      style={{
-                        background: `linear-gradient(135deg, transparent 30%, ${color}15 50%, transparent 70%)`,
-                      }}
-                    />
-                    {/* Thin top accent line */}
-                    <div
-                      className="absolute inset-x-4 top-0 h-0.5 rounded-full opacity-0 transition-all duration-500 group-hover:opacity-100"
-                      style={{
-                        background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
-                      }}
-                    />
-                    {/* Subtle glow */}
-                    <div
-                      className="absolute -inset-1 rounded-3xl opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-30"
-                      style={{
-                        background: `radial-gradient(circle, ${color}20, transparent 70%)`,
-                      }}
-                    />
-                    {/* Brand initial — luxury monogram */}
-                    <div
-                      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-black tracking-widest"
-                      style={{
-                        background: color,
-                        color: brandTextColor(color),
-                        boxShadow: `0 2px 8px ${color}66`,
-                      }}
-                    >
-                      {b.charAt(0)}
-                    </div>
-                    {/* Brand name — typographic logotype style */}
-                    <div className="relative ml-3">
-                      <p
-                        className="text-xl font-black leading-none tracking-[0.12em]"
-                        style={{
-                          color,
-                          fontFamily: "var(--font-playfair), Georgia, serif",
-                        }}
-                      >
-                        {b}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-              {brands && brands.length > 8 && (
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+              {brandLogos.slice(0, 12).map((b) => (
                 <Link
-                  href="/products?brand=all"
-                  className="group flex h-20 w-[190px] items-center justify-center gap-2.5 rounded-2xl border border-dashed border-muted-foreground/20 bg-card/50 text-muted-foreground transition-all duration-500 hover:scale-[1.03] hover:border-primary/30 hover:text-primary hover:shadow-lg"
+                  key={b._id}
+                  href={`/products?brand=${encodeURIComponent(b.name)}`}
+                  className="group flex h-20 w-[140px] items-center justify-center rounded-2xl border border-border/60 bg-white p-3 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:w-[170px]"
+                  title={b.name}
                 >
-                  <span className="text-2xl font-light leading-none transition-transform duration-500 group-hover:rotate-90">
-                    +
-                  </span>
-                  <span className="text-sm font-medium">{t('pg.home.allBrands')}</span>
+                  {b.logoUrl ? (
+                    <div className="relative h-12 w-full">
+                      <Image src={b.logoUrl} alt={b.name} fill sizes="170px" className="object-contain" />
+                    </div>
+                  ) : (
+                    <span className="text-lg font-bold text-foreground/80">{b.name}</span>
+                  )}
                 </Link>
-              )}
+              ))}
+              <Link
+                href="/brands"
+                className="group flex h-20 w-[140px] items-center justify-center gap-2.5 rounded-2xl border border-dashed border-muted-foreground/20 bg-card/50 text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:text-primary hover:shadow-lg sm:w-[170px]"
+              >
+                <span className="text-2xl font-light leading-none transition-transform duration-500 group-hover:rotate-90">
+                  +
+                </span>
+                <span className="text-sm font-medium">{t('pg.home.allBrands')}</span>
+              </Link>
             </div>
           </section>
         )}

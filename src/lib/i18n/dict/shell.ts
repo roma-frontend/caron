@@ -10,6 +10,7 @@ export const shell: DictModule = {
   'nav.dashboard': { hy: 'Վահանակ', ru: 'Панель', en: 'Dashboard' },
   'nav.products': { hy: 'Ապրանքներ', ru: 'Товары', en: 'Products' },
   'nav.categories': { hy: 'Կատեգորիաներ', ru: 'Категории', en: 'Categories' },
+  'nav.brands': { hy: 'Բրենդներ', ru: 'Бренды', en: 'Brands' },
   'nav.filters': { hy: 'Ֆիլտրեր', ru: 'Фильтры', en: 'Filters' },
   'nav.orders': { hy: 'Պատվերներ', ru: 'Заказы', en: 'Orders' },
   'nav.returns': { hy: 'Վերադարձներ', ru: 'Возвраты', en: 'Returns' },
