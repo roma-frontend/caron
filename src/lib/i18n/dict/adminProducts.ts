@@ -64,7 +64,7 @@ export const adminProducts: DictModule = {
   'ap.productsCountSuffix': { hy: 'ապրանք', ru: 'товар(ов)', en: 'products' },
   'ap.add': { hy: 'Ավելացնել', ru: 'Добавить', en: 'Add' },
   'ap.addMany': { hy: 'Ավելացնել շատ', ru: 'Добавить несколько', en: 'Add multiple' },
-  'ap.downloadCsv': { hy: 'Ներբեռնել CSV', ru: 'Скачать CSV', en: 'Download CSV' },
+  'ap.downloadCsv': { hy: 'Ներբեռնել Excel', ru: 'Скачать Excel', en: 'Download Excel' },
   'ap.search': { hy: 'Որոնել...', ru: 'Поиск...', en: 'Search...' },
   'ap.allShort': { hy: 'Բոլոր', ru: 'Все', en: 'All' },
   'ap.category': { hy: 'Կատեգորիա', ru: 'Категория', en: 'Category' },

@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/adminAuth';
 import { ConvexHttpClient } from 'convex/browser';
+import * as XLSX from 'xlsx';
 import { api } from '../../../../../convex/_generated/api';
 
-function escapeCsv(value: unknown): string {
-  const text = String(value ?? '');
-  // Guard against CSV/formula injection in spreadsheet apps.
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safe.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
-}
+export const runtime = 'nodejs';
 
-/** Join an attribute value (string | string[] | other) for a CSV cell. */
+/** Join an attribute value (string | string[] | other) for one cell. */
 function attrCell(value: unknown): string {
   if (Array.isArray(value)) return value.map((v) => String(v)).join('; ');
   if (value === null || value === undefined) return '';
   return String(value);
+}
+
+/** Numeric cell or '' (so empty stays blank instead of 0 in Excel). */
+function numCell(value: unknown): number | string {
+  return typeof value === 'number' && Number.isFinite(value) ? value : '';
 }
 
 type FilterDef = { _id: string; categoryId: string; slug: string; name: string };
@@ -44,11 +45,10 @@ export async function GET(req: NextRequest) {
       list = list.filter((p) => p.categoryId === categoryParam);
     }
 
-    // Build dynamic attr_<slug> columns from the filter definitions of the
-    // categories actually present in this export.
+    // Dynamic attr_<slug> columns from the filter definitions of the categories
+    // actually present in this export.
     const presentCategoryIds = new Set(list.map((p) => String(p.categoryId)));
     const defs = (filterDefs as FilterDef[]).filter((d) => presentCategoryIds.has(String(d.categoryId)));
-    // De-duplicate slugs (different categories can share a slug like "brand").
     const attrSlugs: string[] = [];
     const seenSlug = new Set<string>();
     const defsBySlug = new Map<string, FilterDef[]>();
@@ -68,55 +68,57 @@ export async function GET(req: NextRequest) {
       'description', 'descriptionRu', 'descriptionEn',
     ];
     const columns = [...baseColumns, ...attrSlugs.map((s) => `attr_${s}`)];
-    const header = columns.map(escapeCsv).join(',') + '\n';
 
-    const rows = list
-      .map((p) => {
-        const attrs = (p.attributes as Record<string, unknown> | undefined) ?? {};
-        const oem = (p.oemNumbers as Array<{ manufacturer?: string; code: string }> | undefined)
-          ?.map((o) => (o.manufacturer ? `${o.manufacturer}=${o.code}` : o.code))
-          .join('; ') ?? '';
-        const images = (p.images as string[] | undefined)?.join('; ') ?? '';
-        const compat = (attrs.vehicleCompat as VehicleCompatEntry[] | undefined)
-          ?.map((c) => `${c.brand ?? ''}|${c.model ?? ''}|${c.yearFrom ?? ''}|${c.yearTo ?? ''}`)
-          .join('; ') ?? '';
+    const dataRows = list.map((p) => {
+      const attrs = (p.attributes as Record<string, unknown> | undefined) ?? {};
+      const oem = (p.oemNumbers as Array<{ manufacturer?: string; code: string }> | undefined)
+        ?.map((o) => (o.manufacturer ? `${o.manufacturer}=${o.code}` : o.code))
+        .join('; ') ?? '';
+      const images = (p.images as string[] | undefined)?.join('; ') ?? '';
+      const compat = (attrs.vehicleCompat as VehicleCompatEntry[] | undefined)
+        ?.map((c) => `${c.brand ?? ''}|${c.model ?? ''}|${c.yearFrom ?? ''}|${c.yearTo ?? ''}`)
+        .join('; ') ?? '';
 
-        const base = [
-          p._id, p.sku ?? '', p.name ?? '', p.nameRu ?? '', p.nameEn ?? '',
-          catName.get(p.categoryId as string) ?? '', p.brand ?? '',
-          p.price ?? '', p.wholesalePrice ?? '', p.costPrice ?? '', p.compareAtPrice ?? '',
-          p.retailDiscount ?? '', p.wholesaleDiscount ?? '', p.stock ?? '', p.qtyStep ?? '',
-          p.atgCode ?? '', p.variantGroup ?? '',
-          p.isActive ? '1' : '0', p.isFeatured ? '1' : '0', p.showInPromotions ? '1' : '0',
-          p.seoTitle ?? '', p.seoDescription ?? '', images, oem, compat,
-          p.description ?? '', p.descriptionRu ?? '', p.descriptionEn ?? '',
-        ];
+      const base: Array<string | number> = [
+        String(p._id), String(p.sku ?? ''), String(p.name ?? ''), String(p.nameRu ?? ''), String(p.nameEn ?? ''),
+        catName.get(p.categoryId as string) ?? '', String(p.brand ?? ''),
+        numCell(p.price), numCell(p.wholesalePrice), numCell(p.costPrice), numCell(p.compareAtPrice),
+        numCell(p.retailDiscount), numCell(p.wholesaleDiscount), numCell(p.stock), numCell(p.qtyStep),
+        String(p.atgCode ?? ''), String(p.variantGroup ?? ''),
+        p.isActive ? 1 : 0, p.isFeatured ? 1 : 0, p.showInPromotions ? 1 : 0,
+        String(p.seoTitle ?? ''), String(p.seoDescription ?? ''), images, oem, compat,
+        String(p.description ?? ''), String(p.descriptionRu ?? ''), String(p.descriptionEn ?? ''),
+      ];
 
-        const attrCells = attrSlugs.map((slug) => {
-          // Value may be keyed by filter _id or by slug — check both.
-          const idsForSlug = (defsBySlug.get(slug) ?? [])
-            .filter((d) => String(d.categoryId) === String(p.categoryId))
-            .map((d) => d._id);
-          let value: unknown = attrs[slug];
-          for (const idKey of idsForSlug) {
-            if (value !== undefined && value !== '') break;
-            value = attrs[idKey];
-          }
-          return attrCell(value);
-        });
+      const attrCells = attrSlugs.map((slug) => {
+        const idsForSlug = (defsBySlug.get(slug) ?? [])
+          .filter((d) => String(d.categoryId) === String(p.categoryId))
+          .map((d) => d._id);
+        let value: unknown = attrs[slug];
+        for (const idKey of idsForSlug) {
+          if (value !== undefined && value !== '') break;
+          value = attrs[idKey];
+        }
+        return attrCell(value);
+      });
 
-        return [...base, ...attrCells].map(escapeCsv).join(',');
-      })
-      .join('\n');
+      return [...base, ...attrCells];
+    });
+
+    const aoa = [columns, ...dataRows];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Products');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 
     const catSuffix = categoryParam && categoryParam !== 'all'
       ? `-${(catName.get(categoryParam) ?? 'category').replace(/[^a-zA-Z0-9_-]+/g, '_')}`
       : '';
 
-    return new NextResponse('\ufeff' + header + rows, {
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename=products${catSuffix}-${new Date().toISOString().slice(0, 10)}.csv`,
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename=products${catSuffix}-${new Date().toISOString().slice(0, 10)}.xlsx`,
       },
     });
   } catch {

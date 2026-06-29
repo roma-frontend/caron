@@ -643,12 +643,11 @@ export default function ImportProductsPage() {
     return new TextDecoder('utf-8', { fatal: false }).decode(buf);
   };
 
-  const parseText = (text: string) => {
+  const applyParsed = (headers: string[], rows: string[][]) => {
     if (Object.keys(categoriesMap).length === 0) {
       toast.error(t('apf.catsNotLoaded'));
       return;
     }
-    const { headers, rows } = parseCsv(text, t);
     const mapped: ParsedRow[] = [];
     const errs: string[] = [];
     for (let i = 0; i < rows.length; i++) {
@@ -664,14 +663,29 @@ export default function ImportProductsPage() {
     toast.success(`${t('apf.found')} ${mapped.length} ${t('apf.productWord')}${errs.length > 0 ? `, ${errs.length} ${t('apf.errLower')}` : ''}`);
   };
 
+  const parseText = (text: string) => {
+    const { headers, rows } = parseCsv(text, t);
+    applyParsed(headers, rows);
+  };
+
+  /** Parse an .xlsx/.xls workbook (first sheet) into headers + rows. */
+  const parseXlsx = async (file: File) => {
+    const XLSX = await import('xlsx');
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    if (!sheet) { toast.error(t('apf.noRowsFound')); return; }
+    const aoa = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, defval: '' });
+    const matrix = aoa.map((r) => (Array.isArray(r) ? r.map((c) => String(c ?? '').trim()) : []));
+    const nonEmpty = matrix.filter((r) => r.some((c) => c !== ''));
+    if (nonEmpty.length < 2) { toast.error(t('apf.csvNeedsHeaderRow')); return; }
+    const headers = nonEmpty[0].map((h) => h.trim().toLowerCase());
+    applyParsed(headers, nonEmpty.slice(1));
+  };
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.name.endsWith('.xlsx')) {
-      toast.error(t('apf.xlsxDisabled'));
-      e.target.value = '';
-      return;
-    }
     setErrors([]);
     setParsed(null);
     setDone(false);
@@ -679,8 +693,12 @@ export default function ImportProductsPage() {
     setImportingRow(null);
     setPasteText('');
     try {
-      const text = await decodeFile(file);
-      parseText(text);
+      if (/\.xlsx?$/i.test(file.name)) {
+        await parseXlsx(file);
+      } else {
+        const text = await decodeFile(file);
+        parseText(text);
+      }
     } catch (e) {
       toast.error(`${t('apf.errorWord')}: ${e instanceof Error ? e.message : t('apf.formatExpected')}`);
     }
@@ -1054,7 +1072,7 @@ export default function ImportProductsPage() {
             <p className="text-sm font-medium">{t('apf.clickToSelectCsv')}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t('apf.exportedFromExcel')}</p>
           </div>
-          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={handleFile} />
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" className="hidden" onChange={handleFile} />
 
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">

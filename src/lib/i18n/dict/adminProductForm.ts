@@ -57,7 +57,7 @@ export const adminProductForm: DictModule = {
   'apf.createProduct': { hy: 'Ստեղծել ապրանք', ru: 'Создать товар', en: 'Create product' },
 
   // ── Import page ─────────────────────────────────────────────
-  'apf.importFromCsv': { hy: 'Ներմուծել CSV ֆայլից', ru: 'Импорт из CSV файла', en: 'Import from CSV file' },
+  'apf.importFromCsv': { hy: 'Ներմուծել Excel/CSV ֆայլից', ru: 'Импорт из Excel/CSV', en: 'Import from Excel/CSV' },
   'apf.bulkAddManual': { hy: 'Ավելացնել շատ (ձեռքով)', ru: 'Массовое добавление (вручную)', en: 'Bulk add (manual)' },
   'apf.row': { hy: 'Տող', ru: 'Строка', en: 'Row' },
   'apf.addAll': { hy: 'Ավելացնել բոլորը', ru: 'Добавить все', en: 'Add all' },
@@ -79,8 +79,8 @@ export const adminProductForm: DictModule = {
   'apf.nameLower': { hy: 'անվանում', ru: 'название', en: 'name' },
   'apf.requiredFieldsNote': { hy: 'Պարտադիր դաշտեր՝ արտիկուլ, անվանում, կատեգորիա։ Այլ սյունակները կամընտրական են։', ru: 'Обязательные поля: артикул, название, категория. Остальные столбцы необязательны.', en: 'Required fields: SKU, name, category. Other columns are optional.' },
   'apf.uploadFile': { hy: 'Ներբեռնել ֆայլ', ru: 'Загрузить файл', en: 'Upload file' },
-  'apf.clickToSelectCsv': { hy: 'Կտտացրու, որպեսզի ընտրես CSV-ֆայլ', ru: 'Нажмите, чтобы выбрать CSV-файл', en: 'Click to select a CSV file' },
-  'apf.exportedFromExcel': { hy: 'Արտահանված Excel-ից: Ֆայլ → Պահպանել որպես → CSV UTF-8', ru: 'Экспорт из Excel: Файл → Сохранить как → CSV UTF-8', en: 'Exported from Excel: File → Save as → CSV UTF-8' },
+  'apf.clickToSelectCsv': { hy: 'Կտտացրու, որպեսզի ընտրես Excel (.xlsx) կամ CSV ֆայլ', ru: 'Нажмите, чтобы выбрать файл Excel (.xlsx) или CSV', en: 'Click to select an Excel (.xlsx) or CSV file' },
+  'apf.exportedFromExcel': { hy: 'Աջակցվում է Excel .xlsx (խորհուրդ է տրվում) և CSV', ru: 'Поддерживаются Excel .xlsx (рекомендуется) и CSV', en: 'Excel .xlsx (recommended) and CSV are supported' },
   'apf.orPasteText': { hy: 'կամ տեղադրեք տեքստը', ru: 'или вставьте текст', en: 'or paste text' },
   'apf.pastePlaceholder': { hy: 'Պարզապես պատճենեք և տեղադրեք տեքստը այստեղ։', ru: 'Просто скопируйте и вставьте текст сюда.', en: 'Just copy and paste the text here.' },
   'apf.parse': { hy: 'Պարսել', ru: 'Разобрать', en: 'Parse' },

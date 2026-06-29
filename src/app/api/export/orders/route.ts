@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/adminAuth';
 import { ConvexHttpClient } from 'convex/browser';
+import * as XLSX from 'xlsx';
 import { api } from '../../../../../convex/_generated/api';
 
-function escapeCsv(value: unknown): string {
-  const text = String(value ?? '');
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safe.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
-}
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   if (!(await requireAdminAuth())) {
@@ -36,45 +33,37 @@ export async function GET(req: NextRequest) {
     if (status) filtered = filtered.filter((o) => o.status === status);
 
     const header = [
-      'Համար',
-      'Ամսաթիվ',
-      'Անուն',
-      'Հեռախոս',
-      'Email',
-      'Հասցե',
-      'Ստատուս',
-      'Վճարում',
-      'Վճարման եղանակ',
-      'Ապրանքներ',
-      'Առաքում',
-      'Ընդամենը',
-      'Չեղարկման պատճառ',
-      'Մեկնաբանություն',
-    ].map(escapeCsv).join(',') + '\n';
+      'Համար', 'Ամսաթիվ', 'Անուն', 'Հեռախոս', 'Email', 'Հասցե',
+      'Ստատուս', 'Վճարում', 'Վճարման եղանակ', 'Առաջին գումար', 'Առաքում', 'Ընդամենը',
+      'Չեղարկման պատճառ', 'Մեկնաբանություն',
+    ];
 
-    const rows = filtered.map((o) =>
-      [
-        o.orderNumber,
-        new Date(Number(o.createdAt)).toLocaleString('hy-AM'),
-        o.customerName,
-        o.customerPhone,
-        o.customerEmail,
-        o.shippingAddress,
-        o.status,
-        o.paymentStatus,
-        o.paymentMethod || '',
-        Number(o.subtotal),
-        Number(o.shipping),
-        Number(o.total),
-        o.cancelReason || '',
-        o.notes || '',
-      ].map(escapeCsv).join(',')
-    ).join('\n');
+    const dataRows = filtered.map((o) => [
+      String(o.orderNumber ?? ''),
+      new Date(Number(o.createdAt)).toLocaleString('hy-AM'),
+      String(o.customerName ?? ''),
+      String(o.customerPhone ?? ''),
+      String(o.customerEmail ?? ''),
+      String(o.shippingAddress ?? ''),
+      String(o.status ?? ''),
+      String(o.paymentStatus ?? ''),
+      String(o.paymentMethod || ''),
+      Number(o.subtotal) || 0,
+      Number(o.shipping) || 0,
+      Number(o.total) || 0,
+      String(o.cancelReason || ''),
+      String(o.notes || ''),
+    ]);
 
-    return new NextResponse('﻿' + header + rows, {
+    const ws = XLSX.utils.aoa_to_sheet([header, ...dataRows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename=orders-${new Date().toISOString().slice(0, 10)}.csv`,
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename=orders-${new Date().toISOString().slice(0, 10)}.xlsx`,
       },
     });
   } catch {
