@@ -187,15 +187,23 @@ async function recomputeCatalogStats(ctx: MutationCtx): Promise<void> {
 
   const categoryCounts: Record<string, number> = {};
   const brands = new Set<string>();
+  const brandCounts: Record<string, number> = {};
   for (const p of products) {
     const cat = p.categoryId as unknown as string;
     categoryCounts[cat] = (categoryCounts[cat] ?? 0) + 1;
-    collectProductBrands(p, brandKeys, brands);
+    const productBrands = new Set<string>();
+    collectProductBrands(p, brandKeys, productBrands);
+    for (const b of productBrands) {
+      brands.add(b);
+      const key = b.toLowerCase();
+      brandCounts[key] = (brandCounts[key] ?? 0) + 1;
+    }
   }
 
   const data = {
     key: 'singleton',
     categoryCounts,
+    brandCounts,
     brands: [...brands].sort(),
     updatedAt: Date.now(),
   };
@@ -512,6 +520,35 @@ export const getBrands = query({
     const brands = new Set<string>();
     for (const p of products) collectProductBrands(p, brandKeys, brands);
     return [...brands].sort();
+  },
+});
+
+/**
+ * Per-brand active-product counts, keyed by lowercased brand name (matching the
+ * brand-filter semantics). Reads the denormalized singleton (O(1)); falls back
+ * to a live scan only before the first stats recompute.
+ */
+export const getBrandCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const stats = await ctx.db
+      .query('catalogStats')
+      .withIndex('by_key', (q) => q.eq('key', 'singleton'))
+      .unique();
+    if (stats && stats.brandCounts) return stats.brandCounts as Record<string, number>;
+
+    const brandKeys = await getBrandAttributeKeys(ctx);
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000);
+    const counts: Record<string, number> = {};
+    for (const p of products) {
+      const pb = new Set<string>();
+      collectProductBrands(p, brandKeys, pb);
+      for (const b of pb) {
+        const key = b.toLowerCase();
+        counts[key] = (counts[key] ?? 0) + 1;
+      }
+    }
+    return counts;
   },
 });
 

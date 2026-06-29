@@ -9,6 +9,7 @@ import { Id } from '../../../../convex/_generated/dataModel';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Car, X, LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import { useSettings } from '@/hooks/useSettings';
 import { LoaderInline } from '@/components/ui/loader';
 import { ProductGridSkeleton } from '@/components/ProductSkeleton';
@@ -63,6 +64,11 @@ export default function ProductsPage() {
 
   const isVehicleSearch = !!vehicle && (search?.includes(vehicle.brand) || !!params.get('q'));
   const activeBrand = filters.brand || urlBrand || undefined;
+  // Brand landing header data (logo + total product count).
+  const brandList = useQuery(api.brands.list, {});
+  const brandCounts = useQuery(api.products.getBrandCounts, activeBrand ? {} : 'skip');
+  const activeBrandInfo = activeBrand ? brandList?.find((b) => b.name.toLowerCase() === activeBrand.toLowerCase()) : undefined;
+  const activeBrandCount = activeBrand ? brandCounts?.[activeBrand.toLowerCase()] : undefined;
   const [brandLoading, setBrandLoading] = useState(false);
   const brandTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const prevBrand = useRef(activeBrand);
@@ -217,6 +223,33 @@ export default function ProductsPage() {
           <Input placeholder={t('cmp.nav_search')} className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
+
+      {activeBrand && (
+        <div className="mb-4 flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-sm">
+          {activeBrandInfo?.logoUrl ? (
+            <div className="relative h-14 w-28 shrink-0">
+              <Image src={activeBrandInfo.logoUrl} alt={activeBrand} fill sizes="160px" className="object-contain object-left" />
+            </div>
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl font-black text-primary">
+              {activeBrand.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-xl font-bold">{activeBrand}</h2>
+            {activeBrandCount !== undefined && (
+              <p className="text-sm text-muted-foreground">{activeBrandCount} {t('pg.common.products')}</p>
+            )}
+          </div>
+          <button
+            onClick={() => { setFilters({ ...filters, brand: undefined }); clearUrlBrand(); }}
+            className="shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label={t('sp.clearFilters')}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <div className="lg:flex lg:gap-8">
         <ProductFilters onFilterChange={(f) => {

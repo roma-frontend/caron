@@ -190,6 +190,7 @@ export default defineSchema(
   catalogStats: defineTable({
     key: v.string(), // always 'singleton'
     categoryCounts: v.any(), // Record<categoryId, number> of active products
+    brandCounts: v.optional(v.any()), // Record<brandNameLowercase, number> of active products
     brands: v.array(v.string()),
     updatedAt: v.number(),
   }).index('by_key', ['key']),

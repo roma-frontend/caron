@@ -490,26 +490,32 @@ export default function HomePage() {
                 <Link
                   key={b._id}
                   href={`/products?brand=${encodeURIComponent(b.name)}`}
-                  className="group flex h-20 w-[140px] items-center justify-center rounded-2xl border border-border/60 bg-white p-3 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:w-[170px]"
+                  className="group flex h-24 w-36 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:h-28 sm:w-44"
                   title={b.name}
                 >
                   {b.logoUrl ? (
-                    <div className="relative h-12 w-full">
-                      <Image src={b.logoUrl} alt={b.name} fill sizes="170px" className="object-contain" />
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={b.logoUrl}
+                        alt={b.name}
+                        fill
+                        sizes="180px"
+                        className="object-contain transition-transform duration-300 group-hover:scale-105"
+                      />
                     </div>
                   ) : (
-                    <span className="text-lg font-bold text-foreground/80">{b.name}</span>
+                    <span className="px-2 text-center text-lg font-bold text-foreground/80">{b.name}</span>
                   )}
                 </Link>
               ))}
+            </div>
+            <div className="mt-6 flex justify-center">
               <Link
                 href="/brands"
-                className="group flex h-20 w-[140px] items-center justify-center gap-2.5 rounded-2xl border border-dashed border-muted-foreground/20 bg-card/50 text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:text-primary hover:shadow-lg sm:w-[170px]"
+                className="group inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
               >
-                <span className="text-2xl font-light leading-none transition-transform duration-500 group-hover:rotate-90">
-                  +
-                </span>
-                <span className="text-sm font-medium">{t('pg.home.allBrands')}</span>
+                {t('pg.home.allBrands')}
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
             </div>
           </section>

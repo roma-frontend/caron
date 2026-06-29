@@ -10,6 +10,7 @@ import { useT } from '@/lib/i18n/admin';
 export default function BrandsPage() {
   const { t } = useT();
   const brands = useQuery(api.brands.list, {});
+  const counts = useQuery(api.products.getBrandCounts, {});
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] px-4 py-[var(--space-section)] sm:px-[var(--space-container)]">
@@ -49,6 +50,11 @@ export default function BrandsPage() {
               <span className="line-clamp-1 text-center text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
                 {b.name}
               </span>
+              {counts?.[b.name.toLowerCase()] !== undefined && (
+                <span className="text-[11px] text-muted-foreground/70">
+                  {counts[b.name.toLowerCase()]} {t('pg.common.products')}
+                </span>
+              )}
             </Link>
           ))}
         </div>
