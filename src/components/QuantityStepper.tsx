@@ -52,11 +52,16 @@ export function QuantityStepper({ value, onChange, step = 1, min = step, max = I
     if (next !== value) onChange(next);
   };
 
+  // Snap to the step grid so the first "+" from an off-grid value (e.g. 1 with
+  // step 10) lands on a multiple of step (→ 10), not value+step (→ 11).
+  const incTarget = Math.floor(value / step) * step + step;
+  const decTarget = Math.ceil(value / step) * step - step;
+
   const dec = () => {
-    if (value - step < min) { onRemove?.(); return; }
-    onChange(value - step);
+    if (decTarget < min) { onRemove?.(); return; }
+    onChange(decTarget);
   };
-  const inc = () => { if (value + step <= max) onChange(value + step); };
+  const inc = () => { if (incTarget <= max) onChange(incTarget); };
 
   return (
     <div className={`flex items-center rounded-lg border ${s.h} ${fullWidth ? 'w-full justify-between' : ''} ${className ?? ''}`}>
@@ -75,7 +80,7 @@ export function QuantityStepper({ value, onChange, step = 1, min = step, max = I
         aria-label={t('sp.quantity')}
       />
       <button type="button" aria-label={t('sp.add')} onClick={(e) => { e.preventDefault(); e.stopPropagation(); inc(); }}
-        disabled={disabled || value + step > max}
+        disabled={disabled || incTarget > max}
         className={`flex ${s.h} ${s.btn} items-center justify-center rounded-r-lg transition-colors hover:bg-muted disabled:opacity-30`}>+</button>
     </div>
   );

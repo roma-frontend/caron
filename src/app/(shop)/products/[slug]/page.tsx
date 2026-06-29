@@ -177,6 +177,10 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
   const step = product?.qtyStep || 1;
+  // Start the quantity at the product's step (e.g. step 10 → default 10, not 1).
+  useEffect(() => {
+    setQty((q) => (q < step ? step : Math.floor(q / step) * step || step));
+  }, [step]);
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';
   const userDiscount = currentUser?.role !== 'admin' ? (currentUser?.discountPercent ?? 0) : 0;
   // If product explicitly sets wholesaleDiscount, it overrides customer's personal discount
