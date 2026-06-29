@@ -846,6 +846,11 @@ export default function ImportProductsPage() {
         <h1 className="text-2xl font-bold">{t('apf.importFromCsv')}</h1>
       </div>
 
+      <div className="mb-6 flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs leading-relaxed">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <p>{t('apf.idColumnHint')}</p>
+      </div>
+
       <Card className="mb-6 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex flex-col items-start justify-between gap-2 text-base sm:flex-row sm:items-center">
@@ -1107,6 +1112,7 @@ export default function ImportProductsPage() {
               <div>
                 <p className="mb-1.5 font-semibold text-foreground">{t('apf.attrsFilters')}</p>
                 <p className="mb-2 text-muted-foreground">{t('apf.eachFilterAddColumn')} <code className="text-primary">attr_ՖիլտրիԱնվանում</code></p>
+                <p className="mb-2 text-muted-foreground">{t('apf.multiselectHint')}</p>
                 <p className="mb-2 text-muted-foreground">{t('apf.sizeUse')} <code className="text-primary">attr_չափ</code> ({t('apf.also')} <code className="text-primary">attr_չափս</code> {t('apf.and')} <code className="text-primary">attr_size</code> {t('apf.savedAs')} <code className="text-primary">չափ</code>)</p>
                 <details>
                   <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t('apf.categoryExamples')}</summary>

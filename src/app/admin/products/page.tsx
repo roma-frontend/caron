@@ -922,7 +922,7 @@ export default function AdminProductsPage() {
       {selectMode && (
         <div className="sticky top-2 z-30 mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-3 shadow-md backdrop-blur">
           <span className="text-sm font-medium">{selectedIds.size} {t('ap.selected')}</span>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set(visibleProducts?.map((p) => String(p._id)) ?? []))}>{t('ap.allPlural')}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set(orderedFiltered?.map((p) => String(p._id)) ?? []))}>{t('ap.allPlural')}</Button>
           <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>{t('ap.clear')}</Button>
           <span className="mx-1 h-5 w-px bg-border" />
           <Button size="sm" variant="outline" disabled={!selectedIds.size || bulkBusy} onClick={() => runBulk('activate')}>{t('ap.activate')}</Button>
