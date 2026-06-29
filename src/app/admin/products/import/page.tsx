@@ -16,13 +16,23 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminT, type AdminTFn } from '@/lib/i18n/admin';
 
 interface ParsedRow {
+  id?: string;
   name?: string;
+  nameRu?: string;
+  nameEn?: string;
   slug?: string;
   description?: string;
+  descriptionRu?: string;
+  descriptionEn?: string;
   price?: number;
   costPrice?: number;
   wholesalePrice?: number;
+  wholesaleDiscount?: number;
+  retailDiscount?: number;
   compareAtPrice?: number;
+  qtyStep?: number;
+  variantGroup?: string;
+  brand?: string;
   images?: string[];
   category: string;
   sku?: string;
@@ -202,14 +212,29 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
     category: catName,
   };
 
+  // Stable id for round-trip update (export → edit → import). When present the
+  // server matches by id and updates in place instead of creating a duplicate.
+  const idVal = get('id') || get('_id') || get('productId') || get('product_id');
+  if (idVal) result.id = idVal;
+
   const nameVal = get('name') || values[0];
   if (nameVal) result.name = nameVal;
+
+  const nameRuVal = get('nameRu');
+  if (nameRuVal) result.nameRu = nameRuVal;
+  const nameEnVal = get('nameEn');
+  if (nameEnVal) result.nameEn = nameEnVal;
 
   const slugVal = get('slug') || get('productslug') || (nameVal && nameVal.toLowerCase().replace(/[^a-z0-9\u0561-\u0587]+/g, '-').replace(/-+$/, ''));
   if (slugVal) result.slug = slugVal;
 
   const descVal = get('description');
   if (descVal) result.description = descVal;
+
+  const descRuVal = get('descriptionRu');
+  if (descRuVal) result.descriptionRu = descRuVal;
+  const descEnVal = get('descriptionEn');
+  if (descEnVal) result.descriptionEn = descEnVal;
 
   const priceVal = num('price') || num('cost');
   if (priceVal) result.price = priceVal;
@@ -223,6 +248,21 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
   const cpVal = num('compareAtPrice');
   if (cpVal) result.compareAtPrice = cpVal;
 
+  const wholesaleDiscVal = num('wholesaleDiscount');
+  if (wholesaleDiscVal) result.wholesaleDiscount = wholesaleDiscVal;
+
+  const retailDiscVal = num('retailDiscount');
+  if (retailDiscVal) result.retailDiscount = retailDiscVal;
+
+  const qtyStepVal = num('qtyStep');
+  if (qtyStepVal) result.qtyStep = qtyStepVal;
+
+  const variantGroupVal = get('variantGroup');
+  if (variantGroupVal) result.variantGroup = variantGroupVal;
+
+  const brandVal = get('brand');
+  if (brandVal) result.brand = brandVal;
+
   const skuVal = get('sku');
   if (skuVal) result.sku = skuVal;
 
@@ -231,14 +271,23 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
 
   const oemStr = get('oemNumbers') || get('oem');
   if (oemStr) {
-    const codes = oemStr.split(/[,;\s]+/).filter(Boolean);
-    if (codes.length > 0) {
-      const manufacturer = get('oemManufacturer') || get('oem_manufacturer') || get('mfg') || 'Unknown';
-      result.oemNumbers = codes.map(code => ({
-        manufacturer,
-        code: code.trim().toUpperCase(),
-      }));
+    const defaultMfg = get('oemManufacturer') || get('oem_manufacturer') || get('mfg') || 'Unknown';
+    const oems: Array<{ manufacturer: string; code: string }> = [];
+    for (const tok of oemStr.split(/[;,]/).map((s) => s.trim()).filter(Boolean)) {
+      const eq = tok.indexOf('=');
+      if (eq > 0) {
+        // "MFG=CODE" form (produced by the round-trip export).
+        const manufacturer = tok.slice(0, eq).trim() || defaultMfg;
+        const code = tok.slice(eq + 1).trim();
+        if (code) oems.push({ manufacturer, code: code.toUpperCase() });
+      } else {
+        // Bare code(s), possibly space-separated; use the shared manufacturer.
+        for (const code of tok.split(/\s+/).filter(Boolean)) {
+          oems.push({ manufacturer: defaultMfg, code: code.toUpperCase() });
+        }
+      }
     }
+    if (oems.length > 0) result.oemNumbers = oems;
   }
 
   const stockVal = num('stock') || num('quantity');
@@ -265,6 +314,18 @@ function parseRow(headers: string[], values: string[], categoriesMap: Record<str
   if (Object.keys(attrs).length > 0) result.attributes = attrs;
 
   if (vc.length > 0) result.vehicleCompat = vc;
+
+  // A single `vehicleCompat` column (brand|model|from|to; ...) — produced by the
+  // round-trip export — takes precedence over the legacy vehicle_* columns.
+  const compatStr = get('vehicleCompat');
+  if (compatStr) {
+    const compat: Array<{ brand: string; model: string; yearFrom: number; yearTo: number }> = [];
+    for (const e of compatStr.split(/[;\n]/).map((s) => s.trim()).filter(Boolean)) {
+      const [brand, model, from, to] = e.split('|').map((s) => s.trim());
+      if (brand && model) compat.push({ brand, model, yearFrom: Number(from) || 0, yearTo: Number(to) || 0 });
+    }
+    if (compat.length > 0) result.vehicleCompat = compat;
+  }
 
   return result;
 }
@@ -640,7 +701,17 @@ export default function ImportProductsPage() {
     setImporting(true);
     try {
       type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
-      type BulkProductWithAtg = BulkProduct & { atgCode?: string };
+      type BulkProductWithAtg = BulkProduct & {
+        atgCode?: string;
+        id?: Id<'products'>;
+        nameRu?: string;
+        nameEn?: string;
+        descriptionRu?: string;
+        descriptionEn?: string;
+        wholesaleDiscount?: number;
+        qtyStep?: number;
+        brand?: string;
+      };
       const toBulkProduct = (r: ParsedRow): BulkProductWithAtg => {
         const p: BulkProductWithAtg = {
           category: r.category,
@@ -667,6 +738,16 @@ export default function ImportProductsPage() {
         const safeAttrs = sanitizeAttributesForCategory(r.category, r.attributes);
         if (safeAttrs) p.attributes = safeAttrs;
         if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
+        if (r.id !== undefined) p.id = r.id as Id<'products'>;
+        if (r.nameRu !== undefined) p.nameRu = r.nameRu;
+        if (r.nameEn !== undefined) p.nameEn = r.nameEn;
+        if (r.descriptionRu !== undefined) p.descriptionRu = r.descriptionRu;
+        if (r.descriptionEn !== undefined) p.descriptionEn = r.descriptionEn;
+        if (r.retailDiscount !== undefined) p.retailDiscount = r.retailDiscount;
+        if (r.wholesaleDiscount !== undefined) p.wholesaleDiscount = r.wholesaleDiscount;
+        if (r.qtyStep !== undefined) p.qtyStep = r.qtyStep;
+        if (r.variantGroup !== undefined) p.variantGroup = r.variantGroup;
+        if (r.brand !== undefined) p.brand = r.brand;
         return p;
       };
       const products: BulkProductWithAtg[] = parsed.map(toBulkProduct);
@@ -689,7 +770,17 @@ export default function ImportProductsPage() {
     setImportingRow(rowIndex);
     try {
       type BulkProduct = Parameters<typeof bulkCreate>[0]['products'][number];
-      type BulkProductWithAtg = BulkProduct & { atgCode?: string };
+      type BulkProductWithAtg = BulkProduct & {
+        atgCode?: string;
+        id?: Id<'products'>;
+        nameRu?: string;
+        nameEn?: string;
+        descriptionRu?: string;
+        descriptionEn?: string;
+        wholesaleDiscount?: number;
+        qtyStep?: number;
+        brand?: string;
+      };
       const r = parsed[rowIndex];
       const p: BulkProductWithAtg = {
         category: r.category,
@@ -715,6 +806,16 @@ export default function ImportProductsPage() {
       const safeAttrs = sanitizeAttributesForCategory(r.category, r.attributes);
       if (safeAttrs) p.attributes = safeAttrs;
       if (r.vehicleCompat !== undefined && r.vehicleCompat.length > 0) p.vehicleCompat = r.vehicleCompat;
+      if (r.id !== undefined) p.id = r.id as Id<'products'>;
+      if (r.nameRu !== undefined) p.nameRu = r.nameRu;
+      if (r.nameEn !== undefined) p.nameEn = r.nameEn;
+      if (r.descriptionRu !== undefined) p.descriptionRu = r.descriptionRu;
+      if (r.descriptionEn !== undefined) p.descriptionEn = r.descriptionEn;
+      if (r.retailDiscount !== undefined) p.retailDiscount = r.retailDiscount;
+      if (r.wholesaleDiscount !== undefined) p.wholesaleDiscount = r.wholesaleDiscount;
+      if (r.qtyStep !== undefined) p.qtyStep = r.qtyStep;
+      if (r.variantGroup !== undefined) p.variantGroup = r.variantGroup;
+      if (r.brand !== undefined) p.brand = r.brand;
 
       await bulkCreate({ sessionToken, products: [p] });
       setImportedRows((prev) => new Set(prev).add(rowIndex));

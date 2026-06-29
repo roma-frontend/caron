@@ -910,6 +910,13 @@ export default function AdminProductsPage() {
             <span className="text-sm leading-none">×</span>
           </Link>
         )}
+        {catFilter !== 'all' && (
+          <a href={`/api/export/products?category=${catFilter}`} download className="ml-auto">
+            <Button size="sm" variant="outline" className="gap-1.5">
+              <Download className="h-3.5 w-3.5" /> {t('ap.downloadCsv')}
+            </Button>
+          </a>
+        )}
       </div>
 
       {selectMode && (

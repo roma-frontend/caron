@@ -1291,18 +1291,26 @@ export const bulkCreate = mutation({
     sessionToken: v.string(),
     products: v.array(
       v.object({
+        id: v.optional(v.id('products')),
         name: v.optional(v.string()),
+        nameRu: v.optional(v.string()),
+        nameEn: v.optional(v.string()),
         slug: v.optional(v.string()),
         description: v.optional(v.string()),
+        descriptionRu: v.optional(v.string()),
+        descriptionEn: v.optional(v.string()),
         price: v.optional(v.number()),
         costPrice: v.optional(v.number()),
         retailDiscount: v.optional(v.number()),
         wholesalePrice: v.optional(v.number()),
+        wholesaleDiscount: v.optional(v.number()),
         compareAtPrice: v.optional(v.number()),
         category: v.optional(v.string()),
         categoryId: v.id('categories'),
         sku: v.optional(v.string()),
         atgCode: v.optional(v.string()),
+        brand: v.optional(v.string()),
+        qtyStep: v.optional(v.number()),
         variantGroup: v.optional(v.string()),
 
         oemNumbers: v.optional(v.array(v.object({
@@ -1417,11 +1425,17 @@ export const bulkCreate = mutation({
     }
     
     for (const p of args.products) {
-      // Поиск существующего товара по sku или slug
+      // Поиск существующего товара: по id (точное совпадение для round-trip
+      // экспорт→правка→импорт), затем по sku, затем по slug.
       let existing = null;
       const nextSku = p.sku?.trim();
-      
-      if (nextSku) {
+
+      if (p.id) {
+        existing = await ctx.db.get(p.id);
+        if (!existing) {
+          throw new Error(`Ապրանք id "${p.id}" չի գտնվել`);
+        }
+      } else if (nextSku) {
         existing = await ctx.db.query('products').withIndex('by_sku', (q) => q.eq('sku', nextSku)).unique();
       } else if (p.slug) {
         const slug = p.slug;
@@ -1440,16 +1454,24 @@ export const bulkCreate = mutation({
         
         // Передаём только заполненные поля
         if (p.name !== undefined) updatePayload.name = p.name;
+        if (p.nameRu !== undefined) updatePayload.nameRu = p.nameRu;
+        if (p.nameEn !== undefined) updatePayload.nameEn = p.nameEn;
         if (p.slug !== undefined) updatePayload.slug = p.slug;
         if (p.description !== undefined) updatePayload.description = p.description;
+        if (p.descriptionRu !== undefined) updatePayload.descriptionRu = p.descriptionRu;
+        if (p.descriptionEn !== undefined) updatePayload.descriptionEn = p.descriptionEn;
         if (p.price !== undefined) updatePayload.price = p.price;
         if (p.costPrice !== undefined) updatePayload.costPrice = p.costPrice;
-        if (p.retailDiscount !== undefined) updatePayload.retailDiscount = p.retailDiscount;
+        if (p.retailDiscount !== undefined) updatePayload.retailDiscount = p.retailDiscount > 0 ? p.retailDiscount : undefined;
         if (p.wholesalePrice !== undefined) updatePayload.wholesalePrice = p.wholesalePrice;
+        if (p.wholesaleDiscount !== undefined) updatePayload.wholesaleDiscount = p.wholesaleDiscount > 0 ? p.wholesaleDiscount : undefined;
         if (p.compareAtPrice !== undefined) updatePayload.compareAtPrice = p.compareAtPrice;
         if (p.categoryId !== undefined) updatePayload.categoryId = p.categoryId;
         if (nextSku !== undefined) updatePayload.sku = nextSku;
         if (p.atgCode !== undefined) updatePayload.atgCode = p.atgCode;
+        if (p.variantGroup !== undefined) updatePayload.variantGroup = p.variantGroup || undefined;
+        if (p.qtyStep !== undefined) updatePayload.qtyStep = p.qtyStep > 0 ? p.qtyStep : undefined;
+        if (p.brand !== undefined) updatePayload.brand = p.brand || undefined;
         if (p.oemNumbers !== undefined) updatePayload.oemNumbers = p.oemNumbers;
         if (p.stock !== undefined) updatePayload.stock = p.stock;
         if (p.isActive !== undefined) updatePayload.isActive = p.isActive;
@@ -1458,14 +1480,18 @@ export const bulkCreate = mutation({
         if (p.seoTitle !== undefined) updatePayload.seoTitle = p.seoTitle;
         if (p.seoDescription !== undefined) updatePayload.seoDescription = p.seoDescription;
         if (p.images !== undefined) updatePayload.images = p.images;
-        if (p.attributes !== undefined) {
-          const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
+        // Attributes + vehicle compatibility. The edit form stores compat inside
+        // `attributes.vehicleCompat`, so merge it there (not as a top-level field).
+        if (p.attributes !== undefined || p.vehicleCompat !== undefined) {
+          const safeAttrs = (await sanitizeAttributes(p.categoryId, p.attributes)) ?? {};
+          if (Array.isArray(p.vehicleCompat) && p.vehicleCompat.length > 0) {
+            safeAttrs.vehicleCompat = p.vehicleCompat;
+          }
           const brand = syncBrand(p.categoryId, safeAttrs);
-          updatePayload.attributes = safeAttrs;
+          updatePayload.attributes = Object.keys(safeAttrs).length > 0 ? safeAttrs : undefined;
           if (brand) updatePayload.brand = brand;
         }
-        if (p.vehicleCompat !== undefined) updatePayload.vehicleCompat = p.vehicleCompat;
-        
+
         await ctx.db.patch(existing._id, updatePayload);
         if (p.oemNumbers !== undefined) await syncOemIndex(ctx, existing._id, p.oemNumbers);
         updated++;
@@ -1491,20 +1517,31 @@ export const bulkCreate = mutation({
         };
         
         // Опциональные поля
+        if (p.nameRu !== undefined) createPayload.nameRu = p.nameRu;
+        if (p.nameEn !== undefined) createPayload.nameEn = p.nameEn;
+        if (p.descriptionRu !== undefined) createPayload.descriptionRu = p.descriptionRu;
+        if (p.descriptionEn !== undefined) createPayload.descriptionEn = p.descriptionEn;
         if (p.costPrice !== undefined) createPayload.costPrice = p.costPrice;
         if (p.wholesalePrice !== undefined) createPayload.wholesalePrice = p.wholesalePrice;
-        if (p.retailDiscount !== undefined) createPayload.retailDiscount = p.retailDiscount;
+        if (p.retailDiscount !== undefined && p.retailDiscount > 0) createPayload.retailDiscount = p.retailDiscount;
+        if (p.wholesaleDiscount !== undefined && p.wholesaleDiscount > 0) createPayload.wholesaleDiscount = p.wholesaleDiscount;
         if (p.compareAtPrice !== undefined) createPayload.compareAtPrice = p.compareAtPrice;
         if (nextSku !== undefined) createPayload.sku = nextSku;
         if (p.atgCode !== undefined) createPayload.atgCode = p.atgCode;
+        if (p.variantGroup) createPayload.variantGroup = p.variantGroup;
+        if (p.qtyStep !== undefined && p.qtyStep > 0) createPayload.qtyStep = p.qtyStep;
+        if (p.brand) createPayload.brand = p.brand;
         if (p.oemNumbers !== undefined) createPayload.oemNumbers = p.oemNumbers;
         if (p.isFeatured !== undefined) createPayload.isFeatured = p.isFeatured;
         if (p.showInPromotions !== undefined) createPayload.showInPromotions = p.showInPromotions;
         if (p.seoTitle !== undefined) createPayload.seoTitle = p.seoTitle;
         if (p.seoDescription !== undefined) createPayload.seoDescription = p.seoDescription;
-        if (p.attributes !== undefined) {
-          const safeAttrs = await sanitizeAttributes(p.categoryId, p.attributes);
-          if (safeAttrs) {
+        if (p.attributes !== undefined || p.vehicleCompat !== undefined) {
+          const safeAttrs = (await sanitizeAttributes(p.categoryId, p.attributes)) ?? {};
+          if (Array.isArray(p.vehicleCompat) && p.vehicleCompat.length > 0) {
+            safeAttrs.vehicleCompat = p.vehicleCompat;
+          }
+          if (Object.keys(safeAttrs).length > 0) {
             const brand = syncBrand(p.categoryId, safeAttrs);
             createPayload.attributes = safeAttrs;
             if (brand) createPayload.brand = brand;
