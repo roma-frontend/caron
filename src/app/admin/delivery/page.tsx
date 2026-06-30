@@ -11,8 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Trash2, Plus, Save, Sparkles, Tag, Pencil } from 'lucide-react';
+import { Truck, Trash2, Plus, Save, Sparkles, Tag, Pencil, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';
@@ -180,6 +181,7 @@ function RuleDialog({ rule, zones, sessionToken, open, onClose }: { rule: Rule |
   const upsert = useMutation(api.delivery.ruleUpsert);
   const [form, setForm] = useState(() => blank(rule));
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(0);
 
   function blank(r: Rule | null) {
     return {
@@ -198,7 +200,7 @@ function RuleDialog({ rule, zones, sessionToken, open, onClose }: { rule: Rule |
     };
   }
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setForm(blank(rule)); }, [rule, open]);
+  useEffect(() => { setForm(blank(rule)); setStep(0); }, [rule, open]);
 
   const toggleSet = <T,>(set: Set<T>, v: T): Set<T> => {
     const n = new Set(set); if (n.has(v)) n.delete(v); else n.add(v); return n;
@@ -231,114 +233,148 @@ function RuleDialog({ rule, zones, sessionToken, open, onClose }: { rule: Rule |
     } finally { setSaving(false); }
   };
 
+  const STEP_TITLES = [t('ad.step.basics'), t('ad.step.scope'), t('ad.step.note')];
+  const goNext = () => {
+    if (step === 0 && !form.name.trim()) { toast.error(t('ad.ruleNameRequired')); return; }
+    setStep((s) => Math.min(s + 1, 2));
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{rule ? t('ad.editRule') : t('ad.newRule')}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('ad.ruleName')} className="font-medium" />
-            <label className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
-              <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} /> {t('as.active')}
-            </label>
-          </div>
 
-          {/* Effect */}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="text-xs text-muted-foreground">{t('ad.effect')}</label>
-              <Select value={form.effectType} onValueChange={(v) => setForm({ ...form, effectType: v as typeof form.effectType })}>
-                <SelectTrigger><SelectValue>{{ free: t('ad.effect.free'), fixed: t('ad.effect.fixed'), percent: t('ad.effect.percent') }[form.effectType]}</SelectValue></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">{t('ad.effect.free')}</SelectItem>
-                  <SelectItem value="fixed">{t('ad.effect.fixed')}</SelectItem>
-                  <SelectItem value="percent">{t('ad.effect.percent')}</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Stepper */}
+        <div className="mb-4 flex items-center">
+          {STEP_TITLES.map((title, i) => (
+            <div key={i} className="flex flex-1 items-center last:flex-none">
+              <button type="button" onClick={() => (i < step ? setStep(i) : undefined)} className="flex items-center gap-2">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
+                  i < step ? 'border-primary bg-primary text-primary-foreground'
+                    : i === step ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground'}`}>
+                  {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                </span>
+                <span className={`hidden text-xs font-medium sm:inline ${i === step ? 'text-foreground' : 'text-muted-foreground'}`}>{title}</span>
+              </button>
+              {i < STEP_TITLES.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded-full ${i < step ? 'bg-primary' : 'bg-border'}`} />}
             </div>
-            {form.effectType !== 'free' && (
-              <div>
-                <label className="text-xs text-muted-foreground">{form.effectType === 'percent' ? t('ad.percentOff') : t('ad.fixedPrice')}</label>
-                <Input value={form.effectValue} inputMode="numeric" onChange={(e) => setForm({ ...form, effectValue: e.target.value })} placeholder="0" />
-              </div>
-            )}
-            <div>
-              <label className="text-xs text-muted-foreground">{t('ad.priority')}</label>
-              <Input value={form.priority} inputMode="numeric" onChange={(e) => setForm({ ...form, priority: e.target.value })} placeholder="0" />
-            </div>
-          </div>
-
-          {/* Scope: group + weekdays */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="text-xs text-muted-foreground">{t('ad.group')}</label>
-              <Select value={form.group} onValueChange={(v) => setForm({ ...form, group: v as typeof form.group })}>
-                <SelectTrigger><SelectValue>{{ any: t('ad.anyGroup'), yerevan: t('as.yerevanCommunities'), region: t('as.regions') }[form.group]}</SelectValue></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">{t('ad.anyGroup')}</SelectItem>
-                  <SelectItem value="yerevan">{t('as.yerevanCommunities')}</SelectItem>
-                  <SelectItem value="region">{t('as.regions')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{t('ad.minOrder')}</label>
-              <Input value={form.minOrderTotal} inputMode="numeric" onChange={(e) => setForm({ ...form, minOrderTotal: e.target.value })} placeholder={t('ad.anyAmount')} />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground">{t('ad.weekdays')}</label>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {WEEKDAY_ORDER.map((d) => (
-                <button key={d} type="button" onClick={() => setForm({ ...form, weekdays: toggleSet(form.weekdays, d) })}
-                  className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${form.weekdays.has(d) ? 'border-primary bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}>
-                  {t(`ad.dow.${d}`)}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">{t('ad.weekdaysHint')}</p>
-          </div>
-
-          {/* Date window */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="text-xs text-muted-foreground">{t('ad.dateFrom')}</label>
-              <Input type="date" value={form.dateFrom} onChange={(e) => setForm({ ...form, dateFrom: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{t('ad.dateTo')}</label>
-              <Input type="date" value={form.dateTo} onChange={(e) => setForm({ ...form, dateTo: e.target.value })} />
-            </div>
-          </div>
-
-          {/* Specific zones */}
-          <div>
-            <label className="text-xs text-muted-foreground">{t('ad.specificZones')}</label>
-            <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border p-2">
-              <div className="flex flex-wrap gap-1.5">
-                {zones.map((z) => (
-                  <button key={z._id} type="button" onClick={() => setForm({ ...form, zoneIds: toggleSet(form.zoneIds, String(z._id)) })}
-                    className={`rounded-lg border px-2 py-1 text-xs transition-colors ${form.zoneIds.has(String(z._id)) ? 'border-primary bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}>
-                    {z.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">{t('ad.zonesHint')}</p>
-          </div>
-
-          {/* Customer-facing note */}
-          <div className="grid gap-2">
-            <label className="text-xs text-muted-foreground">{t('ad.note')}</label>
-            <Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="HY" />
-            <Input value={form.noteRu} onChange={(e) => setForm({ ...form, noteRu: e.target.value })} placeholder="RU" />
-            <Input value={form.noteEn} onChange={(e) => setForm({ ...form, noteEn: e.target.value })} placeholder="EN" />
-          </div>
+          ))}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>{t('as.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving}><Save className="mr-2 h-4 w-4" /> {t('as.save')}</Button>
+
+        <div className="space-y-4">
+          {/* Step 1 — Basics */}
+          {step === 0 && (
+            <>
+              <div className="flex items-center gap-3">
+                <Input autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('ad.ruleName')} className="font-medium" />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                  <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} /> {t('as.active')}
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">{t('ad.effect')}</label>
+                  <Select value={form.effectType} onValueChange={(v) => setForm({ ...form, effectType: v as typeof form.effectType })}>
+                    <SelectTrigger><SelectValue>{{ free: t('ad.effect.free'), fixed: t('ad.effect.fixed'), percent: t('ad.effect.percent') }[form.effectType]}</SelectValue></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">{t('ad.effect.free')}</SelectItem>
+                      <SelectItem value="fixed">{t('ad.effect.fixed')}</SelectItem>
+                      <SelectItem value="percent">{t('ad.effect.percent')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {form.effectType !== 'free' && (
+                  <div>
+                    <label className="text-xs text-muted-foreground">{form.effectType === 'percent' ? t('ad.percentOff') : t('ad.fixedPrice')}</label>
+                    <Input value={form.effectValue} inputMode="numeric" onChange={(e) => setForm({ ...form, effectValue: e.target.value })} placeholder="0" />
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs text-muted-foreground">{t('ad.priority')}</label>
+                  <Input value={form.priority} inputMode="numeric" onChange={(e) => setForm({ ...form, priority: e.target.value })} placeholder="0" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Step 2 — Scope */}
+          {step === 1 && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs text-muted-foreground">{t('ad.group')}</label>
+                  <Select value={form.group} onValueChange={(v) => setForm({ ...form, group: v as typeof form.group })}>
+                    <SelectTrigger><SelectValue>{{ any: t('ad.anyGroup'), yerevan: t('as.yerevanCommunities'), region: t('as.regions') }[form.group]}</SelectValue></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">{t('ad.anyGroup')}</SelectItem>
+                      <SelectItem value="yerevan">{t('as.yerevanCommunities')}</SelectItem>
+                      <SelectItem value="region">{t('as.regions')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">{t('ad.minOrder')}</label>
+                  <Input value={form.minOrderTotal} inputMode="numeric" onChange={(e) => setForm({ ...form, minOrderTotal: e.target.value })} placeholder={t('ad.anyAmount')} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">{t('ad.weekdays')}</label>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {WEEKDAY_ORDER.map((d) => (
+                    <button key={d} type="button" onClick={() => setForm({ ...form, weekdays: toggleSet(form.weekdays, d) })}
+                      className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${form.weekdays.has(d) ? 'border-primary bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}>
+                      {t(`ad.dow.${d}`)}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">{t('ad.weekdaysHint')}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs text-muted-foreground">{t('ad.dateFrom')}</label>
+                  <DatePicker value={form.dateFrom} onChange={(v) => setForm({ ...form, dateFrom: v })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">{t('ad.dateTo')}</label>
+                  <DatePicker value={form.dateTo} onChange={(v) => setForm({ ...form, dateTo: v })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">{t('ad.specificZones')}</label>
+                <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border p-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {zones.map((z) => (
+                      <button key={z._id} type="button" onClick={() => setForm({ ...form, zoneIds: toggleSet(form.zoneIds, String(z._id)) })}
+                        className={`rounded-lg border px-2 py-1 text-xs transition-colors ${form.zoneIds.has(String(z._id)) ? 'border-primary bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}>
+                        {z.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">{t('ad.zonesHint')}</p>
+              </div>
+            </>
+          )}
+
+          {/* Step 3 — Customer-facing note */}
+          {step === 2 && (
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">{t('ad.note')}</label>
+              <Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Հայերեն" />
+              <Input value={form.noteRu} onChange={(e) => setForm({ ...form, noteRu: e.target.value })} placeholder="Русский" />
+              <Input value={form.noteEn} onChange={(e) => setForm({ ...form, noteEn: e.target.value })} placeholder="English" />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          {step > 0
+            ? <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={saving} className="gap-1.5"><ArrowLeft className="h-4 w-4" /> {t('ad.back')}</Button>
+            : <Button variant="outline" onClick={onClose} disabled={saving}>{t('as.cancel')}</Button>}
+          {step < 2
+            ? <Button onClick={goNext} className="gap-1.5">{t('ad.next')} <ArrowRight className="h-4 w-4" /></Button>
+            : <Button onClick={handleSave} disabled={saving} className="gap-1.5"><Save className="h-4 w-4" /> {t('as.save')}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
