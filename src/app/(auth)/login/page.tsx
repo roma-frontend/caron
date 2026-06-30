@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from '@/components/LocalizedLink';
 import { Mail, Lock } from 'lucide-react';
-import { Logo } from '@/components/layout/Logo';
 import { useAuthStore } from '@/store/auth';
 import { setAuthCookie } from '@/actions/auth';
 import { toast } from 'sonner';
@@ -78,7 +77,7 @@ export default function LoginPage() {
     } catch (err) {
       toast.error(errorToMessage(err));
     }
-  }, [loginWithTelegram, setSession, router, errorToMessage]);
+  }, [loginWithTelegram, setSession, router, errorToMessage, t]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
@@ -93,7 +92,9 @@ export default function LoginPage() {
         <div className="rounded-2xl border bg-background/80 p-5 sm:p-8 shadow-xl backdrop-blur-sm" style={{ boxShadow: 'var(--shadow-xl)' }}>
           <div className="mb-6 text-center">
             <Link href="/" className="mb-8 flex flex-col items-center gap-3 transition-transform hover:scale-105">
-              <Logo size={48} />
+              {/* Compact app-icon brand mark (matches the register page). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/favicon.svg" alt="Caron" width={48} height={48} className="h-12 w-12 rounded-2xl shadow-md" />
               <h1 className="text-2xl font-bold">{t('auth.login')}</h1>
             </Link>
           </div>
