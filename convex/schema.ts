@@ -215,6 +215,10 @@ export default defineSchema(
     subtotal: v.number(),
     shipping: v.number(),
     total: v.number(),
+    // Resolved delivery context (optional → existing orders unaffected)
+    deliveryZoneId: v.optional(v.id('deliveryZones')),
+    deliveryGroup: v.optional(v.union(v.literal('yerevan'), v.literal('region'))),
+    deliveryRuleApplied: v.optional(v.string()),
     status: v.union(
       v.literal('pending'),
       v.literal('confirmed'),
@@ -591,7 +595,34 @@ export default defineSchema(
     schedule: v.string(),    // delivery schedule / dates text (multi-line)
     order: v.number(),
     isActive: v.boolean(),
+    // ── Admin-controllable delivery economics (all optional → back-compat) ──
+    price: v.optional(v.number()),          // base delivery fee for this zone
+    freeThreshold: v.optional(v.number()),  // per-zone free-shipping threshold (overrides global)
+    etaText: v.optional(v.string()),        // human ETA, e.g. "1–2 օր"
+    keywords: v.optional(v.array(v.string())), // address aliases for auto-detection
   }).index('by_group', ['group']),
+
+  // ─── Delivery Rules / Exceptions (e.g. "free on Tuesdays in a region") ──
+  deliveryRules: defineTable({
+    name: v.string(),
+    isActive: v.boolean(),
+    priority: v.number(),                   // lower = evaluated first; first match wins
+    // Scope (all optional → unset means "any")
+    group: v.optional(v.union(v.literal('yerevan'), v.literal('region'))),
+    zoneIds: v.optional(v.array(v.id('deliveryZones'))),
+    weekdays: v.optional(v.array(v.number())), // 0=Sun … 6=Sat (Asia/Yerevan)
+    dateFrom: v.optional(v.number()),
+    dateTo: v.optional(v.number()),
+    minOrderTotal: v.optional(v.number()),
+    // Effect
+    effectType: v.union(v.literal('free'), v.literal('fixed'), v.literal('percent')),
+    effectValue: v.optional(v.number()),    // fixed → AMD; percent → % off base
+    // Customer-facing note (localized)
+    note: v.optional(v.string()),
+    noteRu: v.optional(v.string()),
+    noteEn: v.optional(v.string()),
+    createdAt: v.number(),
+  }),
   },
   { schemaValidation: true },
 );

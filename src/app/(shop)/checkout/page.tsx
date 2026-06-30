@@ -15,8 +15,10 @@ import { useT } from '@/lib/i18n/admin';
 import { useMutation, useQuery } from 'convex/react';
 import { useSettings } from '@/hooks/useSettings';
 import { api } from '../../../../convex/_generated/api';
+import { detectZoneId } from '../../../../convex/lib/delivery';
 import { displayEmail } from '@/lib/contact';
 import { Id } from '../../../../convex/_generated/dataModel';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import Link from '@/components/LocalizedLink';
 import { Check, ChevronLeft, ChevronRight, ShoppingBag, User, MapPin, ClipboardList, CreditCard, Banknote, Smartphone, Building2 } from 'lucide-react';
@@ -58,13 +60,20 @@ export default function CheckoutPage() {
   const validateCart = useMutation(api.orders.validateCart);
   const applyCoupon = useMutation(api.coupons.apply);
   const settings = useSettings();
-  const shippingCost = totalPrice >= (settings?.freeShippingThreshold ?? 20000) ? 0 : (settings?.deliveryYerevan ?? 0);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [agreed, setAgreed] = useState(false);
   const [validationDiff, setValidationDiff] = useState<ValidationDiffItem[]>([]);
 
   const [pickup, setPickup] = useState(false);
+  const [zoneId, setZoneId] = useState('');
+  const [zoneTouched, setZoneTouched] = useState(false);
+  const zones = useQuery(api.delivery.list, {});
+  const deliveryQuote = useQuery(
+    api.delivery.quoteDelivery,
+    pickup ? 'skip' : { zoneId: zoneId ? (zoneId as Id<'deliveryZones'>) : undefined, subtotal: totalPrice, lang },
+  );
+  const shippingCost = pickup ? 0 : (deliveryQuote?.price ?? 0);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const coupon = useQuery(api.coupons.validate, couponCode.trim() ? { code: couponCode.trim(), orderTotal: totalPrice + shippingCost } : 'skip');
@@ -96,6 +105,15 @@ export default function CheckoutPage() {
     }
   }, [me, currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-detect the delivery zone from the typed address (until the user picks
+  // one manually). Keeps the quote accurate without extra friction.
+  useEffect(() => {
+    if (zoneTouched || !zones || !form.address) return;
+    const id = detectZoneId(form.address, zones);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (id && id !== zoneId) setZoneId(id);
+  }, [form.address, zones, zoneTouched]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const goToStep = (i: number) => {
     setTimeout(() => setStep(i), 150);
   };
@@ -108,8 +126,12 @@ export default function CheckoutPage() {
       }
     }
     if (step === 1) {
-      if (!form.address) {
+      if (!pickup && !form.address) {
         toast.error(t('sc.fillAddress'));
+        return false;
+      }
+      if (!pickup && !zoneId) {
+        toast.error(t('sc.selectZone'));
         return false;
       }
     }
@@ -207,9 +229,7 @@ export default function CheckoutPage() {
       setValidationDiff([]);
 
       const validatedSubtotal = validation.subtotal;
-      const validatedShipping = validatedSubtotal >= (settings?.freeShippingThreshold ?? 20000)
-        ? 0
-        : (settings?.deliveryYerevan ?? 0);
+      const validatedShipping = pickup ? 0 : (deliveryQuote?.price ?? 0);
 
       const orderId = await createOrder({
         sessionToken: sessionToken || undefined,
@@ -220,6 +240,8 @@ export default function CheckoutPage() {
         paymentMethod: paymentMethod || undefined,
         notes: form.notes || undefined,
         pointsToSpend: appliedPoints > 0 ? appliedPoints : undefined,
+        deliveryZoneId: !pickup && zoneId ? (zoneId as Id<'deliveryZones'>) : undefined,
+        pickup: pickup || undefined,
         items: validation.items.map((i) => ({
           productId: i.id as Id<'products'>,
           name: i.name,
@@ -329,6 +351,33 @@ export default function CheckoutPage() {
                   </label>
                 )}
                 {!pickup && <div><Label>{t('sc.address')} *</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('sc.yerevan')} className="h-11" /></div>}
+                {!pickup && (
+                  <div>
+                    <Label>{t('sc.zone')} *</Label>
+                    <Select value={zoneId} onValueChange={(v) => { setZoneId(v ?? ''); setZoneTouched(true); }}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder={t('sc.selectZone')}>{zoneId ? (zones?.find((z) => z._id === zoneId)?.name ?? '') : t('sc.selectZone')}</SelectValue></SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>{t('sc.yerevanGroup')}</SelectLabel>
+                          {zones?.filter((z) => z.group === 'yerevan').map((z) => <SelectItem key={z._id} value={z._id}>{z.name}</SelectItem>)}
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>{t('sc.regionsGroup')}</SelectLabel>
+                          {zones?.filter((z) => z.group === 'region').map((z) => <SelectItem key={z._id} value={z._id}>{z.name}</SelectItem>)}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    {zoneId && deliveryQuote && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">{t('sc.shipping')}:</span>
+                        <strong className={deliveryQuote.free ? 'text-green-600' : ''}>{deliveryQuote.free ? t('sc.free') : formatPrice(deliveryQuote.price)}</strong>
+                        {deliveryQuote.appliedRuleNote && (
+                          <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">{deliveryQuote.appliedRuleNote}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div><Label>{t('sc.notes')}</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={t('sc.notesPlaceholder')} rows={3} /></div>
               </CardContent>
             </Card>

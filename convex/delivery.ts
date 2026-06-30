@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
+import { computeDeliveryQuote, ruleNote, type RuleLike, type ZoneLike } from './lib/delivery';
 
 /** Public: active delivery zones (both groups), ordered. */
 export const list = query({
@@ -33,6 +34,10 @@ export const upsert = mutation({
     schedule: v.string(),
     order: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
+    price: v.optional(v.number()),
+    freeThreshold: v.optional(v.number()),
+    etaText: v.optional(v.string()),
+    keywords: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     await getAdminCaller(ctx, args.sessionToken);
@@ -41,6 +46,10 @@ export const upsert = mutation({
       const patch: Record<string, unknown> = { name: rest.name, schedule: rest.schedule, group: rest.group };
       if (typeof rest.order === 'number') patch.order = rest.order;
       if (typeof rest.isActive === 'boolean') patch.isActive = rest.isActive;
+      if (rest.price !== undefined) patch.price = rest.price;
+      if (rest.freeThreshold !== undefined) patch.freeThreshold = rest.freeThreshold;
+      if (rest.etaText !== undefined) patch.etaText = rest.etaText;
+      if (rest.keywords !== undefined) patch.keywords = rest.keywords;
       await ctx.db.patch(id, patch);
       return id;
     }
@@ -53,6 +62,10 @@ export const upsert = mutation({
       schedule: rest.schedule,
       order: typeof rest.order === 'number' ? rest.order : maxOrder + 1,
       isActive: rest.isActive ?? true,
+      price: rest.price,
+      freeThreshold: rest.freeThreshold,
+      etaText: rest.etaText,
+      keywords: rest.keywords,
     });
   },
 });
@@ -98,6 +111,32 @@ export const seed = mutation({
       { group: 'region', name: 'Վայոց Ձորի մարզ', order: 9 },
     ];
 
+    // Russian/English address aliases to help auto-detect the zone from a typed
+    // address. Admins can extend these per zone afterwards.
+    const ALIASES: Record<string, string[]> = {
+      'Արաբկիր': ['Арабкир', 'Arabkir'],
+      'Կենտրոն': ['Кентрон', 'Центр', 'Kentron', 'Center'],
+      'Էրեբունի': ['Эребуни', 'Erebuni'],
+      'Մալաթիա-Սեբաստիա': ['Малатия', 'Себастия', 'Malatia', 'Sebastia'],
+      'Շենգավիթ': ['Шенгавит', 'Shengavit'],
+      'Նորք-Մարաշ': ['Норк', 'Мараш', 'Nork', 'Marash'],
+      'Ավան-Առինջ': ['Аван', 'Аринж', 'Avan', 'Arinj'],
+      'Քանաքեռ-Զեյթուն': ['Канакер', 'Зейтун', 'Kanaker', 'Zeytun'],
+      'Աջափնյակ': ['Аджапняк', 'Ajapnyak'],
+      'Դավթաշեն': ['Давташен', 'Davtashen'],
+      'Նոր Նորք': ['Нор Норк', 'Nor Nork'],
+      'Արագածոտնի մարզ': ['Арагацотн', 'Аштарак', 'Aragatsotn', 'Ashtarak'],
+      'Շիրակի մարզ': ['Ширак', 'Гюмри', 'Shirak', 'Gyumri'],
+      'Արմավիրի մարզ': ['Армавир', 'Armavir', 'Эчмиадзин', 'Vagharshapat'],
+      'Արարատի մարզ': ['Арарат', 'Арташат', 'Ararat', 'Artashat'],
+      'Կոտայքի մարզ': ['Котайк', 'Абовян', 'Раздан', 'Kotayk', 'Abovyan', 'Hrazdan'],
+      'Լոռու մարզ': ['Лори', 'Ванадзор', 'Lori', 'Vanadzor'],
+      'Գեղարքունիքի մարզ': ['Гегаркуник', 'Гавар', 'Севан', 'Gegharkunik', 'Sevan'],
+      'Տավուշի մարզ': ['Тавуш', 'Иджеван', 'Tavush', 'Ijevan', 'Dilijan'],
+      'Սյունիքի մարզ': ['Сюник', 'Капан', 'Горис', 'Syunik', 'Kapan', 'Goris'],
+      'Վայոց Ձորի մարզ': ['Вайоц Дзор', 'Ехегнадзор', 'Vayots Dzor', 'Yeghegnadzor'],
+    };
+
     for (const z of zones) {
       await ctx.db.insert('deliveryZones', {
         group: z.group,
@@ -105,8 +144,138 @@ export const seed = mutation({
         schedule: '',
         order: z.order,
         isActive: true,
+        price: z.group === 'yerevan' ? 1000 : 2000,
+        keywords: [z.name.replace(/ մարզ$/, ''), ...(ALIASES[z.name] ?? [])],
       });
     }
     return `seeded-${zones.length}`;
+  },
+});
+
+// ─── Public quote (live checkout/calculator) ─────────────────────────────────
+
+/**
+ * Compute the delivery price for a zone (or group), order subtotal and time.
+ * Pure logic lives in lib/delivery so the checkout preview and the server-side
+ * recompute on order creation always agree.
+ */
+export const quoteDelivery = query({
+  args: {
+    zoneId: v.optional(v.id('deliveryZones')),
+    group: v.optional(v.union(v.literal('yerevan'), v.literal('region'))),
+    subtotal: v.number(),
+    at: v.optional(v.number()),
+    lang: v.optional(v.union(v.literal('hy'), v.literal('ru'), v.literal('en'))),
+  },
+  handler: async (ctx, args) => {
+    const zone = args.zoneId ? await ctx.db.get(args.zoneId) : null;
+    const settings = await ctx.db.query('settings').first();
+    const rules = (await ctx.db.query('deliveryRules').collect()).filter((r) => r.isActive);
+    const q = computeDeliveryQuote({
+      zone: zone as ZoneLike | null,
+      group: args.group,
+      subtotal: args.subtotal,
+      at: args.at ?? Date.now(),
+      settings: settings ?? undefined,
+      rules: rules as unknown as RuleLike[],
+    });
+    return {
+      base: q.base,
+      price: q.price,
+      free: q.free,
+      appliedRuleName: q.appliedRule?.name ?? null,
+      appliedRuleNote: ruleNote(q.appliedRule as RuleLike | null, args.lang ?? 'hy'),
+    };
+  },
+});
+
+// ─── Delivery Rules / Exceptions ─────────────────────────────────────────────
+
+/** Public: active rules (for the delivery page notes). */
+export const rulesList = query({
+  args: {},
+  handler: async (ctx) => {
+    const rules = await ctx.db.query('deliveryRules').collect();
+    return rules.filter((r) => r.isActive).sort((a, b) => a.priority - b.priority);
+  },
+});
+
+/** Admin: all rules. */
+export const rulesListAdmin = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    return (await ctx.db.query('deliveryRules').collect()).sort((a, b) => a.priority - b.priority);
+  },
+});
+
+/** Admin: create or update a rule. */
+export const ruleUpsert = mutation({
+  args: {
+    sessionToken: v.string(),
+    id: v.optional(v.id('deliveryRules')),
+    name: v.string(),
+    isActive: v.optional(v.boolean()),
+    priority: v.optional(v.number()),
+    group: v.optional(v.union(v.literal('yerevan'), v.literal('region'))),
+    zoneIds: v.optional(v.array(v.id('deliveryZones'))),
+    weekdays: v.optional(v.array(v.number())),
+    dateFrom: v.optional(v.number()),
+    dateTo: v.optional(v.number()),
+    minOrderTotal: v.optional(v.number()),
+    effectType: v.union(v.literal('free'), v.literal('fixed'), v.literal('percent')),
+    effectValue: v.optional(v.number()),
+    note: v.optional(v.string()),
+    noteRu: v.optional(v.string()),
+    noteEn: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const { sessionToken: _, id, ...rest } = args;
+    if (id) {
+      await ctx.db.patch(id, {
+        name: rest.name,
+        isActive: rest.isActive ?? true,
+        priority: rest.priority ?? 0,
+        group: rest.group,
+        zoneIds: rest.zoneIds,
+        weekdays: rest.weekdays,
+        dateFrom: rest.dateFrom,
+        dateTo: rest.dateTo,
+        minOrderTotal: rest.minOrderTotal,
+        effectType: rest.effectType,
+        effectValue: rest.effectValue,
+        note: rest.note,
+        noteRu: rest.noteRu,
+        noteEn: rest.noteEn,
+      });
+      return id;
+    }
+    return await ctx.db.insert('deliveryRules', {
+      name: rest.name,
+      isActive: rest.isActive ?? true,
+      priority: rest.priority ?? 0,
+      group: rest.group,
+      zoneIds: rest.zoneIds,
+      weekdays: rest.weekdays,
+      dateFrom: rest.dateFrom,
+      dateTo: rest.dateTo,
+      minOrderTotal: rest.minOrderTotal,
+      effectType: rest.effectType,
+      effectValue: rest.effectValue,
+      note: rest.note,
+      noteRu: rest.noteRu,
+      noteEn: rest.noteEn,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+/** Admin: delete a rule. */
+export const ruleRemove = mutation({
+  args: { sessionToken: v.string(), id: v.id('deliveryRules') },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    await ctx.db.delete(args.id);
   },
 });

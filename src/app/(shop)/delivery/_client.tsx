@@ -17,6 +17,7 @@ import {
   Gift,
 } from 'lucide-react';
 import { DeliverySchedule } from '@/components/DeliverySchedule';
+import { DeliveryCalculator } from '@/components/DeliveryCalculator';
 import { useReveal, revealStyle } from '@/lib/motion';
 import { useT } from '@/lib/i18n/admin';
 
@@ -235,6 +236,9 @@ export default function DeliveryPage() {
               })}
             </div>
           </section>
+
+          {/* Delivery cost calculator + active rules */}
+          <DeliveryCalculator />
 
           {/* Delivery schedule by location */}
           <DeliverySchedule />

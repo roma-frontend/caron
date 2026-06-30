@@ -5,6 +5,7 @@ import type { Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
 import { getAdminCaller, getAuthCaller } from './lib/auth';
 import { resolveCashback } from './lib/loyalty';
+import { computeDeliveryQuote, type RuleLike, type ZoneLike } from './lib/delivery';
 
 /**
  * Add (or subtract, when negative) loyalty points for a customer.
@@ -62,6 +63,8 @@ export const create = mutation({
     paymentMethod: v.optional(v.string()),
     notes: v.optional(v.string()),
     pointsToSpend: v.optional(v.number()),
+    deliveryZoneId: v.optional(v.id('deliveryZones')),
+    pickup: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx, args.sessionToken);
@@ -79,25 +82,29 @@ export const create = mutation({
       serverSubtotal += product.price * item.quantity;
     }
 
-    // Server-side shipping validation against store settings — never trust
-    // the client-provided shipping amount.
+    // Server-side shipping validation — recompute authoritatively from the
+    // delivery zone + active rules; never trust the client-provided amount.
     if (!Number.isFinite(args.shipping) || args.shipping < 0) {
       throw new Error('Առաքման սխալ արժեք');
     }
     const settings = await ctx.db.query('settings').first();
-    const freeThreshold = settings?.freeShippingThreshold ?? 0;
-    let serverShipping = args.shipping;
-    if (freeThreshold > 0 && serverSubtotal >= freeThreshold) {
-      // Free shipping unlocked — force 0 regardless of client input.
-      serverShipping = 0;
-    } else {
-      // Otherwise the only acceptable values are pickup (0) or a configured zone price.
-      const allowed = new Set<number>([0]);
-      if (typeof settings?.deliveryYerevan === 'number') allowed.add(settings.deliveryYerevan);
-      if (typeof settings?.deliveryRegions === 'number') allowed.add(settings.deliveryRegions);
-      if (!allowed.has(args.shipping)) {
-        throw new Error('Առաքման արժեքն անվավեր է. խնդրում ենք թարմացնել էջը');
-      }
+    let serverShipping = 0;
+    let deliveryGroup: 'yerevan' | 'region' | undefined;
+    let deliveryRuleApplied: string | undefined;
+    if (!args.pickup) {
+      const zone = args.deliveryZoneId ? await ctx.db.get(args.deliveryZoneId) : null;
+      const rules = (await ctx.db.query('deliveryRules').collect()).filter((r) => r.isActive);
+      const quote = computeDeliveryQuote({
+        zone: zone as ZoneLike | null,
+        group: (zone as { group?: 'yerevan' | 'region' } | null)?.group,
+        subtotal: serverSubtotal,
+        at: Date.now(),
+        settings: settings ?? undefined,
+        rules: rules as unknown as RuleLike[],
+      });
+      serverShipping = quote.price;
+      deliveryGroup = (zone as { group?: 'yerevan' | 'region' } | null)?.group;
+      deliveryRuleApplied = quote.appliedRule?.name;
     }
 
     const serverTotal = serverSubtotal + serverShipping;
@@ -138,12 +145,14 @@ export const create = mutation({
       }
     }
 
-    const { sessionToken: _st, pointsToSpend: _pts, ...orderData } = args;
+    const { sessionToken: _st, pointsToSpend: _pts, pickup: _pickup, ...orderData } = args;
     const orderId = await ctx.db.insert('orders', {
       ...orderData,
       subtotal: serverSubtotal,
       shipping: serverShipping,
       total: finalTotal,
+      deliveryGroup,
+      deliveryRuleApplied,
       pointsSpent: pointsSpent > 0 ? pointsSpent : undefined,
       orderNumber,
       userId: caller?._id,

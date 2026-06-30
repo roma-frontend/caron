@@ -22,6 +22,7 @@ import type * as delivery from "../delivery.js";
 import type * as email from "../email.js";
 import type * as filters from "../filters.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_delivery from "../lib/delivery.js";
 import type * as lib_emailTemplates from "../lib/emailTemplates.js";
 import type * as lib_imageUrl from "../lib/imageUrl.js";
 import type * as lib_loyalty from "../lib/loyalty.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   filters: typeof filters;
   "lib/auth": typeof lib_auth;
+  "lib/delivery": typeof lib_delivery;
   "lib/emailTemplates": typeof lib_emailTemplates;
   "lib/imageUrl": typeof lib_imageUrl;
   "lib/loyalty": typeof lib_loyalty;

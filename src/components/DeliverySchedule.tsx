@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
-import { Truck, Search, MapPin, CalendarDays, X } from 'lucide-react';
+import { Truck, Search, MapPin, CalendarDays, X, Clock } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
+import { formatPrice } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/admin';
 import { useZoneName } from '@/lib/i18n/zoneNames';
@@ -16,6 +17,8 @@ type Zone = {
   schedule: string;
   order: number;
   isActive: boolean;
+  price?: number;
+  etaText?: string;
 };
 
 type GroupFilter = 'all' | 'yerevan' | 'region';
@@ -81,7 +84,13 @@ function ZoneCard({ zone }: { zone: Zone }) {
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 shrink-0 text-primary" />
         <h4 className="font-semibold leading-tight">{zoneName(zone.name)}</h4>
+        <span className="ml-auto shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+          {!zone.price ? t('pg.delivery.free') : formatPrice(zone.price)}
+        </span>
       </div>
+      {zone.etaText && (
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Clock className="h-3.5 w-3.5 text-primary/70" />{zone.etaText}</p>
+      )}
 
       {!hasSchedule ? (
         <p className="text-sm text-muted-foreground/60">{t('pg.delsch.callToConfirm')}</p>
