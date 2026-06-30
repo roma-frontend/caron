@@ -281,6 +281,28 @@ export const listAdmin = query({
   },
 });
 
+export const getForInvoice = query({
+  args: { sessionToken: v.string(), id: v.id('orders') },
+  handler: async (ctx, args) => {
+    try { await getAdminCaller(ctx, args.sessionToken); } catch { return null; }
+    const order = await ctx.db.get(args.id);
+    if (!order) return null;
+    // Enrich each line item with the product's article (SKU, falling back to
+    // the ATG code) by looking up the product snapshot. Items store only a
+    // productId reference, so this works for historical orders too.
+    const items = await Promise.all(
+      order.items.map(async (it) => {
+        const product = await ctx.db.get(it.productId);
+        return {
+          ...it,
+          sku: product?.sku ?? product?.atgCode ?? '',
+        };
+      }),
+    );
+    return { ...order, items };
+  },
+});
+
 export const getByOrderNumber = query({
   args: { orderNumber: v.string() },
   handler: async (ctx, args) => {

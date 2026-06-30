@@ -5,6 +5,8 @@ interface AuthState {
   sessionToken: string | null;
   user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number; phone?: string; telegramUsername?: string } | null;
   setSession: (token: string, user: { id: string; name: string; email: string; role: string; customerType?: string; discountPercent?: number; phone?: string; telegramUsername?: string }) => void;
+  /** Merge fresh fields into the current user (e.g. when the server profile changes). */
+  patchUser: (patch: Partial<NonNullable<AuthState['user']>>) => void;
   logout: () => void;
   _hasHydrated: boolean;
   setHasHydrated: (v: boolean) => void;
@@ -17,6 +19,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       _hasHydrated: false,
       setSession: (token, user) => set({ sessionToken: token, user }),
+      patchUser: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : s.user })),
       logout: () => set({ sessionToken: null, user: null }),
       setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),

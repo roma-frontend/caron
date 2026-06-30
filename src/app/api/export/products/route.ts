@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/adminAuth';
 import { ConvexHttpClient } from 'convex/browser';
-import * as XLSX from 'xlsx';
+import { XLSX, styleSheet } from '@/lib/xlsxStyle';
 import { api } from '../../../../../convex/_generated/api';
 
 export const runtime = 'nodejs';
@@ -107,6 +107,14 @@ export async function GET(req: NextRequest) {
 
     const aoa = [columns, ...dataRows];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // Header-only styling: this sheet is also the import round-trip format and
+    // can hold thousands of rows, so we keep values/structure intact and avoid
+    // per-cell styling that would bloat the file.
+    const colWidth = (key: string): number =>
+      key === 'name' || key === 'nameRu' || key === 'nameEn' || key.startsWith('description') ? 38
+        : key === 'images' || key === 'oem' || key === 'vehicleCompat' || key === 'seoDescription' ? 30
+        : key === 'id' ? 22 : 15;
+    styleSheet(ws, { widths: columns.map(colWidth), headerOnly: true });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Products');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;

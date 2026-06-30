@@ -49,6 +49,8 @@ export const adminOrders: DictModule = {
   // Card actions
   'ao.action.call': { hy: 'Զանգել', ru: 'Позвонить', en: 'Call' },
   'ao.action.history': { hy: 'Պատմություն', ru: 'История', en: 'History' },
+  'ao.details.open': { hy: 'Մանրամասներ', ru: 'Подробнее', en: 'Details' },
+  'ao.details.title': { hy: 'Պատվեր', ru: 'Заказ', en: 'Order' },
   'ao.btn.markPaid': { hy: 'Նշել վճարած', ru: 'Отметить оплаченным', en: 'Mark as paid' },
   'ao.paid': { hy: 'Վճարված', ru: 'Оплачено', en: 'Paid' },
 

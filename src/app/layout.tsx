@@ -14,6 +14,7 @@ import { SettingsProvider } from '@/components/SettingsProvider';
 import { AnalyticsInjector } from '@/components/AnalyticsInjector';
 import { FloatingActions } from '@/components/FloatingActions';
 import { CartSync } from '@/components/CartSync';
+import { SessionSync } from '@/components/SessionSync';
 import { AdminOrderWatcher } from '@/components/AdminOrderWatcher';
 import { AdminReturnWatcher } from '@/components/AdminReturnWatcher';
 import { CustomerReturnWatcher } from '@/components/CustomerReturnWatcher';
@@ -273,6 +274,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <main id="main-content" className="min-h-dvh">{content}</main>
               <CookieConsentWrapper />
               <CartSync />
+              <SessionSync />
               <ScrollToTop />
               <AdminOrderWatcher />
               <AdminReturnWatcher />

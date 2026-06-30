@@ -1,7 +1,8 @@
 ﻿'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useConvex } from 'convex/react';
+import * as XLSX from 'xlsx-js-style';
 import { api } from '../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/DatePicker';
@@ -13,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet, XCircle, History } from 'lucide-react';
+import { TrendingUp, ShoppingBag, DollarSign, Clock, FileDown, Search, Phone, MessageSquare, FileSpreadsheet, XCircle, History, Eye } from 'lucide-react';
 import { formatPrice, formatDateLocalized } from '@/lib/formatters';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { useReveal, revealStyle } from '@/lib/motion';
@@ -136,40 +137,247 @@ function escapeHtml(str: string): string {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
 }
 
-function exportPDF(o: Record<string, unknown>) {
-  const html = [
-    '<html><head><meta charset="utf-8"><title>Invoice</title>',
-    '<style>body{font-family:sans-serif;padding:40px;max-width:700px;margin:auto}',
-    'h1{color:#333}table{width:100%;border-collapse:collapse;margin:20px 0}',
-    'th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#f5f5f5}',
-    '.total{font-size:1.3em;font-weight:bold;text-align:right;margin-top:20px}</style></head><body>',
-    `<h1>Invoice #${escapeHtml(String(o.orderNumber))}</h1>`,
-    `<p><strong>Name:</strong> ${escapeHtml(String(o.customerName))}<br>`,
-    `${escapeHtml(String(o.customerPhone))}<br>${displayEmail(String(o.customerEmail)) ? escapeHtml(displayEmail(String(o.customerEmail))) + '<br>' : ''}`,
-    `${escapeHtml(String(o.shippingAddress))}</p>`,
-    `<table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`,
-    (o.items as Array<Record<string, unknown>> || []).map((i: Record<string, unknown>) =>
-      `<tr><td>${escapeHtml(String(i.name))}</td><td>${Number(i.quantity)}</td><td>${Number(i.price).toLocaleString()} ֏</td><td>${(Number(i.price) * Number(i.quantity)).toLocaleString()} ֏</td></tr>`
-    ).join(''),
-    `</tbody></table><p class="total">Total: ${Number(o.total).toLocaleString()} ֏</p></body></html>`,
-  ].join('\n');
+type InvoiceMeta = { storeName: string; phone?: string; email?: string; address?: string };
+
+/** A professionally styled, self-contained invoice document (inline CSS + inline
+ * logo) used both for printing/PDF and as the live preview inside the order
+ * details modal — single source of truth, identical look. */
+function invoiceHtml(o: Record<string, unknown>, meta: InvoiceMeta): string {
+  const BRAND = '#0066ae';
+  const items = (o.items as Array<Record<string, unknown>>) || [];
+  const email = displayEmail(String(o.customerEmail ?? ''));
+  const fmt = (n: number) => Number(n).toLocaleString() + ' ֏';
+  const subtotal = o.subtotal != null ? Number(o.subtotal) : items.reduce((s, i) => s + Number(i.price) * Number(i.quantity), 0);
+  const shipping = Number(o.shipping ?? 0);
+  const date = o.createdAt ? new Date(Number(o.createdAt)).toLocaleDateString() : '';
+
+  const logo = `<svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="15" fill="#1B5FCB"/><rect x="11" y="22" width="42" height="20" rx="10" fill="#fff"/><rect x="19" y="27.5" width="26" height="9" rx="4.5" fill="none" stroke="#1B5FCB" stroke-width="2.4"/><line x1="19" y1="32" x2="45" y2="32" stroke="#1B5FCB" stroke-width="1.8"/></svg>`;
+
+  const rows = items.map((i, idx) =>
+    `<tr style="background:${idx % 2 ? '#f7fafc' : '#fff'}">
+      <td class="art">${escapeHtml(String(i.sku ?? '') || '—')}</td>
+      <td>${escapeHtml(String(i.name))}</td>
+      <td class="num">${Number(i.quantity)}</td>
+      <td class="num">${fmt(Number(i.price))}</td>
+      <td class="num strong">${fmt(Number(i.price) * Number(i.quantity))}</td>
+    </tr>`).join('');
+
+  const contacts = [meta.phone, email || meta.email, meta.address].filter(Boolean).map((c) => escapeHtml(String(c))).join('&nbsp;&nbsp;•&nbsp;&nbsp;');
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice ${escapeHtml(String(o.orderNumber))}</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;color:#1a2330;background:#fff;}
+.sheet{max-width:760px;width:100%;margin:0 auto;padding:32px 30px}
+.bar{height:6px;background:${BRAND};border-radius:6px;margin-bottom:28px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.brand{display:flex;gap:12px;align-items:center}
+.brand .name{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.brand .tag{font-size:11px;color:#6b7785;margin-top:2px}
+.inv{text-align:right}
+.inv h1{margin:0;font-size:26px;font-weight:800;color:${BRAND};letter-spacing:1px}
+.inv .meta{font-size:12px;color:#6b7785;margin-top:4px;line-height:1.5}
+.inv .num{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:#1a2330}
+.billto{margin:30px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#9aa5b1;font-weight:700}
+.cust{font-size:14px;line-height:1.6}
+.cust .who{font-weight:700;font-size:15px}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.paid{background:#e6f6ec;color:#15803d}
+.await{background:#fff4e5;color:#b45309}
+table{width:100%;border-collapse:collapse;margin:22px 0 0}
+th{background:${BRAND};color:#fff;text-align:left;padding:11px 12px;font-size:12px;font-weight:600;letter-spacing:.3px}
+th:first-child{border-radius:8px 0 0 0}th:last-child{border-radius:0 8px 0 0}
+td{padding:11px 12px;font-size:13px;border-bottom:1px solid #eef1f5}
+.num{text-align:right;white-space:nowrap}
+.art{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#52606d}
+.strong{font-weight:700}
+.totals{margin-top:18px;display:flex;justify-content:flex-end}
+.totals table{width:300px;margin:0}
+.totals td{border:none;padding:6px 4px;font-size:13px}
+.totals .lbl{color:#6b7785}.totals .v{text-align:right;font-weight:600}
+.totals .grand td{border-top:2px solid ${BRAND};padding-top:12px;font-size:18px;font-weight:800;color:${BRAND}}
+.foot{margin-top:40px;padding-top:16px;border-top:1px solid #eef1f5;text-align:center;color:#6b7785;font-size:11.5px;line-height:1.7}
+.thanks{font-weight:700;color:#1a2330;font-size:13px;margin-bottom:4px}
+@media (max-width:560px){.sheet{padding:20px 16px}.inv h1{font-size:22px}th,td{padding:8px 8px;font-size:12px}.art{font-size:11px}}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.sheet{padding:0;max-width:none}}
+</style></head><body><div class="sheet">
+<div class="bar"></div>
+<div class="head">
+  <div class="brand">${logo}<div><div class="name">${escapeHtml(meta.storeName)}</div><div class="tag">${escapeHtml(meta.address ?? '')}</div></div></div>
+  <div class="inv"><h1>INVOICE</h1><div class="meta"># <span class="num">${escapeHtml(String(o.orderNumber))}</span><br>${date}<br><span class="badge ${o.paymentStatus === 'paid' ? 'paid' : 'await'}">${o.paymentStatus === 'paid' ? 'PAID' : 'AWAITING PAYMENT'}</span></div></div>
+</div>
+<div class="billto">Bill To</div>
+<div class="cust"><div class="who">${escapeHtml(String(o.customerName ?? ''))}</div>${escapeHtml(String(o.customerPhone ?? ''))}${email ? '<br>' + escapeHtml(email) : ''}${o.shippingAddress ? '<br>' + escapeHtml(String(o.shippingAddress)) : ''}</div>
+<table><thead><tr><th>Article</th><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="totals"><table>
+  <tr><td class="lbl">Subtotal</td><td class="v">${fmt(subtotal)}</td></tr>
+  ${shipping ? `<tr><td class="lbl">Shipping</td><td class="v">${fmt(shipping)}</td></tr>` : ''}
+  <tr class="grand"><td>Total</td><td class="v">${fmt(Number(o.total))}</td></tr>
+</table></div>
+<div class="foot"><div class="thanks">Thank you for your order!</div>${contacts}</div>
+</div></body></html>`;
+}
+
+function printInvoice(o: Record<string, unknown>, meta: InvoiceMeta) {
+  const html = invoiceHtml(o, meta);
   const w = window.open('', '_blank');
-  if (w) { w.document.write(html); w.document.close(); w.print(); }
+  if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 250); }
   else {
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     document.body.appendChild(iframe);
     iframe.contentDocument?.write(html);
     iframe.contentDocument?.close();
-    iframe.contentWindow?.print();
-    setTimeout(() => iframe.remove(), 3000);
+    setTimeout(() => { iframe.contentWindow?.print(); }, 250);
+    setTimeout(() => iframe.remove(), 4000);
   }
+}
+
+/** Download the invoice as a styled .xlsx workbook (brand colors, borders,
+ * currency formatting, item article column). */
+function exportXLSX(o: Record<string, unknown>, meta: InvoiceMeta) {
+  const BRAND = '0066AE';
+  const orderNumber = String(o.orderNumber);
+  const items = (o.items as Array<Record<string, unknown>>) || [];
+  const email = displayEmail(String(o.customerEmail ?? '')) || meta.email || '';
+  const date = o.createdAt ? new Date(Number(o.createdAt)).toLocaleDateString() : '';
+  const subtotal = o.subtotal != null ? Number(o.subtotal) : items.reduce((s, i) => s + Number(i.price) * Number(i.quantity), 0);
+  const shipping = Number(o.shipping ?? 0);
+
+  const aoa: (string | number)[][] = [
+    [meta.storeName, '', '', '', 'INVOICE'],
+    [`# ${orderNumber}`, '', '', '', date],
+    [o.paymentStatus === 'paid' ? 'PAID' : 'AWAITING PAYMENT'],
+    [],
+    ['BILL TO'],
+    ['Name', String(o.customerName ?? '')],
+    ['Phone', String(o.customerPhone ?? '')],
+    ...(email ? [['Email', email]] : []),
+    ['Address', String(o.shippingAddress ?? '')],
+    [],
+    ['Article', 'Item', 'Qty', 'Price', 'Total'],
+    ...items.map((i) => [
+      String(i.sku ?? '') || '—',
+      String(i.name ?? ''),
+      Number(i.quantity),
+      Number(i.price),
+      Number(i.price) * Number(i.quantity),
+    ]),
+    [],
+    ['', '', '', 'Subtotal', subtotal],
+    ...(shipping ? [['', '', '', 'Shipping', shipping]] : []),
+    ['', '', '', 'Total', Number(o.total)],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{ wch: 16 }, { wch: 42 }, { wch: 8 }, { wch: 14 }, { wch: 16 }];
+
+  const headerRow = aoa.findIndex((r) => r[0] === 'Article');
+  const lastItemRow = headerRow + items.length;
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+  ws['!rows'] = []; ws['!rows'][headerRow] = { hpt: 22 };
+
+  const MONEY = '#,##0" ֏"';
+  const thin = { style: 'thin', color: { rgb: 'E5E9EF' } } as const;
+  const allBorders = { top: thin, bottom: thin, left: thin, right: thin };
+  const at = (r: number, c: number) => XLSX.utils.encode_cell({ r, c });
+  const style = (r: number, c: number, s: Record<string, unknown>) => {
+    const addr = at(r, c);
+    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+    ws[addr].s = { ...(ws[addr].s || {}), ...s };
+  };
+
+  // Title row
+  style(0, 0, { font: { bold: true, sz: 16, color: { rgb: '1A2330' } } });
+  style(0, 4, { font: { bold: true, sz: 16, color: { rgb: BRAND } }, alignment: { horizontal: 'right' } });
+  style(1, 0, { font: { bold: true, color: { rgb: '52606D' } } });
+  style(1, 4, { font: { color: { rgb: '6B7785' } }, alignment: { horizontal: 'right' } });
+  style(2, 0, { font: { bold: true, color: { rgb: o.paymentStatus === 'paid' ? '15803D' : 'B45309' } } });
+  // Bill-to label + labels
+  style(4, 0, { font: { bold: true, sz: 9, color: { rgb: '9AA5B1' } } });
+  for (let r = 5; r < headerRow - 1; r++) style(r, 0, { font: { bold: true, color: { rgb: '6B7785' } } });
+
+  // Items header
+  for (let c = 0; c < 5; c++) {
+    style(headerRow, c, {
+      font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+      fill: { fgColor: { rgb: BRAND } },
+      alignment: { horizontal: c >= 2 ? 'right' : 'left', vertical: 'center' },
+      border: allBorders,
+    });
+  }
+  // Item rows
+  for (let r = headerRow + 1; r <= lastItemRow; r++) {
+    for (let c = 0; c < 5; c++) {
+      style(r, c, {
+        border: allBorders,
+        alignment: { horizontal: c >= 2 ? 'right' : 'left', vertical: 'center', wrapText: c === 1 },
+      });
+    }
+    if (ws[at(r, 3)]) { ws[at(r, 3)].z = MONEY; }
+    if (ws[at(r, 4)]) { ws[at(r, 4)].z = MONEY; ws[at(r, 4)].s = { ...(ws[at(r, 4)].s || {}), font: { bold: true } }; }
+    if (ws[at(r, 0)]) ws[at(r, 0)].s = { ...(ws[at(r, 0)].s || {}), font: { color: { rgb: '52606D' } } };
+  }
+  // Totals block
+  const totalRow = aoa.length - 1;
+  for (let r = lastItemRow + 2; r <= totalRow; r++) {
+    style(r, 3, { font: { bold: r === totalRow, color: { rgb: r === totalRow ? BRAND : '6B7785' } }, alignment: { horizontal: 'right' } });
+    style(r, 4, { font: { bold: true, sz: r === totalRow ? 13 : 11, color: { rgb: r === totalRow ? BRAND : '1A2330' } }, alignment: { horizontal: 'right' } });
+    if (ws[at(r, 4)]) ws[at(r, 4)].z = MONEY;
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Invoice');
+  XLSX.writeFile(wb, `invoice-${orderNumber}.xlsx`);
 }
 
 function OrderCard({ order, sessionToken, index, settings }: { order: Record<string, unknown>; sessionToken: string; index: number; settings: ReturnType<typeof useSettings> }) {
   const { ref, visible } = useReveal();
   const { t } = useAdminT();
   const updateStatus = useMutation(api.orders.updateStatus);
+  const convex = useConvex();
+  const [exporting, setExporting] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const invoiceMeta: InvoiceMeta = {
+    storeName: String((settings as Record<string, unknown> | null | undefined)?.storeName ?? 'Caron'),
+    phone: (settings as Record<string, unknown> | null | undefined)?.phone as string | undefined,
+    email: (settings as Record<string, unknown> | null | undefined)?.email as string | undefined,
+    address: (settings as Record<string, unknown> | null | undefined)?.address as string | undefined,
+  };
+
+  // Order enriched with each line item's article (SKU). Loaded lazily when the
+  // details modal opens; also reused for the print/XLSX export.
+  const invoice = useQuery(
+    api.orders.getForInvoice,
+    detailsOpen && sessionToken ? { sessionToken, id: order._id as Id<'orders'> } : 'skip',
+  );
+  const invoiceData = (invoice as unknown as Record<string, unknown>) ?? order;
+
+  // Fetch the order with articles resolved server-side, then hand it to the PDF
+  // / XLSX generator. Falls back to the in-memory order if the query fails.
+  const runExport = async (kind: 'pdf' | 'xlsx') => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      let data: Record<string, unknown> = order;
+      if (invoice) data = invoice as unknown as Record<string, unknown>;
+      else if (sessionToken) {
+        const enriched = await convex.query(api.orders.getForInvoice, {
+          sessionToken,
+          id: order._id as Id<'orders'>,
+        });
+        if (enriched) data = enriched as unknown as Record<string, unknown>;
+      }
+      if (kind === 'pdf') printInvoice(data, invoiceMeta);
+      else exportXLSX(data, invoiceMeta);
+    } catch {
+      if (kind === 'pdf') printInvoice(order, invoiceMeta);
+      else exportXLSX(order, invoiceMeta);
+    } finally {
+      setExporting(false);
+    }
+  };
   // Best-effort: email the customer when their order status changes. Never
   // blocks the admin action; silently skipped if email isn't configured or the
   // account has no real email (Telegram placeholder).
@@ -240,12 +448,12 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
         </div>
         {/* Content row — customer + actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer group/cust" onClick={() => setDetailsOpen(true)} title={t('ao.details.open')}>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary shrink-0">
               {String(order.customerName).charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium leading-tight">{String(order.customerName)}</p>
+              <p className="text-sm font-medium leading-tight group-hover/cust:text-primary transition-colors">{String(order.customerName)}</p>
               <p className="text-xs text-muted-foreground">{String(order.customerPhone)}</p>
             </div>
           </div>
@@ -275,8 +483,14 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
                 <MessageSquare className="h-3.5 w-3.5" />
               </Link>
             )}
-            <button onClick={() => exportPDF(order)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors" title="PDF">
+            <button onClick={() => setDetailsOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent hover:text-primary transition-colors" title={t('ao.details.open')}>
+              <Eye className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => runExport('pdf')} disabled={exporting} className="flex h-8 w-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-accent transition-colors disabled:opacity-50" title="PDF">
               <FileDown className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => runExport('xlsx')} disabled={exporting} className="flex h-8 w-8 items-center justify-center rounded-lg border text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50" title="XLSX">
+              <FileSpreadsheet className="h-3.5 w-3.5" />
             </button>
             <button onClick={() => setHistoryOpen((v) => !v)} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${historyOpen ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent'}`} title={t('ao.action.history')}>
               <History className="h-3.5 w-3.5" />
@@ -319,6 +533,29 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
           </div>
         )}
       </div>
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-[900px] w-[94vw] p-0 overflow-hidden gap-0">
+          <DialogHeader className="flex flex-row items-center justify-between gap-2 border-b px-4 py-3 space-y-0">
+            <div>
+              <DialogTitle className="text-base">{t('ao.details.title')} <span className="font-mono text-primary">{String(order.orderNumber)}</span></DialogTitle>
+              <DialogDescription className="text-xs">{String(order.customerName)} · {formatDateLocalized(Number(order.createdAt), t)}</DialogDescription>
+            </div>
+            <div className="flex items-center gap-2 pr-6">
+              <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => runExport('pdf')} disabled={exporting}>
+                <FileDown className="h-3.5 w-3.5" /> PDF
+              </Button>
+              <Button type="button" size="sm" variant="outline" className="gap-1.5 text-green-700" onClick={() => runExport('xlsx')} disabled={exporting}>
+                <FileSpreadsheet className="h-3.5 w-3.5" /> XLSX
+              </Button>
+            </div>
+          </DialogHeader>
+          <iframe
+            title={`invoice-${String(order.orderNumber)}`}
+            srcDoc={invoiceHtml(invoiceData, invoiceMeta)}
+            className="h-[72vh] w-full border-0 bg-white"
+          />
+        </DialogContent>
+      </Dialog>
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="overflow-visible">
           <DialogHeader>

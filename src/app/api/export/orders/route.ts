@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/adminAuth';
 import { ConvexHttpClient } from 'convex/browser';
-import * as XLSX from 'xlsx';
+import { XLSX, styleSheet } from '@/lib/xlsxStyle';
 import { api } from '../../../../../convex/_generated/api';
 
 export const runtime = 'nodejs';
@@ -56,6 +56,10 @@ export async function GET(req: NextRequest) {
     ]);
 
     const ws = XLSX.utils.aoa_to_sheet([header, ...dataRows]);
+    styleSheet(ws, {
+      widths: [14, 18, 20, 16, 24, 30, 12, 12, 16, 14, 12, 14, 20, 24],
+      moneyCols: [9, 10, 11],
+    });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Orders');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
