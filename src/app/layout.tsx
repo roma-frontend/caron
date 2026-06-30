@@ -21,6 +21,13 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { toR2MediaProxyUrl } from '@/lib/r2Media';
+
+// Hero poster (home page LCP element) — resolved to the same delivery URL the
+// home page <img> uses, so the document-level preload actually matches it.
+const HERO_POSTER_URL = toR2MediaProxyUrl(
+  process.env.NEXT_PUBLIC_HERO_POSTER_URL || 'products/hero-poster.jpg',
+);
 // Primary UI font
 const inter = Inter({
   variable: '--font-inter',
@@ -218,11 +225,29 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // the admin panel is not, so it stays on the language store.
   const isStorefront = hl !== null;
   const content = isStorefront ? <LocaleProvider initial={htmlLang}>{children}</LocaleProvider> : children;
+  // Home page only: preload the hero poster (the LCP element) at the document
+  // level so the browser discovers it from the initial HTML, instead of waiting
+  // for the client component tree to render the <img>.
+  const isHome = h.get('x-pathname') === '/';
   return (
     <html lang={htmlLang} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Safari pinned tab */}
         <link rel="mask-icon" href="/favicon.svg" color="#0066AE" />
+
+        {isHome && (
+          <link
+            rel="preload"
+            as="image"
+            href={HERO_POSTER_URL}
+            fetchPriority="high"
+          />
+        )}
+
+        {/* Image CDN (R2 proxy) — establish the connection early so the hero
+            poster and product images (LCP candidates) start downloading sooner. */}
+        <link rel="preconnect" href="https://img.caron.group" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://img.caron.group" />
 
         {process.env.NEXT_PUBLIC_CONVEX_URL && (
           <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_URL} />

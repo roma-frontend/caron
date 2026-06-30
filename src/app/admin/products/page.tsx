@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useDeferredValue } from 'react';
 import { numericInputProps } from '@/lib/utils';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -622,6 +622,10 @@ export default function AdminProductsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const searchTerm = search.trim().toLowerCase();
+  // Defer the expensive list re-filter/re-sort (up to 5000 products) so typing
+  // in the search box stays responsive — keystrokes commit instantly while the
+  // heavy recompute runs at a lower priority (improves INP).
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const searchParams = useSearchParams();
   const healthFilter = searchParams.get('health');
   const dupSkuSet = useMemo(() => {
@@ -665,41 +669,43 @@ export default function AdminProductsPage() {
     return map;
   }, [allFilterDefs]);
 
-  let filtered = products?.filter((p) => {
-    if (searchTerm) {
-      const byName = p.name.toLowerCase().includes(searchTerm)
-        || (p.nameRu?.toLowerCase().includes(searchTerm) ?? false)
-        || (p.nameEn?.toLowerCase().includes(searchTerm) ?? false);
-      const bySku = p.sku?.toLowerCase().includes(searchTerm) ?? false;
-      const byAtg = p.atgCode?.toLowerCase().includes(searchTerm) ?? false;
-      if (!byName && !bySku && !byAtg) return false;
-    }
-    if (catFilter !== 'all' && p.categoryId !== catFilter) return false;
-    if (healthFilter) {
-      const brand = p.brand ?? ((p.attributes ?? {}) as Record<string, unknown>).brand;
-      if (healthFilter === 'noImage' && (p.images?.length ?? 0) > 0) return false;
-      if (healthFilter === 'noDescription' && !!p.description?.trim()) return false;
-      if (healthFilter === 'zeroStock' && !(p.isActive && p.stock <= 0)) return false;
-      if (healthFilter === 'lowStock' && !(p.stock > 0 && p.stock <= 5)) return false;
-      if (healthFilter === 'noSeo' && !!(p.seoTitle && p.seoDescription)) return false;
-      if (healthFilter === 'noBrand' && !!brand) return false;
-      if (healthFilter === 'dupSku' && !(p.sku && dupSkuSet.has(p.sku))) return false;
-    }
-    if (stockFilter === 'instock' && p.stock <= 0) return false;
-    if (stockFilter === 'low' && (p.stock > 5 || p.stock <= 0)) return false;
-    if (stockFilter === 'out' && p.stock > 0) return false;
-    if (statusFilter === 'active' && !p.isActive) return false;
-    if (statusFilter === 'inactive' && p.isActive) return false;
-    if (statusFilter === 'featured' && !p.isFeatured) return false;
-    return true;
-  });
-  if (filtered) {
-    if (sortBy === 'newest') filtered = [...filtered].sort((a, b) => b.createdAt - a.createdAt);
-    else if (sortBy === 'priceAsc') filtered = [...filtered].sort((a, b) => a.price - b.price);
-    else if (sortBy === 'priceDesc') filtered = [...filtered].sort((a, b) => b.price - a.price);
-    else if (sortBy === 'stockAsc') filtered = [...filtered].sort((a, b) => a.stock - b.stock);
-    else if (sortBy === 'name') filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-  }
+  const filtered = useMemo(() => {
+    if (!products) return undefined;
+    const result = products.filter((p) => {
+      if (deferredSearchTerm) {
+        const byName = p.name.toLowerCase().includes(deferredSearchTerm)
+          || (p.nameRu?.toLowerCase().includes(deferredSearchTerm) ?? false)
+          || (p.nameEn?.toLowerCase().includes(deferredSearchTerm) ?? false);
+        const bySku = p.sku?.toLowerCase().includes(deferredSearchTerm) ?? false;
+        const byAtg = p.atgCode?.toLowerCase().includes(deferredSearchTerm) ?? false;
+        if (!byName && !bySku && !byAtg) return false;
+      }
+      if (catFilter !== 'all' && p.categoryId !== catFilter) return false;
+      if (healthFilter) {
+        const brand = p.brand ?? ((p.attributes ?? {}) as Record<string, unknown>).brand;
+        if (healthFilter === 'noImage' && (p.images?.length ?? 0) > 0) return false;
+        if (healthFilter === 'noDescription' && !!p.description?.trim()) return false;
+        if (healthFilter === 'zeroStock' && !(p.isActive && p.stock <= 0)) return false;
+        if (healthFilter === 'lowStock' && !(p.stock > 0 && p.stock <= 5)) return false;
+        if (healthFilter === 'noSeo' && !!(p.seoTitle && p.seoDescription)) return false;
+        if (healthFilter === 'noBrand' && !!brand) return false;
+        if (healthFilter === 'dupSku' && !(p.sku && dupSkuSet.has(p.sku))) return false;
+      }
+      if (stockFilter === 'instock' && p.stock <= 0) return false;
+      if (stockFilter === 'low' && (p.stock > 5 || p.stock <= 0)) return false;
+      if (stockFilter === 'out' && p.stock > 0) return false;
+      if (statusFilter === 'active' && !p.isActive) return false;
+      if (statusFilter === 'inactive' && p.isActive) return false;
+      if (statusFilter === 'featured' && !p.isFeatured) return false;
+      return true;
+    });
+    if (sortBy === 'newest') result.sort((a, b) => b.createdAt - a.createdAt);
+    else if (sortBy === 'priceAsc') result.sort((a, b) => a.price - b.price);
+    else if (sortBy === 'priceDesc') result.sort((a, b) => b.price - a.price);
+    else if (sortBy === 'stockAsc') result.sort((a, b) => a.stock - b.stock);
+    else if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name));
+    return result;
+  }, [products, deferredSearchTerm, catFilter, healthFilter, dupSkuSet, stockFilter, statusFilter, sortBy]);
 
   useEffect(() => {
     window.localStorage.setItem(ADMIN_PRODUCTS_VIEW_KEY, viewMode);

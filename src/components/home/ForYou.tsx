@@ -25,14 +25,15 @@ export function ForYou() {
 
   // No browsing history yet → don't render.
   if (viewedIds.length === 0) return null;
-  // Loaded but empty → hide.
-  if (recommended && recommended.length === 0) return null;
+  // Avoid reserving skeleton space that could later collapse (CLS): only
+  // render once we have a confirmed, non-empty recommendation set.
+  if (!recommended || recommended.length === 0) return null;
 
   return (
     <ProductRail
       title={t('sx.rail.forYou')}
       icon={<Sparkles className="h-5 w-5 text-primary" />}
-      products={recommended as RailProduct[] | undefined}
+      products={recommended as RailProduct[]}
       viewAllHref="/products"
     />
   );

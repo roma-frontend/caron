@@ -26,6 +26,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useAuthStore } from "@/store/auth";
 import { toR2MediaProxyUrl } from "@/lib/r2Media";
 import Image from "next/image";
+import ReactDOM from "react-dom";
 import { useT } from "@/lib/i18n/admin";
 import { useStoreName } from "@/hooks/useStoreName";
 
@@ -45,6 +46,10 @@ const HERO_VIDEO_SRC = toR2MediaProxyUrl(
 const HERO_POSTER_SRC = toR2MediaProxyUrl(
   process.env.NEXT_PUBLIC_HERO_POSTER_URL || "products/hero-poster.jpg",
 );
+
+// Kick off the hero poster (LCP element) download as early as possible — before
+// the component tree paints — so it doesn't wait on hydration/connection setup.
+ReactDOM.preload(HERO_POSTER_SRC, { as: "image", fetchPriority: "high" });
 
 function FeatureItem({
   feature,

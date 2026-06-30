@@ -11,7 +11,7 @@ import { MaintenanceGate } from '@/components/MaintenanceGate';
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <Header />
       <main className="flex-1">
         <MaintenanceGate>

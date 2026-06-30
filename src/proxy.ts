@@ -48,6 +48,9 @@ export function proxy(request: NextRequest) {
   const { locale, path } = splitLocale(pathname);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-locale', locale);
+  // Forward the resolved (unprefixed) path so the root layout can emit
+  // route-specific <head> hints (e.g. preload the hero poster only on home).
+  requestHeaders.set('x-pathname', path);
 
   let response: NextResponse;
   if (locale !== DEFAULT_LOCALE) {

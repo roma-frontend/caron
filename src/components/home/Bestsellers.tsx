@@ -14,13 +14,15 @@ export function Bestsellers() {
   const { t } = useT();
   const products = useQuery(api.products.getBestsellers, { limit: 12 });
 
-  if (products && products.length < 3) return null;
+  // Only reserve space once we know the rail will render — prevents a
+  // skeleton→null collapse that shifts the footer (CLS).
+  if (!products || products.length < 3) return null;
 
   return (
     <ProductRail
       title={t('sx.rail.bestsellers')}
       icon={<Flame className="h-5 w-5 text-destructive" />}
-      products={products as RailProduct[] | undefined}
+      products={products as RailProduct[]}
       viewAllHref="/products?sort=popular"
       asHit
     />

@@ -11,13 +11,14 @@ function CategoryShelf({ categoryId, name, slug }: { categoryId: Id<'categories'
   const products = useQuery(api.products.listCards, { categoryId, limit: 16 });
   const inStock = products?.filter((p) => p.stock > 0).slice(0, 12);
 
-  // Loaded but not enough to justify a shelf → render nothing.
-  if (inStock && inStock.length < 3) return null;
+  // Don't reserve skeleton space until the shelf is confirmed renderable —
+  // a skeleton that collapses to `null` shifts the footer below it (CLS).
+  if (!inStock || inStock.length < 3) return null;
 
   return (
     <ProductRail
       title={name}
-      products={inStock as RailProduct[] | undefined}
+      products={inStock as RailProduct[]}
       viewAllHref={`/categories/${slug}`}
       skeletonCount={6}
     />
