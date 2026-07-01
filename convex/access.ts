@@ -160,3 +160,59 @@ export const listStaff = query({
     }));
   },
 });
+
+/** Active login sessions for a user (superadmin only). Token is masked. */
+export const listSessions = query({
+  args: { sessionToken: v.string(), userId: v.id('users') },
+  handler: async (ctx, args) => {
+    await getSuperAdminCaller(ctx, args.sessionToken);
+    const rows = await ctx.db.query('sessions').withIndex('by_user', (q) => q.eq('userId', args.userId)).take(100);
+    const now = Date.now();
+    return rows
+      .filter((s) => s.expiresAt > now)
+      .map((s) => ({ _id: s._id, createdAt: s.createdAt, expiresAt: s.expiresAt, tokenTail: s.token.slice(-6) }));
+  },
+});
+
+/** Force-logout: revoke all sessions of a user (superadmin only). */
+export const revokeAllSessions = mutation({
+  args: { sessionToken: v.string(), userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const caller = await getSuperAdminCaller(ctx, args.sessionToken);
+    const rows = await ctx.db.query('sessions').withIndex('by_user', (q) => q.eq('userId', args.userId)).take(500);
+    for (const s of rows) await ctx.db.delete(s._id);
+    // Also clear any legacy per-user token.
+    const target = await ctx.db.get(args.userId);
+    if (target?.sessionToken) await ctx.db.patch(args.userId, { sessionToken: undefined, sessionExpiry: undefined });
+    await logAudit(ctx, caller, 'session.revokeAll', `Force-logged-out "${target?.name ?? args.userId}" (${rows.length} sessions)`,
+      { targetType: 'user', targetId: args.userId });
+    return { revoked: rows.length };
+  },
+});
+
+/**
+ * Start impersonation: issue a real session for the target user so the
+ * superadmin can see the app exactly as them. Superadmin-only, audit-logged,
+ * short-lived (1 day). The client keeps the superadmin token to restore later.
+ */
+export const startImpersonation = mutation({
+  args: { sessionToken: v.string(), targetUserId: v.id('users') },
+  handler: async (ctx, args) => {
+    const caller = await getSuperAdminCaller(ctx, args.sessionToken);
+    const target = await ctx.db.get(args.targetUserId);
+    if (!target) throw new Error('User not found');
+    if (target.role === 'superadmin') throw new Error('Cannot impersonate a superadmin');
+    const token = crypto.randomUUID();
+    await ctx.db.insert('sessions', { userId: target._id, token, expiresAt: Date.now() + 24 * 60 * 60 * 1000, createdAt: Date.now() });
+    await logAudit(ctx, caller, 'user.impersonate', `Started impersonating "${target.name}" (${target.email})`,
+      { targetType: 'user', targetId: args.targetUserId, meta: { role: target.role } });
+    return {
+      sessionToken: token,
+      user: {
+        id: target._id, name: target.name, email: target.email, role: target.role,
+        customerType: target.customerType, discountPercent: target.discountPercent,
+        phone: target.phone, telegramUsername: target.telegramUsername,
+      },
+    };
+  },
+});

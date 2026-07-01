@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query } from './_generated/server';
+import { query, internalQuery } from './_generated/server';
 import { getAdminCaller } from './lib/auth';
 
 /**
@@ -100,5 +100,38 @@ export const getAbandonedCarts = query({
     }
     rows.sort((a, b) => b.total - a.total);
     return { count: rows.length, totalValue: rows.reduce((s, r) => s + r.total, 0), rows: rows.slice(0, 100) };
+  },
+});
+
+/** Aggregated numbers for the owner's daily Telegram digest (internal). */
+export const dailyDigestData = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const recent = await ctx.db.query('orders').order('desc').take(1000);
+    const todays = recent.filter((o) => o.createdAt >= cutoff);
+    const revenue = todays.reduce((s, o) => s + (o.total ?? 0), 0);
+    const [pending, awaiting, activeProducts] = await Promise.all([
+      ctx.db.query('orders').withIndex('by_status', (q) => q.eq('status', 'pending')).take(500),
+      ctx.db.query('orders').withIndex('by_payment_status', (q) => q.eq('paymentStatus', 'awaiting')).take(500),
+      ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(5000),
+    ]);
+    const lowStock = activeProducts.filter((p) => p.stock > 0 && p.stock <= 5).length;
+    const zeroStock = activeProducts.filter((p) => p.stock <= 0).length;
+    // Top product by quantity across today's orders.
+    const qtyByName = new Map<string, number>();
+    for (const o of todays) for (const it of o.items) qtyByName.set(it.name, (qtyByName.get(it.name) ?? 0) + it.quantity);
+    let topName = '';
+    let topQty = 0;
+    for (const [name, q] of qtyByName) if (q > topQty) { topQty = q; topName = name; }
+    return {
+      ordersToday: todays.length,
+      revenueToday: revenue,
+      pendingOrders: pending.length,
+      awaitingPayment: awaiting.length,
+      lowStock,
+      zeroStock,
+      topProduct: topName ? { name: topName, qty: topQty } : null,
+    };
   },
 });

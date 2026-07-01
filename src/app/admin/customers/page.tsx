@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader } from '@/components/ui/loader';
-import { LayoutGrid, List, Search, Percent, Phone, Mail, Pencil, Ban, Trash2, UserPlus, Shield, ShieldCheck } from 'lucide-react';
+import { LayoutGrid, List, Search, Percent, Phone, Mail, Pencil, Ban, Trash2, UserPlus, Shield, ShieldCheck, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { formatDateLocalized } from '@/lib/formatters';
@@ -361,6 +361,19 @@ export default function AdminCustomersPage() {
 
   const isSuperAdmin = customers?.callerRole === 'superadmin';
 
+  const startImpersonationMut = useMutation(api.access.startImpersonation);
+  const startImp = useAuthStore((s) => s.startImpersonation);
+  const impersonate = async (userId: Id<'users'>) => {
+    if (!sessionToken) return;
+    try {
+      const res = await startImpersonationMut({ sessionToken, targetUserId: userId });
+      startImp(res.sessionToken, res.user);
+      window.location.assign('/');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('ac.error'));
+    }
+  };
+
   const updateCustomer = useMutation(api.customers.updateCustomer);
   const deleteCustomer = useMutation(api.customers.deleteCustomer);
 
@@ -439,7 +452,7 @@ export default function AdminCustomersPage() {
       {viewMode === 'grid' ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {customers.page.map((c) => (
-            <CustomerCard key={c._id} customer={c} sessionToken={sessionToken!} onToggleType={() => toggleType(c._id, c.customerType)} onSetDiscount={(d) => setDiscount(c._id, d)} onEdit={() => setEditingCustomer(c)} onToggleBlock={() => toggleBlock(c._id, c.isActive)} onDelete={() => handleDelete(c._id, c.name)} />
+            <CustomerCard key={c._id} customer={c} sessionToken={sessionToken!} onToggleType={() => toggleType(c._id, c.customerType)} onSetDiscount={(d) => setDiscount(c._id, d)} onEdit={() => setEditingCustomer(c)} onToggleBlock={() => toggleBlock(c._id, c.isActive)} onDelete={() => handleDelete(c._id, c.name)} onImpersonate={isSuperAdmin && c.role !== 'superadmin' ? () => impersonate(c._id) : undefined} />
           ))}
         </div>
       ) : (
@@ -489,6 +502,9 @@ export default function AdminCustomersPage() {
                   <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{formatDateLocalized(c.createdAt, t)}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-1">
+                      {isSuperAdmin && c.role !== 'superadmin' && (
+                        <button onClick={() => impersonate(c._id)} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title="Просмотр от имени"><UserCog className="h-3.5 w-3.5" /></button>
+                      )}
                       <button onClick={() => setEditingCustomer(c)} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
                       <button onClick={() => toggleBlock(c._id, c.isActive)} className={`rounded p-1 transition-colors ${c.isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-green-500 hover:bg-green-500/10'}`}><Ban className="h-3.5 w-3.5" /></button>
                       <button onClick={() => handleDelete(c._id, c.name)} className="rounded p-1 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -508,9 +524,9 @@ export default function AdminCustomersPage() {
   );
 }
 
-function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onSetDiscount, onEdit, onToggleBlock, onDelete }: {
+function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onSetDiscount, onEdit, onToggleBlock, onDelete, onImpersonate }: {
   customer: Customer;
-  sessionToken: string; onToggleType: () => void; onSetDiscount: (d: number) => void; onEdit: () => void; onToggleBlock: () => void; onDelete: () => void;
+  sessionToken: string; onToggleType: () => void; onSetDiscount: (d: number) => void; onEdit: () => void; onToggleBlock: () => void; onDelete: () => void; onImpersonate?: () => void;
 }) {
   const { t } = useAdminT();
   return (
@@ -527,6 +543,9 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
               </Badge>
             ) : (
               <RoleBadge role={customer.role} />
+            )}
+            {onImpersonate && (
+              <button onClick={onImpersonate} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title="Просмотр от имени"><UserCog className="h-3.5 w-3.5" /></button>
             )}
             <button onClick={onEdit} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
             <button onClick={onToggleBlock} className={`rounded p-1 transition-colors ${customer.isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-green-500 hover:bg-green-500/10'}`}><Ban className="h-3.5 w-3.5" /></button>

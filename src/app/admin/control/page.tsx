@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader } from '@/components/ui/loader';
 import { formatDateLocalized } from '@/lib/formatters';
 import { toast } from 'sonner';
-import { ShieldCheck, ShieldAlert, Users, Lock, Activity, ScrollText, Crown, Shield } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Users, Lock, Activity, ScrollText, Crown, Shield, LogOut } from 'lucide-react';
 
 type Role = 'admin' | 'manager';
 
@@ -55,6 +55,15 @@ export default function ControlCenterPage() {
   const audit = useQuery(api.access.listAudit, isSuperadmin && sessionToken ? { sessionToken, limit: 60 } : 'skip');
   const staff = useQuery(api.access.listStaff, args);
   const setCapability = useMutation(api.access.setCapability);
+  const revokeAllSessions = useMutation(api.access.revokeAllSessions);
+
+  const forceLogout = async (userId: string, name: string) => {
+    if (!window.confirm(`Завершить все сессии «${name}»?`)) return;
+    try {
+      await revokeAllSessions({ sessionToken: sessionToken!, userId: userId as Parameters<typeof revokeAllSessions>[0]['userId'] });
+      toast.success(t('sc.capSaved'));
+    } catch { toast.error(t('sc.capError')); }
+  };
 
   const grouped = useMemo(() => {
     const caps = matrixData?.capabilities ?? [];
@@ -167,6 +176,9 @@ export default function ControlCenterPage() {
                     </div>
                     <Badge variant="secondary" className="gap-1 text-[10px]"><RoleIcon role={s.role} />{s.role}</Badge>
                     {!s.isActive && <span className="h-2 w-2 rounded-full bg-destructive" title="blocked" />}
+                    <button onClick={() => forceLogout(s._id, s.name)} className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" title="Завершить сессии">
+                      <LogOut className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 ))}
                 {staff === undefined && <div className="py-8"><Loader /></div>}

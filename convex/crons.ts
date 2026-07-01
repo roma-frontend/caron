@@ -66,4 +66,12 @@ crons.daily(
   {},
 );
 
+// Daily: owner Telegram digest (revenue, orders, stock) — 06:00 Armenia time.
+crons.daily(
+  'owner-daily-digest',
+  { hourUTC: 2, minuteUTC: 0 },
+  internal.notifications.sendDailyDigest,
+  {},
+);
+
 export default crons;

@@ -7,11 +7,13 @@ import { Footer } from '@/components/layout/Footer';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { JsonLd } from '@/components/JsonLd';
 import { MaintenanceGate } from '@/components/MaintenanceGate';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="flex min-h-dvh flex-col">
+      <ImpersonationBanner />
       <Header />
       <main className="flex-1 min-h-dvh">
         <MaintenanceGate>

@@ -9,6 +9,40 @@ function fmt(n: number): string {
 /** Public site base URL for links in notifications (no trailing slash). */
 const SITE = (process.env.NEXT_PUBLIC_APP_URL || 'https://caron.group').trim().replace(/\/+$/, '');
 
+/** Owner daily digest: revenue/orders/stock summary → Telegram. */
+export const sendDailyDigest = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
+    const token = settings?.telegramBotToken;
+    const chatId = settings?.telegramChatId;
+    if (!token || !chatId) return;
+
+    const d = await ctx.runQuery(internal.insights.dailyDigestData, {});
+    const text = [
+      `<b>📊 Օրվա հաշվետվություն</b>`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<b>🧾 Պատվերներ (24ժ)՝</b> ${d.ordersToday}`,
+      `<b>💰 Հասույթ (24ժ)՝</b> <b>${fmt(d.revenueToday)} ֏</b>`,
+      `<b>⏳ Սպասող պատվերներ՝</b> ${d.pendingOrders}`,
+      `<b>💳 Վճարման սպասող՝</b> ${d.awaitingPayment}`,
+      `<b>📉 Քիչ մնացորդ (≤5)՝</b> ${d.lowStock}`,
+      `<b>🚫 Զրո մնացորդ՝</b> ${d.zeroStock}`,
+      d.topProduct ? `<b>🔥 Թոփ ապրանք՝</b> ${d.topProduct.name} (${d.topProduct.qty})` : ``,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<a href="${SITE}/admin">📋 Վահանակ</a>`,
+    ].filter(Boolean).join('\n');
+
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      });
+    } catch {}
+  },
+});
+
 export const sendOrderNotification = internalAction({
   args: {
     orderNumber: v.string(),
