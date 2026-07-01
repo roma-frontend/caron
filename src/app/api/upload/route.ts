@@ -80,9 +80,29 @@ export async function POST(req: NextRequest) {
       CacheControl: 'public, max-age=31536000, immutable',
     }));
 
+    // Also store a small ~400px thumbnail (`<key>-thumb`) for catalog grids —
+    // the LCP/list images then download a fraction of the full-size bytes.
+    // Best-effort: a thumbnail failure must never fail the upload.
+    let thumbUrl: string | undefined;
+    if (file.type !== 'image/gif') {
+      try {
+        const thumb = await optimizeImage(original, file.type, 400, 72);
+        await R2.send(new PutObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME!,
+          Key: `${key}-thumb`,
+          Body: thumb.buffer,
+          ContentType: thumb.contentType,
+          CacheControl: 'public, max-age=31536000, immutable',
+        }));
+        thumbUrl = buildImageUrl(`${key}-thumb`);
+      } catch (e) {
+        console.error('Thumbnail generation failed (non-fatal):', e instanceof Error ? e.message : e);
+      }
+    }
+
     const publicUrl = buildImageUrl(key);
 
-    return NextResponse.json({ publicUrl, key });
+    return NextResponse.json({ publicUrl, key, thumbUrl });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('R2 upload error:', msg);

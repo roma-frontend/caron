@@ -18,6 +18,7 @@ export async function optimizeImage(
   input: Buffer,
   mimeType: string,
   maxDim = 1600,
+  quality = 80,
 ): Promise<OptimizedImage> {
   if (mimeType === 'image/gif') {
     return { buffer: input, contentType: 'image/gif' };
@@ -26,7 +27,7 @@ export async function optimizeImage(
     const buffer = await sharp(input, { failOn: 'none' })
       .rotate() // bake in EXIF orientation before stripping metadata
       .resize({ width: maxDim, height: maxDim, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80, effort: 4 })
+      .webp({ quality, effort: 4 })
       .toBuffer();
     return { buffer, contentType: 'image/webp' };
   } catch {
