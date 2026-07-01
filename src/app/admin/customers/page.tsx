@@ -77,7 +77,7 @@ function EditDialog({ customer, sessionToken, canManageStaff, onClose }: { custo
         phone: form.phone || undefined,
         address: form.address || undefined,
         isActive: form.isActive,
-        ...(form.role === 'customer' ? { customerType: form.customerType, discountPercent: form.discountPercent } : {}),
+        ...(form.role !== 'admin' ? { customerType: form.customerType, discountPercent: form.discountPercent } : {}),
         ...(canManageStaff ? {
           ...(form.role !== customer.role ? { role: form.role } : {}),
           ...(form.newPassword ? { newPassword: form.newPassword } : {}),
@@ -112,7 +112,7 @@ function EditDialog({ customer, sessionToken, canManageStaff, onClose }: { custo
             </div>
           )}
 
-          {form.role === 'customer' && (
+          {form.role !== 'admin' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>{t('ac.customerTypeLabel')}</Label>
@@ -198,8 +198,8 @@ function CreateUserWizard({ sessionToken, onClose, onCreated }: { sessionToken: 
         role: form.role,
         phone: form.phone || undefined,
         address: form.address || undefined,
-        customerType: form.role === 'customer' ? form.customerType : undefined,
-        discountPercent: form.role === 'customer' ? form.discountPercent : undefined,
+        customerType: form.role !== 'admin' ? form.customerType : undefined,
+        discountPercent: form.role !== 'admin' ? form.discountPercent : undefined,
         isActive: form.isActive,
       });
       toast.success(t('ac.userCreated'));
@@ -249,7 +249,7 @@ function CreateUserWizard({ sessionToken, onClose, onCreated }: { sessionToken: 
                   </button>
                 ))}
               </div>
-              {form.role === 'customer' && (
+              {form.role !== 'admin' && (
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
                     <Label>{t('ac.customerTypeLabel')}</Label>
@@ -293,8 +293,8 @@ function CreateUserWizard({ sessionToken, onClose, onCreated }: { sessionToken: 
           {step === 3 && (
             <div className="space-y-2 rounded-xl border bg-muted/30 p-4 text-sm">
               <Row label={t('ac.role')} value={t(form.role === 'customer' ? 'ac.roleCustomer' : form.role === 'manager' ? 'ac.roleManager' : 'ac.roleAdmin')} />
-              {form.role === 'customer' && <Row label={t('ac.customerTypeLabel')} value={form.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')} />}
-              {form.role === 'customer' && form.discountPercent > 0 && <Row label={t('ac.discountLabel')} value={`${form.discountPercent}%`} />}
+              {form.role !== 'admin' && <Row label={t('ac.customerTypeLabel')} value={form.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')} />}
+              {form.role !== 'admin' && form.discountPercent > 0 && <Row label={t('ac.discountLabel')} value={`${form.discountPercent}%`} />}
               <Row label={t('ac.name')} value={form.name} />
               <Row label={t('ac.email')} value={form.email} />
               {form.phone && <Row label={t('ac.phoneLabel')} value={form.phone} />}
@@ -487,7 +487,14 @@ export default function AdminCustomersPage() {
                         {c.customerType === 'wholesale' ? t('ac.wholesaleShort') : t('ac.retailShort')}
                       </Badge>
                     ) : (
-                      <RoleBadge role={c.role} />
+                      <div className="flex items-center gap-1">
+                        <RoleBadge role={c.role} />
+                        {c.role === 'manager' && c.customerType && (
+                          <Badge variant={c.customerType === 'wholesale' ? 'default' : 'secondary'} className="text-[10px]">
+                            {c.customerType === 'wholesale' ? t('ac.wholesaleShort') : t('ac.retailShort')}
+                          </Badge>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="p-3 hidden sm:table-cell">
@@ -542,7 +549,14 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
                 {customer.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')}
               </Badge>
             ) : (
-              <RoleBadge role={customer.role} />
+              <>
+                <RoleBadge role={customer.role} />
+                {customer.role === 'manager' && customer.customerType && (
+                  <Badge variant={customer.customerType === 'wholesale' ? 'default' : 'secondary'} className="text-[10px]">
+                    {customer.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')}
+                  </Badge>
+                )}
+              </>
             )}
             {onImpersonate && (
               <button onClick={onImpersonate} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title={t('sc.impTitle')}><UserCog className="h-3.5 w-3.5" /></button>

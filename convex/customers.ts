@@ -86,9 +86,10 @@ export const createUser = mutation({
       address: args.address,
       role: args.role,
       passwordHash,
-      // customerType/discount only meaningful for customer accounts.
-      customerType: args.role === 'customer' ? (args.customerType ?? 'retail') : undefined,
-      discountPercent: args.role === 'customer' ? args.discountPercent : undefined,
+      // customerType/discount apply to customers AND managers (managers place
+      // orders on behalf of customers at retail/wholesale pricing); not admins.
+      customerType: args.role === 'admin' ? undefined : (args.customerType ?? 'retail'),
+      discountPercent: args.role === 'admin' ? undefined : args.discountPercent,
       isActive: args.isActive ?? true,
       createdAt: Date.now(),
     });
@@ -124,7 +125,7 @@ export const updateCustomer = mutation({
 
     // Modifying a staff account (admin/manager) is a super-admin-only action,
     // so a manager cannot block, rename, or otherwise alter another staffer.
-    if ((target.role === 'admin' || target.role === 'manager') && caller.role !== 'admin') {
+    if ((target.role === 'admin' || target.role === 'manager') && caller.role !== 'admin' && caller.role !== 'superadmin') {
       throw new Error('Super-admin access required');
     }
 
@@ -134,9 +135,10 @@ export const updateCustomer = mutation({
       // Don't let an admin demote themselves (avoid locking themselves out).
       if (userId === caller._id && role !== 'admin') throw new Error('Cannot change your own role');
       patch.role = role;
-      // Clear customer-only fields when promoting to staff.
-      if (role !== 'customer') { patch.customerType = undefined; patch.discountPercent = undefined; }
-      else if (target.customerType === undefined) { patch.customerType = 'retail'; }
+      // customerType/discount apply to customers AND managers; drop only when
+      // promoting to admin. Default managers/customers to retail if unset.
+      if (role === 'admin') { patch.customerType = undefined; patch.discountPercent = undefined; }
+      else if (target.customerType === undefined && rest.customerType === undefined) { patch.customerType = 'retail'; }
     }
 
     if (newPassword !== undefined) {
