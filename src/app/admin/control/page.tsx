@@ -57,11 +57,16 @@ export default function ControlCenterPage() {
   const setCapability = useMutation(api.access.setCapability);
   const revokeAllSessions = useMutation(api.access.revokeAllSessions);
 
+  const roleLabel = (role: string) => role === 'superadmin' ? t('sc.roleSuperadmin')
+    : role === 'admin' ? t('ac.roleAdmin')
+    : role === 'manager' ? t('ac.roleManager')
+    : t('ac.roleCustomer');
+
   const forceLogout = async (userId: string, name: string) => {
-    if (!window.confirm(`Завершить все сессии «${name}»?`)) return;
+    if (!window.confirm(`${t('sc.forceLogoutConfirm')} ${name}`)) return;
     try {
       await revokeAllSessions({ sessionToken: sessionToken!, userId: userId as Parameters<typeof revokeAllSessions>[0]['userId'] });
-      toast.success(t('sc.capSaved'));
+      toast.success(t('sc.sessionsRevoked'));
     } catch { toast.error(t('sc.capError')); }
   };
 
@@ -174,9 +179,9 @@ export default function ControlCenterPage() {
                       <p className="truncate text-sm font-medium">{s.name}</p>
                       <p className="truncate text-xs text-muted-foreground">{s.email}</p>
                     </div>
-                    <Badge variant="secondary" className="gap-1 text-[10px]"><RoleIcon role={s.role} />{s.role}</Badge>
+                    <Badge variant="secondary" className="gap-1 text-[10px]"><RoleIcon role={s.role} />{roleLabel(s.role)}</Badge>
                     {!s.isActive && <span className="h-2 w-2 rounded-full bg-destructive" title="blocked" />}
-                    <button onClick={() => forceLogout(s._id, s.name)} className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" title="Завершить сессии">
+                    <button onClick={() => forceLogout(s._id, s.name)} className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" title={t('sc.forceLogout')}>
                       <LogOut className="h-3.5 w-3.5" />
                     </button>
                   </div>

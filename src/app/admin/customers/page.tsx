@@ -503,7 +503,7 @@ export default function AdminCustomersPage() {
                   <td className="p-3">
                     <div className="flex items-center gap-1">
                       {isSuperAdmin && c.role !== 'superadmin' && (
-                        <button onClick={() => impersonate(c._id)} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title="Просмотр от имени"><UserCog className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => impersonate(c._id)} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title={t('sc.impTitle')}><UserCog className="h-3.5 w-3.5" /></button>
                       )}
                       <button onClick={() => setEditingCustomer(c)} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
                       <button onClick={() => toggleBlock(c._id, c.isActive)} className={`rounded p-1 transition-colors ${c.isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-green-500 hover:bg-green-500/10'}`}><Ban className="h-3.5 w-3.5" /></button>
@@ -545,7 +545,7 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
               <RoleBadge role={customer.role} />
             )}
             {onImpersonate && (
-              <button onClick={onImpersonate} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title="Просмотр от имени"><UserCog className="h-3.5 w-3.5" /></button>
+              <button onClick={onImpersonate} className="rounded p-1 text-amber-600 hover:bg-amber-500/10 transition-colors" title={t('sc.impTitle')}><UserCog className="h-3.5 w-3.5" /></button>
             )}
             <button onClick={onEdit} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
             <button onClick={onToggleBlock} className={`rounded p-1 transition-colors ${customer.isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-green-500 hover:bg-green-500/10'}`}><Ban className="h-3.5 w-3.5" /></button>

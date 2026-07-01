@@ -2,7 +2,7 @@
 import { query, mutation, internalMutation, internalQuery } from './_generated/server';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
-import { requireCapability, logAudit } from './lib/auth';
+import { getAdminCaller, requireCapability, logAudit } from './lib/auth';
 import { internal } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
 import type { Doc, Id } from './_generated/dataModel';
@@ -849,7 +849,7 @@ export const dataHealth = query({
     activeNoImage: number; activeNoDescription: number; activeZeroStock: number;
     lowStock: number; missingSeo: number; noBrand: number; duplicateSkus: number;
   }> => {
-    await requireCapability(ctx, args.sessionToken, 'products');
+    await getAdminCaller(ctx, args.sessionToken);
     const products = await ctx.db.query('products').take(50000);
     const brandKeys = await getBrandAttributeKeys(ctx);
     const skuCount = new Map<string, number>();
@@ -1302,7 +1302,7 @@ async function archiveProduct(
 export const listTrash = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await requireCapability(ctx, args.sessionToken, 'products');
+    await requireCapability(ctx, args.sessionToken, 'trash');
     const rows = await ctx.db.query('deletedProducts').withIndex('by_deletedAt').order('desc').take(500);
     return rows.map((r) => ({
       _id: r._id,
@@ -1319,7 +1319,7 @@ export const listTrash = query({
 export const restoreProduct = mutation({
   args: { sessionToken: v.string(), trashId: v.id('deletedProducts') },
   handler: async (ctx, args) => {
-    const caller = await requireCapability(ctx, args.sessionToken, 'products');
+    const caller = await requireCapability(ctx, args.sessionToken, 'trash');
     const row = await ctx.db.get(args.trashId);
     if (!row) throw new Error('Not found');
     const data = JSON.parse(row.snapshot) as ProductInsert;
@@ -1337,7 +1337,7 @@ export const restoreProduct = mutation({
 export const permanentDeleteProduct = mutation({
   args: { sessionToken: v.string(), trashId: v.id('deletedProducts') },
   handler: async (ctx, args) => {
-    const caller = await requireCapability(ctx, args.sessionToken, 'products');
+    const caller = await requireCapability(ctx, args.sessionToken, 'trash');
     const row = await ctx.db.get(args.trashId);
     if (!row) return;
     if (row.images?.length) {
@@ -1354,7 +1354,7 @@ export const permanentDeleteProduct = mutation({
 export const emptyTrash = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    const caller = await requireCapability(ctx, args.sessionToken, 'products');
+    const caller = await requireCapability(ctx, args.sessionToken, 'trash');
     const rows = await ctx.db.query('deletedProducts').take(1000);
     for (const row of rows) {
       if (row.images?.length) {

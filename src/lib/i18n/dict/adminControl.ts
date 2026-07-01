@@ -90,4 +90,13 @@ export const adminControl: DictModule = {
   'tr.emptied': { hy: 'Զամբյուղը դատարկվեց', ru: 'Корзина очищена', en: 'Trash emptied' },
   'tr.error': { hy: 'Սխալ', ru: 'Ошибка', en: 'Error' },
   'tr.autoPurgeNote': { hy: '30 օր հետո ապրանքները ջնջվում են ինքնաշխատ', ru: 'Через 30 дней товары удаляются автоматически', en: 'Items are auto-purged after 30 days' },
+
+  // --- Impersonation & sessions ---
+  'sc.impViewAs': { hy: 'Դիտում որպես', ru: 'Просмотр от имени', en: 'Viewing as' },
+  'sc.impExit': { hy: 'Վերադառնալ սուպերադմին', ru: 'Вернуться в супер-админ', en: 'Back to superadmin' },
+  'sc.impTitle': { hy: 'Դիտել որպես այս օգտատեր', ru: 'Просмотр от имени', en: 'View as this user' },
+  'sc.forceLogout': { hy: 'Ավարտել սեսիաները', ru: 'Завершить сессии', en: 'End sessions' },
+  'sc.forceLogoutConfirm': { hy: 'Ավարտե՞լ բոլոր սեսիաները՝', ru: 'Завершить все сессии:', en: 'End all sessions for:' },
+  'sc.sessionsRevoked': { hy: 'Սեսիաներն ավարտվեցին', ru: 'Сессии завершены', en: 'Sessions ended' },
+  'sc.roleSuperadmin': { hy: 'Սուպերադմին', ru: 'Суперадмин', en: 'Superadmin' },
 };

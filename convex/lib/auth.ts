@@ -123,7 +123,7 @@ export async function requireCapability(
   const row = await ctx.db
     .query('accessControl')
     .withIndex('by_role_capability', (q) => q.eq('role', caller.role as 'admin' | 'manager').eq('capability', capability))
-    .unique();
+    .first();
   if (row && !row.enabled) {
     throw new Error(`Access denied: "${capability}" is disabled for ${caller.role}`);
   }
