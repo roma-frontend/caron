@@ -44,6 +44,18 @@ the `hr-project` RBAC/superadmin patterns.
 - Backend in `convex/products.ts`: `listTrash`, `restoreProduct`,
   `permanentDeleteProduct`, `emptyTrash`, `purgeOldTrash` (+ `crons.ts`).
 
+### Phase 4 — full control / security ✅ (shipped)
+- Server-side capability enforcement: `requireCapability` gates writes across
+  products/categories/brands/filters/promotions/coupons/qa/reviews/pages/
+  delivery/settings/returns/orders (superadmin bypass). Product delete/bulk also
+  gated by `action.delete` / `action.bulk`.
+- Expanded audit: order status changes + settings updates (on top of user/role/
+  access/product-lifecycle).
+- Impersonation ("view as user"): superadmin issues short-lived session for a
+  customer; sticky banner to exit; buttons on /admin/customers; audit-logged.
+- Session control: list + force-logout (revoke all) per user in control center.
+- Daily owner Telegram digest cron.
+
 ## Next (not yet built)
 
 ### Phase 2C — bulk order actions
