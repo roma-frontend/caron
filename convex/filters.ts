@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { internal } from './_generated/api';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 
 function normalizeOptionValue(value: string): string {
   return value
@@ -58,7 +58,7 @@ export const create = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'filters');
     const { sessionToken: _, ...data } = args;
     const id = await ctx.db.insert('filterDefinitions', data);
     // Auto-translate the filter name + option labels to RU/EN in the background.
@@ -70,7 +70,7 @@ export const create = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('filterDefinitions') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'filters');
     await ctx.db.delete(args.id);
   },
 });
@@ -88,7 +88,7 @@ export const update = mutation({
     categoryId: v.optional(v.id('categories')),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'filters');
     const { id, sessionToken: _, slug, ...patch } = args;
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error('Ֆիլտրը չի գտնվել');
@@ -137,7 +137,7 @@ export const update = mutation({
 export const migrateTesak = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'filters');
     const cats = await ctx.db.query('categories').collect();
     let added = 0;
     for (const cat of cats) {
@@ -159,7 +159,7 @@ export const migrateTesak = mutation({
 export const runMigrateFilterAttributeKeysToId = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'filters');
     // Build mapping of slug -> _id for all filterDefinitions
     const filterDefs = await ctx.db.query('filterDefinitions').collect();
     const slugToId = new Map<string, string>(filterDefs.map((f) => [f.slug, f._id]));
@@ -207,7 +207,7 @@ export const reorder = mutation({
     items: v.array(v.object({ id: v.id('filterDefinitions'), order: v.number() })),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'filters');
     for (const item of args.items) {
       await ctx.db.patch(item.id, { order: item.order });
     }

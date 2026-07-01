@@ -2,7 +2,7 @@
 import { query, mutation, internalMutation, internalQuery } from './_generated/server';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
-import { getAdminCaller, logAudit } from './lib/auth';
+import { requireCapability, logAudit } from './lib/auth';
 import { internal } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
 import type { Doc, Id } from './_generated/dataModel';
@@ -617,7 +617,7 @@ export const getBySlug = query({
 export const findDuplicateSlugs = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const all = await ctx.db.query('products').take(100000);
     const bySlug = new Map<string, Doc<'products'>[]>();
     for (const p of all) {
@@ -659,7 +659,7 @@ export const findDuplicateSlugs = query({
 export const dedupeSlugs = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const all = await ctx.db.query('products').take(100000);
 
     const bySlug = new Map<string, Doc<'products'>[]>();
@@ -754,7 +754,7 @@ export const searchByOem = query({
 export const rebuildOemIndex = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     // Clear existing index.
     const all = await ctx.db.query('oemIndex').take(100000);
     for (const row of all) await ctx.db.delete(row._id);
@@ -849,7 +849,7 @@ export const dataHealth = query({
     activeNoImage: number; activeNoDescription: number; activeZeroStock: number;
     lowStock: number; missingSeo: number; noBrand: number; duplicateSkus: number;
   }> => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const products = await ctx.db.query('products').take(50000);
     const brandKeys = await getBrandAttributeKeys(ctx);
     const skuCount = new Map<string, number>();
@@ -1010,7 +1010,7 @@ export const create = mutation({
     seoTitle: v.optional(v.string()), seoDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const { sessionToken, ...data } = args;
     void sessionToken;
     const finalPrice = data.price ?? 0;
@@ -1107,7 +1107,7 @@ export const update = mutation({
     seoTitle: v.optional(v.string()), seoDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const { id, sessionToken, stock, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, showInPromotions, clearBrand, ...rest } = args;
     void sessionToken;
     if (clearBrand) { rest.brand = undefined; }
@@ -1197,7 +1197,7 @@ export const update = mutation({
     }
 
     if (stock !== undefined && old && old.stock !== stock) {
-      const caller = await getAdminCaller(ctx, args.sessionToken);
+      const caller = await requireCapability(ctx, args.sessionToken, 'products');
       await ctx.db.insert('stockMovements', {
         productId: id,
         type: 'manual',
@@ -1262,7 +1262,8 @@ function r2KeyFromUrl(imageUrl: string): string | null {
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('products') },
   handler: async (ctx, args) => {
-    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'products');
+    await requireCapability(ctx, args.sessionToken, 'action.delete');
     const product = await ctx.db.get(args.id);
     if (!product) return;
     await archiveProduct(ctx, product, caller);
@@ -1301,7 +1302,7 @@ async function archiveProduct(
 export const listTrash = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const rows = await ctx.db.query('deletedProducts').withIndex('by_deletedAt').order('desc').take(500);
     return rows.map((r) => ({
       _id: r._id,
@@ -1318,7 +1319,7 @@ export const listTrash = query({
 export const restoreProduct = mutation({
   args: { sessionToken: v.string(), trashId: v.id('deletedProducts') },
   handler: async (ctx, args) => {
-    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'products');
     const row = await ctx.db.get(args.trashId);
     if (!row) throw new Error('Not found');
     const data = JSON.parse(row.snapshot) as ProductInsert;
@@ -1336,7 +1337,7 @@ export const restoreProduct = mutation({
 export const permanentDeleteProduct = mutation({
   args: { sessionToken: v.string(), trashId: v.id('deletedProducts') },
   handler: async (ctx, args) => {
-    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'products');
     const row = await ctx.db.get(args.trashId);
     if (!row) return;
     if (row.images?.length) {
@@ -1353,7 +1354,7 @@ export const permanentDeleteProduct = mutation({
 export const emptyTrash = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'products');
     const rows = await ctx.db.query('deletedProducts').take(1000);
     for (const row of rows) {
       if (row.images?.length) {
@@ -1402,7 +1403,9 @@ export const bulkAction = mutation({
     categoryId: v.optional(v.id('categories')),
   },
   handler: async (ctx, args): Promise<{ affected: number }> => {
-    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'products');
+    await requireCapability(ctx, args.sessionToken, 'action.bulk');
+    if (args.op === 'delete') await requireCapability(ctx, args.sessionToken, 'action.delete');
     const now = Date.now();
     let affected = 0;
     for (const id of args.ids) {
@@ -1479,7 +1482,7 @@ export const bulkCreate = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     const now = Date.now();
     let created = 0;
     let updated = 0;
@@ -1790,7 +1793,7 @@ export const listStockMovements = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    try { await getAdminCaller(ctx, args.sessionToken); } catch { return []; }
+    try { await requireCapability(ctx, args.sessionToken, 'products'); } catch { return []; }
     const take = args.limit ?? 200;
     if (args.productId) {
       return await ctx.db
@@ -1830,7 +1833,7 @@ export const reorderVariantGroup = mutation({
     items: v.array(v.object({ id: v.id('products'), order: v.number() })),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'products');
     if (!args.variantGroup || args.items.length === 0) return;
 
     const ids = new Set(args.items.map((i) => i.id));

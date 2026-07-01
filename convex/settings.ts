@@ -1,11 +1,11 @@
 import { v } from 'convex/values';
 import { query, internalQuery, mutation } from './_generated/server';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability, logAudit } from './lib/auth';
 
 export const get = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'settings');
     const settings = await ctx.db.query('settings').first();
     return settings ?? {
       storeName: 'Caron Armenia',
@@ -201,8 +201,9 @@ export const save = mutation({
     navBadges: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'settings');
     const { sessionToken, ...data } = args;
+    await logAudit(ctx, caller, 'settings.update', 'Updated store settings', { targetType: 'settings', meta: { keys: Object.keys(data) } });
     const existing = await ctx.db.query('settings').first();
     if (existing) {
       await ctx.db.patch(existing._id, data);

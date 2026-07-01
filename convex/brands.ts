@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 import { normalizeImageUrl } from './lib/imageUrl';
 
 function normalizeBrandLogo<T extends { logoUrl?: string }>(brand: T): T {
@@ -51,7 +51,7 @@ export const create = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'brands');
     const name = args.name.trim();
     if (!name) throw new Error('Brand name is required');
 
@@ -92,7 +92,7 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'brands');
     const current = await ctx.db.get(args.id);
     if (!current) throw new Error('Brand not found');
 
@@ -115,7 +115,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('brands') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'brands');
     await ctx.db.delete(args.id);
   },
 });
@@ -126,7 +126,7 @@ export const reorder = mutation({
     items: v.array(v.object({ id: v.id('brands'), order: v.number() })),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'brands');
     const now = Date.now();
     for (const it of args.items) {
       await ctx.db.patch(it.id, { order: it.order, updatedAt: now });

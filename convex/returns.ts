@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation, internalMutation } from './_generated/server';
 import { internal } from './_generated/api';
-import { getAuthCaller, getAdminCaller } from './lib/auth';
+import { getAuthCaller, getAdminCaller, requireCapability } from './lib/auth';
 
 /** Customer creates a return/exchange request for one of their orders. */
 export const create = mutation({
@@ -127,7 +127,7 @@ export const updateStatus = mutation({
     adminComment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'returns');
     const req = await ctx.db.get(args.id);
     if (!req) throw new Error('Հայտը չի գտնվել');
 

@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAuthCaller, getAdminCaller } from './lib/auth';
+import { getAuthCaller, requireCapability } from './lib/auth';
 
 /** Public: approved questions (with answers) for a product. */
 export const listByProduct = query({
@@ -58,7 +58,7 @@ export const listAll = query({
 export const answer = mutation({
   args: { sessionToken: v.string(), id: v.id('productQuestions'), answer: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'qa');
     await ctx.db.patch(args.id, {
       answer: args.answer.trim() || undefined,
       answeredAt: Date.now(),
@@ -71,7 +71,7 @@ export const answer = mutation({
 export const approve = mutation({
   args: { sessionToken: v.string(), id: v.id('productQuestions'), approved: v.boolean() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'qa');
     await ctx.db.patch(args.id, { isApproved: args.approved });
   },
 });
@@ -79,7 +79,7 @@ export const approve = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('productQuestions') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'qa');
     await ctx.db.delete(args.id);
   },
 });

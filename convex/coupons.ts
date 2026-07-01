@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller, getAuthCaller } from './lib/auth';
+import { requireCapability, getAuthCaller } from './lib/auth';
 
 export const list = query({
   args: { sessionToken: v.string() },
@@ -24,7 +24,7 @@ export const create = mutation({
     expiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'promotions');
     if (!Number.isFinite(args.value) || args.value < 0) {
       throw new Error('Invalid coupon value');
     }
@@ -45,7 +45,7 @@ export const create = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('coupons') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'promotions');
     await ctx.db.delete(args.id);
   },
 });

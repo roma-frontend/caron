@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 import { internal } from './_generated/api';
 import { normalizeImageUrl, normalizeImageUrls } from './lib/imageUrl';
 import { toProductCard } from './products';
@@ -69,7 +69,7 @@ export const create = mutation({
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'promotions');
     const { sessionToken, ...data } = args;
     if (data.images && data.images.length > 0) {
       data.imageUrl = data.images[0];
@@ -84,7 +84,7 @@ export const create = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('promotions') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'promotions');
     await ctx.db.delete(args.id);
   },
 });
@@ -106,7 +106,7 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'promotions');
     const { id, sessionToken, productIds, images, ...rest } = args;
 
     const old = await ctx.db.get(id);

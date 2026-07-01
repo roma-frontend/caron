@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
-import { getAuthCaller, getAdminCaller } from './lib/auth';
+import { getAuthCaller, requireCapability } from './lib/auth';
 import { adjustLoyalty } from './lib/loyalty';
 
 export const getByProduct = query({
@@ -124,7 +124,7 @@ export const listAll = query({
 export const approve = mutation({
   args: { sessionToken: v.string(), id: v.id('reviews'), approved: v.boolean() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'reviews');
     const review = await ctx.db.get(args.id);
     if (!review) return;
     await ctx.db.patch(args.id, { isApproved: args.approved });
@@ -151,7 +151,7 @@ export const approve = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('reviews') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'reviews');
     const review = await ctx.db.get(args.id);
     await ctx.db.delete(args.id);
     if (review) await recomputeRating(ctx, review.productId);

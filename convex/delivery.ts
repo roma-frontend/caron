@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 import { computeDeliveryQuote, ruleNote, type RuleLike, type ZoneLike } from './lib/delivery';
 
 /** Public: active delivery zones (both groups), ordered. */
@@ -18,7 +18,7 @@ export const list = query({
 export const listAdmin = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     const zones = await ctx.db.query('deliveryZones').collect();
     return zones.sort((a, b) => a.order - b.order);
   },
@@ -40,7 +40,7 @@ export const upsert = mutation({
     keywords: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     const { sessionToken: _, id, ...rest } = args;
     if (id) {
       const patch: Record<string, unknown> = { name: rest.name, schedule: rest.schedule, group: rest.group };
@@ -74,7 +74,7 @@ export const upsert = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('deliveryZones') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     await ctx.db.delete(args.id);
   },
 });
@@ -83,7 +83,7 @@ export const remove = mutation({
 export const seed = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     const existing = await ctx.db.query('deliveryZones').first();
     if (existing) return 'already-seeded';
 
@@ -204,7 +204,7 @@ export const rulesList = query({
 export const rulesListAdmin = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     return (await ctx.db.query('deliveryRules').collect()).sort((a, b) => a.priority - b.priority);
   },
 });
@@ -230,7 +230,7 @@ export const ruleUpsert = mutation({
     noteEn: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     const { sessionToken: _, id, ...rest } = args;
     if (id) {
       await ctx.db.patch(id, {
@@ -275,7 +275,7 @@ export const ruleUpsert = mutation({
 export const ruleRemove = mutation({
   args: { sessionToken: v.string(), id: v.id('deliveryRules') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'delivery');
     await ctx.db.delete(args.id);
   },
 });

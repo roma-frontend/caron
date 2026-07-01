@@ -105,6 +105,32 @@ export async function getSuperAdminCaller(
 export const getSuperadminCaller = getSuperAdminCaller;
 
 /**
+ * Staff gate + access-matrix enforcement in one call. Verifies the caller may
+ * use the given capability (nav section like 'products', or an action like
+ * 'action.delete'). Superadmin bypasses all restrictions. For admin/manager the
+ * `accessControl` matrix is consulted — a row with `enabled: false` blocks it.
+ * Absence of a row = allowed (default). Use this in section mutations so the UI
+ * restrictions are actually enforced server-side.
+ */
+export async function requireCapability(
+  ctx: QueryCtx | MutationCtx,
+  sessionToken: string,
+  capability: string,
+): Promise<AuthenticatedCaller> {
+  const caller = await getAdminCaller(ctx, sessionToken);
+  if (caller.role === 'superadmin') return caller;
+  if (caller.role !== 'admin' && caller.role !== 'manager') return caller;
+  const row = await ctx.db
+    .query('accessControl')
+    .withIndex('by_role_capability', (q) => q.eq('role', caller.role as 'admin' | 'manager').eq('capability', capability))
+    .unique();
+  if (row && !row.enabled) {
+    throw new Error(`Access denied: "${capability}" is disabled for ${caller.role}`);
+  }
+  return caller;
+}
+
+/**
  * Append an entry to the audit log. Best-effort: callers pass the already
  * resolved caller so we avoid an extra lookup. Only usable in mutation context.
  */

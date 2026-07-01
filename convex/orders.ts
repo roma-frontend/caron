@@ -3,7 +3,7 @@ import { query, mutation } from './_generated/server';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
-import { getAdminCaller, getAuthCaller } from './lib/auth';
+import { getAdminCaller, getAuthCaller, requireCapability, logAudit } from './lib/auth';
 import { resolveCashback } from './lib/loyalty';
 import { computeDeliveryQuote, type RuleLike, type ZoneLike } from './lib/delivery';
 
@@ -396,7 +396,7 @@ export const updateStatus = mutation({
     cancelComment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const admin = await getAdminCaller(ctx, args.sessionToken);
+    const admin = await requireCapability(ctx, args.sessionToken, 'orders');
     const { id, status, paymentStatus, cancelReason, cancelComment } = args;
 
     const order = await ctx.db.get(id);
@@ -517,6 +517,12 @@ export const updateStatus = mutation({
     else if (currentPaymentStatus === undefined) patch.paymentStatus = 'awaiting';
 
     await ctx.db.patch(id, patch);
+
+    if ((status !== undefined && status !== prevStatus) || (paymentStatus !== undefined && paymentStatus !== order.paymentStatus)) {
+      await logAudit(ctx, admin, 'order.updateStatus',
+        `Order #${order.orderNumber}: ${prevStatus}→${nextStatus}${paymentStatus ? `, payment ${paymentStatus}` : ''}`,
+        { targetType: 'order', targetId: id, meta: { prevStatus, nextStatus, paymentStatus } });
+    }
 
     const now = Date.now();
     const adminName = admin?.name ?? admin?.email;

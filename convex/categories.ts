@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { internal } from './_generated/api';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 import { normalizeImageUrl } from './lib/imageUrl';
 
 function normalizeCategoryImage<T extends { imageUrl?: string | null }>(category: T): T {
@@ -62,7 +62,7 @@ export const create = mutation({
     seoDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'categories');
     const all = await ctx.db.query('categories').take(500);
     const inputName = normalizeCategoryKey(args.name);
     const inputSlug = normalizeCategoryKey(args.slug);
@@ -104,7 +104,7 @@ export const update = mutation({
     seoDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'categories');
 
     const current = await ctx.db.get(args.id);
     if (!current) throw new Error('Category not found');
@@ -137,7 +137,7 @@ export const mergeCategories = mutation({
     targetId: v.id('categories'),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'categories');
 
     if (args.sourceId === args.targetId) {
       throw new Error('Source and target category must be different');
@@ -225,7 +225,7 @@ export const listWithCounts = query({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('categories') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'categories');
     await ctx.db.delete(args.id);
   },
 });

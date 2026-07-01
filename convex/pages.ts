@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { internal } from './_generated/api';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 
 export const list = query({
   args: {},
@@ -29,7 +29,7 @@ export const save = mutation({
     seoDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'pages');
     const { sessionToken: _, id, ...data } = args;
     const now = Date.now();
     if (id) {
@@ -47,7 +47,7 @@ export const save = mutation({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('pages') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    await requireCapability(ctx, args.sessionToken, 'pages');
     await ctx.db.delete(args.id);
   },
 });
