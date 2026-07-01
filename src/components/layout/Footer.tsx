@@ -119,9 +119,13 @@ export function Footer() {
           </div>
         </div>
 
-        {settings?.enableNewsletter && (
-          <div className="mt-6 sm:mt-8 max-w-md mx-auto px-2 sm:px-0">
-            <NewsletterForm />
+        {/* Reserve the newsletter slot while settings are still loading so the
+            common (enabled) case does not shift the footer bottom when the
+            Convex settings query resolves. It only collapses once in the rarer
+            explicitly-disabled configuration. */}
+        {(settings === undefined || settings?.enableNewsletter) && (
+          <div className="mt-6 sm:mt-8 max-w-md mx-auto px-2 sm:px-0 min-h-[168px]">
+            {settings !== undefined && <NewsletterForm />}
           </div>
         )}
 

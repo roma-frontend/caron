@@ -5,7 +5,7 @@ import { useReveal, useMouseGlow, cardRevealStyle } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QuantityStepper } from '@/components/QuantityStepper';
-import { ShoppingCart, Heart, Star, Check, Eye, Truck } from 'lucide-react';
+import { ShoppingCart, Heart, Star, Check, Eye } from 'lucide-react';
 import { formatPrice, discountPercent } from '@/lib/formatters';
 import { formatDateLocalized, localizeDeliveryEstimate } from '@/lib/formatters';
 import { useCartStore } from '@/store/cart';
@@ -69,7 +69,7 @@ function checkFits(vehicle: { brand: string; model: string; year: string } | nul
   return !!(carBrand && vehicle.brand === carBrand);
 }
 
-function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: _promoDiscountPercent, qtyStep, attributes, index = 0, description, compact, lite }: ProductCardProps) {
+function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku, price, wholesalePrice, compareAtPrice, retailDiscount, wholesaleDiscount, image, category, inStock = true, stock, isNew, isHit, rating, reviewCount, carBrand, promoDiscountPercent: qtyStep, attributes, index = 0, description, compact, lite }: ProductCardProps) {
   const { t, lang } = useT();
   const name = pickLocalized({ name: rawName, nameRu, nameEn }, 'name', lang);
   const { ref, visible } = useReveal();
@@ -134,11 +134,6 @@ function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku
   const deliveryDate = inStock && typeof settings?.deliveryDaysYerevan === 'number' && settings.deliveryDaysYerevan > 0
     ? formatDateLocalized(now + settings.deliveryDaysYerevan * 86400000, t)
     : null;
-  const deliveryText = inStock
-    ? (deliveryDate
-        ? `${t('sp.deliveryUntil')} ${deliveryDate}`
-        : `${t('sp.deliveryWord')} ${localizeDeliveryEstimate(settings?.deliveryEstimateYerevan?.trim(), lang) || t('sp.days13')}`)
-    : null;
   const btnDeliveryLabel = deliveryDate || (inStock ? (localizeDeliveryEstimate(settings?.deliveryEstimateYerevan?.trim(), lang) || t('sp.days13')) : null);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -151,7 +146,7 @@ function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku
 
   return (
     <>
-      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), contentVisibility: 'auto', containIntrinsicHeight: 'auto 380px' }} {...(lite ? {} : handlers)}>
+      <div ref={ref} data-product-card style={{ ...cardRevealStyle(visible, index * 0.06), ...(index < 4 ? {} : { contentVisibility: 'auto', containIntrinsicHeight: 'auto 380px' }) }} {...(lite ? {} : handlers)}>
         {compact ? (
           /* ─── Compact list mode ─── */
           <div className="flex gap-2 sm:gap-3 rounded-xl border bg-background p-1.5 sm:p-2 transition-all hover:shadow-md" style={{ boxShadow: 'var(--shadow-xs)' }}>

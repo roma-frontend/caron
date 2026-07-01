@@ -355,7 +355,13 @@ export default function ProductsPage() {
             <div
               ref={setGridEl}
               className={isList ? 'mx-auto max-w-3xl' : ''}
-              style={{ position: 'relative', width: '100%', height: `${rowVirtualizer.getTotalSize()}px` }}
+              // Keep the results area at least a viewport tall so that when the
+              // real (virtualized) grid replaces the 100dvh skeleton — or when a
+              // short result set (fewer than a full page) renders — the footer
+              // below does not slam upward. This is the dominant CLS source on
+              // the catalog (footer shifts by ~1.0). `minHeight` is a no-op once
+              // content is taller than the viewport.
+              style={{ position: 'relative', width: '100%', minHeight: '100dvh', height: `${rowVirtualizer.getTotalSize()}px` }}
             >
               {virtualRows.map((vRow) => {
                 const start = vRow.index * cols;
@@ -389,7 +395,7 @@ export default function ProductsPage() {
           )}
 
           {!brandLoading && results.length === 0 && status !== 'LoadingFirstPage' && (
-            <div className="py-16 text-center text-muted-foreground">{t('sp.noProductsFound')}</div>
+            <div className="flex min-h-[100dvh] items-start justify-center py-16 text-center text-muted-foreground">{t('sp.noProductsFound')}</div>
           )}
 
           {(status === 'LoadingFirstPage' || brandLoading) && <ProductGridSkeleton count={PAGE_SIZE} />}
