@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { contactLabel } from '@/lib/contact';
+import { auditActionLabel, auditText } from '@/lib/i18n/auditLog';
 import { api } from '../../../../convex/_generated/api';
 import { useAuth } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';
@@ -204,10 +205,10 @@ export default function ControlCenterPage() {
                   audit.map((e) => (
                     <div key={e._id} className="border-b border-border/40 px-4 py-2.5 last:border-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{e.action}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{auditActionLabel(e.action, t)}</span>
                         <span className="shrink-0 text-[10px] text-muted-foreground">{formatDateLocalized(e.createdAt, t)}</span>
                       </div>
-                      <p className="mt-1 text-sm">{e.summary}</p>
+                      <p className="mt-1 text-sm">{auditText(e, t)}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground"><RoleIcon role={e.actorRole} />{e.actorName}</p>
                     </div>
                   ))
