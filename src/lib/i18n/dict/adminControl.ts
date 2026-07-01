@@ -72,4 +72,22 @@ export const adminControl: DictModule = {
   'ib.allClear': { hy: 'Ամեն ինչ կարգին է ', ru: 'Всё чисто ', en: 'All clear ' },
   'ib.totalValue': { hy: 'Ընդհանուր արժեք', ru: 'Общая сумма', en: 'Total value' },
   'nav.inbox': { hy: 'Մուտքեր', ru: 'Входящие', en: 'Inbox' },
+
+  // --- Trash (deleted products) ---
+  'nav.trash': { hy: 'Զամբյուղ', ru: 'Корзина', en: 'Trash' },
+  'sc.cap.trash': { hy: 'Զամբյուղ', ru: 'Корзина', en: 'Trash' },
+  'tr.title': { hy: 'Ջնջվածների զամբյուղ', ru: 'Корзина удалённых', en: 'Trash' },
+  'tr.subtitle': { hy: 'Վերականգնեք սխալմամբ ջնջված ապրանքները', ru: 'Восстановите случайно удалённые товары', en: 'Restore accidentally deleted products' },
+  'tr.empty': { hy: 'Զամբյուղը դատարկ է', ru: 'Корзина пуста', en: 'Trash is empty' },
+  'tr.restore': { hy: 'Վերականգնել', ru: 'Восстановить', en: 'Restore' },
+  'tr.deleteForever': { hy: 'Ջնջել ընդմիշտ', ru: 'Удалить навсегда', en: 'Delete forever' },
+  'tr.emptyTrash': { hy: 'Դատարկել զամբյուղը', ru: 'Очистить корзину', en: 'Empty trash' },
+  'tr.deletedBy': { hy: 'Ջնջեց', ru: 'Удалил', en: 'Deleted by' },
+  'tr.confirmPurge': { hy: 'Ջնջե՞լ ընդմիշտ։ Այս գործողությունն անշրջելի է։', ru: 'Удалить навсегда? Действие необратимо.', en: 'Delete forever? This cannot be undone.' },
+  'tr.confirmEmpty': { hy: 'Դատարկե՞լ ամբողջ զամբյուղը ընդմիշտ։', ru: 'Очистить всю корзину навсегда?', en: 'Permanently empty the whole trash?' },
+  'tr.restored': { hy: 'Վերականգնվեց', ru: 'Восстановлено', en: 'Restored' },
+  'tr.purged': { hy: 'Ջնջվեց ընդմիշտ', ru: 'Удалено навсегда', en: 'Permanently deleted' },
+  'tr.emptied': { hy: 'Զամբյուղը դատարկվեց', ru: 'Корзина очищена', en: 'Trash emptied' },
+  'tr.error': { hy: 'Սխալ', ru: 'Ошибка', en: 'Error' },
+  'tr.autoPurgeNote': { hy: '30 օր հետո ապրանքները ջնջվում են ինքնաշխատ', ru: 'Через 30 дней товары удаляются автоматически', en: 'Items are auto-purged after 30 days' },
 };

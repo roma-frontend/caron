@@ -58,4 +58,12 @@ crons.daily(
   { dryRun: false },
 );
 
+// Daily: permanently purge products that have sat in the trash > 30 days.
+crons.daily(
+  'purge-old-product-trash',
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.products.purgeOldTrash,
+  {},
+);
+
 export default crons;

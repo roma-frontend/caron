@@ -28,6 +28,7 @@ export const CAPABILITIES = [
   { key: 'pages', kind: 'nav' },
   { key: 'delivery', kind: 'nav' },
   { key: 'settings', kind: 'nav' },
+  { key: 'trash', kind: 'nav' },
   // Cross-cutting privileged actions
   { key: 'action.delete', kind: 'action' },
   { key: 'action.export', kind: 'action' },

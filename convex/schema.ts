@@ -277,7 +277,23 @@ export default defineSchema(
     .index('by_order_number', ['orderNumber'])
     .index('by_payment_status', ['paymentStatus']),
 
-  // ─── Promotions / Sales ────────────────────────────────────────
+  // ─── Deleted products archive (trash / restore) ───────────────
+  // Products are moved here on delete instead of being destroyed, so an
+  // accidental deletion can be restored. Images are NOT purged from R2 while a
+  // product sits in the trash (see products.imageReferences). Permanent delete
+  // (manual or auto-purge cron) drops the row and its images.
+  deletedProducts: defineTable({
+    originalId: v.string(),
+    name: v.string(),
+    sku: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
+    snapshot: v.string(),          // JSON of the full original product doc
+    deletedBy: v.optional(v.id('users')),
+    deletedByName: v.string(),
+    deletedAt: v.number(),
+  }).index('by_deletedAt', ['deletedAt']),
+
+
   promotions: defineTable({
     title: v.string(),
     description: v.optional(v.string()),

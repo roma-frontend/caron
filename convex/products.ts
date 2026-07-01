@@ -2,7 +2,7 @@
 import { query, mutation, internalMutation, internalQuery } from './_generated/server';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
-import { getAdminCaller } from './lib/auth';
+import { getAdminCaller, logAudit } from './lib/auth';
 import { internal } from './_generated/api';
 import { normalizeImageUrls } from './lib/imageUrl';
 import type { Doc, Id } from './_generated/dataModel';
@@ -812,6 +812,11 @@ export const imageReferences = internalQuery({
     const products = await ctx.db.query('products').take(50000);
     for (const p of products) if (p.images) urls.push(...p.images);
 
+    // Keep images of trashed products alive so they survive the orphan-cleanup
+    // cron and a restore brings the pictures back intact.
+    const trashed = await ctx.db.query('deletedProducts').take(50000);
+    for (const d of trashed) if (d.images) urls.push(...d.images);
+
     const reviews = await ctx.db.query('reviews').take(50000);
     for (const r of reviews) if (r.photos) urls.push(...r.photos);
 
@@ -1257,15 +1262,125 @@ function r2KeyFromUrl(imageUrl: string): string | null {
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('products') },
   handler: async (ctx, args) => {
-    await getAdminCaller(ctx, args.sessionToken);
+    const caller = await getAdminCaller(ctx, args.sessionToken);
     const product = await ctx.db.get(args.id);
-    if (product?.images?.length) {
-      const keys = product.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
-      if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
-    }
+    if (!product) return;
+    await archiveProduct(ctx, product, caller);
     await syncOemIndex(ctx, args.id, undefined); // remove OEM index rows
     await ctx.db.delete(args.id);
     await recomputeCatalogStats(ctx);
+    await logAudit(ctx, caller, 'product.delete', `Moved product "${product.name}" to trash`,
+      { targetType: 'product', targetId: args.id });
+  },
+});
+
+/**
+ * Move a product into the `deletedProducts` archive (trash). Images are kept in
+ * R2 (referenced via imageReferences) so a restore is lossless.
+ */
+async function archiveProduct(
+  ctx: MutationCtx,
+  product: Doc<'products'>,
+  caller: { _id: Id<'users'>; name: string },
+): Promise<void> {
+  const { _id, _creationTime, ...rest } = product;
+  void _id; void _creationTime;
+  await ctx.db.insert('deletedProducts', {
+    originalId: product._id,
+    name: product.name,
+    sku: product.sku,
+    images: product.images,
+    snapshot: JSON.stringify(rest),
+    deletedBy: caller._id,
+    deletedByName: caller.name,
+    deletedAt: Date.now(),
+  });
+}
+
+/** List trashed products (most-recently deleted first). Admin-only. */
+export const listTrash = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getAdminCaller(ctx, args.sessionToken);
+    const rows = await ctx.db.query('deletedProducts').withIndex('by_deletedAt').order('desc').take(500);
+    return rows.map((r) => ({
+      _id: r._id,
+      name: r.name,
+      sku: r.sku,
+      image: r.images?.[0] ?? null,
+      deletedByName: r.deletedByName,
+      deletedAt: r.deletedAt,
+    }));
+  },
+});
+
+/** Restore a trashed product back into the live catalog. Admin-only. */
+export const restoreProduct = mutation({
+  args: { sessionToken: v.string(), trashId: v.id('deletedProducts') },
+  handler: async (ctx, args) => {
+    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const row = await ctx.db.get(args.trashId);
+    if (!row) throw new Error('Not found');
+    const data = JSON.parse(row.snapshot) as ProductInsert;
+    const newId = await ctx.db.insert('products', data);
+    await syncOemIndex(ctx, newId, data.oemNumbers);
+    await ctx.db.delete(args.trashId);
+    await recomputeCatalogStats(ctx);
+    await logAudit(ctx, caller, 'product.restore', `Restored product "${row.name}" from trash`,
+      { targetType: 'product', targetId: newId });
+    return { productId: newId };
+  },
+});
+
+/** Permanently delete a trashed product and purge its R2 images. Admin-only. */
+export const permanentDeleteProduct = mutation({
+  args: { sessionToken: v.string(), trashId: v.id('deletedProducts') },
+  handler: async (ctx, args) => {
+    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const row = await ctx.db.get(args.trashId);
+    if (!row) return;
+    if (row.images?.length) {
+      const keys = row.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
+      if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
+    }
+    await ctx.db.delete(args.trashId);
+    await logAudit(ctx, caller, 'product.purge', `Permanently deleted "${row.name}"`,
+      { targetType: 'product', targetId: row.originalId });
+  },
+});
+
+/** Empty the whole trash (permanent). Admin-only. */
+export const emptyTrash = mutation({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const rows = await ctx.db.query('deletedProducts').take(1000);
+    for (const row of rows) {
+      if (row.images?.length) {
+        const keys = row.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
+        if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
+      }
+      await ctx.db.delete(row._id);
+    }
+    await logAudit(ctx, caller, 'product.emptyTrash', `Emptied trash (${rows.length} products)`);
+    return { removed: rows.length };
+  },
+});
+
+/** Auto-purge products that have been in the trash longer than 30 days. */
+export const purgeOldTrash = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 86400000;
+    const old = await ctx.db.query('deletedProducts').withIndex('by_deletedAt', (q) => q.lt('deletedAt', cutoff)).take(500);
+    for (const row of old) {
+      if (row.images?.length) {
+        const keys = row.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
+        if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
+      }
+      await ctx.db.delete(row._id);
+    }
+    return { purged: old.length };
   },
 });
 
@@ -1287,17 +1402,14 @@ export const bulkAction = mutation({
     categoryId: v.optional(v.id('categories')),
   },
   handler: async (ctx, args): Promise<{ affected: number }> => {
-    await getAdminCaller(ctx, args.sessionToken);
+    const caller = await getAdminCaller(ctx, args.sessionToken);
     const now = Date.now();
     let affected = 0;
     for (const id of args.ids) {
       const p = await ctx.db.get(id);
       if (!p) continue;
       if (args.op === 'delete') {
-        if (p.images?.length) {
-          const keys = p.images.map(r2KeyFromUrl).filter((k): k is string => !!k);
-          if (keys.length) await ctx.scheduler.runAfter(0, internal.r2Actions.deleteObjects, { keys });
-        }
+        await archiveProduct(ctx, p, caller);
         await syncOemIndex(ctx, id, undefined);
         await ctx.db.delete(id);
       } else if (args.op === 'activate') {
