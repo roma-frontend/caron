@@ -1806,6 +1806,78 @@ export const listStockMovements = query({
   },
 });
 
+/**
+ * Stock analytics for the superadmin: sales velocity (units sold / day over the
+ * last 30 days), estimated days of cover, reorder suggestions for fast-moving
+ * low-stock items, and a dead-stock report (in stock but no sales in 60 days).
+ */
+export const stockInsights = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    try { await requireCapability(ctx, args.sessionToken, 'products'); } catch { return null; }
+    const now = Date.now();
+    const D30 = 30 * 24 * 60 * 60 * 1000;
+    const D60 = 60 * 24 * 60 * 60 * 1000;
+
+    // Sale movements in the last 60 days (qty is negative for sales).
+    const sales = await ctx.db
+      .query('stockMovements')
+      .withIndex('by_created', (q) => q.gte('createdAt', now - D60))
+      .filter((q) => q.eq(q.field('type'), 'sale'))
+      .take(20000);
+
+    const sold30 = new Map<string, number>();
+    const sold60 = new Map<string, number>();
+    for (const m of sales) {
+      const units = Math.abs(m.qty);
+      const key = m.productId as string;
+      sold60.set(key, (sold60.get(key) ?? 0) + units);
+      if (m.createdAt >= now - D30) sold30.set(key, (sold30.get(key) ?? 0) + units);
+    }
+
+    const products = await ctx.db.query('products').withIndex('by_active', (q) => q.eq('isActive', true)).take(10000);
+
+    const reorder: Array<{ _id: string; name: string; sku?: string; stock: number; perDay: number; daysLeft: number; suggested: number }> = [];
+    const deadStock: Array<{ _id: string; name: string; sku?: string; stock: number; lastSale60: 0 }> = [];
+
+    for (const p of products) {
+      const key = p._id as string;
+      const units30 = sold30.get(key) ?? 0;
+      const units60 = sold60.get(key) ?? 0;
+      const perDay = units30 / 30;
+
+      // Reorder: selling and less than 14 days of cover left. Suggest topping up
+      // to ~30 days of demand.
+      if (perDay > 0) {
+        const daysLeft = perDay > 0 ? p.stock / perDay : Infinity;
+        if (daysLeft < 14) {
+          reorder.push({
+            _id: key, name: p.name, sku: p.sku, stock: p.stock,
+            perDay: Math.round(perDay * 100) / 100,
+            daysLeft: Math.round(daysLeft),
+            suggested: Math.max(0, Math.ceil(perDay * 30 - p.stock)),
+          });
+        }
+      }
+      // Dead stock: has inventory but zero sales in 60 days.
+      if (p.stock > 0 && units60 === 0) {
+        deadStock.push({ _id: key, name: p.name, sku: p.sku, stock: p.stock, lastSale60: 0 });
+      }
+    }
+
+    reorder.sort((a, b) => a.daysLeft - b.daysLeft);
+    deadStock.sort((a, b) => b.stock - a.stock);
+
+    const totalUnits30 = [...sold30.values()].reduce((s, n) => s + n, 0);
+    return {
+      generatedAt: now,
+      totalUnits30,
+      reorder: reorder.slice(0, 100),
+      deadStock: deadStock.slice(0, 100),
+    };
+  },
+});
+
 export const getVariantGroup = query({
   args: { variantGroup: v.string() },
   handler: async (ctx, args) => {

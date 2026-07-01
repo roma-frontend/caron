@@ -6,6 +6,16 @@ import type { DictModule } from '../types';
  * Keys prefixed `acat.`.
  */
 export const adminCatalog: DictModule = {
+  // ── Stock insights (reorder + dead stock) ──────────────────────
+  'acat.reorderTitle': { hy: 'Վերապատվերի առաջարկներ', ru: 'Рекомендации к дозаказу', en: 'Reorder suggestions' },
+  'acat.reorderNone': { hy: 'Ամեն ինչ բավարար է', ru: 'Запасов достаточно', en: 'Stock levels are healthy' },
+  'acat.deadStockTitle': { hy: 'Անշարժ ապրանքներ', ru: 'Мёртвый сток', en: 'Dead stock' },
+  'acat.deadStockNone': { hy: 'Անշարժ ապրանքներ չկան', ru: 'Нет мёртвого стока', en: 'No dead stock' },
+  'acat.deadStockHint': { hy: 'Պահեստում կա, բայց 60 օր վաճառք չի եղել', ru: 'В наличии, но нет продаж за 60 дней', en: 'In stock but no sales in 60 days' },
+  'acat.perDay': { hy: 'օրական', ru: 'в день', en: 'per day' },
+  'acat.daysLeft': { hy: 'օր մնացել է', ru: 'дней хватит', en: 'days left' },
+  'acat.inStock': { hy: 'պահեստում', ru: 'в наличии', en: 'in stock' },
+
   // ── Common ──────────────────────────────────────────────────
   'acat.cancel': { hy: 'Չեղարկել', ru: 'Отмена', en: 'Cancel' },
   'acat.delete': { hy: 'Ջնջել', ru: 'Удалить', en: 'Delete' },

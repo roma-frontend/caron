@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
-import { Warehouse, Search, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
+import { Warehouse, Search, ArrowDown, ArrowUp, RefreshCw, TrendingUp, AlertTriangle, PackageCheck } from 'lucide-react';
 import { formatDateLocalized } from '@/lib/formatters';
 import { useAuth } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';
@@ -24,6 +24,7 @@ export default function StockMovementsPage() {
   const { t } = useAdminT();
   const movements = useQuery(api.products.listStockMovements, sessionToken ? { sessionToken, limit: 500 } : 'skip');
   const products = useQuery(api.products.listNameMap);
+  const insights = useQuery(api.products.stockInsights, sessionToken ? { sessionToken } : 'skip');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
@@ -45,6 +46,50 @@ export default function StockMovementsPage() {
         <h1 className="text-2xl font-bold">{t('acat.stock')}</h1>
         <p className="text-sm text-muted-foreground">{t('acat.stockSubtitle')}</p>
       </div>
+
+      {/* Smart insights: reorder suggestions + dead stock */}
+      {insights && (insights.reorder.length > 0 || insights.deadStock.length > 0) && (
+        <div className="mb-6 grid gap-4 lg:grid-cols-2">
+          <Card className="border-orange-500/30">
+            <CardContent className="p-4">
+              <h2 className="mb-3 flex items-center gap-2 font-semibold"><TrendingUp className="h-4 w-4 text-orange-500" /> {t('acat.reorderTitle')}</h2>
+              {insights.reorder.length === 0 ? (
+                <p className="flex items-center gap-2 text-sm text-muted-foreground"><PackageCheck className="h-4 w-4 text-green-500" /> {t('acat.reorderNone')}</p>
+              ) : (
+                <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                  {insights.reorder.map((r) => (
+                    <div key={r._id} className="flex items-center justify-between gap-2 rounded-lg border p-2 text-sm">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{r.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{t('acat.perDay')}: {r.perDay} · {t('acat.daysLeft')}: {r.daysLeft} · {t('acat.inStock')}: {r.stock}</p>
+                      </div>
+                      <Badge className="shrink-0 bg-orange-100 text-orange-800 border-0 text-[10px]">+{r.suggested}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="border-red-500/30">
+            <CardContent className="p-4">
+              <h2 className="mb-3 flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4 text-red-500" /> {t('acat.deadStockTitle')}</h2>
+              {insights.deadStock.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('acat.deadStockNone')}</p>
+              ) : (
+                <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                  {insights.deadStock.map((d) => (
+                    <div key={d._id} className="flex items-center justify-between gap-2 rounded-lg border p-2 text-sm">
+                      <p className="min-w-0 truncate font-medium">{d.name}</p>
+                      <Badge variant="secondary" className="shrink-0 text-[10px]">{t('acat.inStock')}: {d.stock}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-muted-foreground">{t('acat.deadStockHint')}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
