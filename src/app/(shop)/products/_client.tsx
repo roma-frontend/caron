@@ -178,6 +178,11 @@ export default function ProductsPage() {
     return Math.min(5, Math.max(1, Math.floor((contentW + 20) / (170 + 20))));
   });
   const [scrollMargin, setScrollMargin] = useState(0);
+  // Accurate row-height estimate so the virtualized grid's initial total height
+  // matches the measured one — otherwise the footer below shifts as rows are
+  // measured (a major source of CLS on the catalog). Grid card = square image
+  // (height == card width) + a roughly fixed content/button block (~156px).
+  const [rowEstimate, setRowEstimate] = useState(380);
 
   // Measure columns from the always-present content column (not the grid, which
   // mounts late) so the correct count is known before any product renders.
@@ -187,7 +192,13 @@ export default function ProductsPage() {
     const MIN_COL = 170;
     const recompute = () => {
       const width = contentEl.clientWidth;
-      if (width > 0) setColumnCount(Math.min(5, Math.max(1, Math.floor((width + GAP) / (MIN_COL + GAP)))));
+      if (width > 0) {
+        const cols = Math.min(5, Math.max(1, Math.floor((width + GAP) / (MIN_COL + GAP))));
+        setColumnCount(cols);
+        // Square image height ≈ card width; +176px for title(3 lines)/price/button block.
+        const cardW = (width - GAP * (cols - 1)) / cols;
+        setRowEstimate(Math.round(cardW) + 176);
+      }
     };
     recompute();
     const ro = new ResizeObserver(recompute);
@@ -208,7 +219,7 @@ export default function ProductsPage() {
   const rowCount = Math.ceil(results.length / cols);
   const rowVirtualizer = useWindowVirtualizer({
     count: rowCount,
-    estimateSize: () => (isList ? 104 : 380),
+    estimateSize: () => (isList ? 104 : rowEstimate),
     overscan: 4,
     scrollMargin,
   });

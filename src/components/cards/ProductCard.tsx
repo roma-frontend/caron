@@ -264,7 +264,7 @@ function ProductCardImpl({ id, name: rawName, nameRu, nameEn, slug, atgCode, sku
 
             <div className="p-3">
               {category && <p className="mb-1 text-xs font-medium text-primary/70">{category}</p>}
-              <h3 className="line-clamp-3 text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
+              <h3 className="line-clamp-3 min-h-[3.75rem] text-sm font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
                 <Link href={detailHref} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm">{name}</Link>
               </h3>
               {sku && <p className="mt-1 text-[10px] text-muted-foreground">{t('sp.article')}: <span className="font-mono">{sku}</span></p>}
