@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller, getSuperAdminCaller } from './lib/auth';
+import { getAdminCaller, getSuperAdminCaller, logAudit } from './lib/auth';
 import { hashPassword } from './auth';
 import { paginationOptsValidator } from 'convex/server';
 
@@ -68,7 +68,7 @@ export const createUser = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await getSuperAdminCaller(ctx, args.sessionToken);
+    const caller = await getSuperAdminCaller(ctx, args.sessionToken);
 
     const email = args.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Սխալ էլ․ հասցե');
@@ -92,6 +92,8 @@ export const createUser = mutation({
       isActive: args.isActive ?? true,
       createdAt: Date.now(),
     });
+    await logAudit(ctx, caller, 'user.create', `Created ${args.role} "${args.name.trim()}" (${email})`,
+      { targetType: 'user', targetId: userId, meta: { role: args.role } });
     return { userId };
   },
 });
@@ -143,6 +145,15 @@ export const updateCustomer = mutation({
     }
 
     await ctx.db.patch(userId, patch);
+
+    if (role !== undefined && role !== target.role) {
+      await logAudit(ctx, caller, 'user.roleChange', `Changed role of "${target.name}" ${target.role} → ${role}`,
+        { targetType: 'user', targetId: userId, meta: { from: target.role, to: role } });
+    }
+    if (newPassword !== undefined) {
+      await logAudit(ctx, caller, 'user.passwordReset', `Reset password for "${target.name}"`,
+        { targetType: 'user', targetId: userId });
+    }
   },
 });
 
@@ -183,6 +194,8 @@ export const deleteCustomer = mutation({
       await getSuperAdminCaller(ctx, args.sessionToken);
     }
     await ctx.db.delete(args.userId);
+    await logAudit(ctx, caller, 'user.delete', `Deleted ${target?.role ?? 'user'} "${target?.name ?? args.userId}"`,
+      { targetType: 'user', targetId: args.userId });
   },
 });
 

@@ -1,0 +1,52 @@
+import type { DictModule } from '../types';
+
+/** Superadmin control center. Keys prefixed `sc.`. */
+export const adminControl: DictModule = {
+  'sc.title': { hy: 'Կառավարման կենտրոն', ru: 'Центр управления', en: 'Control center' },
+  'sc.subtitle': { hy: 'Լիարժեք վերահսկողություն, անվտանգություն և աուդիտ', ru: 'Полный контроль, безопасность и аудит', en: 'Full control, security & audit' },
+  'sc.navControl': { hy: 'Կառավարում', ru: 'Управление', en: 'Control' },
+
+  'sc.statSuperadmins': { hy: 'Սուպերադմիններ', ru: 'Суперадмины', en: 'Superadmins' },
+  'sc.statAdmins': { hy: 'Ադմիններ', ru: 'Админы', en: 'Admins' },
+  'sc.statManagers': { hy: 'Մենեջերներ', ru: 'Менеджеры', en: 'Managers' },
+  'sc.statRestrictions': { hy: 'Սահմանափակումներ', ru: 'Ограничения', en: 'Restrictions' },
+  'sc.statAudit24h': { hy: 'Աուդիտ (24ժ)', ru: 'Аудит (24ч)', en: 'Audit (24h)' },
+
+  'sc.accessMatrix': { hy: 'Հասանելիության մատրից', ru: 'Матрица доступа', en: 'Access matrix' },
+  'sc.accessMatrixHint': { hy: 'Անջատեք բաժինները/գործողությունները ադմինների և մենեջերների համար։ Անջատվածը թաքցվում և արգելափակվում է։', ru: 'Отключайте разделы/действия для админов и менеджеров. Отключённое скрывается и блокируется.', en: 'Toggle sections/actions off for admins and managers. Disabled ones are hidden and blocked.' },
+  'sc.sections': { hy: 'Բաժիններ', ru: 'Разделы', en: 'Sections' },
+  'sc.actions': { hy: 'Գործողություններ', ru: 'Действия', en: 'Actions' },
+  'sc.capability': { hy: 'Հնարավորություն', ru: 'Возможность', en: 'Capability' },
+  'sc.enabled': { hy: 'Միացված', ru: 'Включено', en: 'Enabled' },
+  'sc.disabled': { hy: 'Անջատված', ru: 'Отключено', en: 'Disabled' },
+  'sc.capSaved': { hy: 'Պահպանվեց', ru: 'Сохранено', en: 'Saved' },
+  'sc.capError': { hy: 'Սխալ', ru: 'Ошибка', en: 'Error' },
+
+  'sc.auditFeed': { hy: 'Աուդիտ մատյան', ru: 'Журнал аудита', en: 'Audit log' },
+  'sc.auditEmpty': { hy: 'Դեռ գրառումներ չկան', ru: 'Пока нет записей', en: 'No entries yet' },
+  'sc.staff': { hy: 'Անձնակազմ', ru: 'Персонал', en: 'Staff' },
+
+  // Capability labels
+  'sc.cap.products': { hy: 'Ապրանքներ', ru: 'Товары', en: 'Products' },
+  'sc.cap.categories': { hy: 'Կատեգորիաներ', ru: 'Категории', en: 'Categories' },
+  'sc.cap.brands': { hy: 'Բրենդներ', ru: 'Бренды', en: 'Brands' },
+  'sc.cap.filters': { hy: 'Ֆիլտրեր', ru: 'Фильтры', en: 'Filters' },
+  'sc.cap.orders': { hy: 'Պատվերներ', ru: 'Заказы', en: 'Orders' },
+  'sc.cap.returns': { hy: 'Վերադարձներ', ru: 'Возвраты', en: 'Returns' },
+  'sc.cap.customers': { hy: 'Հաճախորդներ', ru: 'Клиенты', en: 'Customers' },
+  'sc.cap.stock': { hy: 'Պահեստ', ru: 'Склад', en: 'Stock' },
+  'sc.cap.analytics': { hy: 'Վերլուծություն', ru: 'Аналитика', en: 'Analytics' },
+  'sc.cap.promotions': { hy: 'Ակցիաներ', ru: 'Акции', en: 'Promotions' },
+  'sc.cap.reviews': { hy: 'Կարծիքներ', ru: 'Отзывы', en: 'Reviews' },
+  'sc.cap.qa': { hy: 'Հարց/Պատասխան', ru: 'Вопросы', en: 'Q&A' },
+  'sc.cap.pages': { hy: 'Էջեր', ru: 'Страницы', en: 'Pages' },
+  'sc.cap.delivery': { hy: 'Առաքում', ru: 'Доставка', en: 'Delivery' },
+  'sc.cap.settings': { hy: 'Կարգավորումներ', ru: 'Настройки', en: 'Settings' },
+  'sc.cap.action.delete': { hy: 'Ջնջում', ru: 'Удаление', en: 'Deleting' },
+  'sc.cap.action.export': { hy: 'Արտահանում', ru: 'Экспорт', en: 'Export' },
+  'sc.cap.action.priceEdit': { hy: 'Գնի փոփոխում', ru: 'Изменение цен', en: 'Price editing' },
+  'sc.cap.action.bulk': { hy: 'Զանգվածային գործողություններ', ru: 'Массовые действия', en: 'Bulk actions' },
+
+  'sc.noAccessTitle': { hy: 'Հասանելիությունը սահմանափակված է', ru: 'Доступ ограничен', en: 'Access restricted' },
+  'sc.noAccessDesc': { hy: 'Այս բաժինը անջատված է ձեր դերի համար։ Դիմեք սուպերադմինին։', ru: 'Этот раздел отключён для вашей роли. Обратитесь к суперадмину.', en: 'This section is disabled for your role. Contact the superadmin.' },
+};

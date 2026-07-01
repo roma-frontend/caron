@@ -5,6 +5,7 @@ import { adminProductForm } from './adminProductForm';
 import { adminOrders } from './adminOrders';
 import { adminSettings } from './adminSettings';
 import { adminCustomers } from './adminCustomers';
+import { adminControl } from './adminControl';
 import { adminCatalog } from './adminCatalog';
 import { shopCheckout } from './shopCheckout';
 import { shopProduct } from './shopProduct';
@@ -27,6 +28,7 @@ export const DICT: DictModule = {
   ...adminOrders,
   ...adminSettings,
   ...adminCustomers,
+  ...adminControl,
   ...adminCatalog,
   ...shopCheckout,
   ...shopProduct,

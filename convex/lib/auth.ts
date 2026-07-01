@@ -1,9 +1,29 @@
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 
+/** Role hierarchy, highest privilege first. */
+export const ROLE_HIERARCHY = ['superadmin', 'admin', 'manager', 'customer'] as const;
+export type Role = (typeof ROLE_HIERARCHY)[number];
+
+/** Bootstrap superadmin email (the owner). Source of truth is `role`, but this
+ *  env-pinned email lets the very first owner become superadmin before any DB
+ *  role exists. */
+function bootstrapSuperadminEmail(): string | null {
+  const email = process.env.ADMIN_EMAIL;
+  return email ? email.toLowerCase().trim() : null;
+}
+
+/** Runtime superadmin check: DB role is primary, env email is bootstrap fallback. */
+export function isSuperadmin(user: { role?: string; email?: string } | null | undefined): boolean {
+  if (!user) return false;
+  if (user.role === 'superadmin') return true;
+  const boot = bootstrapSuperadminEmail();
+  return !!boot && !!user.email && user.email.toLowerCase().trim() === boot;
+}
+
 export interface AuthenticatedCaller {
   _id: Id<'users'>;
-  role: 'admin' | 'manager' | 'customer';
+  role: Role;
   email: string;
   name: string;
 }
@@ -11,7 +31,7 @@ export interface AuthenticatedCaller {
 async function getSessionUser(
   ctx: QueryCtx | MutationCtx,
   sessionToken: string,
-): Promise<{ _id: Id<'users'>; role: 'admin' | 'manager' | 'customer'; email: string; name: string } | null> {
+): Promise<{ _id: Id<'users'>; role: Role; email: string; name: string } | null> {
   // Try sessions table first
   const session = await ctx.db
     .query('sessions')
@@ -21,7 +41,7 @@ async function getSessionUser(
     if (session.expiresAt < Date.now()) return null;
     const user = await ctx.db.get(session.userId);
     if (!user || !user.isActive) return null;
-    return { _id: user._id, role: user.role as 'admin' | 'manager' | 'customer', email: user.email, name: user.name };
+    return { _id: user._id, role: user.role as Role, email: user.email, name: user.name };
   }
   // Fallback: check old sessionToken on user document (migration)
   const user = await ctx.db
@@ -33,7 +53,7 @@ async function getSessionUser(
   if (isMutationCtx(ctx)) {
     await ctx.db.insert('sessions', { userId: user._id, token: sessionToken, expiresAt: user.sessionExpiry, createdAt: Date.now() });
   }
-  return { _id: user._id, role: user.role as 'admin' | 'manager' | 'customer', email: user.email, name: user.name };
+  return { _id: user._id, role: user.role as Role, email: user.email, name: user.name };
 }
 
 function isMutationCtx(ctx: QueryCtx | MutationCtx): ctx is MutationCtx {
@@ -41,10 +61,9 @@ function isMutationCtx(ctx: QueryCtx | MutationCtx): ctx is MutationCtx {
 }
 
 /**
- * Staff gate: allows both `admin` and `manager` roles. Used for the general
- * admin-panel operations (products, orders, customers, etc.). Managers have the
- * same day-to-day permissions as admins; the sensitive staff/user-management
- * operations are guarded separately by {@link getSuperAdminCaller}.
+ * Staff gate: allows `superadmin`, `admin` and `manager` roles — the general
+ * admin-panel operations. Fine-grained restriction of what admins/managers can
+ * do is layered on top via the access-control matrix.
  */
 export async function getAdminCaller(
   ctx: QueryCtx | MutationCtx,
@@ -52,14 +71,16 @@ export async function getAdminCaller(
 ): Promise<AuthenticatedCaller> {
   const caller = await getSessionUser(ctx, sessionToken);
   if (!caller) throw new Error('Not authenticated');
-  if (caller.role !== 'admin' && caller.role !== 'manager') throw new Error('Admin access required');
+  if (caller.role !== 'superadmin' && caller.role !== 'admin' && caller.role !== 'manager') {
+    throw new Error('Admin access required');
+  }
   return caller;
 }
 
 /**
- * Super-admin gate: strictly `admin`. Reserved for staff/user management
- * (creating managers/admins, changing roles, deleting staff) so a manager
- * cannot escalate privileges or manage other staff accounts.
+ * Super-admin gate: strictly the owner (`superadmin` role, or the bootstrap
+ * ADMIN_EMAIL before the role is assigned). Reserved for full-control actions:
+ * staff/user management, role changes, access-control matrix, security.
  */
 export async function getSuperAdminCaller(
   ctx: QueryCtx | MutationCtx,
@@ -67,8 +88,35 @@ export async function getSuperAdminCaller(
 ): Promise<AuthenticatedCaller> {
   const caller = await getSessionUser(ctx, sessionToken);
   if (!caller) throw new Error('Not authenticated');
-  if (caller.role !== 'admin') throw new Error('Super-admin access required');
+  if (!isSuperadmin(caller)) throw new Error('Super-admin access required');
   return caller;
+}
+
+/** Alias kept for readability at call sites. */
+export const getSuperadminCaller = getSuperAdminCaller;
+
+/**
+ * Append an entry to the audit log. Best-effort: callers pass the already
+ * resolved caller so we avoid an extra lookup. Only usable in mutation context.
+ */
+export async function logAudit(
+  ctx: MutationCtx,
+  caller: { _id: Id<'users'>; role: string; name: string } | null,
+  action: string,
+  summary: string,
+  opts?: { targetType?: string; targetId?: string; meta?: Record<string, unknown> },
+): Promise<void> {
+  await ctx.db.insert('auditLogs', {
+    actorId: caller?._id,
+    actorName: caller?.name ?? 'system',
+    actorRole: caller?.role ?? 'system',
+    action,
+    targetType: opts?.targetType,
+    targetId: opts?.targetId,
+    summary,
+    meta: opts?.meta ? JSON.stringify(opts.meta) : undefined,
+    createdAt: Date.now(),
+  });
 }
 
 // Optional auth: returns user if valid session token found, null otherwise
@@ -82,12 +130,12 @@ export async function getAuthCaller(
 
 export function requireAdmin(caller: AuthenticatedCaller | null): AuthenticatedCaller {
   if (!caller) throw new Error('Not authenticated');
-  if (caller.role !== 'admin' && caller.role !== 'manager') throw new Error('Admin access required');
+  if (caller.role !== 'superadmin' && caller.role !== 'admin' && caller.role !== 'manager') throw new Error('Admin access required');
   return caller;
 }
 
 export function requireSuperAdmin(caller: AuthenticatedCaller | null): AuthenticatedCaller {
   if (!caller) throw new Error('Not authenticated');
-  if (caller.role !== 'admin') throw new Error('Super-admin access required');
+  if (!isSuperadmin(caller)) throw new Error('Super-admin access required');
   return caller;
 }

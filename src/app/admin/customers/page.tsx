@@ -359,7 +359,7 @@ export default function AdminCustomersPage() {
     paginationOpts: { numItems: PAGE_SIZE, cursor: null },
   } : 'skip');
 
-  const isSuperAdmin = customers?.callerRole === 'admin';
+  const isSuperAdmin = customers?.callerRole === 'superadmin';
 
   const updateCustomer = useMutation(api.customers.updateCustomer);
   const deleteCustomer = useMutation(api.customers.deleteCustomer);

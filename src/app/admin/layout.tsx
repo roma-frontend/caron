@@ -4,7 +4,7 @@ import { useAuthStore, useAuth } from '@/store/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from '@/components/LocalizedLink';
-import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck, Award } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck, Award, Crown } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -55,6 +55,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const storeName = useStoreName();
   const { t } = useAdminT();
   const me = useQuery(api.auth.me, sessionToken ? { sessionToken } : 'skip');
+  const isStaff = user?.role === 'superadmin' || user?.role === 'admin' || user?.role === 'manager';
+  const myCaps = useQuery(api.access.getMyCapabilities, sessionToken && isStaff ? { sessionToken } : 'skip');
+
+  // Section key from an admin href: '/admin/products' -> 'products', '/admin' -> ''.
+  const sectionKey = (href: string) => href.replace(/^\/admin\/?/, '').split('/')[0];
+  const disabledSet = new Set(myCaps?.disabled ?? []);
+  const callerIsSuperadmin = myCaps?.isSuperadmin ?? (user?.role === 'superadmin');
+  const visibleNav = NAV_ITEMS.filter((item) => {
+    const key = sectionKey(item.href);
+    if (!key) return true; // dashboard root always visible
+    return !disabledSet.has(key);
+  });
+  // Route guard: current section disabled for this role → block render below.
+  const currentSection = sectionKey(pathname);
+  const sectionBlocked = !!currentSection && disabledSet.has(currentSection);
 
   const sessionStartRef = useRef<number | null>(null);
 
@@ -100,7 +115,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Link>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {NAV_ITEMS.map((item, i) => {
+        {callerIsSuperadmin && (
+          <Link href="/admin/control" className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${pathname === '/admin/control' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-gradient-to-r from-amber-500/10 to-purple-500/10 text-foreground hover:from-amber-500/20 hover:to-purple-500/20'}`}>
+            <Crown className="h-4 w-4 shrink-0 text-amber-500" />
+            <span className="truncate">{t('sc.navControl')}</span>
+          </Link>
+        )}
+        {visibleNav.map((item, i) => {
           const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
           return (
             <Link key={`${item.href}-${i}`} href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>
@@ -172,7 +193,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <AdminUserMenu user={user} sessionToken={sessionToken} onLogout={handleLogout} />
           </div>
         </header>
-        <main className="flex-1 p-4 pb-20 md:p-8 lg:pb-8">{children}</main>
+        <main className="flex-1 p-4 pb-20 md:p-8 lg:pb-8">
+          {sectionBlocked ? (
+            <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+                <LogOut className="h-7 w-7 text-destructive" />
+              </div>
+              <h1 className="text-xl font-semibold">{t('sc.noAccessTitle')}</h1>
+              <p className="max-w-sm text-sm text-muted-foreground">{t('sc.noAccessDesc')}</p>
+            </div>
+          ) : children}
+        </main>
       </div>
 
       {/* Mobile bottom nav: 4 tabs + central FAB opening the full sections grid */}
@@ -201,7 +232,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           />
         }
         items={[
-          ...NAV_ITEMS.map((item) => ({
+          ...(callerIsSuperadmin ? [{ href: '/admin/control', icon: Crown, label: t('sc.navControl') }] : []),
+          ...visibleNav.map((item) => ({
             href: item.href,
             icon: item.icon,
             label: t(item.labelKey),

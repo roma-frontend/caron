@@ -11,7 +11,7 @@ export default defineSchema(
     googleId: v.optional(v.string()),
     telegramId: v.optional(v.string()),
     telegramUsername: v.optional(v.string()),
-    role: v.union(v.literal('admin'), v.literal('manager'), v.literal('customer')),
+    role: v.union(v.literal('superadmin'), v.literal('admin'), v.literal('manager'), v.literal('customer')),
     phone: v.optional(v.string()),
     address: v.optional(v.string()),
     isActive: v.boolean(),
@@ -48,6 +48,36 @@ export default defineSchema(
     lockedUntil: v.optional(v.number()),
     updatedAt: v.number(),
   }).index('by_key', ['key']),
+
+  // ─── Audit log (who did what) ──────────────────────────────────
+  // Append-only trail of privileged actions for accountability & security.
+  auditLogs: defineTable({
+    actorId: v.optional(v.id('users')),
+    actorName: v.string(),
+    actorRole: v.string(),
+    action: v.string(),            // e.g. 'user.create', 'product.delete', 'access.setCapability'
+    targetType: v.optional(v.string()),  // e.g. 'user', 'product', 'order'
+    targetId: v.optional(v.string()),
+    summary: v.string(),           // human-readable one-liner
+    meta: v.optional(v.string()),  // JSON blob with extra detail
+    createdAt: v.number(),
+  })
+    .index('by_created', ['createdAt'])
+    .index('by_actor', ['actorId'])
+    .index('by_action', ['action']),
+
+  // ─── Access control matrix (feature flags per role) ────────────
+  // Superadmin toggles which admin-panel sections/actions each role may use.
+  // Absence of a row = enabled (default keeps current behaviour).
+  accessControl: defineTable({
+    role: v.union(v.literal('admin'), v.literal('manager')),
+    capability: v.string(),        // section key, e.g. 'products', 'orders', 'action.delete'
+    enabled: v.boolean(),
+    updatedBy: v.optional(v.id('users')),
+    updatedAt: v.number(),
+  })
+    .index('by_role', ['role'])
+    .index('by_role_capability', ['role', 'capability']),
 
   // ─── Categories ────────────────────────────────────────────────
   categories: defineTable({
