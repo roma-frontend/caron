@@ -92,7 +92,7 @@ function EditDialog({ customer, sessionToken, canManageStaff, onClose }: { custo
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>{t('ac.editUser')}</DialogTitle></DialogHeader>
-        <div className="space-y-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-3 py-2 max-h-[70vh] overflow-y-auto px-1">
           <div><Label>{t('ac.name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-10 mt-1" /></div>
           <div><Label>{t('ac.email')}</Label><Input value={customer.email} disabled className="h-10 mt-1 opacity-60" /></div>
           <div><Label>{t('ac.phoneLabel')}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374 XX XXX XXX" className="h-10 mt-1" /></div>
@@ -234,7 +234,7 @@ function CreateUserWizard({ sessionToken, onClose, onCreated }: { sessionToken: 
         </div>
         <p className="text-sm font-medium text-muted-foreground">{t('ac.stepOf')} {step + 1} {t('ac.of')} {WIZARD_STEPS.length} · {t(`ac.${WIZARD_STEPS[step]}`)}</p>
 
-        <div className="min-h-[240px] space-y-3 py-2 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="min-h-[240px] space-y-3 py-2 max-h-[60vh] overflow-y-auto px-1">
           {step === 0 && (
             <div className="space-y-3">
               <div className="grid gap-2">
