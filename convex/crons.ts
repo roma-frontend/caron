@@ -49,4 +49,13 @@ crons.daily(
   {},
 );
 
+// Daily: re-translate any product whose RU/EN name still has Armenian residue
+// (self-heals rare import-time LLM failures so names don't stay half-translated).
+crons.daily(
+  'retranslate-armenian-residue',
+  { hourUTC: 3, minuteUTC: 30 },
+  internal.maintenance.retranslateArmenianResidue,
+  { dryRun: false },
+);
+
 export default crons;

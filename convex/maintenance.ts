@@ -1,5 +1,40 @@
 import { v } from 'convex/values';
 import { internalMutation } from './_generated/server';
+import { internal } from './_generated/api';
+
+/** Any Armenian letter (used to detect untranslated residue in RU/EN fields). */
+const ARMENIAN_RE = /[\u0531-\u0556\u0561-\u0587]/;
+
+/**
+ * Self-healing translation repair: find products whose RU or EN name still
+ * contains Armenian letters (an untranslated word left when both the dictionary
+ * and a rate-limited LLM failed at import time) and re-run the normal
+ * force-translation pipeline for them. Staggered to respect the Groq rate
+ * limit, capped per run so a daily cron can't storm the API. Idempotent — once
+ * everything is clean it becomes a cheap read-only scan that schedules nothing.
+ *
+ * Run manually:
+ *   npx convex run maintenance:retranslateArmenianResidue '{dryRun:true}' --prod
+ *   npx convex run maintenance:retranslateArmenianResidue '{dryRun:false}' --prod
+ */
+export const retranslateArmenianResidue = internalMutation({
+  args: { dryRun: v.optional(v.boolean()), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun !== false;
+    const cap = args.limit ?? 40;
+    const products = await ctx.db.query('products').collect();
+    const targets = products.filter(
+      (p) => ARMENIAN_RE.test(p.nameRu ?? '') || ARMENIAN_RE.test(p.nameEn ?? ''),
+    );
+    const batch = targets.slice(0, cap);
+    if (!dryRun) {
+      batch.forEach((p, i) => {
+        void ctx.scheduler.runAfter(i * 3500, internal.translate.translateProduct, { id: p._id, force: true });
+      });
+    }
+    return { dryRun, totalResidual: targets.length, scheduled: dryRun ? 0 : batch.length, skus: batch.slice(0, 25).map((p) => p.sku) };
+  },
+});
 
 /**
  * Flip promotions whose end date has passed to inactive, so expired sales stop
