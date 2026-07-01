@@ -167,6 +167,9 @@ function invoiceHtml(o: Record<string, unknown>, meta: InvoiceMeta): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice ${escapeHtml(String(o.orderNumber))}</title>
 <style>
 *{box-sizing:border-box}
+/* Hide the scrollbar inside the preview iframe (scroll still works). */
+html{scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar{display:none}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;color:#1a2330;background:#fff;}
 .sheet{max-width:760px;width:100%;margin:0 auto;padding:32px 30px}
 .bar{height:6px;background:${BRAND};border-radius:6px;margin-bottom:28px}
@@ -534,13 +537,13 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
         )}
       </div>
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-[900px] w-[94vw] p-0 overflow-hidden gap-0">
+        <DialogContent className="max-w-[760px]! w-[96vw] p-0 overflow-hidden gap-0">
           <DialogHeader className="flex flex-row items-center justify-between gap-2 border-b px-4 py-3 space-y-0">
             <div>
               <DialogTitle className="text-base">{t('ao.details.title')} <span className="font-mono text-primary">{String(order.orderNumber)}</span></DialogTitle>
               <DialogDescription className="text-xs">{String(order.customerName)} · {formatDateLocalized(Number(order.createdAt), t)}</DialogDescription>
             </div>
-            <div className="flex items-center gap-2 pr-6">
+            <div className="flex items-center gap-2 pr-8">
               <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => runExport('pdf')} disabled={exporting}>
                 <FileDown className="h-3.5 w-3.5" /> PDF
               </Button>
