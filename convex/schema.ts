@@ -49,6 +49,19 @@ export default defineSchema(
     updatedAt: v.number(),
   }).index('by_key', ['key']),
 
+  // ─── Password reset tokens ─────────────────────────────────────
+  // Single-use, time-limited. Only the SHA-256 hash of the raw token is stored,
+  // so a DB read can't reveal a working reset link.
+  passwordResets: defineTable({
+    userId: v.id('users'),
+    tokenHash: v.string(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_tokenHash', ['tokenHash'])
+    .index('by_user', ['userId']),
+
   // ─── Audit log (who did what) ──────────────────────────────────
   // Append-only trail of privileged actions for accountability & security.
   auditLogs: defineTable({

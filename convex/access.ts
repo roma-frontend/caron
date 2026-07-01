@@ -156,7 +156,7 @@ export const listStaff = query({
       ),
     );
     return groups.flat().map((u) => ({
-      _id: u._id, name: u.name, email: u.email, role: u.role, isActive: u.isActive, createdAt: u.createdAt,
+      _id: u._id, name: u.name, email: u.email, role: u.role, isActive: u.isActive, createdAt: u.createdAt, telegramUsername: u.telegramUsername,
     }));
   },
 });

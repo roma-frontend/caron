@@ -113,6 +113,11 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className="h-11 pl-10" />
               </div>
+              <div className="text-right">
+                <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                  {t('auth.forgotPassword')}
+                </Link>
+              </div>
             </div>
             {error && <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{error}</div>}
             <Button type="submit" variant="cta" size="xl" className="w-full" disabled={loading}>

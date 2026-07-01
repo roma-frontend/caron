@@ -36,6 +36,7 @@ import type * as newsletter from "../newsletter.js";
 import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
 import type * as pages from "../pages.js";
+import type * as passwordReset from "../passwordReset.js";
 import type * as priceAlerts from "../priceAlerts.js";
 import type * as products from "../products.js";
 import type * as promotionSubscribers from "../promotionSubscribers.js";
@@ -86,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   orders: typeof orders;
   pages: typeof pages;
+  passwordReset: typeof passwordReset;
   priceAlerts: typeof priceAlerts;
   products: typeof products;
   promotionSubscribers: typeof promotionSubscribers;

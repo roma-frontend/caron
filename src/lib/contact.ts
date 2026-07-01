@@ -12,3 +12,15 @@ export function isPlaceholderEmail(email?: string | null): boolean {
 export function displayEmail(email?: string | null): string {
   return !email || isPlaceholderEmail(email) ? '' : email;
 }
+
+/**
+ * Human-friendly contact label chosen by how the user signed in: the Telegram
+ * `@username` handle for placeholder (Telegram-only) accounts, otherwise the
+ * real email. Falls back to 'Telegram' when a placeholder account has no handle.
+ */
+export function contactLabel(email?: string | null, telegramUsername?: string | null): string {
+  if (isPlaceholderEmail(email) || !email) {
+    return telegramUsername ? `@${telegramUsername}` : 'Telegram';
+  }
+  return email;
+}

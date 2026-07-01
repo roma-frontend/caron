@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useAuthStore, useAuth } from '@/store/auth';
+import { contactLabel } from '@/lib/contact';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from '@/components/LocalizedLink';
@@ -144,7 +145,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{user.name.charAt(0)}</div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{user.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{contactLabel(user.email, user.telegramUsername)}</p>
           </div>
         </div>
         <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleLogout}>

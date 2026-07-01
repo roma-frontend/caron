@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
+import { contactLabel } from '@/lib/contact';
 import { api } from '../../../../convex/_generated/api';
 import { useAuth } from '@/store/auth';
 import { useAdminT } from '@/lib/i18n/admin';
@@ -177,7 +178,7 @@ export default function ControlCenterPage() {
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{s.name.charAt(0).toUpperCase()}</div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{s.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+                      <p className="truncate text-xs text-muted-foreground">{contactLabel(s.email, s.telegramUsername)}</p>
                     </div>
                     <Badge variant="secondary" className="gap-1 text-[10px]"><RoleIcon role={s.role} />{roleLabel(s.role)}</Badge>
                     {!s.isActive && <span className="h-2 w-2 rounded-full bg-destructive" title="blocked" />}

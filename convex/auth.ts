@@ -122,6 +122,41 @@ export const login = mutation({
     const attemptKey = `login:${email}`;
     await assertLoginAllowed(ctx, attemptKey);
 
+    // ─── Superadmin (owner) email login ───────────────────────────
+    // Lets the owner sign in with a real email/password in addition to the
+    // Telegram widget. On first success it unifies with the existing Telegram
+    // owner account (so it stays ONE identity) or creates a superadmin user.
+    const superEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase();
+    const superPassword = process.env.SUPERADMIN_PASSWORD;
+    const superPasswordHash = process.env.SUPERADMIN_PASSWORD_HASH;
+    if (superEmail && (superPassword || superPasswordHash)) {
+      const emailMatch = await safeEqual(email, superEmail);
+      const passMatch = superPasswordHash
+        ? await verifyPassword(args.password, superPasswordHash)
+        : await safeEqual(args.password, superPassword!);
+      if (emailMatch && passMatch) {
+        let user = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', superEmail)).unique();
+        if (!user) {
+          // Prefer unifying with the Telegram owner account (@i_amVip) so the
+          // owner has a single identity reachable by both Telegram and email.
+          const owner = (await ctx.db.query('users').withIndex('by_role', (q) => q.eq('role', 'superadmin')).take(20)).find((u) => u.telegramId);
+          if (owner) {
+            await ctx.db.patch(owner._id, { email: superEmail });
+            user = (await ctx.db.get(owner._id))!;
+          } else {
+            const id = await ctx.db.insert('users', { name: 'Superadmin', email: superEmail, role: 'superadmin', isActive: true, createdAt: Date.now() });
+            user = (await ctx.db.get(id))!;
+          }
+        } else if (user.role !== 'superadmin') {
+          await ctx.db.patch(user._id, { role: 'superadmin' });
+          user = (await ctx.db.get(user._id))!;
+        }
+        await clearLoginFailures(ctx, attemptKey);
+        const sessionToken = await createSession(ctx, user._id, 7);
+        return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address, telegramUsername: user.telegramUsername };
+      }
+    }
+
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
     const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;

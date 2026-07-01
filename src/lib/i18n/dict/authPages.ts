@@ -58,4 +58,21 @@ export const authPages: DictModule = {
   'auth.pw.strong': { hy: 'Հուսալի', ru: 'Надёжный', en: 'Strong' },
   'auth.pw.match': { hy: 'Գաղտնաբառերը համընկնում են', ru: 'Пароли совпадают', en: 'Passwords match' },
   'auth.pw.noMatch': { hy: 'Գաղտնաբառերը չեն համընկնում', ru: 'Пароли не совпадают', en: 'Passwords do not match' },
+
+  // ── Password recovery ──
+  'auth.forgotPassword': { hy: 'Մոռացե՞լ եք գաղտնաբառը', ru: 'Забыли пароль?', en: 'Forgot password?' },
+  'auth.forgotTitle': { hy: 'Վերականգնել գաղտնաբառը', ru: 'Восстановление пароля', en: 'Reset password' },
+  'auth.forgotDesc': { hy: 'Մուտքագրեք ձեր էլ. հասցեն, և մենք կուղարկենք վերականգնման հղում', ru: 'Введите вашу эл. почту — мы отправим ссылку для сброса', en: 'Enter your email and we will send a reset link' },
+  'auth.forgotSubmit': { hy: 'Ուղարկել հղումը', ru: 'Отправить ссылку', en: 'Send link' },
+  'auth.forgotSending': { hy: 'Ուղարկվում է...', ru: 'Отправка...', en: 'Sending...' },
+  'auth.forgotSent': { hy: 'Եթե հաշիվ գոյություն ունի, վերականգնման հղումն ուղարկվել է ձեր էլ. հասցեին', ru: 'Если аккаунт существует, ссылка для сброса отправлена на вашу почту', en: 'If an account exists, a reset link has been sent to your email' },
+  'auth.backToLogin': { hy: 'Վերադառնալ մուտք', ru: 'Вернуться ко входу', en: 'Back to sign in' },
+  'auth.resetTitle': { hy: 'Նոր գաղտնաբառ', ru: 'Новый пароль', en: 'New password' },
+  'auth.resetDesc': { hy: 'Մուտքագրեք ձեր նոր գաղտնաբառը', ru: 'Введите новый пароль', en: 'Enter your new password' },
+  'auth.resetSubmit': { hy: 'Պահպանել գաղտնաբառը', ru: 'Сохранить пароль', en: 'Save password' },
+  'auth.resetting': { hy: 'Պահպանվում է...', ru: 'Сохранение...', en: 'Saving...' },
+  'auth.resetSuccess': { hy: 'Գաղտնաբառը փոխվեց։ Այժմ կարող եք մուտք գործել։', ru: 'Пароль изменён. Теперь вы можете войти.', en: 'Password changed. You can now sign in.' },
+  'auth.resetMin8': { hy: 'Գաղտնաբառը պետք է լինի առնվազն 8 նիշ', ru: 'Пароль должен быть не менее 8 символов', en: 'Password must be at least 8 characters' },
+  'auth.resetInvalidToken': { hy: 'Հղումն անվավեր է կամ ժամկետը լրացել է', ru: 'Ссылка недействительна или устарела', en: 'The link is invalid or expired' },
+  'auth.resetNoToken': { hy: 'Վերականգնման հղումը բացակայում է', ru: 'Ссылка для сброса отсутствует', en: 'Reset link is missing' },
 };
