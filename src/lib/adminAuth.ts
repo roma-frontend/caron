@@ -10,7 +10,7 @@ export async function requireAdminAuth(): Promise<boolean> {
   if (!token || !url) return false;
   try {
     const user = await new ConvexHttpClient(url).query(api.auth.me, { sessionToken: token });
-    return user?.role === 'admin' || user?.role === 'manager';
+    return user?.role === 'admin' || user?.role === 'manager' || user?.role === 'superadmin';
   } catch {
     return false;
   }

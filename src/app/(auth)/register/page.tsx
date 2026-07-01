@@ -129,7 +129,7 @@ export default function RegisterPage() {
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone, telegramUsername: result.telegramUsername });
       await setAuthCookie(result.sessionToken);
       toast.success(t('auth.welcomeBack') + result.name + '!');
-      router.push(result.role === 'admin' || result.role === 'manager' ? '/admin' : '/dashboard');
+      router.push(result.role === 'admin' || result.role === 'manager' || result.role === 'superadmin' ? '/admin' : '/dashboard');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('auth.telegramLoginError'));
     }

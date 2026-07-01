@@ -55,7 +55,7 @@ export function MobileNav() {
   // it's on screen — step aside then to avoid two overlapping bottom bars.
   if (buyBarVisible) return null;
 
-  const accountHref = mounted && user ? ((user.role === 'admin' || user.role === 'manager') ? '/admin' : '/dashboard') : '/login';
+  const accountHref = mounted && user ? ((user.role === 'admin' || user.role === 'manager' || user.role === 'superadmin') ? '/admin' : '/dashboard') : '/login';
 
   const tabs: TabItem[] = [
     { href: '/', icon: Home, label: t('cmp.home'), active: pathname === '/' },

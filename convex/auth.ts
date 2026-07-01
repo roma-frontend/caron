@@ -4,6 +4,7 @@ import { api } from './_generated/api';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
+import { isSuperadminTelegram } from './lib/auth';
 
 const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256';
 const PASSWORD_HASH_ITERATIONS = 210_000;
@@ -401,6 +402,7 @@ export const loginWithTelegram = mutation({
     }
 
     let user = await ctx.db.query('users').withIndex('by_telegram_id', (q) => q.eq('telegramId', args.id)).unique();
+    const wantsSuperadmin = isSuperadminTelegram(args.username);
     if (!user) {
       const name = [args.firstName, args.lastName].filter(Boolean).join(' ').trim() || args.username || `Telegram ${args.id}`;
       const referralCode = await generateReferralCode(ctx);
@@ -412,15 +414,22 @@ export const loginWithTelegram = mutation({
         email: placeholderEmail,
         telegramId: args.id,
         telegramUsername: args.username,
-        role: 'customer',
-        customerType: 'retail',
+        role: wantsSuperadmin ? 'superadmin' : 'customer',
+        customerType: wantsSuperadmin ? undefined : 'retail',
         isActive: true,
         referralCode,
         createdAt: Date.now(),
       });
       user = (await ctx.db.get(newId))!;
-    } else if (args.username && user.telegramUsername !== args.username) {
-      await ctx.db.patch(user._id, { telegramUsername: args.username });
+    } else {
+      // Keep username fresh, and promote the owner handle to superadmin.
+      const patch: Record<string, unknown> = {};
+      if (args.username && user.telegramUsername !== args.username) patch.telegramUsername = args.username;
+      if (wantsSuperadmin && user.role !== 'superadmin') patch.role = 'superadmin';
+      if (Object.keys(patch).length) {
+        await ctx.db.patch(user._id, patch);
+        user = (await ctx.db.get(user._id))!;
+      }
     }
     if (!user.isActive) throw new Error('Օգտագործողը արգելափակված է');
 

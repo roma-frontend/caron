@@ -13,12 +13,27 @@ function bootstrapSuperadminEmail(): string | null {
   return email ? email.toLowerCase().trim() : null;
 }
 
+/** Bootstrap superadmin Telegram usernames (comma-separated in env
+ *  `SUPERADMIN_TELEGRAM`, without '@'). Falls back to the owner's pinned handle
+ *  so the owner can sign in via Telegram and be recognised as superadmin. */
+function bootstrapSuperadminTelegrams(): string[] {
+  const raw = process.env.SUPERADMIN_TELEGRAM ?? 'i_amVip';
+  return raw.split(',').map((s) => s.trim().replace(/^@/, '').toLowerCase()).filter(Boolean);
+}
+
+/** Is this Telegram username designated as a bootstrap superadmin? */
+export function isSuperadminTelegram(username: string | undefined | null): boolean {
+  if (!username) return false;
+  return bootstrapSuperadminTelegrams().includes(username.replace(/^@/, '').toLowerCase());
+}
+
 /** Runtime superadmin check: DB role is primary, env email is bootstrap fallback. */
-export function isSuperadmin(user: { role?: string; email?: string } | null | undefined): boolean {
+export function isSuperadmin(user: { role?: string; email?: string; telegramUsername?: string } | null | undefined): boolean {
   if (!user) return false;
   if (user.role === 'superadmin') return true;
   const boot = bootstrapSuperadminEmail();
-  return !!boot && !!user.email && user.email.toLowerCase().trim() === boot;
+  if (boot && user.email && user.email.toLowerCase().trim() === boot) return true;
+  return isSuperadminTelegram(user.telegramUsername);
 }
 
 export interface AuthenticatedCaller {
