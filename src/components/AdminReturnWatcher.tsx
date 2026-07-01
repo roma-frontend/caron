@@ -82,13 +82,13 @@ export function AdminReturnWatcher() {
               </div>
             </Link>
           ),
-          { duration: 8000, position: 'top-right' },
+          { duration: 4000, position: 'top-right' },
         );
       }
     }
 
     prevCount.current = pendingCount;
-  }, [pendingCount, isAdmin, requests, setReturnsPendingCount, setReturnsFlash]);
+  }, [pendingCount, isAdmin, requests, setReturnsPendingCount, setReturnsFlash, t]);
 
   return null;
 }

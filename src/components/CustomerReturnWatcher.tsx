@@ -74,13 +74,13 @@ export function CustomerReturnWatcher() {
                 </div>
               </Link>
             ),
-            { duration: 8000, position: 'top-right' },
+            { duration: 4000, position: 'top-right' },
           );
         }
       }
       prevStatuses.current.set(id, status);
     }
-  }, [enabled, requests]);
+  }, [enabled, requests, t]);
 
   return null;
 }

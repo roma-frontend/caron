@@ -102,7 +102,7 @@ export function AdminOrderWatcher() {
             </Link>
           ),
           {
-            duration: 8000,
+            duration: 4000,
             position: 'top-right',
           },
         );
@@ -110,7 +110,7 @@ export function AdminOrderWatcher() {
     }
 
     prevCount.current = pendingCount;
-  }, [pendingCount, isAdmin, orders, setPendingCount, setFlash]);
+  }, [pendingCount, isAdmin, orders, setPendingCount, setFlash, t]);
 
   return null;
 }
