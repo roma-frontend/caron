@@ -58,7 +58,7 @@ export const notifySubscribers = internalAction({
       .join('\n');
 
     const text = [
-      `<b>🎉 Նոր ապրանքներ ակցիայում</b>`,
+      `<b> Նոր ապրանքներ ակցիայում</b>`,
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `<b>${args.promotionTitle}</b>`,

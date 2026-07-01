@@ -49,4 +49,27 @@ export const adminControl: DictModule = {
 
   'sc.noAccessTitle': { hy: 'Հասանելիությունը սահմանափակված է', ru: 'Доступ ограничен', en: 'Access restricted' },
   'sc.noAccessDesc': { hy: 'Այս բաժինը անջատված է ձեր դերի համար։ Դիմեք սուպերադմինին։', ru: 'Этот раздел отключён для вашей роли. Обратитесь к суперадмину.', en: 'This section is disabled for your role. Contact the superadmin.' },
+  'sc.cap.inbox': { hy: 'Մուտքեր', ru: 'Входящие', en: 'Inbox' },
+
+  // --- Inbox / needs attention ---
+  'ib.title': { hy: 'Պահանջում է ուշադրություն', ru: 'Требует внимания', en: 'Needs attention' },
+  'ib.subtitle': { hy: 'Բոլոր անելիքները մեկ տեղում', ru: 'Все задачи в одном месте', en: 'Everything actionable in one place' },
+  'ib.pendingOrders': { hy: 'Նոր պատվերներ', ru: 'Новые заказы', en: 'Pending orders' },
+  'ib.awaitingPayment': { hy: 'Վճարման սպասող', ru: 'Ожидают оплаты', en: 'Awaiting payment' },
+  'ib.pendingReturns': { hy: 'Վերադարձներ', ru: 'Возвраты', en: 'Returns' },
+  'ib.pendingReviews': { hy: 'Կարծիքներ մոդերացիայի', ru: 'Отзывы на модерации', en: 'Reviews to moderate' },
+  'ib.unansweredQuestions': { hy: 'Անպատասխան հարցեր', ru: 'Вопросы без ответа', en: 'Unanswered questions' },
+  'ib.zeroStock': { hy: 'Զրո մնացորդ', ru: 'Нулевой остаток', en: 'Zero stock' },
+  'ib.abandonedCarts': { hy: 'Լքված զամբյուղներ', ru: 'Брошенные корзины', en: 'Abandoned carts' },
+  'ib.abandonedHint': { hy: 'Հաճախորդներ ապրանքներով զամբյուղում՝ առանց պատվերի', ru: 'Клиенты с товарами в корзине без оформления', en: 'Customers with items in cart but no order' },
+  'ib.cartValue': { hy: 'Զամբյուղի արժեք', ru: 'Сумма корзины', en: 'Cart value' },
+  'ib.items': { hy: 'ապրանք', ru: 'товаров', en: 'items' },
+  'ib.noAbandoned': { hy: 'Լքված զամբյուղներ չկան', ru: 'Нет брошенных корзин', en: 'No abandoned carts' },
+  'ib.contact': { hy: 'Կապ', ru: 'Контакт', en: 'Contact' },
+  'ib.recentOrders': { hy: 'Վերջին պատվերները', ru: 'Последние заказы', en: 'Recent orders' },
+  'ib.recentReturns': { hy: 'Վերջին վերադարձները', ru: 'Последние возвраты', en: 'Recent returns' },
+  'ib.recentQuestions': { hy: 'Վերջին հարցերը', ru: 'Последние вопросы', en: 'Recent questions' },
+  'ib.allClear': { hy: 'Ամեն ինչ կարգին է ', ru: 'Всё чисто ', en: 'All clear ' },
+  'ib.totalValue': { hy: 'Ընդհանուր արժեք', ru: 'Общая сумма', en: 'Total value' },
+  'nav.inbox': { hy: 'Մուտքեր', ru: 'Входящие', en: 'Inbox' },
 };

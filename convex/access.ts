@@ -12,6 +12,7 @@ import { getAdminCaller, getSuperAdminCaller, isSuperadmin, logAudit } from './l
  */
 export const CAPABILITIES = [
   // Navigable sections (href = /admin/<key>, '' = dashboard root)
+  { key: 'inbox', kind: 'nav' },
   { key: 'products', kind: 'nav' },
   { key: 'categories', kind: 'nav' },
   { key: 'brands', kind: 'nav' },

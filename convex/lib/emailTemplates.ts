@@ -226,7 +226,7 @@ export function orderConfirmationEmail(input: OrderConfirmationInput): { subject
 
   const content = `
     <p style="margin:0 0 16px;font-size:18px;font-weight:700;color:${BRAND.text};">
-      ${greetingName ? `Հարգելի ${greetingName}, շ` : 'Շ'}նորհակալություն գնման համար։ 🎉
+      ${greetingName ? `Հարգելի ${greetingName}, շ` : 'Շ'}նորհակալություն գնման համար։ 
     </p>
     <p style="margin:0 0 20px;color:${BRAND.muted};">
       Ձեր պատվերը հաջողությամբ ընդունված է և մշակման փուլում է։
@@ -275,7 +275,7 @@ const STATUS_META: Record<OrderStatus, { label: string; color: string; message: 
   confirmed: { label: 'Հաստատվել է', color: '#0066AE', message: 'Ձեր պատվերը հաստատվել է և շուտով կմշակվի։' },
   processing: { label: 'Մշակվում է', color: '#6366f1', message: 'Ձեր պատվերը մշակման փուլում է։ Շուտով կուղարկվի։' },
   shipped: { label: 'Ուղարկվել է', color: '#0ea5e9', message: 'Ձեր պատվերը ճանապարհին է։ 🚚' },
-  delivered: { label: 'Առաքվել է', color: '#16a34a', message: 'Ձեր պատվերն առաքվել է։ Շնորհակալություն գնման համար։ 🎉' },
+  delivered: { label: 'Առաքվել է', color: '#16a34a', message: 'Ձեր պատվերն առաքվել է։ Շնորհակալություն գնման համար։ ' },
   cancelled: { label: 'Չեղարկվել է', color: '#dc2626', message: 'Ձեր պատվերը չեղարկվել է։ Հարցերի դեպքում կապվեք մեզ հետ։' },
 };
 
