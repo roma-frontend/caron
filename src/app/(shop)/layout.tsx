@@ -13,7 +13,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="flex min-h-dvh flex-col">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 min-h-dvh">
         <MaintenanceGate>
           <motion.div key={pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
             {children}
