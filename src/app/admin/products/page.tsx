@@ -741,6 +741,38 @@ export default function AdminProductsPage() {
   }, [filtered, groupOrders]);
 
   const visibleProducts = orderedFiltered?.slice(0, visibleCount);
+
+  // Infinite scroll (WB-style, no button): when the sentinel near the bottom
+  // enters the viewport, reveal the next page. Data is already fully loaded
+  // client-side, so this only grows the rendered slice.
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const totalFiltered = orderedFiltered?.length ?? 0;
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || visibleCount >= totalFiltered) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((v) => Math.min(v + ADMIN_PRODUCTS_PAGE_SIZE, ADMIN_PRODUCTS_FETCH_LIMIT));
+        }
+      },
+      { rootMargin: '600px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visibleCount, totalFiltered]);
+
+  // Reset the visible slice back to one page whenever the active filter/search/
+  // sort set changes, so narrowing the list doesn't keep thousands of rows
+  // mounted from a previous scroll depth. Done during render (React-recommended
+  // "adjust state on prop change" pattern) to avoid a cascading effect render.
+  const filterResetKey = `${deferredSearchTerm}|${catFilter}|${healthFilter}|${stockFilter}|${statusFilter}|${sortBy}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterResetKey);
+  if (prevFilterKey !== filterResetKey) {
+    setPrevFilterKey(filterResetKey);
+    if (visibleCount !== ADMIN_PRODUCTS_PAGE_SIZE) setVisibleCount(ADMIN_PRODUCTS_PAGE_SIZE);
+  }
+
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -1012,14 +1044,7 @@ export default function AdminProductsPage() {
       )}
 
       {filtered && filtered.length > visibleCount && (
-        <div className="mt-6 flex justify-center">
-          <Button
-            variant="outline"
-            onClick={() => setVisibleCount((v) => Math.min(v + ADMIN_PRODUCTS_PAGE_SIZE, ADMIN_PRODUCTS_FETCH_LIMIT))}
-          >
-            {t('ap.loadMore')}
-          </Button>
-        </div>
+        <div ref={loadMoreRef} aria-hidden="true" className="h-px w-full" />
       )}
     </div>
   );
