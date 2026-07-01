@@ -12,7 +12,7 @@ import { Loader } from '@/components/ui/loader';
 import Image from 'next/image';
 import { formatDateLocalized } from '@/lib/formatters';
 import { toast } from 'sonner';
-import { Trash2, RotateCcw, Package } from 'lucide-react';
+import { Trash2, RotateCcw, Package, FolderTree } from 'lucide-react';
 
 export default function TrashPage() {
   const { t } = useAdminT();
@@ -21,6 +21,9 @@ export default function TrashPage() {
   const restore = useMutation(api.products.restoreProduct);
   const purge = useMutation(api.products.permanentDeleteProduct);
   const emptyTrash = useMutation(api.products.emptyTrash);
+  const catTrash = useQuery(api.categories.listTrash, sessionToken ? { sessionToken } : 'skip');
+  const restoreCat = useMutation(api.categories.restoreCategory);
+  const purgeCat = useMutation(api.categories.permanentDeleteCategory);
   const [busy, setBusy] = useState<string | null>(null);
 
   if (trash === undefined) return <div className="flex min-h-[50vh] items-center justify-center"><Loader /></div>;
@@ -42,6 +45,17 @@ export default function TrashPage() {
     try { await emptyTrash({ sessionToken: sessionToken! }); toast.success(t('tr.emptied')); }
     catch { toast.error(t('tr.error')); } finally { setBusy(null); }
   };
+  const doRestoreCat = async (trashId: Id<'deletedCategories'>) => {
+    setBusy(trashId);
+    try { await restoreCat({ sessionToken: sessionToken!, trashId }); toast.success(t('tr.restored')); }
+    catch { toast.error(t('tr.error')); } finally { setBusy(null); }
+  };
+  const doPurgeCat = async (trashId: Id<'deletedCategories'>) => {
+    if (!window.confirm(t('tr.confirmPurge'))) return;
+    setBusy(trashId);
+    try { await purgeCat({ sessionToken: sessionToken!, trashId }); toast.success(t('tr.purged')); }
+    catch { toast.error(t('tr.error')); } finally { setBusy(null); }
+  };
 
   return (
     <div className="space-y-5">
@@ -57,7 +71,7 @@ export default function TrashPage() {
         )}
       </div>
 
-      {trash.length === 0 ? (
+      {trash.length === 0 && (!catTrash || catTrash.length === 0) ? (
         <Card className="border-border/50">
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground">
             <Package className="h-12 w-12 opacity-30" />
@@ -86,6 +100,32 @@ export default function TrashPage() {
                     <RotateCcw className="h-3.5 w-3.5" /> {t('tr.restore')}
                   </Button>
                   <Button size="icon-sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => doPurge(p._id)} disabled={busy !== null} title={t('tr.deleteForever')}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Deleted categories */}
+      {catTrash && catTrash.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground"><FolderTree className="h-4 w-4" /> {t('tr.categories')}</h2>
+          {catTrash.map((c) => (
+            <Card key={c._id} className="border-border/60">
+              <CardContent className="flex items-center gap-3 p-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground/50"><FolderTree className="h-5 w-5" /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{c.name}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{t('tr.deletedBy')}: {c.deletedByName} · {formatDateLocalized(c.deletedAt, t)}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => doRestoreCat(c._id)} disabled={busy !== null}>
+                    <RotateCcw className="h-3.5 w-3.5" /> {t('tr.restore')}
+                  </Button>
+                  <Button size="icon-sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => doPurgeCat(c._id)} disabled={busy !== null} title={t('tr.deleteForever')}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

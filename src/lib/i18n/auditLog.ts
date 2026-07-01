@@ -67,6 +67,12 @@ export function auditText(
       return `${t('al.txt.productPurge')} ${q(name)}`;
     case 'product.emptyTrash':
       return t('al.txt.emptyTrash');
+    case 'category.delete':
+      return `${t('al.txt.categoryDelete')} ${q(name)}`;
+    case 'category.restore':
+      return `${t('al.txt.categoryRestore')} ${q(name)}`;
+    case 'category.purge':
+      return `${t('al.txt.categoryPurge')} ${q(name)}`;
     case 'session.revokeAll':
       return `${t('al.txt.revokeAll')} ${q(name)}`;
     case 'order.updateStatus':

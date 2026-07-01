@@ -90,6 +90,7 @@ export const adminControl: DictModule = {
   'tr.emptied': { hy: 'Զամբյուղը դատարկվեց', ru: 'Корзина очищена', en: 'Trash emptied' },
   'tr.error': { hy: 'Սխալ', ru: 'Ошибка', en: 'Error' },
   'tr.autoPurgeNote': { hy: '30 օր հետո ապրանքները ջնջվում են ինքնաշխատ', ru: 'Через 30 дней товары удаляются автоматически', en: 'Items are auto-purged after 30 days' },
+  'tr.categories': { hy: 'Ջնջված կատեգորիաներ', ru: 'Удалённые категории', en: 'Deleted categories' },
 
   // --- Impersonation & sessions ---
   'sc.impViewAs': { hy: 'Դիտում որպես', ru: 'Просмотр от имени', en: 'Viewing as' },
@@ -110,6 +111,9 @@ export const adminControl: DictModule = {
   'al.product.restore': { hy: 'Ապրանք · վերականգնում', ru: 'Товар · восстановление', en: 'Product · restore' },
   'al.product.purge': { hy: 'Ապրանք · ջնջում', ru: 'Товар · удаление', en: 'Product · purge' },
   'al.product.emptyTrash': { hy: 'Զամբյուղ · դատարկում', ru: 'Корзина · очистка', en: 'Trash · empty' },
+  'al.category.delete': { hy: 'Կատեգորիա · զամբյուղ', ru: 'Категория · в корзину', en: 'Category · trash' },
+  'al.category.restore': { hy: 'Կատեգորիա · վերականգնում', ru: 'Категория · восстановление', en: 'Category · restore' },
+  'al.category.purge': { hy: 'Կատեգորիա · ջնջում', ru: 'Категория · удаление', en: 'Category · purge' },
   'al.access.setCapability': { hy: 'Հասանելիություն', ru: 'Доступ', en: 'Access' },
   'al.session.revokeAll': { hy: 'Սեսիաներ · ելք', ru: 'Сессии · выход', en: 'Sessions · logout' },
   'al.order.updateStatus': { hy: 'Պատվեր · կարգավիճակ', ru: 'Заказ · статус', en: 'Order · status' },
@@ -129,6 +133,9 @@ export const adminControl: DictModule = {
   'al.txt.productRestore': { hy: 'Վերականգնեց ապրանքը՝', ru: 'Восстановил товар', en: 'Restored product' },
   'al.txt.productPurge': { hy: 'Ընդմիշտ ջնջեց՝', ru: 'Удалил навсегда', en: 'Permanently deleted' },
   'al.txt.emptyTrash': { hy: 'Դատարկեց զամբյուղը', ru: 'Очистил корзину', en: 'Emptied trash' },
+  'al.txt.categoryDelete': { hy: 'Տեղափոխեց կատեգորիան զամբյուղ՝', ru: 'Переместил категорию в корзину', en: 'Moved category to trash' },
+  'al.txt.categoryRestore': { hy: 'Վերականգնեց կատեգորիան՝', ru: 'Восстановил категорию', en: 'Restored category' },
+  'al.txt.categoryPurge': { hy: 'Ընդմիշտ ջնջեց կատեգորիան՝', ru: 'Удалил категорию навсегда', en: 'Permanently deleted category' },
   'al.txt.revokeAll': { hy: 'Դուրս բերեց բոլոր սեսիաներից՝', ru: 'Завершил все сессии', en: 'Force-logged-out' },
   'al.txt.orderStatus': { hy: 'Պատվերի կարգավիճակ', ru: 'Статус заказа', en: 'Order status' },
   'al.txt.bulkOrders': { hy: 'Խմբակային թարմացում պատվերների համար', ru: 'Массовое обновление заказов', en: 'Bulk update on orders' },

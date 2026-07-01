@@ -66,6 +66,14 @@ crons.daily(
   {},
 );
 
+// Daily: permanently purge categories that have sat in the trash > 30 days.
+crons.daily(
+  'purge-old-category-trash',
+  { hourUTC: 4, minuteUTC: 10 },
+  internal.categories.purgeOldTrash,
+  {},
+);
+
 // Daily: owner Telegram digest (revenue, orders, stock) — 06:00 Armenia time.
 crons.daily(
   'owner-daily-digest',

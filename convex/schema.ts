@@ -306,6 +306,16 @@ export default defineSchema(
     deletedAt: v.number(),
   }).index('by_deletedAt', ['deletedAt']),
 
+  // ─── Deleted categories archive (trash / restore) ─────────────
+  deletedCategories: defineTable({
+    originalId: v.string(),
+    name: v.string(),
+    snapshot: v.string(),          // JSON of the full original category doc
+    deletedBy: v.optional(v.id('users')),
+    deletedByName: v.string(),
+    deletedAt: v.number(),
+  }).index('by_deletedAt', ['deletedAt']),
+
 
   promotions: defineTable({
     title: v.string(),

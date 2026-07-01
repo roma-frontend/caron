@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { internal } from './_generated/api';
-import { requireCapability } from './lib/auth';
+import { internalMutation } from './_generated/server';
+import { requireCapability, logAudit } from './lib/auth';
 import { normalizeImageUrl } from './lib/imageUrl';
 
 function normalizeCategoryImage<T extends { imageUrl?: string | null }>(category: T): T {
@@ -225,7 +226,72 @@ export const listWithCounts = query({
 export const remove = mutation({
   args: { sessionToken: v.string(), id: v.id('categories') },
   handler: async (ctx, args) => {
-    await requireCapability(ctx, args.sessionToken, 'categories');
+    const caller = await requireCapability(ctx, args.sessionToken, 'categories');
+    const cat = await ctx.db.get(args.id);
+    if (!cat) return;
+    // Soft-delete: archive to trash instead of destroying, so it can be restored.
+    const { _id, _creationTime, ...data } = cat;
+    void _id; void _creationTime;
+    await ctx.db.insert('deletedCategories', {
+      originalId: args.id as string,
+      name: cat.name,
+      snapshot: JSON.stringify(data),
+      deletedBy: caller._id,
+      deletedByName: caller.name,
+      deletedAt: Date.now(),
+    });
     await ctx.db.delete(args.id);
+    await logAudit(ctx, caller, 'category.delete', `Moved category "${cat.name}" to trash`,
+      { targetType: 'category', targetId: args.id });
+  },
+});
+
+/** List trashed categories (superadmin control, gated by `trash`). */
+export const listTrash = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await requireCapability(ctx, args.sessionToken, 'trash');
+    const rows = await ctx.db.query('deletedCategories').withIndex('by_deletedAt').order('desc').take(500);
+    return rows.map((r) => ({ _id: r._id, name: r.name, deletedByName: r.deletedByName, deletedAt: r.deletedAt }));
+  },
+});
+
+/** Restore a trashed category back into the catalog. */
+export const restoreCategory = mutation({
+  args: { sessionToken: v.string(), trashId: v.id('deletedCategories') },
+  handler: async (ctx, args) => {
+    const caller = await requireCapability(ctx, args.sessionToken, 'trash');
+    const row = await ctx.db.get(args.trashId);
+    if (!row) throw new Error('Not found');
+    const data = JSON.parse(row.snapshot);
+    const newId = await ctx.db.insert('categories', data);
+    await ctx.db.delete(args.trashId);
+    await logAudit(ctx, caller, 'category.restore', `Restored category "${row.name}" from trash`,
+      { targetType: 'category', targetId: newId });
+    return { categoryId: newId };
+  },
+});
+
+/** Permanently delete a trashed category. */
+export const permanentDeleteCategory = mutation({
+  args: { sessionToken: v.string(), trashId: v.id('deletedCategories') },
+  handler: async (ctx, args) => {
+    const caller = await requireCapability(ctx, args.sessionToken, 'trash');
+    const row = await ctx.db.get(args.trashId);
+    if (!row) return;
+    await ctx.db.delete(args.trashId);
+    await logAudit(ctx, caller, 'category.purge', `Permanently deleted category "${row.name}"`,
+      { targetType: 'category', targetId: row.originalId });
+  },
+});
+
+/** Cron: permanently purge categories that have sat in the trash > 30 days. */
+export const purgeOldTrash = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 86400000;
+    const old = await ctx.db.query('deletedCategories').withIndex('by_deletedAt', (q) => q.lt('deletedAt', cutoff)).take(500);
+    for (const row of old) await ctx.db.delete(row._id);
+    return { purged: old.length };
   },
 });
