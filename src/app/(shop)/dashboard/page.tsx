@@ -42,6 +42,13 @@ export default function DashboardPage() {
     }
   }, [hydrated, user, router]);
 
+  // Staff belong in the admin panel — send them there instead of the
+  // customer dashboard.
+  const isStaff = user?.role === 'superadmin' || user?.role === 'admin' || user?.role === 'manager';
+  useEffect(() => {
+    if (hydrated && isStaff) router.replace('/admin');
+  }, [hydrated, isStaff, router]);
+
   if (!hydrated) return <Loader />;
   if (!user) return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">

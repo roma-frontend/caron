@@ -135,11 +135,12 @@ export const login = mutation({
       if (emailMatch && passMatch) {
         let user = await ctx.db.query('users').withIndex('by_email', (q) => q.eq('email', adminEmail.toLowerCase())).unique();
         if (!user) {
-          const id = await ctx.db.insert('users', { name: 'Admin', email: adminEmail.toLowerCase(), role: 'superadmin', isActive: true, createdAt: Date.now() });
+          const id = await ctx.db.insert('users', { name: 'Admin', email: adminEmail.toLowerCase(), role: 'admin', isActive: true, createdAt: Date.now() });
           user = (await ctx.db.get(id))!;
-        } else if (user.role !== 'superadmin') {
-          // Promote the bootstrap owner account to superadmin (source of truth).
-          await ctx.db.patch(user._id, { role: 'superadmin' });
+        } else if (user.role !== 'admin') {
+          // The env ADMIN_EMAIL account is a regular admin (NOT superadmin).
+          // Superadmin is reserved for the Telegram owner (@i_amVip).
+          await ctx.db.patch(user._id, { role: 'admin' });
           user = (await ctx.db.get(user._id))!;
         }
         await clearLoginFailures(ctx, attemptKey);

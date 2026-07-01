@@ -5,17 +5,9 @@ import type { Id } from '../_generated/dataModel';
 export const ROLE_HIERARCHY = ['superadmin', 'admin', 'manager', 'customer'] as const;
 export type Role = (typeof ROLE_HIERARCHY)[number];
 
-/** Bootstrap superadmin email (the owner). Source of truth is `role`, but this
- *  env-pinned email lets the very first owner become superadmin before any DB
- *  role exists. */
-function bootstrapSuperadminEmail(): string | null {
-  const email = process.env.ADMIN_EMAIL;
-  return email ? email.toLowerCase().trim() : null;
-}
-
 /** Bootstrap superadmin Telegram usernames (comma-separated in env
- *  `SUPERADMIN_TELEGRAM`, without '@'). Falls back to the owner's pinned handle
- *  so the owner can sign in via Telegram and be recognised as superadmin. */
+ *  `SUPERADMIN_TELEGRAM`, without '@'). Defaults to the owner handle so the
+ *  owner can sign in via Telegram and be recognised as superadmin. */
 function bootstrapSuperadminTelegrams(): string[] {
   const raw = process.env.SUPERADMIN_TELEGRAM ?? 'i_amVip';
   return raw.split(',').map((s) => s.trim().replace(/^@/, '').toLowerCase()).filter(Boolean);
@@ -27,12 +19,14 @@ export function isSuperadminTelegram(username: string | undefined | null): boole
   return bootstrapSuperadminTelegrams().includes(username.replace(/^@/, '').toLowerCase());
 }
 
-/** Runtime superadmin check: DB role is primary, env email is bootstrap fallback. */
+/**
+ * Runtime superadmin check. Source of truth is the DB `role`. The only bootstrap
+ * path is the owner's Telegram handle (env `SUPERADMIN_TELEGRAM`, default
+ * `i_amVip`) — the email ADMIN_EMAIL account is a regular admin, not superadmin.
+ */
 export function isSuperadmin(user: { role?: string; email?: string; telegramUsername?: string } | null | undefined): boolean {
   if (!user) return false;
   if (user.role === 'superadmin') return true;
-  const boot = bootstrapSuperadminEmail();
-  if (boot && user.email && user.email.toLowerCase().trim() === boot) return true;
   return isSuperadminTelegram(user.telegramUsername);
 }
 

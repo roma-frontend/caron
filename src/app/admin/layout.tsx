@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   if (!hydrated) return <div className="flex min-h-screen items-center justify-center"><Loader /></div>;
-  if (!user || (user.role !== 'admin' && user.role !== 'manager')) return (
+  if (!user || !isStaff) return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
       <div className="flex flex-col items-center gap-4 text-center max-w-sm">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
