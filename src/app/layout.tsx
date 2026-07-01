@@ -22,6 +22,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieConsentWrapper } from '@/components/CookieConsentWrapper';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { toR2MediaProxyUrl } from '@/lib/r2Media';
 
 // Hero poster (home page LCP element) — resolved to the same delivery URL the
@@ -282,6 +283,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </SettingsProvider>
             <ThemedToaster />
             <FloatingActions />
+            <ImpersonationBanner />
           </ConvexClientProvider>
         </ThemeProvider>
 

@@ -17,16 +17,16 @@ export function ImpersonationBanner() {
   if (!impersonator) return null;
 
   return (
-    <div className="sticky top-0 z-[200] flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-black shadow-md">
+    <div className="fixed inset-x-0 bottom-0 z-[9999] flex items-center justify-center gap-3 border-t border-amber-600/40 bg-amber-500 px-4 py-2.5 text-sm font-medium text-black shadow-[0_-4px_20px_rgba(0,0,0,0.25)]">
       <UserCog className="h-4 w-4 shrink-0" />
       <span className="truncate">
-        Просмотр от имени <strong>{user?.name}</strong>{user?.email ? ` (${user.email})` : ''}
+        Просмотр от имени <strong>{user?.name}</strong>{user?.email && !user.email.endsWith('@telegram.local') ? ` (${user.email})` : ''}
       </span>
       <button
         onClick={() => { stop(); router.push('/admin/control'); }}
-        className="inline-flex items-center gap-1 rounded-full bg-black/85 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-black"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-xs font-bold text-white transition-transform hover:scale-105"
       >
-        <X className="h-3 w-3" /> Выйти
+        <X className="h-3.5 w-3.5" /> Вернуться в супер-админ
       </button>
     </div>
   );
