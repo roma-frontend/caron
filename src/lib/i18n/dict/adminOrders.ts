@@ -2,6 +2,22 @@ import type { DictModule } from '../types';
 
 /** Admin: orders & returns pages. Keys prefixed `ao.`. */
 export const adminOrders: DictModule = {
+  // Bulk selection / actions
+  'ao.refunded': { hy: 'Վերադարձված', ru: 'Возвращено', en: 'Refunded' },
+  'ao.bulk.select': { hy: 'Ընտրել', ru: 'Выбрать', en: 'Select' },
+  'ao.bulk.exit': { hy: 'Չեղարկել ընտրությունը', ru: 'Отменить выбор', en: 'Cancel selection' },
+  'ao.bulk.selected': { hy: 'Ընտրված է', ru: 'Выбрано', en: 'Selected' },
+  'ao.bulk.all': { hy: 'Ընտրել բոլորը', ru: 'Выбрать все', en: 'Select all' },
+  'ao.bulk.clear': { hy: 'Մաքրել', ru: 'Очистить', en: 'Clear' },
+  'ao.bulk.status': { hy: 'Կարգավիճակ →', ru: 'Статус →', en: 'Status →' },
+  'ao.bulk.payment': { hy: 'Վճարում →', ru: 'Оплата →', en: 'Payment →' },
+  'ao.bulk.apply': { hy: 'Կիրառել', ru: 'Применить', en: 'Apply' },
+  'ao.bulk.applying': { hy: 'Կիրառվում է...', ru: 'Применение...', en: 'Applying...' },
+  'ao.bulk.export': { hy: 'Ներբեռնել CSV', ru: 'Экспорт CSV', en: 'Export CSV' },
+  'ao.bulk.done': { hy: 'Թարմացվեց', ru: 'Обновлено', en: 'Updated' },
+  'ao.bulk.failed': { hy: 'ձախողվեց', ru: 'ошибок', en: 'failed' },
+  'ao.bulk.error': { hy: 'Խմբակային գործողության սխալ', ru: 'Ошибка массового действия', en: 'Bulk action failed' },
+
   // Order status
   'ao.status.pending': { hy: 'Սպասում', ru: 'Ожидание', en: 'Pending' },
   'ao.status.confirmed': { hy: 'Հաստատվել է', ru: 'Подтверждён', en: 'Confirmed' },

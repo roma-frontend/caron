@@ -397,13 +397,37 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     const admin = await requireCapability(ctx, args.sessionToken, 'orders');
-    const { id, status, paymentStatus, cancelReason, cancelComment } = args;
+    await applyOrderStatusChange(ctx, admin, args);
+  },
+});
+
+type OrderStatusChange = {
+  id: Id<'orders'>;
+  status?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus?: 'awaiting' | 'paid' | 'refunded';
+  cancelReason?: string;
+  cancelComment?: string;
+};
+
+/**
+ * Core order status/payment transition with all side-effects (stock
+ * restock/reserve, loyalty & referral accrual/reversal, order events, web
+ * push). Shared by the single `updateStatus` mutation and `bulkAction` so both
+ * paths behave identically.
+ */
+async function applyOrderStatusChange(
+  ctx: MutationCtx,
+  admin: Awaited<ReturnType<typeof requireCapability>>,
+  p: OrderStatusChange,
+  skipAudit = false,
+) {
+    const { id, status, paymentStatus, cancelReason, cancelComment } = p;
 
     const order = await ctx.db.get(id);
     if (!order) throw new Error('Պատվերը չի գտնվել');
 
     const prevStatus = order.status;
-    const nextStatus = args.status ?? prevStatus;
+    const nextStatus = status ?? prevStatus;
 
     // Loyalty accrual: award when an order is delivered, reverse if it is later
     // cancelled. Gated by store settings; tracked on the order to prevent
@@ -519,7 +543,7 @@ export const updateStatus = mutation({
     await ctx.db.patch(id, patch);
 
     if ((status !== undefined && status !== prevStatus) || (paymentStatus !== undefined && paymentStatus !== order.paymentStatus)) {
-      await logAudit(ctx, admin, 'order.updateStatus',
+      if (!skipAudit) await logAudit(ctx, admin, 'order.updateStatus',
         `Order #${order.orderNumber}: ${prevStatus}→${nextStatus}${paymentStatus ? `, payment ${paymentStatus}` : ''}`,
         { targetType: 'order', targetId: id, meta: { prevStatus, nextStatus, paymentStatus } });
     }
@@ -568,6 +592,54 @@ export const updateStatus = mutation({
         createdAt: now,
       });
     }
+}
+
+/** Bulk order status / payment update over a selection (superadmin control:
+ * audit-logged once, capability-gated by `orders` + `action.bulk`). Individual
+ * order failures (e.g. insufficient stock on reopen) are skipped so one bad
+ * order doesn't abort the whole batch. */
+export const bulkAction = mutation({
+  args: {
+    sessionToken: v.string(),
+    ids: v.array(v.id('orders')),
+    status: v.optional(
+      v.union(
+        v.literal('pending'), v.literal('confirmed'), v.literal('processing'),
+        v.literal('shipped'), v.literal('delivered'), v.literal('cancelled'),
+      ),
+    ),
+    paymentStatus: v.optional(v.union(v.literal('awaiting'), v.literal('paid'), v.literal('refunded'))),
+    cancelReason: v.optional(v.string()),
+    cancelComment: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const admin = await requireCapability(ctx, args.sessionToken, 'orders');
+    await requireCapability(ctx, args.sessionToken, 'action.bulk');
+    if (args.ids.length === 0) return { updated: 0, failed: 0 };
+    if (args.ids.length > 200) throw new Error('Չափից շատ պատվերներ ընտրված են (առավելագույնը՝ 200)');
+    if (args.status === 'cancelled' && !args.cancelReason?.trim()) {
+      throw new Error('Խնդրում ենք նշել չեղարկման պատճառը');
+    }
+    let updated = 0;
+    let failed = 0;
+    for (const id of args.ids) {
+      try {
+        await applyOrderStatusChange(ctx, admin, {
+          id,
+          status: args.status,
+          paymentStatus: args.paymentStatus,
+          cancelReason: args.cancelReason,
+          cancelComment: args.cancelComment,
+        }, true);
+        updated++;
+      } catch {
+        failed++;
+      }
+    }
+    await logAudit(ctx, admin, 'order.bulkAction',
+      `Bulk update on ${updated} order(s)${args.status ? ` → ${args.status}` : ''}${args.paymentStatus ? `, payment ${args.paymentStatus}` : ''}`,
+      { targetType: 'order', meta: { count: updated, failed, status: args.status, paymentStatus: args.paymentStatus } });
+    return { updated, failed };
   },
 });
 

@@ -71,6 +71,8 @@ export function auditText(
       return `${t('al.txt.revokeAll')} ${q(name)}`;
     case 'order.updateStatus':
       return `${t('al.txt.orderStatus')}: ${statusLabel(meta.prevStatus)} → ${statusLabel(meta.nextStatus)}`;
+    case 'order.bulkAction':
+      return `${t('al.txt.bulkOrders')}: ${typeof meta.count === 'number' ? meta.count : ''}${meta.status ? ` → ${statusLabel(meta.status)}` : ''}`;
     case 'settings.update':
       return t('al.txt.settingsUpdate');
     default:

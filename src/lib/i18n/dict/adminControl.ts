@@ -113,6 +113,7 @@ export const adminControl: DictModule = {
   'al.access.setCapability': { hy: 'Հասանելիություն', ru: 'Доступ', en: 'Access' },
   'al.session.revokeAll': { hy: 'Սեսիաներ · ելք', ru: 'Сессии · выход', en: 'Sessions · logout' },
   'al.order.updateStatus': { hy: 'Պատվեր · կարգավիճակ', ru: 'Заказ · статус', en: 'Order · status' },
+  'al.order.bulkAction': { hy: 'Պատվերներ · խմբակային', ru: 'Заказы · массово', en: 'Orders · bulk' },
   'al.settings.update': { hy: 'Կարգավորումներ', ru: 'Настройки', en: 'Settings' },
 
   // --- Audit log: localized summaries (verbs; dynamic parts appended) ---
@@ -130,5 +131,6 @@ export const adminControl: DictModule = {
   'al.txt.emptyTrash': { hy: 'Դատարկեց զամբյուղը', ru: 'Очистил корзину', en: 'Emptied trash' },
   'al.txt.revokeAll': { hy: 'Դուրս բերեց բոլոր սեսիաներից՝', ru: 'Завершил все сессии', en: 'Force-logged-out' },
   'al.txt.orderStatus': { hy: 'Պատվերի կարգավիճակ', ru: 'Статус заказа', en: 'Order status' },
+  'al.txt.bulkOrders': { hy: 'Խմբակային թարմացում պատվերների համար', ru: 'Массовое обновление заказов', en: 'Bulk update on orders' },
   'al.txt.settingsUpdate': { hy: 'Թարմացրեց խանութի կարգավորումները', ru: 'Обновил настройки магазина', en: 'Updated store settings' },
 };

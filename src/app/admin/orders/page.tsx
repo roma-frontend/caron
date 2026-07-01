@@ -605,6 +605,19 @@ export default function AdminDashboardPage() {
   const [customFrom, setCustomFrom] = useState(() => formatDateInput(new Date()));
   const [customTo, setCustomTo] = useState(() => formatDateInput(new Date()));
 
+  // ─── Bulk selection mode (superadmin control) ───
+  const bulkAction = useMutation(api.orders.bulkAction);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkPayment, setBulkPayment] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const toggleSelect = (id: string) => setSelected((prev) => {
+    const n = new Set(prev);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  });
+
   const periodRange = getPeriodRange(period, customFrom, customTo);
   const periodOrders = orders?.filter((o) => o.createdAt >= periodRange.from && o.createdAt <= periodRange.to) ?? [];
   const paidActiveOrders = periodOrders.filter((o) => o.paymentStatus === 'paid' && o.status !== 'cancelled');
@@ -641,6 +654,42 @@ export default function AdminDashboardPage() {
     }
     return true;
   });
+
+  const applyBulk = async () => {
+    if (selected.size === 0 || (!bulkStatus && !bulkPayment)) return;
+    setBulkSaving(true);
+    try {
+      const res = await bulkAction({
+        sessionToken: sessionToken!,
+        ids: [...selected] as Parameters<typeof bulkAction>[0]['ids'],
+        status: (bulkStatus || undefined) as Parameters<typeof bulkAction>[0]['status'],
+        paymentStatus: (bulkPayment || undefined) as Parameters<typeof bulkAction>[0]['paymentStatus'],
+      });
+      toast.success(`${t('ao.bulk.done')}: ${res.updated}${res.failed ? ` (${res.failed} ${t('ao.bulk.failed')})` : ''}`);
+      setSelected(new Set()); setBulkStatus(''); setBulkPayment('');
+    } catch { toast.error(t('ao.bulk.error')); } finally { setBulkSaving(false); }
+  };
+
+  const exportSelected = () => {
+    const rows = (filtered ?? []).filter((o) => selected.has(String(o._id)));
+    if (rows.length === 0) return;
+    const header = ['Order', 'Date', 'Customer', 'Phone', 'Status', 'Payment', 'Total'];
+    const body = rows.map((o) => [
+      String(o.orderNumber ?? ''),
+      new Date(o.createdAt).toISOString().slice(0, 10),
+      String(o.customerName ?? ''),
+      String(o.customerPhone ?? ''),
+      String(o.status ?? ''),
+      String(o.paymentStatus ?? ''),
+      String(o.total ?? ''),
+    ]);
+    const csv = [header, ...body].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `orders-${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const statCards = [
     { label: 'ao.stat.total', value: periodOrders.length, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -811,11 +860,51 @@ export default function AdminDashboardPage() {
             {Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{t(v.label)}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant={selectMode ? 'default' : 'outline'} className="h-9 text-xs" onClick={() => { setSelectMode((s) => !s); setSelected(new Set()); }}>
+          {selectMode ? t('ao.bulk.exit') : t('ao.bulk.select')}
+        </Button>
       </div>
+
+      {/* Bulk action bar */}
+      {selectMode && (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border bg-muted/40 p-3 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span>{t('ao.bulk.selected')}: {selected.size}</span>
+            <button className="text-primary hover:underline" onClick={() => setSelected(new Set((filtered ?? []).map((o) => String(o._id))))}>{t('ao.bulk.all')}</button>
+            {selected.size > 0 && <button className="text-muted-foreground hover:underline" onClick={() => setSelected(new Set())}>{t('ao.bulk.clear')}</button>}
+          </div>
+          <div className="flex flex-1 flex-wrap items-center gap-2 sm:justify-end">
+            <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="h-9 rounded-lg border border-input bg-background px-2 text-xs">
+              <option value="">{t('ao.bulk.status')}</option>
+              {['pending', 'confirmed', 'processing', 'shipped', 'delivered'].map((s) => <option key={s} value={s}>{t(STATUS_MAP[s]?.label ?? s)}</option>)}
+            </select>
+            <select value={bulkPayment} onChange={(e) => setBulkPayment(e.target.value)} className="h-9 rounded-lg border border-input bg-background px-2 text-xs">
+              <option value="">{t('ao.bulk.payment')}</option>
+              <option value="awaiting">{t('ao.awaitingPayment')}</option>
+              <option value="paid">{t('ao.paid')}</option>
+              <option value="refunded">{t('ao.refunded')}</option>
+            </select>
+            <Button className="h-9 text-xs" disabled={bulkSaving || selected.size === 0 || (!bulkStatus && !bulkPayment)} onClick={applyBulk}>{bulkSaving ? t('ao.bulk.applying') : t('ao.bulk.apply')}</Button>
+            <Button variant="outline" className="h-9 text-xs" disabled={selected.size === 0} onClick={exportSelected}>{t('ao.bulk.export')}</Button>
+          </div>
+        </div>
+      )}
 
       {/* Orders list */}
       <div className="space-y-2">
-        {filtered?.map((order, i) => <OrderCard key={String(order._id)} order={order as Record<string, unknown>} sessionToken={sessionToken ?? ''} index={i} settings={settings} />)}
+        {filtered?.map((order, i) => {
+          const id = String(order._id);
+          return (
+            <div key={id} className="flex items-start gap-2">
+              {selectMode && (
+                <input type="checkbox" checked={selected.has(id)} onChange={() => toggleSelect(id)} className="mt-5 h-4 w-4 shrink-0" />
+              )}
+              <div className="min-w-0 flex-1">
+                <OrderCard order={order as Record<string, unknown>} sessionToken={sessionToken ?? ''} index={i} settings={settings} />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {filtered?.length === 0 && (
