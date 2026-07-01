@@ -11,12 +11,12 @@ import { Loader } from '@/components/ui/loader';
 import { LayoutGrid, List, Search, Percent, Phone, Mail, Pencil, Ban, Trash2, UserPlus, Shield, ShieldCheck, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
-import { formatDateLocalized } from '@/lib/formatters';
+import { formatDateLocalized, formatPrice } from '@/lib/formatters';
 import { Id, Doc } from '../../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { useAdminT } from '@/lib/i18n/admin';
 
-type Customer = Doc<'users'>;
+type Customer = Doc<'users'> & { ltv?: number; orderCount?: number; lastOrderAt?: number };
 
 /** What to show as the customer's contact line: their real email, or the
  *  Telegram @username — never the internal `tg_<id>@telegram.local` placeholder.
@@ -477,6 +477,9 @@ export default function AdminCustomersPage() {
                   <td className="p-3 font-medium">
                     <div>{c.name}</div>
                     <div className="text-xs text-muted-foreground sm:hidden">{customerContact(c).text}</div>
+                    {(c.orderCount ?? 0) > 0 && (
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">{t('ac.ltv')} {formatPrice(c.ltv ?? 0)} · {c.orderCount} {t('ac.ordersCount')}</div>
+                    )}
                   </td>
                   <td className="p-3 text-muted-foreground hidden sm:table-cell">{customerContact(c).text}</td>
                   <td className="p-3 text-muted-foreground hidden md:table-cell">{c.phone || '—'}</td>
@@ -582,6 +585,13 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
           {customer.phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {customer.phone}</div>}
           {customer.address && <div className="flex items-center gap-1.5 truncate">📍 {customer.address}</div>}
         </div>
+        {(customer.orderCount ?? 0) > 0 && (
+          <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg border bg-muted/30 p-2 text-center">
+            <div><p className="text-[10px] text-muted-foreground">{t('ac.ltv')}</p><p className="text-xs font-semibold">{formatPrice(customer.ltv ?? 0)}</p></div>
+            <div><p className="text-[10px] text-muted-foreground">{t('ac.ordersCount')}</p><p className="text-xs font-semibold">{customer.orderCount}</p></div>
+            <div><p className="text-[10px] text-muted-foreground">{t('ac.lastOrder')}</p><p className="text-xs font-semibold">{customer.lastOrderAt ? formatDateLocalized(customer.lastOrderAt, t) : '—'}</p></div>
+          </div>
+        )}
         <div className="mt-3 flex items-center justify-between">
           {customer.role === 'customer' ? (
             <div className="flex items-center gap-1.5">

@@ -45,7 +45,20 @@ export const list = query({
     const total = users.length;
     const { numItems } = args.paginationOpts;
     const page = users.slice(0, numItems ?? 20);
-    return { page, total, isDone: page.length >= total, callerRole: caller.role };
+
+    // Enrich the visible page with order stats (LTV, order count, last order).
+    // Computed only for the page (~20 rows) to keep the query cheap. Aggregated
+    // by userId; guest orders without a linked account are not counted.
+    const pageWithStats = await Promise.all(
+      page.map(async (u) => {
+        const userOrders = await ctx.db.query('orders').withIndex('by_user', (q) => q.eq('userId', u._id)).take(1000);
+        const active = userOrders.filter((o) => o.status !== 'cancelled');
+        const ltv = active.reduce((s, o) => s + o.total, 0);
+        const lastOrderAt = userOrders.reduce((m, o) => Math.max(m, o.createdAt), 0);
+        return { ...u, ltv, orderCount: userOrders.length, lastOrderAt: lastOrderAt || undefined };
+      }),
+    );
+    return { page: pageWithStats, total, isDone: page.length >= total, callerRole: caller.role };
   },
 });
 

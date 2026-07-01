@@ -2,6 +2,11 @@ import type { DictModule } from '../types';
 
 /** Admin: customers page. Keys prefixed `ac.`. */
 export const adminCustomers: DictModule = {
+  // --- Customer lifetime stats ---
+  'ac.ltv': { hy: 'LTV', ru: 'LTV', en: 'LTV' },
+  'ac.ordersCount': { hy: 'Պատվերներ', ru: 'Заказы', en: 'Orders' },
+  'ac.lastOrder': { hy: 'Վերջին', ru: 'Последний', en: 'Last' },
+
   // --- Customers page ---
   'ac.confirmDelete': { hy: 'Հաստատե՞լ ջնջումը', ru: 'Подтвердить удаление?', en: 'Confirm deletion?' },
   'ac.customerWillBeDeleted': { hy: 'հաճախորդը կջնջվի', ru: 'клиент будет удалён', en: 'customer will be deleted' },
