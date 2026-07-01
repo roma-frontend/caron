@@ -100,6 +100,9 @@ export const adminControl: DictModule = {
   'sc.forceLogoutConfirm': { hy: 'Ավարտե՞լ բոլոր սեսիաները՝', ru: 'Завершить все сессии:', en: 'End all sessions for:' },
   'sc.sessionsRevoked': { hy: 'Սեսիաներն ավարտվեցին', ru: 'Сессии завершены', en: 'Sessions ended' },
   'sc.roleSuperadmin': { hy: 'Սուպերադմին', ru: 'Суперадмин', en: 'Superadmin' },
+  'sc.auditActor': { hy: 'Ֆիլտր ըստ կատարողի', ru: 'Фильтр по исполнителю', en: 'Filter by actor' },
+  'sc.auditAllActions': { hy: 'Բոլոր գործողությունները', ru: 'Все действия', en: 'All actions' },
+  'sc.auditExport': { hy: 'CSV արտահանում', ru: 'Экспорт CSV', en: 'Export CSV' },
 
   // --- Audit log: action chip labels ---
   'al.user.create': { hy: 'Օգտատեր · ստեղծում', ru: 'Пользователь · создание', en: 'User · create' },

@@ -43,6 +43,34 @@ export const sendDailyDigest = internalAction({
   },
 });
 
+/** Real-time security alert to the owner for critical audit events. */
+export const sendCriticalAlert = internalAction({
+  args: { action: v.string(), summary: v.string(), actorName: v.string() },
+  handler: async (ctx, args) => {
+    const settings = await ctx.runQuery(internal.settings.getSecret, {});
+    const token = settings?.telegramBotToken;
+    const chatId = settings?.telegramChatId;
+    if (!token || !chatId) return;
+    const text = [
+      `<b>🔐 Անվտանգության ազդանշան</b>`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<b>Գործողություն՝</b> <code>${args.action}</code>`,
+      `<b>Կատարող՝</b> ${args.actorName}`,
+      `<b>Մանրամասն՝</b> ${args.summary}`,
+      `<b>🕐</b> ${new Date().toLocaleString('hy-AM', { timeZone: 'Asia/Yerevan' })}`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `<a href="${SITE}/admin/control">🛡 Control Center</a>`,
+    ].join('\n');
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      });
+    } catch {}
+  },
+});
+
 export const sendOrderNotification = internalAction({
   args: {
     orderNumber: v.string(),

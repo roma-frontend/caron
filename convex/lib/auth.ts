@@ -1,5 +1,18 @@
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
+import { internal } from '../_generated/api';
+
+/** Audit actions that trigger a real-time Telegram security alert to the owner. */
+const CRITICAL_AUDIT_ACTIONS = new Set<string>([
+  'access.setCapability',
+  'user.delete',
+  'user.roleChange',
+  'user.impersonate',
+  'session.revokeAll',
+  'product.emptyTrash',
+  'order.bulkAction',
+  'category.purge',
+]);
 
 /** Role hierarchy, highest privilege first. */
 export const ROLE_HIERARCHY = ['superadmin', 'admin', 'manager', 'customer'] as const;
@@ -152,6 +165,14 @@ export async function logAudit(
     meta: opts?.meta ? JSON.stringify(opts.meta) : undefined,
     createdAt: Date.now(),
   });
+  // Fire a real-time Telegram alert for critical security events (best-effort).
+  if (CRITICAL_AUDIT_ACTIONS.has(action)) {
+    await ctx.scheduler.runAfter(0, internal.notifications.sendCriticalAlert, {
+      action,
+      summary,
+      actorName: caller?.name ?? 'system',
+    });
+  }
 }
 
 // Optional auth: returns user if valid session token found, null otherwise

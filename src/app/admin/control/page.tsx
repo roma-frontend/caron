@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { contactLabel } from '@/lib/contact';
 import { auditActionLabel, auditText } from '@/lib/i18n/auditLog';
@@ -54,7 +54,7 @@ export default function ControlCenterPage() {
 
   const stats = useQuery(api.access.getControlStats, args);
   const matrixData = useQuery(api.access.getAccessMatrix, args);
-  const audit = useQuery(api.access.listAudit, isSuperadmin && sessionToken ? { sessionToken, limit: 60 } : 'skip');
+  const audit = useQuery(api.access.listAudit, isSuperadmin && sessionToken ? { sessionToken, limit: 300 } : 'skip');
   const staff = useQuery(api.access.listStaff, args);
   const setCapability = useMutation(api.access.setCapability);
   const revokeAllSessions = useMutation(api.access.revokeAllSessions);
@@ -63,6 +63,32 @@ export default function ControlCenterPage() {
     : role === 'admin' ? t('ac.roleAdmin')
     : role === 'manager' ? t('ac.roleManager')
     : t('ac.roleCustomer');
+
+  const [auditActor, setAuditActor] = useState('');
+  const [auditActionFilter, setAuditActionFilter] = useState('all');
+  const auditActions = useMemo(() => [...new Set((audit ?? []).map((e) => e.action))].sort(), [audit]);
+  const filteredAudit = useMemo(() => (audit ?? []).filter((e) => {
+    if (auditActionFilter !== 'all' && e.action !== auditActionFilter) return false;
+    if (auditActor && !e.actorName.toLowerCase().includes(auditActor.toLowerCase())) return false;
+    return true;
+  }), [audit, auditActionFilter, auditActor]);
+
+  const exportAudit = () => {
+    const header = ['Date', 'Action', 'Actor', 'Role', 'Summary'];
+    const body = filteredAudit.map((e) => [
+      new Date(e.createdAt).toISOString(),
+      e.action,
+      e.actorName,
+      e.actorRole,
+      auditText(e, t),
+    ]);
+    const csv = [header, ...body].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `audit-${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const forceLogout = async (userId: string, name: string) => {
     if (!window.confirm(`${t('sc.forceLogoutConfirm')} ${name}`)) return;
@@ -195,14 +221,24 @@ export default function ControlCenterPage() {
 
           <Card className="border-border/60">
             <CardContent className="p-0">
-              <div className="border-b px-4 py-3"><h2 className="flex items-center gap-2 font-semibold"><ScrollText className="h-4 w-4 text-primary" /> {t('sc.auditFeed')}</h2></div>
+              <div className="border-b px-4 py-3">
+                <h2 className="flex items-center gap-2 font-semibold"><ScrollText className="h-4 w-4 text-primary" /> {t('sc.auditFeed')}</h2>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input value={auditActor} onChange={(e) => setAuditActor(e.target.value)} placeholder={t('sc.auditActor')} className="h-8 flex-1 min-w-[120px] rounded-lg border border-input bg-background px-2 text-xs" />
+                  <select value={auditActionFilter} onChange={(e) => setAuditActionFilter(e.target.value)} className="h-8 rounded-lg border border-input bg-background px-2 text-xs">
+                    <option value="all">{t('sc.auditAllActions')}</option>
+                    {auditActions.map((a) => <option key={a} value={a}>{auditActionLabel(a, t)}</option>)}
+                  </select>
+                  <button onClick={exportAudit} disabled={filteredAudit.length === 0} className="h-8 rounded-lg border bg-background px-2 text-xs font-medium hover:bg-accent disabled:opacity-50">{t('sc.auditExport')}</button>
+                </div>
+              </div>
               <div className="max-h-[420px] overflow-y-auto">
                 {audit === undefined ? (
                   <div className="py-8"><Loader /></div>
-                ) : audit.length === 0 ? (
+                ) : filteredAudit.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t('sc.auditEmpty')}</p>
                 ) : (
-                  audit.map((e) => (
+                  filteredAudit.map((e) => (
                     <div key={e._id} className="border-b border-border/40 px-4 py-2.5 last:border-0">
                       <div className="flex items-center justify-between gap-2">
                         <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{auditActionLabel(e.action, t)}</span>
