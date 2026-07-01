@@ -51,7 +51,7 @@ export function Header() {
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const hasFavs = mounted && favCount > 0;
   const displayCartCount = mounted ? cartCount : 0;
-  const accountHref = !authHydrated ? '/login' : !user ? '/login' : user.role === 'admin' ? '/admin' : '/dashboard';
+  const accountHref = !authHydrated ? '/login' : !user ? '/login' : (user.role === 'admin' || user.role === 'manager') ? '/admin' : '/dashboard';
   const storeName = useStoreName();
   const announcementBar = settings?.announcementBar;
   const showAnnouncement = settings?.announcementEnabled !== false && Boolean(announcementBar);

@@ -34,7 +34,7 @@ async function derivePbkdf2(password: string, saltHex: string, iterations: numbe
   return bytesToHex(new Uint8Array(bits));
 }
 
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   const salt = new Uint8Array(16);
   crypto.getRandomValues(salt);
   const saltHex = bytesToHex(salt);

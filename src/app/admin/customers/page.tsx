@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader } from '@/components/ui/loader';
-import { LayoutGrid, List, Search, Percent, Phone, Mail, Pencil, Ban, Trash2 } from 'lucide-react';
+import { LayoutGrid, List, Search, Percent, Phone, Mail, Pencil, Ban, Trash2, UserPlus, Shield, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { formatDateLocalized } from '@/lib/formatters';
@@ -50,16 +50,39 @@ function ConfirmDeleteDialog({ state, onConfirm, onClose }: { state: NonNullable
   );
 }
 
-function EditDialog({ customer, sessionToken, onClose }: { customer: Customer; sessionToken: string; onClose: () => void }) {
+function EditDialog({ customer, sessionToken, canManageStaff, onClose }: { customer: Customer; sessionToken: string; canManageStaff: boolean; onClose: () => void }) {
   const { t } = useAdminT();
   const updateCustomer = useMutation(api.customers.updateCustomer);
-  const [form, setForm] = useState({ name: customer.name, phone: customer.phone ?? '', address: customer.address ?? '' });
+  const isTelegram = customer.email?.endsWith('@telegram.local');
+  const [form, setForm] = useState({
+    name: customer.name,
+    phone: customer.phone ?? '',
+    address: customer.address ?? '',
+    role: (customer.role as 'customer' | 'manager' | 'admin'),
+    customerType: (customer.customerType ?? 'retail') as 'retail' | 'wholesale',
+    discountPercent: customer.discountPercent ?? 0,
+    isActive: customer.isActive,
+    newPassword: '',
+  });
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
+    if (form.newPassword && form.newPassword.length < 8) { toast.error(t('ac.passwordTooShort')); return; }
     setSaving(true);
     try {
-      await updateCustomer({ sessionToken, userId: customer._id, name: form.name, phone: form.phone || undefined, address: form.address || undefined });
+      await updateCustomer({
+        sessionToken,
+        userId: customer._id,
+        name: form.name,
+        phone: form.phone || undefined,
+        address: form.address || undefined,
+        isActive: form.isActive,
+        ...(form.role === 'customer' ? { customerType: form.customerType, discountPercent: form.discountPercent } : {}),
+        ...(canManageStaff ? {
+          ...(form.role !== customer.role ? { role: form.role } : {}),
+          ...(form.newPassword ? { newPassword: form.newPassword } : {}),
+        } : {}),
+      });
       toast.success(t('ac.saved'));
       onClose();
     } catch { toast.error(t('ac.error')); } finally { setSaving(false); }
@@ -68,12 +91,54 @@ function EditDialog({ customer, sessionToken, onClose }: { customer: Customer; s
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>{t('ac.editCustomer')}</DialogTitle></DialogHeader>
-        <div className="space-y-3 py-2">
+        <DialogHeader><DialogTitle>{t('ac.editUser')}</DialogTitle></DialogHeader>
+        <div className="space-y-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
           <div><Label>{t('ac.name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-10 mt-1" /></div>
           <div><Label>{t('ac.email')}</Label><Input value={customer.email} disabled className="h-10 mt-1 opacity-60" /></div>
           <div><Label>{t('ac.phoneLabel')}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374 XX XXX XXX" className="h-10 mt-1" /></div>
           <div><Label>{t('ac.address')}</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('ac.addressPlaceholder')} className="h-10 mt-1" /></div>
+
+          {canManageStaff && (
+            <div>
+              <Label>{t('ac.role')}</Label>
+              <div className="mt-1 grid grid-cols-3 gap-2">
+                {(['customer', 'manager', 'admin'] as const).map((r) => (
+                  <button key={r} type="button" onClick={() => setForm({ ...form, role: r })}
+                    className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${form.role === r ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-accent text-muted-foreground'}`}>
+                    {t(r === 'customer' ? 'ac.roleCustomer' : r === 'manager' ? 'ac.roleManager' : 'ac.roleAdmin')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {form.role === 'customer' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t('ac.customerTypeLabel')}</Label>
+                <select value={form.customerType} onChange={(e) => setForm({ ...form, customerType: e.target.value as 'retail' | 'wholesale' })} className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
+                  <option value="retail">{t('ac.retail')}</option>
+                  <option value="wholesale">{t('ac.wholesale')}</option>
+                </select>
+              </div>
+              <div>
+                <Label>{t('ac.discountLabel')}</Label>
+                <Input {...numericInputProps(false)} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })} className="h-10 mt-1" />
+              </div>
+            </div>
+          )}
+
+          {canManageStaff && !isTelegram && (
+            <div>
+              <Label>{t('ac.newPassword')}</Label>
+              <Input type="password" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} placeholder={t('ac.leaveBlankKeepPassword')} className="h-10 mt-1" autoComplete="new-password" />
+            </div>
+          )}
+
+          <label className="flex items-center gap-2 pt-1 text-sm">
+            <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="h-4 w-4" />
+            {t('ac.accountActive')}
+          </label>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('ac.cancel')}</Button>
@@ -84,6 +149,193 @@ function EditDialog({ customer, sessionToken, onClose }: { customer: Customer; s
   );
 }
 
+const WIZARD_STEPS = ['stepRole', 'stepIdentity', 'stepCredentials', 'stepReview'] as const;
+
+function CreateUserWizard({ sessionToken, onClose, onCreated }: { sessionToken: string; onClose: () => void; onCreated: () => void }) {
+  const { t } = useAdminT();
+  const createUser = useMutation(api.customers.createUser);
+  const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    role: 'customer' as 'customer' | 'manager' | 'admin',
+    customerType: 'retail' as 'retail' | 'wholesale',
+    discountPercent: 0,
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+    isActive: true,
+  });
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+
+  const canNext = () => {
+    if (step === 0) return !!form.role;
+    if (step === 1) return form.name.trim().length > 0 && emailValid;
+    if (step === 2) return form.password.length >= 8;
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!canNext()) {
+      if (step === 1) toast.error(emailValid ? t('ac.fillRequired') : t('ac.invalidEmail'));
+      else if (step === 2) toast.error(t('ac.passwordTooShort'));
+      else toast.error(t('ac.fillRequired'));
+      return;
+    }
+    setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await createUser({
+        sessionToken,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        role: form.role,
+        phone: form.phone || undefined,
+        address: form.address || undefined,
+        customerType: form.role === 'customer' ? form.customerType : undefined,
+        discountPercent: form.role === 'customer' ? form.discountPercent : undefined,
+        isActive: form.isActive,
+      });
+      toast.success(t('ac.userCreated'));
+      onCreated();
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('ac.error'));
+    } finally { setSaving(false); }
+  };
+
+  const roleCards: { role: 'customer' | 'manager' | 'admin'; label: string; desc: string }[] = [
+    { role: 'customer', label: t('ac.roleCustomer'), desc: t('ac.roleCustomerDesc') },
+    { role: 'manager', label: t('ac.roleManager'), desc: t('ac.roleManagerDesc') },
+    { role: 'admin', label: t('ac.roleAdmin'), desc: t('ac.roleAdminDesc') },
+  ];
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t('ac.createUser')}</DialogTitle>
+        </DialogHeader>
+
+        {/* Stepper */}
+        <div className="flex items-center gap-2 py-1">
+          {WIZARD_STEPS.map((s, i) => (
+            <div key={s} className="flex flex-1 items-center gap-2">
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>{i + 1}</div>
+              {i < WIZARD_STEPS.length - 1 && <div className={`h-0.5 flex-1 rounded ${i < step ? 'bg-primary' : 'bg-muted'}`} />}
+            </div>
+          ))}
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">{t('ac.stepOf')} {step + 1} {t('ac.of')} {WIZARD_STEPS.length} · {t(`ac.${WIZARD_STEPS[step]}`)}</p>
+
+        <div className="min-h-[240px] space-y-3 py-2 max-h-[60vh] overflow-y-auto pr-1">
+          {step === 0 && (
+            <div className="space-y-3">
+              <div className="grid gap-2">
+                {roleCards.map((rc) => (
+                  <button key={rc.role} type="button" onClick={() => setForm({ ...form, role: rc.role })}
+                    className={`flex items-center justify-between rounded-xl border p-3 text-left transition-colors ${form.role === rc.role ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-accent'}`}>
+                    <div>
+                      <p className="font-semibold text-sm">{rc.label}</p>
+                      <p className="text-xs text-muted-foreground">{rc.desc}</p>
+                    </div>
+                    <div className={`h-4 w-4 rounded-full border-2 ${form.role === rc.role ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`} />
+                  </button>
+                ))}
+              </div>
+              {form.role === 'customer' && (
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <Label>{t('ac.customerTypeLabel')}</Label>
+                    <select value={form.customerType} onChange={(e) => setForm({ ...form, customerType: e.target.value as 'retail' | 'wholesale' })} className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
+                      <option value="retail">{t('ac.retail')}</option>
+                      <option value="wholesale">{t('ac.wholesale')}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label>{t('ac.discountLabel')}</Label>
+                    <Input {...numericInputProps(false)} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })} className="h-10 mt-1" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-3">
+              <div><Label>{t('ac.name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('ac.namePlaceholder')} className="h-10 mt-1" /></div>
+              <div><Label>{t('ac.email')}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('ac.emailPlaceholder')} className="h-10 mt-1" autoComplete="off" /></div>
+              <div><Label>{t('ac.phoneLabel')}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+374 XX XXX XXX" className="h-10 mt-1" /></div>
+              <div><Label>{t('ac.address')}</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('ac.addressPlaceholder')} className="h-10 mt-1" /></div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-3">
+              <div>
+                <Label>{t('ac.password')}</Label>
+                <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-10 mt-1" autoComplete="new-password" />
+                <p className="mt-1 text-xs text-muted-foreground">{t('ac.passwordHint')}</p>
+              </div>
+              <label className="flex items-center gap-2 pt-1 text-sm">
+                <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="h-4 w-4" />
+                {t('ac.accountActive')}
+              </label>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-2 rounded-xl border bg-muted/30 p-4 text-sm">
+              <Row label={t('ac.role')} value={t(form.role === 'customer' ? 'ac.roleCustomer' : form.role === 'manager' ? 'ac.roleManager' : 'ac.roleAdmin')} />
+              {form.role === 'customer' && <Row label={t('ac.customerTypeLabel')} value={form.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')} />}
+              {form.role === 'customer' && form.discountPercent > 0 && <Row label={t('ac.discountLabel')} value={`${form.discountPercent}%`} />}
+              <Row label={t('ac.name')} value={form.name} />
+              <Row label={t('ac.email')} value={form.email} />
+              {form.phone && <Row label={t('ac.phoneLabel')} value={form.phone} />}
+              {form.address && <Row label={t('ac.address')} value={form.address} />}
+              <Row label={t('ac.statusCol')} value={form.isActive ? t('ac.active') : t('ac.blockedFull')} />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button variant="outline" onClick={() => (step === 0 ? onClose() : setStep((s) => s - 1))} disabled={saving}>
+            {step === 0 ? t('ac.cancel') : t('ac.back')}
+          </Button>
+          {step < WIZARD_STEPS.length - 1 ? (
+            <Button onClick={handleNext}>{t('ac.next')}</Button>
+          ) : (
+            <Button onClick={submit} disabled={saving}>{saving ? t('ac.creating') : t('ac.create')}</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-right truncate max-w-[60%]">{value}</span>
+    </div>
+  );
+}
+
+/** Small badge shown for staff accounts (manager/admin); nothing for customers. */
+function RoleBadge({ role }: { role: string }) {
+  const { t } = useAdminT();
+  if (role === 'admin') return <Badge className="gap-1 bg-purple-600 text-[10px] text-white hover:bg-purple-600"><ShieldCheck className="h-3 w-3" />{t('ac.roleAdmin')}</Badge>;
+  if (role === 'manager') return <Badge className="gap-1 bg-blue-600 text-[10px] text-white hover:bg-blue-600"><Shield className="h-3 w-3" />{t('ac.roleManager')}</Badge>;
+  return null;
+}
+
 export default function AdminCustomersPage() {
   const { t } = useAdminT();
   const sessionToken = useAuthStore((s) => s.sessionToken);
@@ -92,17 +344,22 @@ export default function AdminCustomersPage() {
     return new URLSearchParams(window.location.search).get('q') ?? '';
   });
   const [typeFilter, setTypeFilter] = useState<'all' | 'retail' | 'wholesale'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'customers' | 'staff'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ConfirmState>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const PAGE_SIZE = 24;
 
   const customers = useQuery(api.customers.list, sessionToken ? {
     sessionToken,
     search: search || undefined,
     customerType: typeFilter !== 'all' ? typeFilter : undefined,
+    role: roleFilter === 'customers' ? 'customer' : roleFilter === 'staff' ? 'staff' : undefined,
     paginationOpts: { numItems: PAGE_SIZE, cursor: null },
   } : 'skip');
+
+  const isSuperAdmin = customers?.callerRole === 'admin';
 
   const updateCustomer = useMutation(api.customers.updateCustomer);
   const deleteCustomer = useMutation(api.customers.deleteCustomer);
@@ -137,7 +394,10 @@ export default function AdminCustomersPage() {
   return (
     <div>
       {editingCustomer && (
-        <EditDialog customer={editingCustomer} sessionToken={sessionToken!} onClose={() => setEditingCustomer(null)} />
+        <EditDialog customer={editingCustomer} sessionToken={sessionToken!} canManageStaff={!!isSuperAdmin} onClose={() => setEditingCustomer(null)} />
+      )}
+      {createOpen && sessionToken && (
+        <CreateUserWizard sessionToken={sessionToken} onClose={() => setCreateOpen(false)} onCreated={() => { /* list is reactive */ }} />
       )}
       {confirmDelete && (
         <ConfirmDeleteDialog state={confirmDelete} onConfirm={async () => { if (sessionToken) { try { await deleteCustomer({ sessionToken, userId: confirmDelete.userId }); toast.success(t('ac.customerRemoved')); } catch { toast.error(t('ac.error')); } } }} onClose={() => setConfirmDelete(null)} />
@@ -149,6 +409,11 @@ export default function AdminCustomersPage() {
           <p className="text-sm text-muted-foreground">{customers.total} {t('ac.customersCountSuffix')}</p>
         </div>
         <div className="flex gap-2">
+          {isSuperAdmin && (
+            <Button size="sm" className="gap-1.5" onClick={() => setCreateOpen(true)}>
+              <UserPlus className="h-4 w-4" /> {t('ac.addUser')}
+            </Button>
+          )}
           <button onClick={() => setViewMode('grid')} className={`rounded-lg p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}><LayoutGrid className="h-4 w-4" /></button>
           <button onClick={() => setViewMode('list')} className={`rounded-lg p-2 transition-colors ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}><List className="h-4 w-4" /></button>
         </div>
@@ -163,6 +428,11 @@ export default function AdminCustomersPage() {
           <option value="all">{t('ac.all')}</option>
           <option value="retail">{t('ac.retail')}</option>
           <option value="wholesale">{t('ac.wholesale')}</option>
+        </select>
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as 'all' | 'customers' | 'staff')} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
+          <option value="all">{t('ac.filterAllRoles')}</option>
+          <option value="customers">{t('ac.filterCustomers')}</option>
+          <option value="staff">{t('ac.filterStaff')}</option>
         </select>
       </div>
 
@@ -199,13 +469,21 @@ export default function AdminCustomersPage() {
                   <td className="p-3 text-muted-foreground hidden md:table-cell">{c.phone || '—'}</td>
                   <td className="p-3 text-muted-foreground max-w-[140px] truncate hidden lg:table-cell">{c.address || '—'}</td>
                   <td className="p-3">
-                    <Badge variant={c.customerType === 'wholesale' ? 'default' : 'secondary'} className="text-[10px] cursor-pointer" onClick={() => toggleType(c._id, c.customerType)}>
-                      {c.customerType === 'wholesale' ? t('ac.wholesaleShort') : t('ac.retailShort')}
-                    </Badge>
+                    {c.role === 'customer' ? (
+                      <Badge variant={c.customerType === 'wholesale' ? 'default' : 'secondary'} className="text-[10px] cursor-pointer" onClick={() => toggleType(c._id, c.customerType)}>
+                        {c.customerType === 'wholesale' ? t('ac.wholesaleShort') : t('ac.retailShort')}
+                      </Badge>
+                    ) : (
+                      <RoleBadge role={c.role} />
+                    )}
                   </td>
                   <td className="p-3 hidden sm:table-cell">
-                    <input {...numericInputProps(false)} className="h-7 w-16 rounded border border-input bg-background px-2 text-xs" defaultValue={c.discountPercent ?? 0} onBlur={(e) => setDiscount(c._id, Number(e.target.value))} />
-                    <span className="text-xs text-muted-foreground ml-1">%</span>
+                    {c.role === 'customer' ? (
+                      <>
+                        <input {...numericInputProps(false)} className="h-7 w-16 rounded border border-input bg-background px-2 text-xs" defaultValue={c.discountPercent ?? 0} onBlur={(e) => setDiscount(c._id, Number(e.target.value))} />
+                        <span className="text-xs text-muted-foreground ml-1">%</span>
+                      </>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
                   </td>
                   <td className="p-3 hidden md:table-cell">{c.isActive ? <Badge className="text-[10px] bg-green-500">{t('ac.activeShort')}</Badge> : <Badge variant="secondary" className="text-[10px]">{t('ac.blockedShort')}</Badge>}</td>
                   <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{formatDateLocalized(c.createdAt, t)}</td>
@@ -243,9 +521,13 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
             {customer.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex items-center gap-1.5">
-            <Badge variant={customer.customerType === 'wholesale' ? 'default' : 'secondary'} className="cursor-pointer text-[10px]" onClick={onToggleType}>
-              {customer.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')}
-            </Badge>
+            {customer.role === 'customer' ? (
+              <Badge variant={customer.customerType === 'wholesale' ? 'default' : 'secondary'} className="cursor-pointer text-[10px]" onClick={onToggleType}>
+                {customer.customerType === 'wholesale' ? t('ac.wholesale') : t('ac.retail')}
+              </Badge>
+            ) : (
+              <RoleBadge role={customer.role} />
+            )}
             <button onClick={onEdit} className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
             <button onClick={onToggleBlock} className={`rounded p-1 transition-colors ${customer.isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-green-500 hover:bg-green-500/10'}`}><Ban className="h-3.5 w-3.5" /></button>
             <button onClick={onDelete} className="rounded p-1 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -268,11 +550,13 @@ function CustomerCard({ customer, sessionToken: _sessionToken, onToggleType, onS
           {customer.address && <div className="flex items-center gap-1.5 truncate">📍 {customer.address}</div>}
         </div>
         <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Percent className="h-3.5 w-3.5 text-muted-foreground" />
-            <input {...numericInputProps(false)} className="h-7 w-14 rounded border border-input bg-background px-2 text-xs" defaultValue={customer.discountPercent ?? 0} onBlur={(e) => onSetDiscount(Number(e.target.value))} />
-            <span className="text-xs text-muted-foreground">%</span>
-          </div>
+          {customer.role === 'customer' ? (
+            <div className="flex items-center gap-1.5">
+              <Percent className="h-3.5 w-3.5 text-muted-foreground" />
+              <input {...numericInputProps(false)} className="h-7 w-14 rounded border border-input bg-background px-2 text-xs" defaultValue={customer.discountPercent ?? 0} onBlur={(e) => onSetDiscount(Number(e.target.value))} />
+              <span className="text-xs text-muted-foreground">%</span>
+            </div>
+          ) : <span />}
           <Badge variant={customer.isActive ? 'default' : 'secondary'} className="text-[10px]">
             {customer.isActive ? t('ac.active') : t('ac.blockedFull')}
           </Badge>

@@ -3,7 +3,7 @@ import type { Id } from '../_generated/dataModel';
 
 export interface AuthenticatedCaller {
   _id: Id<'users'>;
-  role: 'admin' | 'customer';
+  role: 'admin' | 'manager' | 'customer';
   email: string;
   name: string;
 }
@@ -11,7 +11,7 @@ export interface AuthenticatedCaller {
 async function getSessionUser(
   ctx: QueryCtx | MutationCtx,
   sessionToken: string,
-): Promise<{ _id: Id<'users'>; role: 'admin' | 'customer'; email: string; name: string } | null> {
+): Promise<{ _id: Id<'users'>; role: 'admin' | 'manager' | 'customer'; email: string; name: string } | null> {
   // Try sessions table first
   const session = await ctx.db
     .query('sessions')
@@ -21,7 +21,7 @@ async function getSessionUser(
     if (session.expiresAt < Date.now()) return null;
     const user = await ctx.db.get(session.userId);
     if (!user || !user.isActive) return null;
-    return { _id: user._id, role: user.role as 'admin' | 'customer', email: user.email, name: user.name };
+    return { _id: user._id, role: user.role as 'admin' | 'manager' | 'customer', email: user.email, name: user.name };
   }
   // Fallback: check old sessionToken on user document (migration)
   const user = await ctx.db
@@ -33,20 +33,41 @@ async function getSessionUser(
   if (isMutationCtx(ctx)) {
     await ctx.db.insert('sessions', { userId: user._id, token: sessionToken, expiresAt: user.sessionExpiry, createdAt: Date.now() });
   }
-  return { _id: user._id, role: user.role as 'admin' | 'customer', email: user.email, name: user.name };
+  return { _id: user._id, role: user.role as 'admin' | 'manager' | 'customer', email: user.email, name: user.name };
 }
 
 function isMutationCtx(ctx: QueryCtx | MutationCtx): ctx is MutationCtx {
   return 'insert' in ctx.db;
 }
 
+/**
+ * Staff gate: allows both `admin` and `manager` roles. Used for the general
+ * admin-panel operations (products, orders, customers, etc.). Managers have the
+ * same day-to-day permissions as admins; the sensitive staff/user-management
+ * operations are guarded separately by {@link getSuperAdminCaller}.
+ */
 export async function getAdminCaller(
   ctx: QueryCtx | MutationCtx,
   sessionToken: string,
 ): Promise<AuthenticatedCaller> {
   const caller = await getSessionUser(ctx, sessionToken);
   if (!caller) throw new Error('Not authenticated');
-  if (caller.role !== 'admin') throw new Error('Admin access required');
+  if (caller.role !== 'admin' && caller.role !== 'manager') throw new Error('Admin access required');
+  return caller;
+}
+
+/**
+ * Super-admin gate: strictly `admin`. Reserved for staff/user management
+ * (creating managers/admins, changing roles, deleting staff) so a manager
+ * cannot escalate privileges or manage other staff accounts.
+ */
+export async function getSuperAdminCaller(
+  ctx: QueryCtx | MutationCtx,
+  sessionToken: string,
+): Promise<AuthenticatedCaller> {
+  const caller = await getSessionUser(ctx, sessionToken);
+  if (!caller) throw new Error('Not authenticated');
+  if (caller.role !== 'admin') throw new Error('Super-admin access required');
   return caller;
 }
 
@@ -61,6 +82,12 @@ export async function getAuthCaller(
 
 export function requireAdmin(caller: AuthenticatedCaller | null): AuthenticatedCaller {
   if (!caller) throw new Error('Not authenticated');
-  if (caller.role !== 'admin') throw new Error('Admin access required');
+  if (caller.role !== 'admin' && caller.role !== 'manager') throw new Error('Admin access required');
+  return caller;
+}
+
+export function requireSuperAdmin(caller: AuthenticatedCaller | null): AuthenticatedCaller {
+  if (!caller) throw new Error('Not authenticated');
+  if (caller.role !== 'admin') throw new Error('Super-admin access required');
   return caller;
 }

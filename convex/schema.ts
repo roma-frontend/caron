@@ -11,7 +11,7 @@ export default defineSchema(
     googleId: v.optional(v.string()),
     telegramId: v.optional(v.string()),
     telegramUsername: v.optional(v.string()),
-    role: v.union(v.literal('admin'), v.literal('customer')),
+    role: v.union(v.literal('admin'), v.literal('manager'), v.literal('customer')),
     phone: v.optional(v.string()),
     address: v.optional(v.string()),
     isActive: v.boolean(),
