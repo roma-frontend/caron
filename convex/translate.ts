@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { internalAction, internalMutation, internalQuery, mutation } from './_generated/server';
 import { internal } from './_generated/api';
-import { getAdminCaller } from './lib/auth';
+import { requireCapability } from './lib/auth';
 import { dictTranslateName } from './lib/translateDict';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -663,7 +663,7 @@ export const translatePage = internalAction({
 export const backfillAll = mutation({
   args: { sessionToken: v.string(), force: v.optional(v.boolean()) },
   handler: async (ctx, { sessionToken, force }) => {
-    await getAdminCaller(ctx, sessionToken);
+    await requireCapability(ctx, sessionToken, 'settings');
 
     const SPACING_MS = 3500;
     let scheduled = 0;

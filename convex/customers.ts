@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
-import { getAdminCaller, getSuperAdminCaller, logAudit } from './lib/auth';
+import { getAdminCaller, getSuperAdminCaller, requireCapability, logAudit } from './lib/auth';
 import { hashPassword } from './auth';
 import { paginationOptsValidator } from 'convex/server';
 
@@ -131,7 +131,7 @@ export const updateCustomer = mutation({
     const wantsPrivilegedChange = role !== undefined || newPassword !== undefined;
     const caller = wantsPrivilegedChange
       ? await getSuperAdminCaller(ctx, sessionToken)
-      : await getAdminCaller(ctx, sessionToken);
+      : await requireCapability(ctx, sessionToken, 'customers');
 
     const target = await ctx.db.get(userId);
     if (!target) throw new Error('Օգտագործողը չի գտնվել');
@@ -201,7 +201,7 @@ export const register = mutation({
 export const deleteCustomer = mutation({
   args: { sessionToken: v.string(), userId: v.id('users') },
   handler: async (ctx, args) => {
-    const caller = await getAdminCaller(ctx, args.sessionToken);
+    const caller = await requireCapability(ctx, args.sessionToken, 'customers');
     if (args.userId === caller._id) throw new Error('Cannot delete your own account');
     const target = await ctx.db.get(args.userId);
     // Deleting staff (admins/managers) is a super-admin-only action.
