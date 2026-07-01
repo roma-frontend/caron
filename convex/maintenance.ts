@@ -64,6 +64,10 @@ export const purgeStaleAuth = internalMutation({
 function normalizeQty(s: string | undefined): string | undefined {
   if (!s) return s;
   let out = s;
+  // Strip an Armenian residue glued to the RU/EN unit — a translation artifact
+  // where "հատ" was partially converted, leaving e.g. "штատ" / "pcsատ".
+  out = out.replace(/(\d+)\s*шт[\u0531-\u058F]+/gi, '$1 шт');
+  out = out.replace(/(\d+)\s*(pcs|pc)[\u0531-\u058F]+/gi, '$1 pcs');
   // Fix the doubled-"шт" typo (штшт → шт) without touching slash structure.
   out = out.replace(/шт(?:\s*шт)+/gi, 'шт');
   // Ensure a space between the number and the unit (RU / EN).
