@@ -21,6 +21,7 @@ import type * as coupons from "../coupons.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as delivery from "../delivery.js";
+import type * as e2e from "../e2e.js";
 import type * as email from "../email.js";
 import type * as filters from "../filters.js";
 import type * as insights from "../insights.js";
@@ -75,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   customers: typeof customers;
   delivery: typeof delivery;
+  e2e: typeof e2e;
   email: typeof email;
   filters: typeof filters;
   insights: typeof insights;

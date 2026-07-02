@@ -29,11 +29,11 @@ test.describe('login', () => {
  * returns, etc. stay covered by the convex-test integration suite to avoid
  * touching live data).
  */
-const email = process.env.E2E_TEST_EMAIL;
-const password = process.env.E2E_TEST_PASSWORD;
+const email = process.env.E2E_CUSTOMER_EMAIL;
+const password = process.env.E2E_CUSTOMER_PASSWORD;
 
 test.describe('authenticated area', () => {
-  test.skip(!email || !password, 'set E2E_TEST_EMAIL / E2E_TEST_PASSWORD to run');
+  test.skip(!email || !password, 'set E2E_CUSTOMER_EMAIL / E2E_CUSTOMER_PASSWORD to run');
 
   test('logs in and lands on an authenticated page', async ({ page }) => {
     await page.goto('/login');

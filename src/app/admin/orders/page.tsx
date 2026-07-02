@@ -472,7 +472,7 @@ function OrderCard({ order, sessionToken, index, settings }: { order: Record<str
               <SelectTrigger className="h-8 w-full sm:w-[110px] text-xs min-w-0"><span>{t(s.label)}</span></SelectTrigger>
               <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{t(v.label)}</SelectItem>)}</SelectContent>
             </Select>
-            <button onClick={() => updateStatus({ sessionToken, id: order._id as Id<'orders'>, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' as const : 'paid' as const })}
+            <button data-testid="order-payment-toggle" onClick={() => updateStatus({ sessionToken, id: order._id as Id<'orders'>, paymentStatus: order.paymentStatus === 'paid' ? 'awaiting' as const : 'paid' as const })}
               className={`flex h-8 items-center gap-1.5 rounded-lg border px-2 sm:px-3 text-[11px] sm:text-xs font-medium transition-colors ${order.paymentStatus === 'paid' ? 'bg-green-50 border-green-200 text-green-700' : 'text-muted-foreground hover:bg-accent'}`}>
               {order.paymentStatus === 'paid' ? '✓' : '○'} {order.paymentStatus === 'paid' ? t('ao.paid') : t('ao.btn.markPaid')}
             </button>

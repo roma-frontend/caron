@@ -37,7 +37,7 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
 
   if (existingStatus) {
     const labels: Record<string, string> = { pending: t('sp.statusPending'), approved: t('sp.statusApproved'), rejected: t('sp.statusRejected'), completed: t('sp.statusCompleted') };
-    return <span className="text-xs text-muted-foreground">{labels[existingStatus] ?? existingStatus}</span>;
+    return <span data-testid="return-status" className="text-xs text-muted-foreground">{labels[existingStatus] ?? existingStatus}</span>;
   }
 
   const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -63,7 +63,7 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
 
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+      <Button variant="outline" size="sm" data-testid="return-open" className="gap-1.5" onClick={() => setOpen(true)}>
         <RotateCcw className="h-3.5 w-3.5" /> {t('sp.return')}
       </Button>
 
@@ -113,7 +113,7 @@ export function ReturnRequestButton({ orderId, items, existingStatus }: {
               {t('sp.telegramHintPre')}<b>Start</b>{t('sp.telegramHintPost')}
             </p>
 
-            <Button className="w-full" disabled={busy} onClick={submit}>{busy ? t('sp.sending') : t('sp.sendRequest')}</Button>
+            <Button className="w-full" data-testid="return-submit" disabled={busy} onClick={submit}>{busy ? t('sp.sending') : t('sp.sendRequest')}</Button>
           </div>
         </div>,
         document.body,

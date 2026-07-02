@@ -11,6 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "e2e:seed": "convex run e2e:seed",
+    "e2e:staging": "convex run e2e:seed && playwright test -c playwright.staging.config.ts",
     "postinstall": "node scripts/patch-convex-tsconfig.cjs"
   },
   "dependencies": {
