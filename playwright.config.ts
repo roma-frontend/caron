@@ -16,6 +16,15 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'https://www.caron.group',
     trace: 'on-first-retry',
     locale: 'hy-AM',
+    // Preview deploys are usually behind Vercel Deployment Protection. Supply a
+    // bypass secret (Vercel → Project → Settings → Deployment Protection →
+    // Protection Bypass for Automation) via env to let the runner through.
+    extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? {
+          'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+          'x-vercel-set-bypass-cookie': 'true',
+        }
+      : undefined,
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
