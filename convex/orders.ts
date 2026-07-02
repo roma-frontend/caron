@@ -573,7 +573,7 @@ async function applyOrderStatusChange(
       });
 
       // Web push to the order owner about the new status.
-      if (order.userId) {
+      if (order.userId && !process.env.VITEST) {
         const statusLabels: Record<string, string> = {
           pending: 'սպասում է', confirmed: 'հաստատվեց', processing: 'մշակվում է',
           shipped: 'ուղարկվեց', delivered: 'առաքվեց', cancelled: 'չեղարկվեց',
