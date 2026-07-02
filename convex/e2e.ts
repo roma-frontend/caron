@@ -142,6 +142,14 @@ export const seed = internalMutation({
       createdAt: now,
     });
 
+    // ── Belt-and-suspenders: blank the Telegram credentials in the dev
+    //     settings row so E2E-created orders/returns/questions can never
+    //     message the real owner, even if NOTIFICATIONS_DISABLED were unset.
+    const settingsRow = await ctx.db.query('settings').first();
+    if (settingsRow) {
+      await ctx.db.patch(settingsRow._id, { telegramBotToken: '', telegramChatId: '' });
+    }
+
     return { customerEmail: CUSTOMER_EMAIL, adminEmail: ADMIN_EMAIL, orderNumber: ORDER_NUMBER, coupon: 'E2ESALE' };
   },
 });

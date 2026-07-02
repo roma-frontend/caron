@@ -40,7 +40,7 @@ export default function ComparePage() {
       </div>
 
       <div className="overflow-x-auto pb-4 -mx-4 sm:-mx-0 px-4 sm:px-0">
-        <motion.table className="w-full border-collapse min-w-[500px] sm:min-w-0" layout>
+        <motion.table className="w-auto border-collapse min-w-[500px] sm:min-w-0" layout>
           <thead>
             <tr>
               <th className="p-3 text-left text-sm font-medium text-muted-foreground w-40"></th>
