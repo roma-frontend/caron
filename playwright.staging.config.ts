@@ -33,7 +33,9 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: `npm run dev -- --port ${PORT}`,
+    // Locally we boot `next dev`; in CI we point E2E_WEB_COMMAND at a prebuilt
+    // `next start` so the run doesn't pay the dev-compile cost per route.
+    command: process.env.E2E_WEB_COMMAND || `npm run dev -- --port ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
