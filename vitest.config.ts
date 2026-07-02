@@ -6,7 +6,7 @@ import path from 'node:path';
 export default defineConfig({
   test: {
     environment: 'edge-runtime',
-    include: ['convex/**/*.test.ts', 'src/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: ['convex/**/*.test.ts', 'src/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
     server: { deps: { inline: ['convex-test'] } },
   },
   resolve: {
