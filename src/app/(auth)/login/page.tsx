@@ -111,14 +111,14 @@ export default function LoginPage() {
               <Label>{t('auth.email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('auth.emailPlaceholder')} className="h-11 pl-10" />
+                <Input type="email" data-testid="login-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('auth.emailPlaceholder')} className="h-11 pl-10" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>{t('auth.password')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className="h-11 pl-10" />
+                <Input type="password" data-testid="login-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className="h-11 pl-10" />
               </div>
               <div className="text-right">
                 <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
@@ -136,8 +136,8 @@ export default function LoginPage() {
                 <p className="text-xs text-muted-foreground">{t('auth.totpHint')}</p>
               </div>
             )}
-            {error && <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{error}</div>}
-            <Button type="submit" variant="cta" size="xl" className="w-full" disabled={loading}>
+            {error && <div data-testid="login-error" className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{error}</div>}
+            <Button type="submit" data-testid="login-submit" variant="cta" size="xl" className="w-full" disabled={loading}>
               {loading ? t('auth.loggingIn') : t('auth.login')}
             </Button>
           </form>
