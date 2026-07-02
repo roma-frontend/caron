@@ -196,7 +196,11 @@ async function recomputeCatalogStats(ctx: MutationCtx): Promise<void> {
     for (const b of productBrands) {
       brands.add(b);
       const key = b.toLowerCase();
-      brandCounts[key] = (brandCounts[key] ?? 0) + 1;
+      // brandCounts is stored as a Convex object whose *field names* must be
+      // ASCII. Skip counting brands with non-ASCII/malformed names (they still
+      // appear in the `brands` array) so the recompute never crashes on dirty
+      // brand data like "fiat; ունիվերսալ".
+      if (/^[\x20-\x7E]+$/.test(key)) brandCounts[key] = (brandCounts[key] ?? 0) + 1;
     }
   }
 
