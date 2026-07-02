@@ -166,7 +166,8 @@ export async function logAudit(
     createdAt: Date.now(),
   });
   // Fire a real-time Telegram alert for critical security events (best-effort).
-  if (CRITICAL_AUDIT_ACTIONS.has(action)) {
+  // Skipped under tests (VITEST) — we don't dispatch external side-effects there.
+  if (CRITICAL_AUDIT_ACTIONS.has(action) && !process.env.VITEST) {
     await ctx.scheduler.runAfter(0, internal.notifications.sendCriticalAlert, {
       action,
       summary,

@@ -7,7 +7,8 @@
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-/** Random base32 secret (default 20 bytes → 32 chars, RFC-recommended). */
+/** Random base32 secret. Emits one base32 symbol per random byte (default 20
+ *  symbols ≈ 100 bits of entropy) — compatible with authenticator apps. */
 export function generateBase32Secret(bytes = 20): string {
   const buf = new Uint8Array(bytes);
   crypto.getRandomValues(buf);
