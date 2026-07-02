@@ -190,6 +190,55 @@ export const revokeAllSessions = mutation({
   },
 });
 
+/** All active login sessions across every user (superadmin only). Tokens masked. */
+export const listAllSessions = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args) => {
+    await getSuperAdminCaller(ctx, args.sessionToken);
+    const now = Date.now();
+    const rows = await ctx.db.query('sessions').take(3000);
+    const active = rows.filter((s) => s.expiresAt > now).sort((a, b) => b.createdAt - a.createdAt).slice(0, 300);
+    const userCache = new Map<string, { name: string; role: string; email: string; telegramUsername?: string } | null>();
+    const out = [];
+    for (const s of active) {
+      const key = s.userId as string;
+      let u = userCache.get(key);
+      if (u === undefined) {
+        const doc = await ctx.db.get(s.userId);
+        u = doc ? { name: doc.name, role: doc.role, email: doc.email, telegramUsername: doc.telegramUsername } : null;
+        userCache.set(key, u);
+      }
+      out.push({
+        _id: s._id,
+        userId: s.userId,
+        name: u?.name ?? '—',
+        role: u?.role ?? 'customer',
+        email: u?.email ?? '',
+        telegramUsername: u?.telegramUsername,
+        createdAt: s.createdAt,
+        expiresAt: s.expiresAt,
+        tokenTail: s.token.slice(-6),
+      });
+    }
+    return out;
+  },
+});
+
+/** Revoke a single session by id (superadmin only). */
+export const revokeSession = mutation({
+  args: { sessionToken: v.string(), sessionId: v.id('sessions') },
+  handler: async (ctx, args) => {
+    const caller = await getSuperAdminCaller(ctx, args.sessionToken);
+    const s = await ctx.db.get(args.sessionId);
+    if (!s) return { ok: true };
+    const target = await ctx.db.get(s.userId);
+    await ctx.db.delete(args.sessionId);
+    await logAudit(ctx, caller, 'session.revoke', `Revoked one session of "${target?.name ?? s.userId}"`,
+      { targetType: 'user', targetId: s.userId });
+    return { ok: true };
+  },
+});
+
 /**
  * Start impersonation: issue a real session for the target user so the
  * superadmin can see the app exactly as them. Superadmin-only, audit-logged,

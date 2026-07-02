@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader } from '@/components/ui/loader';
 import { formatDateLocalized } from '@/lib/formatters';
 import { toast } from 'sonner';
-import { ShieldCheck, ShieldAlert, Users, Lock, Activity, ScrollText, Crown, Shield, LogOut } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Users, Lock, Activity, ScrollText, Crown, Shield, LogOut, Monitor } from 'lucide-react';
 
 type Role = 'admin' | 'manager';
 
@@ -56,6 +56,8 @@ export default function ControlCenterPage() {
   const matrixData = useQuery(api.access.getAccessMatrix, args);
   const audit = useQuery(api.access.listAudit, isSuperadmin && sessionToken ? { sessionToken, limit: 300 } : 'skip');
   const staff = useQuery(api.access.listStaff, args);
+  const sessions = useQuery(api.access.listAllSessions, args);
+  const revokeSession = useMutation(api.access.revokeSession);
   const setCapability = useMutation(api.access.setCapability);
   const revokeAllSessions = useMutation(api.access.revokeAllSessions);
 
@@ -94,6 +96,13 @@ export default function ControlCenterPage() {
     if (!window.confirm(`${t('sc.forceLogoutConfirm')} ${name}`)) return;
     try {
       await revokeAllSessions({ sessionToken: sessionToken!, userId: userId as Parameters<typeof revokeAllSessions>[0]['userId'] });
+      toast.success(t('sc.sessionsRevoked'));
+    } catch { toast.error(t('sc.capError')); }
+  };
+
+  const doRevokeSession = async (sessionId: string) => {
+    try {
+      await revokeSession({ sessionToken: sessionToken!, sessionId: sessionId as Parameters<typeof revokeSession>[0]['sessionId'] });
       toast.success(t('sc.sessionsRevoked'));
     } catch { toast.error(t('sc.capError')); }
   };
@@ -246,6 +255,32 @@ export default function ControlCenterPage() {
                       </div>
                       <p className="mt-1 text-sm">{auditText(e, t)}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground"><RoleIcon role={e.actorRole} />{e.actorName}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardContent className="p-0">
+              <div className="border-b px-4 py-3"><h2 className="flex items-center gap-2 font-semibold"><Monitor className="h-4 w-4 text-primary" /> {t('sc.sessionsTitle')} {sessions ? `(${sessions.length})` : ''}</h2></div>
+              <div className="max-h-[360px] overflow-y-auto">
+                {sessions === undefined ? (
+                  <div className="py-8"><Loader /></div>
+                ) : sessions.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t('sc.sessionsEmpty')}</p>
+                ) : (
+                  sessions.map((s) => (
+                    <div key={s._id} className="flex items-center justify-between gap-2 border-b border-border/40 px-4 py-2.5 last:border-0">
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-1 truncate text-sm font-medium"><RoleIcon role={s.role} />{s.name}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">{contactLabel(s.email, s.telegramUsername)} · <span className="font-mono">…{s.tokenTail}</span></p>
+                        <p className="text-[10px] text-muted-foreground">{formatDateLocalized(s.createdAt, t)} → {formatDateLocalized(s.expiresAt, t)}</p>
+                      </div>
+                      <button onClick={() => doRevokeSession(s._id)} className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" title={t('sc.revokeSession')}>
+                        <LogOut className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))
                 )}

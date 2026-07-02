@@ -75,6 +75,8 @@ export function auditText(
       return `${t('al.txt.categoryPurge')} ${q(name)}`;
     case 'session.revokeAll':
       return `${t('al.txt.revokeAll')} ${q(name)}`;
+    case 'session.revoke':
+      return `${t('al.txt.revokeOne')} ${q(name)}`;
     case 'order.updateStatus':
       return `${t('al.txt.orderStatus')}: ${statusLabel(meta.prevStatus)} → ${statusLabel(meta.nextStatus)}`;
     case 'order.bulkAction':

@@ -103,6 +103,9 @@ export const adminControl: DictModule = {
   'sc.auditActor': { hy: 'Ֆիլտր ըստ կատարողի', ru: 'Фильтр по исполнителю', en: 'Filter by actor' },
   'sc.auditAllActions': { hy: 'Բոլոր գործողությունները', ru: 'Все действия', en: 'All actions' },
   'sc.auditExport': { hy: 'CSV արտահանում', ru: 'Экспорт CSV', en: 'Export CSV' },
+  'sc.sessionsTitle': { hy: 'Ակտիվ սեսիաներ', ru: 'Активные сессии', en: 'Active sessions' },
+  'sc.sessionsEmpty': { hy: 'Ակտիվ սեսիաներ չկան', ru: 'Нет активных сессий', en: 'No active sessions' },
+  'sc.revokeSession': { hy: 'Ավարտել այս սեսիան', ru: 'Завершить эту сессию', en: 'End this session' },
 
   // --- Audit log: action chip labels ---
   'al.user.create': { hy: 'Օգտատեր · ստեղծում', ru: 'Пользователь · создание', en: 'User · create' },
@@ -119,6 +122,7 @@ export const adminControl: DictModule = {
   'al.category.purge': { hy: 'Կատեգորիա · ջնջում', ru: 'Категория · удаление', en: 'Category · purge' },
   'al.access.setCapability': { hy: 'Հասանելիություն', ru: 'Доступ', en: 'Access' },
   'al.session.revokeAll': { hy: 'Սեսիաներ · ելք', ru: 'Сессии · выход', en: 'Sessions · logout' },
+  'al.session.revoke': { hy: 'Սեսիա · ելք', ru: 'Сессия · выход', en: 'Session · logout' },
   'al.order.updateStatus': { hy: 'Պատվեր · կարգավիճակ', ru: 'Заказ · статус', en: 'Order · status' },
   'al.order.bulkAction': { hy: 'Պատվերներ · խմբակային', ru: 'Заказы · массово', en: 'Orders · bulk' },
   'al.settings.update': { hy: 'Կարգավորումներ', ru: 'Настройки', en: 'Settings' },
@@ -140,6 +144,7 @@ export const adminControl: DictModule = {
   'al.txt.categoryRestore': { hy: 'Վերականգնեց կատեգորիան՝', ru: 'Восстановил категорию', en: 'Restored category' },
   'al.txt.categoryPurge': { hy: 'Ընդմիշտ ջնջեց կատեգորիան՝', ru: 'Удалил категорию навсегда', en: 'Permanently deleted category' },
   'al.txt.revokeAll': { hy: 'Դուրս բերեց բոլոր սեսիաներից՝', ru: 'Завершил все сессии', en: 'Force-logged-out' },
+  'al.txt.revokeOne': { hy: 'Ավարտեց մեկ սեսիա՝', ru: 'Завершил одну сессию', en: 'Ended one session of' },
   'al.txt.orderStatus': { hy: 'Պատվերի կարգավիճակ', ru: 'Статус заказа', en: 'Order status' },
   'al.txt.bulkOrders': { hy: 'Խմբակային թարմացում պատվերների համար', ru: 'Массовое обновление заказов', en: 'Bulk update on orders' },
   'al.txt.settingsUpdate': { hy: 'Թարմացրեց խանութի կարգավորումները', ru: 'Обновил настройки магазина', en: 'Updated store settings' },
