@@ -56,25 +56,28 @@ export const create = mutation({
       updatedAt: Date.now(),
     });
 
-    await ctx.scheduler.runAfter(0, internal.notifications.sendReturnNotification, {
-      orderNumber: order.orderNumber,
-      type: args.type,
-      reason: args.reason.trim(),
-      itemsCount: args.items.length,
-      customerEmail: order.customerEmail,
-    });
-
-    // Resolve the customer's @username -> numeric chat_id now, while the
-    // customer has just started the bot (getUpdates is freshest at this point),
-    // store it for later status notifications, and send a "request received"
-    // confirmation to the customer.
-    if (customerTelegram) {
-      await ctx.scheduler.runAfter(0, internal.notifications.sendReturnCreatedToCustomer, {
-        requestId: id,
-        username: customerTelegram,
+    // External notifications are best-effort side-effects; skip under tests.
+    if (!process.env.VITEST) {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendReturnNotification, {
         orderNumber: order.orderNumber,
         type: args.type,
+        reason: args.reason.trim(),
+        itemsCount: args.items.length,
+        customerEmail: order.customerEmail,
       });
+
+      // Resolve the customer's @username -> numeric chat_id now, while the
+      // customer has just started the bot (getUpdates is freshest at this point),
+      // store it for later status notifications, and send a "request received"
+      // confirmation to the customer.
+      if (customerTelegram) {
+        await ctx.scheduler.runAfter(0, internal.notifications.sendReturnCreatedToCustomer, {
+          requestId: id,
+          username: customerTelegram,
+          orderNumber: order.orderNumber,
+          type: args.type,
+        });
+      }
     }
 
     return id;
@@ -144,7 +147,8 @@ export const updateStatus = mutation({
     if (
       args.status !== 'pending' &&
       args.status !== req.status &&
-      (req.customerTelegramChatId || req.customerTelegram)
+      (req.customerTelegramChatId || req.customerTelegram) &&
+      !process.env.VITEST
     ) {
       await ctx.scheduler.runAfter(0, internal.notifications.sendReturnStatusToCustomer, {
         orderNumber: req.orderNumber,
