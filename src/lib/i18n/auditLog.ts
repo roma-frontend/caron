@@ -77,6 +77,10 @@ export function auditText(
       return `${t('al.txt.revokeAll')} ${q(name)}`;
     case 'session.revoke':
       return `${t('al.txt.revokeOne')} ${q(name)}`;
+    case 'user.2faEnable':
+      return t('al.txt.2faEnable');
+    case 'user.2faDisable':
+      return t('al.txt.2faDisable');
     case 'order.updateStatus':
       return `${t('al.txt.orderStatus')}: ${statusLabel(meta.prevStatus)} → ${statusLabel(meta.nextStatus)}`;
     case 'order.bulkAction':

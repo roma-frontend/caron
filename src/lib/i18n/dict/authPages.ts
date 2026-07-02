@@ -75,4 +75,8 @@ export const authPages: DictModule = {
   'auth.resetMin8': { hy: 'Գաղտնաբառը պետք է լինի առնվազն 8 նիշ', ru: 'Пароль должен быть не менее 8 символов', en: 'Password must be at least 8 characters' },
   'auth.resetInvalidToken': { hy: 'Հղումն անվավեր է կամ ժամկետը լրացել է', ru: 'Ссылка недействительна или устарела', en: 'The link is invalid or expired' },
   'auth.resetNoToken': { hy: 'Վերականգնման հղումը բացակայում է', ru: 'Ссылка для сброса отсутствует', en: 'Reset link is missing' },
+  'auth.totpLabel': { hy: 'Երկգործոն կոդ', ru: 'Код двухфакторной аутентификации', en: 'Two-factor code' },
+  'auth.totpHint': { hy: 'Մուտքագրեք հավելվածի 6-նիշանոց կոդը կամ վերականգնման կոդը', ru: 'Введите 6-значный код из приложения или код восстановления', en: 'Enter the 6-digit app code or a recovery code' },
+  'auth.totpRequired': { hy: 'Մուտքագրեք երկգործոն կոդը', ru: 'Введите код двухфакторной аутентификации', en: 'Enter your two-factor code' },
+  'auth.totpInvalid': { hy: 'Սխալ կոդ', ru: 'Неверный код', en: 'Invalid code' },
 };

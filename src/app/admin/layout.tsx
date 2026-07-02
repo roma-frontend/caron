@@ -5,7 +5,7 @@ import { contactLabel } from '@/lib/contact';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from '@/components/LocalizedLink';
-import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck, Award, Crown, Inbox, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, Tag, FileText, LogOut, Settings, Menu, Users, Home, Search, BarChart3, Star, Ticket, SlidersHorizontal, Warehouse, TrendingUp, MessageCircleQuestion, RotateCcw, Truck, Award, Crown, Inbox, Trash2, ShieldCheck } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { useStoreName } from '@/hooks/useStoreName';
@@ -42,6 +42,7 @@ const NAV_ITEMS = [
   { href: '/admin/pages', icon: FileText, labelKey: 'nav.pages' },
   { href: '/admin/delivery', icon: Truck, labelKey: 'nav.delivery' },
   { href: '/admin/settings', icon: Settings, labelKey: 'nav.settings' },
+  { href: '/admin/security', icon: ShieldCheck, labelKey: 'nav.security' },
   { href: '/admin/trash', icon: Trash2, labelKey: 'nav.trash' },
 ];
 

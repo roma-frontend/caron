@@ -5,6 +5,7 @@ import { ConvexError } from 'convex/values';
 import type { MutationCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { isSuperadminTelegram } from './lib/auth';
+import { verifyTotp, sha256Hex } from './lib/totp';
 
 const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256';
 const PASSWORD_HASH_ITERATIONS = 210_000;
@@ -115,8 +116,33 @@ async function clearLoginFailures(ctx: MutationCtx, key: string): Promise<void> 
   if (attempt) await ctx.db.delete(attempt._id);
 }
 
+/**
+ * Enforce TOTP two-factor for a resolved user during password login. No-op when
+ * the account hasn't enabled 2FA. Accepts a 6-digit TOTP code or a one-time
+ * recovery code (which is then consumed). Throws structured ConvexErrors so the
+ * login UI can prompt for a code / show an error.
+ */
+async function enforceTwoFactor(
+  ctx: MutationCtx,
+  user: { _id: Id<'users'>; twoFactorEnabled?: boolean; twoFactorSecret?: string; twoFactorRecoveryCodes?: string[] },
+  totp: string | undefined,
+): Promise<void> {
+  if (!user.twoFactorEnabled || !user.twoFactorSecret) return;
+  if (!totp || !totp.trim()) throw new ConvexError({ code: 'TOTP_REQUIRED' });
+  let ok = await verifyTotp(user.twoFactorSecret, totp);
+  if (!ok) {
+    const hash = await sha256Hex(totp.trim().toLowerCase());
+    const codes = user.twoFactorRecoveryCodes ?? [];
+    if (codes.includes(hash)) {
+      ok = true;
+      await ctx.db.patch(user._id, { twoFactorRecoveryCodes: codes.filter((c) => c !== hash) });
+    }
+  }
+  if (!ok) throw new ConvexError({ code: 'TOTP_INVALID' });
+}
+
 export const login = mutation({
-  args: { email: v.string(), password: v.string() },
+  args: { email: v.string(), password: v.string(), totp: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
     const attemptKey = `login:${email}`;
@@ -151,6 +177,7 @@ export const login = mutation({
           await ctx.db.patch(user._id, { role: 'superadmin' });
           user = (await ctx.db.get(user._id))!;
         }
+        await enforceTwoFactor(ctx, user, args.totp);
         await clearLoginFailures(ctx, attemptKey);
         const sessionToken = await createSession(ctx, user._id, 7);
         return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address, telegramUsername: user.telegramUsername };
@@ -178,6 +205,7 @@ export const login = mutation({
           await ctx.db.patch(user._id, { role: 'admin' });
           user = (await ctx.db.get(user._id))!;
         }
+        await enforceTwoFactor(ctx, user, args.totp);
         await clearLoginFailures(ctx, attemptKey);
         const sessionToken = await createSession(ctx, user._id, 7);
         return { userId: user._id, sessionToken, name: user.name, email: user.email, role: user.role, customerType: user.customerType, discountPercent: user.discountPercent, phone: user.phone, address: user.address };
@@ -196,6 +224,7 @@ export const login = mutation({
       throw new ConvexError({ code: 'INVALID_CREDENTIALS' });
     }
     if (!user.isActive) throw new ConvexError({ code: 'USER_INACTIVE' });
+    await enforceTwoFactor(ctx, user, args.totp);
     await clearLoginFailures(ctx, attemptKey);
     if (!user.passwordHash.startsWith(`${PASSWORD_HASH_PREFIX}$`)) {
       await ctx.db.patch(user._id, { passwordHash: await hashPassword(args.password) });

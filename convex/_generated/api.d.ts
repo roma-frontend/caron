@@ -28,6 +28,7 @@ import type * as lib_delivery from "../lib/delivery.js";
 import type * as lib_emailTemplates from "../lib/emailTemplates.js";
 import type * as lib_imageUrl from "../lib/imageUrl.js";
 import type * as lib_loyalty from "../lib/loyalty.js";
+import type * as lib_totp from "../lib/totp.js";
 import type * as lib_translateDict from "../lib/translateDict.js";
 import type * as loyalty from "../loyalty.js";
 import type * as maintenance from "../maintenance.js";
@@ -51,6 +52,7 @@ import type * as seed from "../seed.js";
 import type * as seedFilters from "../seedFilters.js";
 import type * as settings from "../settings.js";
 import type * as translate from "../translate.js";
+import type * as twoFactor from "../twoFactor.js";
 
 import type {
   ApiFromModules,
@@ -79,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "lib/emailTemplates": typeof lib_emailTemplates;
   "lib/imageUrl": typeof lib_imageUrl;
   "lib/loyalty": typeof lib_loyalty;
+  "lib/totp": typeof lib_totp;
   "lib/translateDict": typeof lib_translateDict;
   loyalty: typeof loyalty;
   maintenance: typeof maintenance;
@@ -102,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   seedFilters: typeof seedFilters;
   settings: typeof settings;
   translate: typeof translate;
+  twoFactor: typeof twoFactor;
 }>;
 
 /**

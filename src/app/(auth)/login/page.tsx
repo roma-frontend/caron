@@ -40,20 +40,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [needsTotp, setNeedsTotp] = useState(false);
+  const [totp, setTotp] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!form.email || !form.password) { toast.error(t('auth.fillAllFields')); return; }
+    if (needsTotp && !totp.trim()) { setError(t('auth.totpRequired')); return; }
     setLoading(true);
     try {
-      const result = await login(form);
+      const result = await login({ ...form, totp: needsTotp ? totp.trim() : undefined });
       setSession(result.sessionToken, { id: result.userId, name: result.name, email: result.email, role: result.role, customerType: result.customerType, discountPercent: result.discountPercent, phone: result.phone });
       await setAuthCookie(result.sessionToken);
       toast.success(t('auth.welcomeBack') + result.name + '!');
       router.push(result.role === 'admin' || result.role === 'manager' || result.role === 'superadmin' ? '/admin' : '/dashboard');
     } catch (err) {
-      setError(errorToMessage(err));
+      const data = (err as { data?: unknown })?.data;
+      const code = typeof data === 'object' && data && 'code' in data ? String((data as { code: unknown }).code) : undefined;
+      if (code === 'TOTP_REQUIRED') { setNeedsTotp(true); setError(''); }
+      else if (code === 'TOTP_INVALID') { setNeedsTotp(true); setError(t('auth.totpInvalid')); }
+      else setError(errorToMessage(err));
     } finally {
       setLoading(false);
     }
@@ -119,6 +126,16 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
+            {needsTotp && (
+              <div className="space-y-2">
+                <Label>{t('auth.totpLabel')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input inputMode="numeric" autoComplete="one-time-code" value={totp} onChange={(e) => setTotp(e.target.value)} placeholder="123456" className="h-11 pl-10 tracking-widest" autoFocus />
+                </div>
+                <p className="text-xs text-muted-foreground">{t('auth.totpHint')}</p>
+              </div>
+            )}
             {error && <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{error}</div>}
             <Button type="submit" variant="cta" size="xl" className="w-full" disabled={loading}>
               {loading ? t('auth.loggingIn') : t('auth.login')}

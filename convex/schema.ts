@@ -23,6 +23,10 @@ export default defineSchema(
     referralCode: v.optional(v.string()),
     referredBy: v.optional(v.id('users')),
     referralRewarded: v.optional(v.boolean()),
+    // Two-factor auth (TOTP) — opt-in, for staff accounts.
+    twoFactorSecret: v.optional(v.string()),        // base32 shared secret (pending or active)
+    twoFactorEnabled: v.optional(v.boolean()),
+    twoFactorRecoveryCodes: v.optional(v.array(v.string())), // sha256 hashes of one-time recovery codes
     createdAt: v.number(),
   })
     .index('by_email', ['email'])
