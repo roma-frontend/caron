@@ -331,10 +331,10 @@ export default function CheckoutPage() {
               <CardHeader><CardTitle>{t('sc.contactInfo')}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><Label>{t('sc.fullName')} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('sc.fullName')} className="h-11" /></div>
-                  <div><Label>{t('sc.phone')} *</Label><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={settings?.phone || "+374 XX XXX XXX"} className="h-11" /></div>
+                  <div><Label>{t('sc.fullName')} *</Label><Input data-testid="checkout-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('sc.fullName')} className="h-11" /></div>
+                  <div><Label>{t('sc.phone')} *</Label><Input type="tel" data-testid="checkout-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={settings?.phone || "+374 XX XXX XXX"} className="h-11" /></div>
                 </div>
-                <div><Label>{t('sc.email')} *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('sc.yourEmail')} className="h-11" /></div>
+                <div><Label>{t('sc.email')} *</Label><Input type="email" data-testid="checkout-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('sc.yourEmail')} className="h-11" /></div>
               </CardContent>
             </Card>
           )}
@@ -345,17 +345,17 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 {settings?.enablePickup && (
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={pickup} onChange={(e) => setPickup(e.target.checked)} className="rounded border-input accent-primary" />
+                    <input type="checkbox" data-testid="pickup-toggle" checked={pickup} onChange={(e) => setPickup(e.target.checked)} className="rounded border-input accent-primary" />
                     <span className="text-sm font-medium">{t('sc.pickup')}</span>
                     {settings.pickupAddress && <span className="text-xs text-muted-foreground">{settings.pickupAddress}</span>}
                   </label>
                 )}
-                {!pickup && <div><Label>{t('sc.address')} *</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('sc.yerevan')} className="h-11" /></div>}
+                {!pickup && <div><Label>{t('sc.address')} *</Label><Input data-testid="checkout-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('sc.yerevan')} className="h-11" /></div>}
                 {!pickup && (
                   <div>
                     <Label>{t('sc.zone')} *</Label>
                     <Select value={zoneId} onValueChange={(v) => { setZoneId(v ?? ''); setZoneTouched(true); }}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder={t('sc.selectZone')}>{zoneId ? (zones?.find((z) => z._id === zoneId)?.name ?? '') : t('sc.selectZone')}</SelectValue></SelectTrigger>
+                      <SelectTrigger data-testid="zone-select" className="h-11"><SelectValue placeholder={t('sc.selectZone')}>{zoneId ? (zones?.find((z) => z._id === zoneId)?.name ?? '') : t('sc.selectZone')}</SelectValue></SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>{t('sc.yerevanGroup')}</SelectLabel>
@@ -442,7 +442,7 @@ export default function CheckoutPage() {
                         const Icon = icons[m] || CreditCard;
                         const labels: Record<string, string> = { cash: 'sc.cash', card: 'sc.card', idram: 'Idram', easypay: 'EasyPay', transfer: 'sc.bankTransfer' };
                         return (
-                          <button key={m} type="button" onClick={() => setPaymentMethod(m)}
+                          <button key={m} type="button" data-testid="payment-option" onClick={() => setPaymentMethod(m)}
                             className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-all ${paymentMethod === m ? 'border-primary bg-primary/10 text-primary' : 'hover:border-primary/40'}`}>
                             <Icon className="h-4 w-4" /> {t(labels[m] || m)}
                           </button>
@@ -484,7 +484,7 @@ export default function CheckoutPage() {
                   {form.notes && <p className="text-sm text-muted-foreground">{t('sc.note')}: {form.notes}</p>}
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="rounded border-input accent-primary" />
+                  <input type="checkbox" data-testid="checkout-agree" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="rounded border-input accent-primary" />
                   <span className="text-sm text-muted-foreground">{t('sc.iAgree')} <Link href="/terms" className="text-primary underline">{t('sc.terms')}</Link> {t('sc.and')} <Link href="/privacy" className="text-primary underline">{t('sc.privacyPolicy')}</Link></span>
                 </label>
               </CardContent>
@@ -497,7 +497,7 @@ export default function CheckoutPage() {
                 <ChevronLeft className="h-4 w-4" /> {t('sc.back')}
               </Button>
             ) : <div />}
-            <Button type="submit" variant="cta" size="lg" className="gap-2 text-sm sm:text-base" disabled={loading || (step === STEPS.length - 1 && (!agreed || ((settings?.paymentMethods?.length ?? 0) > 0 && !paymentMethod)))}>
+            <Button type="submit" data-testid="checkout-submit" variant="cta" size="lg" className="gap-2 text-sm sm:text-base" disabled={loading || (step === STEPS.length - 1 && (!agreed || ((settings?.paymentMethods?.length ?? 0) > 0 && !paymentMethod)))}>
               {step === STEPS.length - 1 ? (
                 loading ? t('sc.processing') : <span className="truncate max-w-50 sm:max-w-none">{t('sc.order')} — {formatPrice(orderTotalBeforePoints - appliedPoints)}</span>
               ) : (

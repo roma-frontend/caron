@@ -559,7 +559,7 @@ export default function ProductDetailPage() {
               onClick={(e) => { const adding = !isFav; const existing = favoriteItems.find((i) => i.id === product._id); if (!adding) flyProductAway({ triggerEl: e.currentTarget as HTMLElement, imageSrc: product.images?.[0] ?? null }); toggleFav({ id: product._id, name: product.name, price: product.price, image: product.images?.[0] ?? null }); if (adding) { flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'favorites', imageSrc: product.images?.[0] ?? null }); } else if (existing) { showUndoCountdownToast({ message: `${product.name} ${t('sp.removedFromFavorites')}`, onUndo: () => toggleFav(existing) }); } }}>
               <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFav ? 'fill-current' : ''}`} />
             </Button>
-            <Button variant="outline" size="icon" title={inCompare ? t('sp.inComparison') : t('sp.compare')}
+            <Button variant="outline" size="icon" data-testid="compare-toggle" title={inCompare ? t('sp.inComparison') : t('sp.compare')}
               className={`h-10 w-10 sm:h-11 sm:w-11 ${inCompare ? 'border-primary text-primary' : 'hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20'}`}
               onClick={() => { if (!inCompare) { addCompare({ id: product._id, slug: product.slug, name: product.name, price: product.price, image: product.images?.[0] ?? null, attributes: (product.attributes ?? {}) as Record<string, string> }); toast.success(t('sp.addedToComparison')); } }}>
               <GitCompareArrows className="h-4 w-4 sm:h-5 sm:w-5" />
