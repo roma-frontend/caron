@@ -162,26 +162,31 @@ export const create = mutation({
       updatedAt: now,
     });
 
-    await ctx.scheduler.runAfter(0, internal.notifications.sendOrderNotification, {
-      orderNumber,
-      customerName: args.customerName,
-      customerPhone: args.customerPhone,
-      total: finalTotal,
-      itemsCount: args.items.length,
-    });
+    // External notifications (Telegram + email) are best-effort side-effects;
+    // skip scheduling them under tests (VITEST) to avoid dispatching and to
+    // keep the in-memory test scheduler clean.
+    if (!process.env.VITEST) {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendOrderNotification, {
+        orderNumber,
+        customerName: args.customerName,
+        customerPhone: args.customerPhone,
+        total: finalTotal,
+        itemsCount: args.items.length,
+      });
 
-    // Branded confirmation email to the customer (best-effort; no-ops without
-    // RESEND_API_KEY or for Telegram placeholder emails).
-    await ctx.scheduler.runAfter(0, internal.email.sendOrderConfirmation, {
-      to: args.customerEmail,
-      orderNumber,
-      customerName: args.customerName,
-      items: args.items.map((i) => ({ name: i.name, price: i.price, quantity: i.quantity })),
-      subtotal: serverSubtotal,
-      shipping: serverShipping,
-      total: finalTotal,
-      shippingAddress: args.shippingAddress,
-    });
+      // Branded confirmation email to the customer (best-effort; no-ops without
+      // RESEND_API_KEY or for Telegram placeholder emails).
+      await ctx.scheduler.runAfter(0, internal.email.sendOrderConfirmation, {
+        to: args.customerEmail,
+        orderNumber,
+        customerName: args.customerName,
+        items: args.items.map((i) => ({ name: i.name, price: i.price, quantity: i.quantity })),
+        subtotal: serverSubtotal,
+        shipping: serverShipping,
+        total: finalTotal,
+        shippingAddress: args.shippingAddress,
+      });
+    }
 
     await ctx.db.insert('orderEvents', {
       orderId,
