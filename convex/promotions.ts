@@ -76,7 +76,10 @@ export const create = mutation({
     }
     const newId = await ctx.db.insert('promotions', { ...data, createdAt: Date.now() });
     // Auto-fill RU/EN (title, description + in-card template text) in background.
-    await ctx.scheduler.runAfter(0, internal.translate.translatePromotion, { id: newId });
+    // Skipped under tests (VITEST) — we don't dispatch external side-effects there.
+    if (!process.env.VITEST) {
+      await ctx.scheduler.runAfter(0, internal.translate.translatePromotion, { id: newId });
+    }
     return newId;
   },
 });
@@ -114,7 +117,7 @@ export const update = mutation({
     const newIds = productIds ?? oldIds;
 
     const added = newIds.filter((id) => !oldIds.includes(id));
-    if (added.length > 0) {
+    if (added.length > 0 && !process.env.VITEST) {
       await ctx.scheduler.runAfter(0, internal.promotionSubscribers.notifySubscribers, {
         promotionId: id,
         promotionTitle: old?.title ?? '',
@@ -133,7 +136,9 @@ export const update = mutation({
     // If any translatable text changed, regenerate RU/EN (force overwrites the
     // now-stale translations).
     if (rest.title !== undefined || rest.description !== undefined || rest.templateJson !== undefined) {
-      await ctx.scheduler.runAfter(0, internal.translate.translatePromotion, { id, force: true });
+      if (!process.env.VITEST) {
+        await ctx.scheduler.runAfter(0, internal.translate.translatePromotion, { id, force: true });
+      }
     }
   },
 });

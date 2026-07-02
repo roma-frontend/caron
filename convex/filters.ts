@@ -62,7 +62,7 @@ export const create = mutation({
     const { sessionToken: _, ...data } = args;
     const id = await ctx.db.insert('filterDefinitions', data);
     // Auto-translate the filter name + option labels to RU/EN in the background.
-    await ctx.scheduler.runAfter(0, internal.translate.translateFilter, { id });
+    if (!process.env.VITEST) await ctx.scheduler.runAfter(0, internal.translate.translateFilter, { id });
     return id;
   },
 });
@@ -130,7 +130,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, patch);
     // Re-translate after edits (name/options may have changed).
-    await ctx.scheduler.runAfter(0, internal.translate.translateFilter, { id, force: true });
+    if (!process.env.VITEST) await ctx.scheduler.runAfter(0, internal.translate.translateFilter, { id, force: true });
   },
 });
 

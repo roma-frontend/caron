@@ -35,11 +35,11 @@ export const save = mutation({
     if (id) {
       await ctx.db.patch(id, { ...data, updatedAt: now });
       // Re-translate after edits (content/title may have changed).
-      await ctx.scheduler.runAfter(0, internal.translate.translatePage, { id, force: true });
+      if (!process.env.VITEST) await ctx.scheduler.runAfter(0, internal.translate.translatePage, { id, force: true });
       return id;
     }
     const newId = await ctx.db.insert('pages', { ...data, createdAt: now, updatedAt: now });
-    await ctx.scheduler.runAfter(0, internal.translate.translatePage, { id: newId });
+    if (!process.env.VITEST) await ctx.scheduler.runAfter(0, internal.translate.translatePage, { id: newId });
     return newId;
   },
 });

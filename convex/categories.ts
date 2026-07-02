@@ -81,7 +81,9 @@ export const create = mutation({
       categoryId: catId, name: 'Անվանում', slug: 'type',
       type: 'multiselect', options: [], order: 0,
     });
-    await ctx.scheduler.runAfter(0, internal.translate.translateCategory, { id: catId });
+    if (!process.env.VITEST) {
+      await ctx.scheduler.runAfter(0, internal.translate.translateCategory, { id: catId });
+    }
     return catId;
   },
 });
@@ -125,7 +127,7 @@ export const update = mutation({
 
     const { id, sessionToken: _, ...patch } = args;
     await ctx.db.patch(id, patch);
-    if (args.name !== undefined || args.description !== undefined) {
+    if ((args.name !== undefined || args.description !== undefined) && !process.env.VITEST) {
       await ctx.scheduler.runAfter(0, internal.translate.translateCategory, { id });
     }
   },

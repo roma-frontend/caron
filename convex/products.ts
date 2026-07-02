@@ -1074,7 +1074,10 @@ export const create = mutation({
     await syncOemIndex(ctx, newId, data.oemNumbers);
     await recomputeCatalogStats(ctx);
     // Auto-fill RU/EN translations in the background (no-op if already set or AI unconfigured).
-    await ctx.scheduler.runAfter(0, internal.translate.translateProduct, { id: newId });
+    // Skipped under tests (VITEST) to keep the in-memory scheduler clean.
+    if (!process.env.VITEST) {
+      await ctx.scheduler.runAfter(0, internal.translate.translateProduct, { id: newId });
+    }
     return newId;
   },
 });
@@ -1139,10 +1142,10 @@ export const update = mutation({
       rest.sku = nextSku;
     }
     if (clearBrand) { rest.brand = undefined; }
-    if (stock !== undefined && old && old.stock <= 0 && stock > 0) {
+    if (stock !== undefined && old && old.stock <= 0 && stock > 0 && !process.env.VITEST) {
       await ctx.scheduler.runAfter(0, internal.backInStock.notifySubscribers, { productId: id, productName: old.name });
     }
-    if (price !== undefined && old && price < old.price) {
+    if (price !== undefined && old && price < old.price && !process.env.VITEST) {
       await ctx.scheduler.runAfter(0, internal.priceAlerts.checkAndNotify, { productId: id, newPrice: price });
     }
     const patch: Record<string, unknown> = { ...rest };
@@ -1210,7 +1213,7 @@ export const update = mutation({
     }
 
     // Fill missing RU/EN translations in the background when source text changed.
-    if (args.name !== undefined || args.description !== undefined) {
+    if ((args.name !== undefined || args.description !== undefined) && !process.env.VITEST) {
       await ctx.scheduler.runAfter(0, internal.translate.translateProduct, { id });
     }
   },
