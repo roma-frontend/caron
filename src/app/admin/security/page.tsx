@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Loader } from '@/components/ui/loader';
 import { ShieldCheck, ShieldOff, Copy, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
+import QRCode from 'qrcode';
 
 export default function SecurityPage() {
   const { t } = useAdminT();
@@ -22,6 +23,7 @@ export default function SecurityPage() {
   const disable = useMutation(api.twoFactor.disable);
 
   const [secret, setSecret] = useState('');
+  const [qr, setQr] = useState('');
   const [code, setCode] = useState('');
   const [recovery, setRecovery] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -33,7 +35,11 @@ export default function SecurityPage() {
 
   const begin = async () => {
     setBusy(true);
-    try { const r = await startSetup({ sessionToken: sessionToken! }); setSecret(r.secret); }
+    try {
+      const r = await startSetup({ sessionToken: sessionToken! });
+      setSecret(r.secret);
+      try { setQr(await QRCode.toDataURL(r.uri, { width: 220, margin: 1 })); } catch { setQr(''); }
+    }
     catch { toast.error(t('sec.error')); } finally { setBusy(false); }
   };
   const confirm = async () => {
@@ -41,7 +47,7 @@ export default function SecurityPage() {
     setBusy(true);
     try {
       const r = await enable({ sessionToken: sessionToken!, code: code.trim() });
-      setRecovery(r.recoveryCodes); setSecret(''); setCode('');
+      setRecovery(r.recoveryCodes); setSecret(''); setQr(''); setCode('');
       toast.success(t('sec.enabled'));
     } catch (e) { toast.error(errCode(e) === 'INVALID_CODE' ? t('sec.codeInvalid') : t('sec.error')); }
     finally { setBusy(false); }
@@ -97,6 +103,13 @@ export default function SecurityPage() {
           ) : secret ? (
             <div className="space-y-4">
               <p className="text-sm">{t('sec.step2')}</p>
+              {qr && (
+                <div className="flex flex-col items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qr} alt="2FA QR" width={220} height={220} className="rounded-lg border bg-white p-2" />
+                  <p className="text-xs text-muted-foreground">{t('sec.scanQr')}</p>
+                </div>
+              )}
               <div className="rounded-lg border bg-muted/40 p-3">
                 <p className="mb-1 text-xs text-muted-foreground">{t('sec.manualKey')}</p>
                 <div className="flex items-center justify-between gap-2">
