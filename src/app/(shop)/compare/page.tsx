@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { useCompareStore } from '@/store/compare';
 import { Button } from '@/components/ui/button';
 import { X, GitCompareArrows, ShoppingCart, TrendingDown, Check } from 'lucide-react';
@@ -9,6 +11,8 @@ import Link from '@/components/LocalizedLink';
 import Image from 'next/image';
 import { motion } from '@/lib/motion';
 import { useT } from '@/lib/i18n/admin';
+import { useFilterName } from '@/lib/i18n/filterNames';
+import { api } from '../../../../convex/_generated/api';
 
 export default function ComparePage() {
   const { t } = useT();
@@ -16,6 +20,23 @@ export default function ComparePage() {
   const addToCart = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
   const bestPrice = items.length > 0 ? Math.min(...items.map((i) => i.price)) : 0;
+
+  // Attribute keys are stored as filter-definition ids (or slugs); resolve them
+  // to human-readable, localized labels instead of showing the raw key.
+  const filterName = useFilterName();
+  const allDefs = useQuery(api.filters.listAll, {});
+  const defByKey = useMemo(() => {
+    const m = new Map<string, { name: string; slug: string; nameRu?: string; nameEn?: string }>();
+    for (const d of allDefs ?? []) {
+      m.set(d._id, d);
+      if (d.slug) m.set(d.slug, d);
+    }
+    return m;
+  }, [allDefs]);
+  const attrLabel = (key: string): string => {
+    const d = defByKey.get(key);
+    return d ? filterName(d.name, d.slug, d.nameRu, d.nameEn) : filterName(key, key);
+  };
 
   if (items.length === 0) {
     return (
@@ -88,7 +109,7 @@ export default function ComparePage() {
               const maxVal = isNumeric ? Math.max(...values.map(Number)) : null;
               return (
                 <tr key={key} className="border-t hover:bg-muted/30 transition-colors">
-                  <td className="p-3 text-sm font-medium text-muted-foreground">{key}</td>
+                  <td className="p-3 text-sm font-medium text-muted-foreground">{attrLabel(key)}</td>
                   {items.map((item) => {
                     const val = item.attributes[key] || '-';
                     const numVal = isNumeric ? Number(val) : null;
