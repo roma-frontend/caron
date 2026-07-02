@@ -103,6 +103,11 @@ export const getPublic = query({
 export const getSecret = internalQuery({
   args: {},
   handler: async (ctx) => {
+    // Silence all outbound notifications (Telegram/etc.) on deployments that
+    // opt in via NOTIFICATIONS_DISABLED=1 — e.g. the dev/staging deployment used
+    // by E2E tests, so automated runs never message the real owner. All callers
+    // treat a null result (missing token/chatId) as "not configured → skip".
+    if (process.env.NOTIFICATIONS_DISABLED === '1') return null;
     return await ctx.db.query('settings').first();
   },
 });

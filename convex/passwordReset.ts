@@ -55,6 +55,7 @@ export const requestPasswordReset = action({
     await ctx.runMutation(internal.passwordReset._storeToken, { userId: user.id, tokenHash, expiresAt: Date.now() + RESET_TTL_MS });
 
     const apiKey = process.env.RESEND_API_KEY;
+    if (process.env.NOTIFICATIONS_DISABLED === '1') return { ok: true }; // silenced (dev/E2E) — token stored, no delivery
     if (!apiKey) return { ok: true }; // email not configured — token stored, no delivery
 
     const siteUrl = (process.env.SITE_URL || 'https://www.caron.group').replace(/\/$/, '');

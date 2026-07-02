@@ -23,6 +23,7 @@ export const sendOrderConfirmation = internalAction({
     shippingAddress: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
+    if (process.env.NOTIFICATIONS_DISABLED === '1') return;
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) return; // email not configured — skip silently
     if (!args.to || args.to.endsWith('@telegram.local')) return;
