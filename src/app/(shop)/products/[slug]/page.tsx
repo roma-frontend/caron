@@ -549,7 +549,7 @@ export default function ProductDetailPage() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button size="lg" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0 || maxQty <= 0}
+            <Button size="lg" data-testid="add-to-cart" className="w-full sm:flex-1 gap-2 order-first" disabled={product.stock <= 0 || maxQty <= 0}
               onClick={(e) => { const prevQty = cartQty; const s = product.qtyStep || 1; for (let i = 0; i < qty; i++) addItem({ id: product._id, name: product.name, price: cartPrice, image: product.images?.[0] ?? null, maxStock: product.stock, qtyStep: s }); flyProductToTarget({ triggerEl: e.currentTarget as HTMLElement, kind: 'cart', imageSrc: product.images?.[0] ?? null }); }}>
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" /> {t('sp.add')}
             </Button>

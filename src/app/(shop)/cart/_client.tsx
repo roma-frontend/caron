@@ -248,7 +248,7 @@ export default function CartPage() {
               {selected.size === 0 ? (
                 <Button variant="cta" size="xl" className="w-full" disabled> {t('sc.order')} </Button>
               ) : (
-                <Link href="/checkout" onClick={() => { if (typeof window !== "undefined") sessionStorage.setItem("checkout-ids", JSON.stringify([...selected])); }} className="block">
+                <Link href="/checkout" data-testid="cart-checkout" onClick={() => { if (typeof window !== "undefined") sessionStorage.setItem("checkout-ids", JSON.stringify([...selected])); }} className="block">
                   <Button variant="cta" size="xl" className="w-full">{t('sc.order')} ({selected.size})</Button>
                 </Link>
               )}

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "playwright test",
     "postinstall": "node scripts/patch-convex-tsconfig.cjs"
   },
   "dependencies": {
@@ -75,6 +76,7 @@
   "devDependencies": {
     "@edge-runtime/vm": "5.0.0",
     "@next/bundle-analyzer": "^16.2.6",
+    "@playwright/test": "1.51.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",
