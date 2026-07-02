@@ -24,13 +24,8 @@ admin mark-paid flows.
 
 ## CI
 
-Two workflows:
-
-- **`e2e.yml`** — runs the read-only suite against each successful Vercel
-  **preview** deploy (`deployment_status` trigger). Note: this only fires if
-  preview deploys actually build (see Convex preview deploy keys).
-- **`e2e-staging.yml`** — self-contained: builds + runs the app in the runner
-  against the **dev** Convex deployment, seeds data, and runs the FULL suite
-  (including mutating specs). No Vercel involved. Requires one repo secret
-  `CONVEX_DEPLOY_KEY` = a **dev** deploy key
-  (Convex dashboard → Project → Settings → Deploy Keys → Development).
+**`e2e-staging.yml`** runs on every PR to `main` (and via manual dispatch). It is
+self-contained: builds + runs the app in the runner against the **dev** Convex
+deployment, seeds data, and runs the FULL suite (including mutating specs). No
+Vercel involved. Requires one repo secret `CONVEX_DEPLOY_KEY` = a **dev** deploy
+key (Convex dashboard → Project → Settings → Deploy Keys → Development).
