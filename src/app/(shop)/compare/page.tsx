@@ -51,7 +51,19 @@ export default function ComparePage() {
     );
   }
 
-  const allKeys = [...new Set(items.flatMap((i) => Object.keys(i.attributes)))];
+  // Collapse attribute keys that resolve to the same localized label (products
+  // can carry both a legacy `brand` key and a filter-definition key that both
+  // mean "Brand"), so each attribute appears as a single row.
+  const rawKeys = [...new Set(items.flatMap((i) => Object.keys(i.attributes)))];
+  const allKeys = (() => {
+    const seen = new Set<string>();
+    return rawKeys.filter((k) => {
+      const label = attrLabel(k).trim().toLowerCase();
+      if (seen.has(label)) return false;
+      seen.add(label);
+      return true;
+    });
+  })();
 
   return (
     <div className="mx-auto max-w-[var(--container-max)] sm:px-[var(--space-container)] py-[var(--space-8)]">
