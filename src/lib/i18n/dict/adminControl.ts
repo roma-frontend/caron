@@ -134,6 +134,11 @@ export const adminControl: DictModule = {
   'sc.sessionsTitle': { hy: 'Ակտիվ սեսիաներ', ru: 'Активные сессии', en: 'Active sessions' },
   'sc.sessionsEmpty': { hy: 'Ակտիվ սեսիաներ չկան', ru: 'Нет активных сессий', en: 'No active sessions' },
   'sc.revokeSession': { hy: 'Ավարտել այս սեսիան', ru: 'Завершить эту сессию', en: 'End this session' },
+  'sc.backupTitle': { hy: 'Տվյալների պահուստ', ru: 'Резервная копия данных', en: 'Data backup' },
+  'sc.backupHint': { hy: 'Ներբեռնեք ամբողջ տվյալների JSON-պատկերը (առանց գաղտնիքների)', ru: 'Скачайте JSON-снимок всех данных (без секретов)', en: 'Download a JSON snapshot of all data (no secrets)' },
+  'sc.backupBtn': { hy: 'Ներբեռնել պատկերը', ru: 'Скачать снимок', en: 'Download snapshot' },
+  'sc.backupBusy': { hy: 'Պատրաստվում է...', ru: 'Готовим...', en: 'Preparing...' },
+  'sc.backupDone': { hy: 'Պատկերը ներբեռնված է', ru: 'Снимок скачан', en: 'Snapshot downloaded' },
 
   // --- Audit log: action chip labels ---
   'al.user.create': { hy: 'Օգտատեր · ստեղծում', ru: 'Пользователь · создание', en: 'User · create' },
@@ -153,6 +158,7 @@ export const adminControl: DictModule = {
   'al.session.revoke': { hy: 'Սեսիա · ելք', ru: 'Сессия · выход', en: 'Session · logout' },
   'al.user.2faEnable': { hy: '2FA · միացում', ru: '2FA · включение', en: '2FA · enable' },
   'al.user.2faDisable': { hy: '2FA · անջատում', ru: '2FA · отключение', en: '2FA · disable' },
+  'al.data.export': { hy: 'Տվյալների արտահանում', ru: 'Экспорт данных', en: 'Data export' },
   'al.order.updateStatus': { hy: 'Պատվեր · կարգավիճակ', ru: 'Заказ · статус', en: 'Order · status' },
   'al.order.bulkAction': { hy: 'Պատվերներ · խմբակային', ru: 'Заказы · массово', en: 'Orders · bulk' },
   'al.settings.update': { hy: 'Կարգավորումներ', ru: 'Настройки', en: 'Settings' },
@@ -177,6 +183,7 @@ export const adminControl: DictModule = {
   'al.txt.revokeOne': { hy: 'Ավարտեց մեկ սեսիա՝', ru: 'Завершил одну сессию', en: 'Ended one session of' },
   'al.txt.2faEnable': { hy: 'Միացրեց երկգործոն նույնականացումը', ru: 'Включил двухфакторную аутентификацию', en: 'Enabled two-factor auth' },
   'al.txt.2faDisable': { hy: 'Անջատեց երկգործոն նույնականացումը', ru: 'Отключил двухфакторную аутентификацию', en: 'Disabled two-factor auth' },
+  'al.txt.dataExport': { hy: 'Ներբեռնեց տվյալների պատկեր', ru: 'Скачал снимок данных', en: 'Exported a data snapshot' },
   'al.txt.orderStatus': { hy: 'Պատվերի կարգավիճակ', ru: 'Статус заказа', en: 'Order status' },
   'al.txt.bulkOrders': { hy: 'Խմբակային թարմացում պատվերների համար', ru: 'Массовое обновление заказов', en: 'Bulk update on orders' },
   'al.txt.settingsUpdate': { hy: 'Թարմացրեց խանութի կարգավորումները', ru: 'Обновил настройки магазина', en: 'Updated store settings' },

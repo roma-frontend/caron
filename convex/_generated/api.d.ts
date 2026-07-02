@@ -13,6 +13,7 @@ import type * as admin from "../admin.js";
 import type * as atg from "../atg.js";
 import type * as auth from "../auth.js";
 import type * as backInStock from "../backInStock.js";
+import type * as backup from "../backup.js";
 import type * as brands from "../brands.js";
 import type * as cart from "../cart.js";
 import type * as categories from "../categories.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   atg: typeof atg;
   auth: typeof auth;
   backInStock: typeof backInStock;
+  backup: typeof backup;
   brands: typeof brands;
   cart: typeof cart;
   categories: typeof categories;

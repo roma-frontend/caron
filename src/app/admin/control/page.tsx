@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader } from '@/components/ui/loader';
 import { formatDateLocalized } from '@/lib/formatters';
 import { toast } from 'sonner';
-import { ShieldCheck, ShieldAlert, Users, Lock, Activity, ScrollText, Crown, Shield, LogOut, Monitor } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Users, Lock, Activity, ScrollText, Crown, Shield, LogOut, Monitor, Database, Download } from 'lucide-react';
 
 type Role = 'admin' | 'manager';
 
@@ -58,6 +58,8 @@ export default function ControlCenterPage() {
   const staff = useQuery(api.access.listStaff, args);
   const sessions = useQuery(api.access.listAllSessions, args);
   const revokeSession = useMutation(api.access.revokeSession);
+  const exportSnapshot = useMutation(api.backup.exportSnapshot);
+  const [backupBusy, setBackupBusy] = useState(false);
   const setCapability = useMutation(api.access.setCapability);
   const revokeAllSessions = useMutation(api.access.revokeAllSessions);
 
@@ -105,6 +107,19 @@ export default function ControlCenterPage() {
       await revokeSession({ sessionToken: sessionToken!, sessionId: sessionId as Parameters<typeof revokeSession>[0]['sessionId'] });
       toast.success(t('sc.sessionsRevoked'));
     } catch { toast.error(t('sc.capError')); }
+  };
+
+  const doExportSnapshot = async () => {
+    setBackupBusy(true);
+    try {
+      const snap = await exportSnapshot({ sessionToken: sessionToken! });
+      const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `caron-snapshot-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t('sc.backupDone'));
+    } catch { toast.error(t('sc.capError')); } finally { setBackupBusy(false); }
   };
 
   const grouped = useMemo(() => {
@@ -285,6 +300,18 @@ export default function ControlCenterPage() {
                   ))
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 font-semibold"><Database className="h-4 w-4 text-primary" /> {t('sc.backupTitle')}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('sc.backupHint')}</p>
+              </div>
+              <button onClick={doExportSnapshot} disabled={backupBusy} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
+                <Download className="h-4 w-4" /> {backupBusy ? t('sc.backupBusy') : t('sc.backupBtn')}
+              </button>
             </CardContent>
           </Card>
         </div>

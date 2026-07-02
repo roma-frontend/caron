@@ -81,6 +81,8 @@ export function auditText(
       return t('al.txt.2faEnable');
     case 'user.2faDisable':
       return t('al.txt.2faDisable');
+    case 'data.export':
+      return t('al.txt.dataExport');
     case 'order.updateStatus':
       return `${t('al.txt.orderStatus')}: ${statusLabel(meta.prevStatus)} → ${statusLabel(meta.nextStatus)}`;
     case 'order.bulkAction':
