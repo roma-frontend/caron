@@ -231,7 +231,7 @@ export default function ProductsPage() {
         <h1 className="font-bold" style={{ fontSize: 'var(--text-3xl)' }}>{t('cmp.nav_catalog')}</h1>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder={t('cmp.nav_search')} className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input data-testid="catalog-search" placeholder={t('cmp.nav_search')} className="h-10 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
 

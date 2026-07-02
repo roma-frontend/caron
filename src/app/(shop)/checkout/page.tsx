@@ -551,14 +551,14 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between font-bold" style={{ fontSize: 'var(--text-lg)' }}><span>{t('sc.total')}</span><span>{formatPrice(orderTotalBeforePoints - appliedPoints)}</span></div>
               <div className="flex gap-2">
-                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder={t('sc.couponCode')} className="h-9 text-xs flex-1" />
+                <Input value={couponCode} data-testid="coupon-input" onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder={t('sc.couponCode')} className="h-9 text-xs flex-1" />
                 <Button type="button" size="sm" variant="outline" disabled={!couponCode.trim()} className="h-9 text-xs">OK</Button>
               </div>
               {couponCode.trim() && coupon === null && (
                 <p className="text-xs text-red-500 text-center">{t('sc.couponNotExist')}</p>
               )}
               {coupon && (
-                <p className="text-xs text-green-500 text-center">-{formatPrice(coupon.discount)} {t('sc.coupon')}</p>
+                <p data-testid="coupon-discount" className="text-xs text-green-500 text-center">-{formatPrice(coupon.discount)} {t('sc.coupon')}</p>
               )}
               {settings?.deliveryEstimateYerevan && form.address && (
                 <p className="text-xs text-muted-foreground text-center">{t('sc.deliveryYerevan')}՝ ~{localizeDeliveryEstimate(settings.deliveryEstimateYerevan, lang)}</p>

@@ -16,6 +16,7 @@ process.env.E2E_CUSTOMER_PASSWORD ??= 'E2ePass123!';
 process.env.E2E_ADMIN_EMAIL ??= 'e2e-admin@caron.test';
 process.env.E2E_ADMIN_PASSWORD ??= 'E2ePass123!';
 process.env.E2E_ORDER_NUMBER ??= 'E2E-0001';
+process.env.E2E_STAGING ??= '1';
 
 const PORT = Number(process.env.E2E_PORT || 3000);
 

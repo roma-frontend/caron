@@ -104,15 +104,44 @@ export const seed = internalMutation({
       });
     }
 
-    // ── Clear any open return request so the return spec can re-run ─
+    // ── Clear ALL return requests for the seeded order so the return
+    //     spec can always create a fresh one (any leftover status would
+    //     otherwise hide the "request return" button). ─────────────
     const requests = await ctx.db
       .query('returnRequests')
       .withIndex('by_order', (q) => q.eq('orderId', order!._id))
       .collect();
     for (const r of requests) {
-      if (r.status === 'pending' || r.status === 'approved') await ctx.db.delete(r._id);
+      await ctx.db.delete(r._id);
     }
 
-    return { customerEmail: CUSTOMER_EMAIL, adminEmail: ADMIN_EMAIL, orderNumber: ORDER_NUMBER };
+    // ── Coupon for the checkout coupon spec ──────────────────────
+    const existingCoupon = await ctx.db
+      .query('coupons')
+      .withIndex('by_code', (q) => q.eq('code', 'E2ESALE'))
+      .first();
+    if (!existingCoupon) {
+      await ctx.db.insert('coupons', {
+        code: 'E2ESALE', type: 'percent', value: 10, isActive: true, usedCount: 0, createdAt: now,
+      });
+    } else {
+      await ctx.db.patch(existingCoupon._id, { isActive: true, type: 'percent', value: 10 });
+    }
+
+    // ── One pending product question for the admin-answer spec ───
+    // Clear prior E2E questions (identified by author) so the run is repeatable.
+    const priorQuestions = await ctx.db.query('productQuestions').collect();
+    for (const q of priorQuestions) {
+      if (q.authorName === 'E2E Asker') await ctx.db.delete(q._id);
+    }
+    await ctx.db.insert('productQuestions', {
+      productId: product!._id,
+      authorName: 'E2E Asker',
+      question: 'E2E test question about the widget?',
+      isApproved: false,
+      createdAt: now,
+    });
+
+    return { customerEmail: CUSTOMER_EMAIL, adminEmail: ADMIN_EMAIL, orderNumber: ORDER_NUMBER, coupon: 'E2ESALE' };
   },
 });

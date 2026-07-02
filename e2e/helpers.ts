@@ -18,3 +18,6 @@ export const ADMIN = {
   password: process.env.E2E_ADMIN_PASSWORD,
 };
 export const SEEDED_ORDER = process.env.E2E_ORDER_NUMBER || 'E2E-0001';
+export const SEEDED_COUPON = process.env.E2E_COUPON || 'E2ESALE';
+/** True only under the staging config, where dev Convex has been seeded. */
+export const STAGING = process.env.E2E_STAGING === '1';

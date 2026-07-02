@@ -47,7 +47,7 @@ export default function AdminQaPage() {
                     <span className="text-xs text-muted-foreground">· {q.productName}</span>
                   </div>
                   <p className="mt-1.5 text-sm">{q.question}</p>
-                  {q.answer && <p className="mt-2 rounded-lg bg-muted/50 p-2 text-sm text-muted-foreground"><span className="font-semibold text-primary">{t('acat.answerLabel')}</span>{q.answer}</p>}
+                  {q.answer && <p data-testid="qa-answered" className="mt-2 rounded-lg bg-muted/50 p-2 text-sm text-muted-foreground"><span className="font-semibold text-primary">{t('acat.answerLabel')}</span>{q.answer}</p>}
                 </div>
                 <div className="flex gap-2 shrink-0">
                   {!q.isApproved && (
@@ -61,8 +61,8 @@ export default function AdminQaPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Input value={drafts[q._id] ?? ''} onChange={(e) => setDrafts((d) => ({ ...d, [q._id]: e.target.value }))} placeholder={t('acat.answerPlaceholder')} className="h-9 text-sm" />
-                <Button size="sm" className="h-9 gap-1 text-xs whitespace-nowrap" onClick={() => submitAnswer(q._id)}>
+                <Input data-testid="qa-answer-input" value={drafts[q._id] ?? ''} onChange={(e) => setDrafts((d) => ({ ...d, [q._id]: e.target.value }))} placeholder={t('acat.answerPlaceholder')} className="h-9 text-sm" />
+                <Button size="sm" data-testid="qa-answer-submit" className="h-9 gap-1 text-xs whitespace-nowrap" onClick={() => submitAnswer(q._id)}>
                   <Send className="h-3 w-3" /> {q.answer ? t('acat.update') : t('acat.answer')}
                 </Button>
               </div>
