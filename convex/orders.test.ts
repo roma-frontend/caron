@@ -269,3 +269,238 @@ describe('orders.create — delivery zones & rules', () => {
     expect((await t.run((ctx) => ctx.db.get(oid)))?.shipping).toBe(700);
   });
 });
+
+
+
+/** Seed a staff user + session; superadmin bypasses all capability checks. */
+async function staffSession(t: T, role: 'superadmin' | 'admin' | 'manager' = 'superadmin'): Promise<string> {
+  const token = `stok-${Math.random().toString(36).slice(2)}`;
+  await t.run(async (ctx) => {
+    const uid = await ctx.db.insert('users', { name: role, email: `${role}-${Math.random().toString(36).slice(2)}@x.com`, role, isActive: true, createdAt: Date.now() }) as Id<'users'>;
+    await ctx.db.insert('sessions', { userId: uid, token, expiresAt: Date.now() + 3_600_000, createdAt: Date.now() });
+  });
+  return token;
+}
+
+describe('orders.updateStatus — cancel / reopen / stock', () => {
+  it('restocks and records a cancel movement when cancelled', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 3), pickup: true });
+    const token = await staffSession(t);
+    await t.mutation(api.orders.updateStatus, { sessionToken: token, id: orderId, status: 'cancelled', cancelReason: 'customer changed mind' });
+    const { stock, movements, order } = await t.run(async (ctx) => ({
+      stock: (await ctx.db.get(pid))?.stock,
+      movements: await ctx.db.query('stockMovements').collect(),
+      order: await ctx.db.get(orderId),
+    }));
+    expect(stock).toBe(10); // 7 after sale, back to 10 after cancel
+    expect(order?.status).toBe('cancelled');
+    expect(order?.cancelReason).toBe('customer changed mind');
+    expect(movements.some((m) => m.type === 'cancel' && m.qty === 3)).toBe(true);
+  });
+
+  it('rejects cancellation without a reason', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const token = await staffSession(t);
+    await expect(t.mutation(api.orders.updateStatus, { sessionToken: token, id: orderId, status: 'cancelled' })).rejects.toThrow();
+  });
+
+  it('re-reserves stock when a cancelled order is re-opened', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 2), pickup: true });
+    const token = await staffSession(t);
+    await t.mutation(api.orders.updateStatus, { sessionToken: token, id: orderId, status: 'cancelled', cancelReason: 'x' });
+    await t.mutation(api.orders.updateStatus, { sessionToken: token, id: orderId, status: 'confirmed' });
+    const { stock, movements } = await t.run(async (ctx) => ({
+      stock: (await ctx.db.get(pid))?.stock,
+      movements: await ctx.db.query('stockMovements').collect(),
+    }));
+    expect(stock).toBe(8); // reserved again
+    expect(movements.some((m) => m.type === 'reopen' && m.qty === -2)).toBe(true);
+  });
+
+  it('records a payment_changed event and updates paymentStatus', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const token = await staffSession(t);
+    await t.mutation(api.orders.updateStatus, { sessionToken: token, id: orderId, paymentStatus: 'paid' });
+    const { order, events } = await t.run(async (ctx) => ({
+      order: await ctx.db.get(orderId),
+      events: await ctx.db.query('orderEvents').withIndex('by_order', (q) => q.eq('orderId', orderId)).collect(),
+    }));
+    expect(order?.paymentStatus).toBe('paid');
+    expect(events.some((e) => e.type === 'payment_changed' && e.nextValue === 'paid')).toBe(true);
+  });
+
+  it('rejects without the orders capability', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    await expect(t.mutation(api.orders.updateStatus, { sessionToken: 'bogus', id: orderId, status: 'confirmed' })).rejects.toThrow();
+  });
+});
+
+describe('orders.updateStatus — loyalty accrual', () => {
+  it('awards loyalty points when an order is delivered and reverses on cancel', async () => {
+    const t = convexTest(schema, modules);
+    await seedSettings(t, { enableLoyalty: true, loyaltyPercent: 10 });
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const { token, userId } = await seedUserWithLoyalty(t, 0);
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true, sessionToken: token });
+    const admin = await staffSession(t);
+    await t.mutation(api.orders.updateStatus, { sessionToken: admin, id: orderId, status: 'delivered' });
+    const awarded = await t.run(async (ctx) => (await ctx.db.query('loyaltyPoints').withIndex('by_user', (q) => q.eq('userId', userId)).first())?.points ?? 0);
+    expect(awarded).toBeGreaterThan(0);
+    // Cancelling a delivered order reverses the awarded points.
+    await t.mutation(api.orders.updateStatus, { sessionToken: admin, id: orderId, status: 'cancelled', cancelReason: 'return' });
+    const after = await t.run(async (ctx) => (await ctx.db.query('loyaltyPoints').withIndex('by_user', (q) => q.eq('userId', userId)).first())?.points ?? 0);
+    expect(after).toBe(0);
+  });
+});
+
+describe('orders.bulkAction', () => {
+  it('updates many orders and skips failures', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 100 });
+    const o1 = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const o2 = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const token = await staffSession(t);
+    const res = await t.mutation(api.orders.bulkAction, { sessionToken: token, ids: [o1, o2], status: 'confirmed' });
+    expect(res.updated).toBe(2);
+    expect(res.failed).toBe(0);
+    const statuses = await t.run(async (ctx) => [(await ctx.db.get(o1))?.status, (await ctx.db.get(o2))?.status]);
+    expect(statuses).toEqual(['confirmed', 'confirmed']);
+  });
+
+  it('returns 0 for an empty selection', async () => {
+    const t = convexTest(schema, modules);
+    const token = await staffSession(t);
+    const res = await t.mutation(api.orders.bulkAction, { sessionToken: token, ids: [], status: 'confirmed' });
+    expect(res).toEqual({ updated: 0, failed: 0 });
+  });
+
+  it('requires a cancel reason for bulk cancellation', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const o1 = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const token = await staffSession(t);
+    await expect(t.mutation(api.orders.bulkAction, { sessionToken: token, ids: [o1], status: 'cancelled' })).rejects.toThrow();
+  });
+});
+
+describe('orders.validateCart', () => {
+  it('flags unavailable and out-of-stock items', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const inactive = await seedProduct(t, cat, { price: 1000, stock: 10, isActive: false });
+    const empty = await seedProduct(t, cat, { price: 1000, stock: 0 });
+    const res = await t.mutation(api.orders.validateCart, { items: [{ productId: inactive, quantity: 1 }, { productId: empty, quantity: 1 }] });
+    expect(res.changed).toBe(true);
+    expect(res.items).toHaveLength(0);
+    expect(res.issues.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('clamps quantity to available stock', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 3 });
+    const res = await t.mutation(api.orders.validateCart, { items: [{ productId: pid, quantity: 10 }] });
+    expect(res.items[0].quantity).toBe(3);
+    expect(res.changed).toBe(true);
+    expect(res.subtotal).toBe(3000);
+  });
+});
+
+describe('orders read queries', () => {
+  it('getByOrderNumber returns a public subset', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const orderNumber = await t.run(async (ctx) => (await ctx.db.get(orderId))?.orderNumber);
+    const pub = await t.query(api.orders.getByOrderNumber, { orderNumber: orderNumber! });
+    expect(pub?.orderNumber).toBe(orderNumber);
+    expect(pub?.total).toBe(1000);
+    // PII fields must not be present in the public subset.
+    expect((pub as Record<string, unknown>).customerName).toBeUndefined();
+  });
+
+  it('getByOrderNumber returns null for unknown number', async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(api.orders.getByOrderNumber, { orderNumber: 'ORD-NOPE' })).toBeNull();
+  });
+
+  it('getById returns full order to owner, subset to anonymous', async () => {
+    const t = convexTest(schema, modules);
+    await seedSettings(t, {});
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const { token } = await seedUserWithLoyalty(t, 0);
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true, sessionToken: token });
+    const full = await t.query(api.orders.getById, { id: orderId, sessionToken: token });
+    expect((full as Record<string, unknown>)?.customerName).toBe('John');
+    const anon = await t.query(api.orders.getById, { id: orderId });
+    expect((anon as Record<string, unknown>)?.customerName).toBeUndefined();
+    expect((anon as Record<string, unknown>)?.total).toBe(1000);
+  });
+
+  it('listByUser / myOrders return the caller orders and empty for guests', async () => {
+    const t = convexTest(schema, modules);
+    await seedSettings(t, {});
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const { token } = await seedUserWithLoyalty(t, 0);
+    await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true, sessionToken: token });
+    expect(await t.query(api.orders.listByUser, { sessionToken: token })).toHaveLength(1);
+    expect(await t.query(api.orders.myOrders, { sessionToken: token })).toHaveLength(1);
+    expect(await t.query(api.orders.myOrders, {})).toHaveLength(0);
+  });
+
+  it('listAdmin returns [] for a non-admin and orders for staff', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    expect(await t.query(api.orders.listAdmin, { sessionToken: 'bogus' })).toEqual([]);
+    const token = await staffSession(t);
+    expect((await t.query(api.orders.listAdmin, { sessionToken: token })).length).toBeGreaterThanOrEqual(1);
+    // filtered by status
+    const pending = await t.query(api.orders.listAdmin, { sessionToken: token, status: 'pending' });
+    expect(pending.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('getOrderEvents returns [] for non-admin and events for staff', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    expect(await t.query(api.orders.getOrderEvents, { sessionToken: 'bogus', orderId })).toEqual([]);
+    const token = await staffSession(t);
+    const events = await t.query(api.orders.getOrderEvents, { sessionToken: token, orderId });
+    expect(events.some((e) => e.type === 'created')).toBe(true);
+  });
+
+  it('getForInvoice enriches items with sku and returns null for unknown', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), pickup: true });
+    const token = await staffSession(t);
+    const inv = await t.query(api.orders.getForInvoice, { sessionToken: token, id: orderId });
+    expect(inv?.items[0]).toHaveProperty('sku');
+    expect(await t.query(api.orders.getForInvoice, { sessionToken: 'bogus', id: orderId })).toBeNull();
+  });
+});

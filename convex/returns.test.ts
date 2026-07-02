@@ -116,3 +116,119 @@ describe('returns.updateStatus', () => {
     await expect(t.mutation(api.returns.updateStatus, { sessionToken: 'bogus', id, status: 'approved' })).rejects.toThrow();
   });
 });
+
+
+
+/** Seed a customer user + session for ownership tests. */
+async function customerSession(t: T, email = 'cust@x.com'): Promise<{ token: string; userId: Id<'users'> }> {
+  const token = `ctok-${Math.random().toString(36).slice(2)}`;
+  const userId = await t.run(async (ctx) => {
+    const uid = await ctx.db.insert('users', { name: 'Cust', email, role: 'customer', isActive: true, createdAt: Date.now() }) as Id<'users'>;
+    await ctx.db.insert('sessions', { userId: uid, token, expiresAt: Date.now() + 3_600_000, createdAt: Date.now() });
+    return uid;
+  });
+  return { token, userId };
+}
+
+describe('returns.create — ownership & duplicates', () => {
+  it('rejects a non-existent order', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const orderId = await seedOrder(t, pid);
+    await t.run((ctx) => ctx.db.delete(orderId));
+    await expect(t.mutation(api.returns.create, returnArgs(orderId, pid))).rejects.toThrow();
+  });
+
+  it('rejects a request from a different logged-in customer', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const owner = await customerSession(t, 'owner@x.com');
+    const orderId = await seedOrder(t, pid, owner.userId);
+    const other = await customerSession(t, 'other@x.com');
+    await expect(
+      t.mutation(api.returns.create, { ...returnArgs(orderId, pid), sessionToken: other.token }),
+    ).rejects.toThrow();
+  });
+
+  it('lets the owning customer create a request', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const owner = await customerSession(t, 'own2@x.com');
+    const orderId = await seedOrder(t, pid, owner.userId);
+    const id = await t.mutation(api.returns.create, { ...returnArgs(orderId, pid), sessionToken: owner.token });
+    const req = await t.run((ctx) => ctx.db.get(id));
+    expect(req?.userId).toBe(owner.userId);
+    expect(req?.status).toBe('pending');
+  });
+
+  it('stores an exchange request and normalises the telegram handle', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const orderId = await seedOrder(t, pid);
+    const id = await t.mutation(api.returns.create, { ...returnArgs(orderId, pid), type: 'exchange', customerTelegram: '@handle' });
+    const req = await t.run((ctx) => ctx.db.get(id));
+    expect(req?.type).toBe('exchange');
+    expect(req?.customerTelegram).toBe('handle');
+  });
+
+  it('allows a new request once the previous one is completed', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const orderId = await seedOrder(t, pid);
+    const id = await t.mutation(api.returns.create, returnArgs(orderId, pid));
+    const token = await superToken(t);
+    await t.mutation(api.returns.updateStatus, { sessionToken: token, id, status: 'completed' });
+    // completed is not an open state → a new request is allowed
+    const id2 = await t.mutation(api.returns.create, returnArgs(orderId, pid));
+    expect(id2).not.toBe(id);
+  });
+});
+
+describe('returns.updateStatus — guards', () => {
+  it('throws for a non-existent request', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const orderId = await seedOrder(t, pid);
+    const id = await t.mutation(api.returns.create, returnArgs(orderId, pid));
+    const token = await superToken(t);
+    await t.run((ctx) => ctx.db.delete(id));
+    await expect(t.mutation(api.returns.updateStatus, { sessionToken: token, id, status: 'approved' })).rejects.toThrow();
+  });
+
+  it('trims an empty admin comment to undefined', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const orderId = await seedOrder(t, pid);
+    const id = await t.mutation(api.returns.create, returnArgs(orderId, pid));
+    const token = await superToken(t);
+    await t.mutation(api.returns.updateStatus, { sessionToken: token, id, status: 'approved', adminComment: '   ' });
+    expect((await t.run((ctx) => ctx.db.get(id)))?.adminComment).toBeUndefined();
+  });
+});
+
+describe('returns.listMine / listAll', () => {
+  it('listMine returns only the caller requests, [] for guest', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const owner = await customerSession(t, 'lm@x.com');
+    const orderId = await seedOrder(t, pid, owner.userId);
+    await t.mutation(api.returns.create, { ...returnArgs(orderId, pid), sessionToken: owner.token });
+    expect(await t.query(api.returns.listMine, { sessionToken: owner.token })).toHaveLength(1);
+    expect(await t.query(api.returns.listMine, {})).toEqual([]);
+  });
+
+  it('listAll returns [] for a non-admin and enriched items for staff', async () => {
+    const t = convexTest(schema, modules);
+    const pid = await seedProduct(t);
+    const orderId = await seedOrder(t, pid);
+    await t.mutation(api.returns.create, returnArgs(orderId, pid));
+    expect(await t.query(api.returns.listAll, { sessionToken: 'bogus' })).toEqual([]);
+    const token = await superToken(t);
+    const all = await t.query(api.returns.listAll, { sessionToken: token });
+    expect(all).toHaveLength(1);
+    expect(all[0].items[0]).toHaveProperty('image');
+    // filter by status
+    const pending = await t.query(api.returns.listAll, { sessionToken: token, status: 'pending' });
+    expect(pending).toHaveLength(1);
+  });
+});
