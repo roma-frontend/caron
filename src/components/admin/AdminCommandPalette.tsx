@@ -62,6 +62,7 @@ export function AdminCommandPalette({ sessionToken }: AdminCommandPaletteProps) 
   }, []);
 
   // Reset query when closed.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- clear input on dialog close
   useEffect(() => { if (!open) setQuery(''); }, [open]);
 
   const term = query.trim();

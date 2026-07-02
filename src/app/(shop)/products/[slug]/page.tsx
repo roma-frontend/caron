@@ -179,6 +179,7 @@ export default function ProductDetailPage() {
   const step = product?.qtyStep || 1;
   // Start the quantity at the product's step (e.g. step 10 → default 10, not 1).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- derive default qty from async-loaded step
     setQty((q) => (q < step ? step : Math.floor(q / step) * step || step));
   }, [step]);
   const isWholesale = currentUser?.customerType === 'wholesale' && currentUser?.role !== 'admin';

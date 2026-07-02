@@ -32,6 +32,7 @@ export function PushToggle() {
 
   useEffect(() => {
     const ok = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && Boolean(VAPID_PUBLIC_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser feature detection must run after mount
     setSupported(ok);
     if (!ok) return;
     navigator.serviceWorker.getRegistration().then((reg) => reg?.pushManager.getSubscription())
