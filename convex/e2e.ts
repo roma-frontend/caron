@@ -23,10 +23,12 @@ const CATEGORY_SLUG = 'e2e-category';
 export const seed = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Hard stop on production.
+    // Hard stop unless we're on the known dev deployment. Allow-listing dev
+    // (rather than only denying prod) keeps the seed safe even if the system
+    // CONVEX_CLOUD_URL var were ever missing — it refuses everywhere else.
     const url = process.env.CONVEX_CLOUD_URL ?? '';
-    if (url.includes('giddy-grasshopper')) {
-      throw new Error('Refusing to seed E2E data on the production deployment');
+    if (!url.includes('marvelous-starfish')) {
+      throw new Error(`Refusing to seed E2E data: not the dev deployment (url=${url || 'unknown'})`);
     }
 
     const now = Date.now();
