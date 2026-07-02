@@ -6,9 +6,9 @@ export const adminControl: DictModule = {
   'sc.subtitle': { hy: 'Լիարժեք վերահսկողություն, անվտանգություն և աուդիտ', ru: 'Полный контроль, безопасность и аудит', en: 'Full control, security & audit' },
   'sc.navControl': { hy: 'Կառավարում', ru: 'Управление', en: 'Control' },
 
-  'sc.statSuperadmins': { hy: 'Սուպերադմիններ', ru: 'Суперадмины', en: 'Superadmins' },
-  'sc.statAdmins': { hy: 'Ադմիններ', ru: 'Админы', en: 'Admins' },
-  'sc.statManagers': { hy: 'Մենեջերներ', ru: 'Менеджеры', en: 'Managers' },
+  'sc.statSuperadmins': { hy: 'Սուպերադմին', ru: 'Суперадмины', en: 'Superadmins' },
+  'sc.statAdmins': { hy: 'Ադմին', ru: 'Админы', en: 'Admins' },
+  'sc.statManagers': { hy: 'Մենեջեր', ru: 'Менеджеры', en: 'Managers' },
   'sc.statRestrictions': { hy: 'Սահմանափակումներ', ru: 'Ограничения', en: 'Restrictions' },
   'sc.statAudit24h': { hy: 'Աուդիտ (24ժ)', ru: 'Аудит (24ч)', en: 'Audit (24h)' },
 

@@ -1,4 +1,4 @@
-import { mutation } from './_generated/server';
+import { mutation, internalMutation } from './_generated/server';
 
 function toBaseSlug(input: string): string {
   return input
@@ -285,5 +285,74 @@ export const backfillBrandFromFilterDef = mutation({
       updated++;
     }
     return `Backfilled brand for ${updated} products`;
+  },
+});
+
+
+/**
+ * Remove the duplicate brand attribute that bulk-imported products carry under
+ * the brand *filter-definition id* (attributes["<defId>"]), keeping the
+ * canonical brand in `product.brand` + `attributes.brand`. This caused the
+ * comparison table to show two "Brand" rows.
+ *
+ * Safe for filtering: the catalog brand facet uses `def.slug === 'brand'` for
+ * its options and sets the special `brand` query param, which matches
+ * `product.brand` / `attributes.brand` (both preserved) — never the removed key.
+ *
+ * Run with: npx convex run migrations:removeDuplicateBrandAttribute
+ */
+export const removeDuplicateBrandAttribute = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const BRAND_LABELS = new Set(['brand', 'бренд', 'բրենդ']);
+    const defs = await ctx.db.query('filterDefinitions').collect();
+    const brandDefIds = new Set(
+      defs
+        .filter(
+          (d) =>
+            (d.slug ?? '').toLowerCase() === 'brand' ||
+            BRAND_LABELS.has((d.name ?? '').trim().toLowerCase()) ||
+            BRAND_LABELS.has(((d as { nameRu?: string }).nameRu ?? '').trim().toLowerCase()) ||
+            BRAND_LABELS.has(((d as { nameEn?: string }).nameEn ?? '').trim().toLowerCase()),
+        )
+        .map((d) => d._id as string),
+    );
+
+    const products = await ctx.db.query('products').collect();
+    let cleaned = 0;
+    let brandFilled = 0;
+    for (const p of products) {
+      const attrs = { ...((p.attributes ?? {}) as Record<string, unknown>) };
+      let removedValue: string | undefined;
+      let changed = false;
+
+      for (const id of brandDefIds) {
+        if (id in attrs) {
+          const v = attrs[id];
+          if (!removedValue && typeof v === 'string' && v.trim()) removedValue = v.trim();
+          delete attrs[id];
+          changed = true;
+        }
+      }
+      if (!changed) continue;
+
+      const canonical =
+        (typeof attrs.brand === 'string' && attrs.brand.trim() ? (attrs.brand as string).trim() : undefined) ??
+        (p.brand && p.brand.trim() ? p.brand.trim() : undefined) ??
+        removedValue;
+
+      const patch: { attributes: Record<string, unknown>; brand?: string } = { attributes: attrs };
+      if (canonical) {
+        attrs.brand = canonical;
+        if (p.brand !== canonical) {
+          patch.brand = canonical;
+          brandFilled++;
+        }
+      }
+      await ctx.db.patch(p._id, patch);
+      cleaned++;
+    }
+
+    return `Removed duplicate brand attribute from ${cleaned} product(s); brand field set on ${brandFilled}. brandDefIds=[${[...brandDefIds].join(', ')}]`;
   },
 });
