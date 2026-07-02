@@ -187,3 +187,85 @@ describe('orders.create — loyalty redemption', () => {
     expect(order?.total).toBe(1000);
   });
 });
+
+describe('orders.create — delivery zones & rules', () => {
+  async function seedZone(t: T, z: Record<string, unknown>): Promise<Id<'deliveryZones'>> {
+    return await t.run(async (ctx) =>
+      ctx.db.insert('deliveryZones', {
+        group: 'yerevan', name: 'Center', schedule: '', order: 0, isActive: true, ...z,
+      }) as Promise<Id<'deliveryZones'>>,
+    );
+  }
+  async function seedRule(t: T, r: Record<string, unknown>): Promise<Id<'deliveryRules'>> {
+    return await t.run(async (ctx) =>
+      ctx.db.insert('deliveryRules', {
+        name: 'rule', isActive: true, priority: 1, effectType: 'free', createdAt: Date.now(), ...r,
+      }) as Promise<Id<'deliveryRules'>>,
+    );
+  }
+
+  it('charges the zone base price', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const zone = await seedZone(t, { price: 700 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), deliveryZoneId: zone });
+    const order = await t.run((ctx) => ctx.db.get(orderId));
+    expect(order?.shipping).toBe(700);
+    expect(order?.total).toBe(1700);
+    expect(order?.deliveryGroup).toBe('yerevan');
+  });
+
+  it('applies the per-zone free-shipping threshold', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const zone = await seedZone(t, { price: 700, freeThreshold: 1000 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 2), deliveryZoneId: zone }); // subtotal 2000 >= 1000
+    const order = await t.run((ctx) => ctx.db.get(orderId));
+    expect(order?.shipping).toBe(0);
+  });
+
+  it('an active "free" rule overrides the zone price and is recorded', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const zone = await seedZone(t, { price: 700 });
+    await seedRule(t, { name: 'freeYerevan', effectType: 'free', group: 'yerevan', priority: 1 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), deliveryZoneId: zone });
+    const order = await t.run((ctx) => ctx.db.get(orderId));
+    expect(order?.shipping).toBe(0);
+    expect(order?.deliveryRuleApplied).toBe('freeYerevan');
+  });
+
+  it('a fixed rule sets an explicit shipping price', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const zone = await seedZone(t, { price: 700 });
+    await seedRule(t, { name: 'flat300', effectType: 'fixed', effectValue: 300, priority: 1 });
+    const orderId = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), deliveryZoneId: zone });
+    expect((await t.run((ctx) => ctx.db.get(orderId)))?.shipping).toBe(300);
+  });
+
+  it('a percent rule reduces the zone base price', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const zone = await seedZone(t, { price: 1000 });
+    await seedRule(t, { name: '30off', effectType: 'percent', effectValue: 30, priority: 1 });
+    const oid = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), deliveryZoneId: zone });
+    expect((await t.run((ctx) => ctx.db.get(oid)))?.shipping).toBe(700);
+  });
+
+  it('ignores a rule whose minOrderTotal is not met', async () => {
+    const t = convexTest(schema, modules);
+    const cat = await seedCategory(t);
+    const pid = await seedProduct(t, cat, { price: 1000, stock: 10 });
+    const zone = await seedZone(t, { price: 700 });
+    await seedRule(t, { name: 'freeBig', effectType: 'free', minOrderTotal: 5000, priority: 1 });
+    // subtotal 1000 < 5000 → rule skipped → base price stands
+    const oid = await createOrder(t, { ...baseItemArgs(pid, 1000, 1), deliveryZoneId: zone });
+    expect((await t.run((ctx) => ctx.db.get(oid)))?.shipping).toBe(700);
+  });
+});
